@@ -12,7 +12,7 @@ version = "1.0-SNAPSHOT"
 kotlin {
     android()
     jvm("desktop") {
-        jvmToolchain(11)
+        jvmToolchain(17)
     }
     sourceSets {
         val commonMain by getting {
@@ -29,13 +29,13 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                api("androidx.appcompat:appcompat:1.5.1")
-                api("androidx.core:core-ktx:1.9.0")
+                api(libs.androidx.appcompat)
+                api(libs.androidx.core.ktx)
             }
         }
         val androidTest by getting {
             dependencies {
-                implementation("junit:junit:4.13.2")
+                implementation(libs.junit.junit4)
             }
         }
         val desktopMain by getting {
@@ -48,14 +48,19 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(33)
+    namespace = "illyan.butler"
+    compileSdk = 33
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdkVersion(24)
-        targetSdkVersion(33)
+        minSdk = 21
+        targetSdk = 33
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
+    }
+    kotlin {
+        jvmToolchain(17)
     }
 }

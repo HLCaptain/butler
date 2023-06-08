@@ -7,31 +7,33 @@ plugins {
 group = "illyan"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    jcenter()
-}
-
-dependencies {
-    implementation(project(":common"))
-    implementation("androidx.activity:activity-compose:1.5.0")
-}
-
 android {
-    compileSdkVersion(33)
+    namespace = "illyan.butler"
+    compileSdk = 33
     defaultConfig {
-        applicationId = "illyan.android"
-        minSdkVersion(24)
-        targetSdkVersion(33)
+        applicationId = "illyan.butler"
+        minSdk = 21
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0-SNAPSHOT"
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
+    }
+    kotlin {
+        jvmToolchain(17)
     }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
         }
     }
+}
+
+dependencies {
+    implementation(project(":common"))
+    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation(libs.androidx.activity.compose)
 }

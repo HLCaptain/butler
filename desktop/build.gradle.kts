@@ -8,10 +8,9 @@ plugins {
 group = "illyan"
 version = "1.0-SNAPSHOT"
 
-
 kotlin {
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(17)
         withJava()
     }
     sourceSets {
@@ -30,7 +29,7 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "buttler"
+            packageName = "butler"
             packageVersion = "1.0.0"
         }
     }
