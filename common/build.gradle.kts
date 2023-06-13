@@ -33,7 +33,7 @@ kotlin {
                 api(libs.androidx.core.ktx)
             }
         }
-        val androidTest by getting {
+        val androidInstrumentedTest by getting {
             dependencies {
                 implementation(libs.junit.junit4)
             }
@@ -63,4 +63,8 @@ android {
     kotlin {
         jvmToolchain(17)
     }
+}
+
+dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

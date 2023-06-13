@@ -1,10 +1,11 @@
 [versions]
 
-compose = "1.5.0-alpha04"
+compose = "1.4.0"
 compose-compiler = "1.4.7"
-kotlin = "1.8.21"
-ksp = "1.8.21-1.0.11"
-agp = "7.4.1"
+jetbrains-compose = "1.4.0"
+kotlin = "1.8.20"
+ksp = "1.8.20-1.0.11"
+agp = "8.1.0-beta05"
 room = "2.5.1"
 
 jetbrains-kotlinx-serialization = "1.5.0"
@@ -14,8 +15,8 @@ jetbrains-kotlinx-coroutines = "1.7.0"
 androidx-core = "1.10.1"
 androidx-collection = "1.2.0"
 androidx-appcompat = "1.6.1"
-androidx-activity = "1.7.1"
-androidx-compose-material3 = "1.2.0-alpha01"
+androidx-activity = "1.7.2"
+androidx-compose-material3 = "1.2.0-alpha02"
 androidx-constraintlayout-compose = "1.0.1"
 androidx-profileinstaller = "1.3.1"
 androidx-datastore = "1.0.0"
@@ -104,6 +105,7 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose" }
 androidx-navigation-safeargs = { id = "androidx.navigation.safeargs.kotlin", version.ref = "androidx-navigation-safeargs" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -1,6 +1,6 @@
-package illyan.android
+package illyan.butler
 
-import illyan.common.App
+import illyan.butler.common.App
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity

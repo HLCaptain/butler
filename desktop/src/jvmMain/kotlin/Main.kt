@@ -1,6 +1,6 @@
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import illyan.common.App
+import illyan.butler.common.App
 
 
 fun main() = application {

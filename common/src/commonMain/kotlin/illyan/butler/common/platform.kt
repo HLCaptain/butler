@@ -1,3 +1,3 @@
-package illyan.common
+package illyan.butler.common
 
 expect fun getPlatformName(): String
