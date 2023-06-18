@@ -37,3 +37,12 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### From KMP Web Wizard terrakok.github.io/kmp-web-wizard/ ###
+/local.properties
+/build
+*/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
