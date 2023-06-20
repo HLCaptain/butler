@@ -17,7 +17,11 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(project(":common"))
-                implementation(compose.desktop.currentOs)
+                implementation(compose.desktop.currentOs) {
+                    exclude(libs.jetbrains.compose.material.desktop.get().group)
+                }
+                implementation(libs.jetbrains.compose.expui.theme)
+                implementation(libs.mayakapps.compose.window.styler)
             }
         }
         val jvmTest by getting
@@ -31,6 +35,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "illyan.butler"
             packageVersion = "1.0.0"
+            modules("jdk.unsupported")
         }
     }
 }

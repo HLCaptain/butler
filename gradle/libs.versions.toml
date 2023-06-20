@@ -2,6 +2,7 @@
 
 compose = "1.4.0"
 compose-compiler = "1.4.7"
+compose-jetbrains-expui-theme = "2.1.0"
 jetbrains-compose = "1.4.0"
 kotlin = "1.8.20"
 ksp = "1.8.20-1.0.11"
@@ -27,7 +28,6 @@ androidx-lifecycle = "2.6.1"
 zstd-jni = "1.5.5-2"
 
 hlcaptain-compose-scrollbar = "0.0.3-alpha"
-lighthousegames-logging = "1.3.0"
 compose-destinations = "1.9.42-beta"
 coil-compose = "2.3.0"
 
@@ -40,8 +40,11 @@ desugar-jdk-libs = "2.0.3"
 
 sonarqube = "4.0.0.2929"
 
+mayakapps-compose-window-styler = "0.3.3-SNAPSHOT"
+
 [libraries]
 
+jetbrains-compose-expui-theme = { module = "com.bybutter.compose:compose-jetbrains-expui-theme", version.ref = "compose-jetbrains-expui-theme" }
 jetbrains-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 jetbrains-kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "jetbrains-kotlinx-collections-immutable" }
 jetbrains-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "jetbrains-kotlinx-serialization" }
@@ -79,8 +82,6 @@ androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "andro
 
 hlcaptain-compose-scrollbar = { module = "com.github.HLCaptain:compose-scrollbar", version.ref = "hlcaptain-compose-scrollbar" }
 
-lighthousegames-logging = { module = "org.lighthousegames:logging", version.ref = "lighthousegames-logging" }
-
 compose-destinations-animations-core = { module = "io.github.raamcosta.compose-destinations:animations-core", version.ref = "compose-destinations" }
 compose-destinations-ksp = { module = "io.github.raamcosta.compose-destinations:ksp", version.ref = "compose-destinations" }
 
@@ -98,6 +99,10 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 
 desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
+
+# Desktop
+mayakapps-compose-window-styler = { module = "com.mayakapps.compose:window-styler", version.ref = "mayakapps-compose-window-styler" }
+jetbrains-compose-material-desktop = { module = "org.jetbrains.compose.material:material-desktop", version.ref = "jetbrains-compose" }
 
 [plugins]
 
