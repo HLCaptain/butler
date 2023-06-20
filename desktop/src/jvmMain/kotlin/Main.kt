@@ -62,6 +62,10 @@ import io.kanro.compose.jetbrains.expui.theme.LightTheme
 import io.kanro.compose.jetbrains.expui.window.JBWindow
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import org.jetbrains.skia.impl.Log
+import theme.ButlerDarkTheme
+import theme.ButlerDarkThemeInverted
+import theme.ButlerLightTheme
+import theme.ButlerLightThemeInverted
 import theme.GlossyDarkTheme
 import theme.GlossyLightTheme
 import java.awt.Desktop
@@ -78,9 +82,9 @@ fun main() = application {
     val state = rememberWindowState()
     var isDark by remember { mutableStateOf(false) }
     val theme = if (isDark) {
-        GlossyDarkTheme
+        ButlerDarkTheme
     } else {
-        GlossyLightTheme
+        ButlerLightTheme
     }
     JBWindow(
         onCloseRequest = ::exitApplication,

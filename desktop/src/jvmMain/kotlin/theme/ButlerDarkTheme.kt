@@ -8,7 +8,7 @@ import io.kanro.compose.jetbrains.expui.theme.LightTheme
 import io.kanro.compose.jetbrains.expui.theme.Theme
 import io.kanro.compose.jetbrains.expui.window.LocalMainToolBarColors
 
-object GlossyDarkTheme : Theme {
+object ButlerDarkTheme : Theme {
     override val isDark: Boolean
         get() = DarkTheme.isDark
 

@@ -16,8 +16,8 @@ object GlossyLightTheme : Theme {
             LocalMainToolBarColors provides LightTheme.MainToolBarColors.copy(
                 normalAreaColors = LightTheme.MainToolBarColors.normalAreaColors.copy(
                     text = LightTheme.NormalAreaColors.text,
-                    startBackground = Color.White.copy(alpha = 0.4f),
-                    endBackground = Color.White.copy(alpha = 0.4f),
+                    startBackground = Color.Black.copy(alpha = 0.1f),
+                    endBackground = Color.Black.copy(alpha = 0.1f),
                 ),
                 inactiveAreaColors = LightTheme.MainToolBarColors.inactiveAreaColors.copy(
                     text = LightTheme.NormalAreaColors.text,
