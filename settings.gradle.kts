@@ -1,6 +1,3 @@
-rootProject.name = "butler"
-include(":shared", ":android", ":desktop", ":common")
-
 pluginManagement {
     repositories {
         google()
@@ -10,9 +7,9 @@ pluginManagement {
     }
 }
 
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+rootProject.name = "butler"
+
+include(":android")
+include(":desktop")
+include(":jsApp")
+include(":common")

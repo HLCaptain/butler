@@ -4,23 +4,29 @@ plugins {
     kotlin("android")
 }
 
-group = "illyan"
+group = "nest"
 version = "1.0-SNAPSHOT"
 
+repositories {
+    mavenCentral()
+}
+
 android {
-    namespace = "illyan.butler"
-    compileSdk = 33
+    namespace = "nest.butler"
+    compileSdk = 34
     defaultConfig {
-        applicationId = "illyan.butler"
+        applicationId = "nest.butler"
         minSdk = 21
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0-SNAPSHOT"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
     kotlin {
         jvmToolchain(17)
@@ -35,5 +41,14 @@ android {
 dependencies {
     implementation(project(":common"))
     implementation(libs.androidx.activity.compose)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
+}
+
+tasks.register("BuildAndRun") {
+    doFirst {
+        exec {
+            workingDir(projectDir.parentFile)
+            commandLine("./gradlew", "android:build")
+            commandLine("./gradlew", "android:installDebug")
+        }
+    }
 }

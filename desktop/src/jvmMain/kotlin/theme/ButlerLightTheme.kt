@@ -16,8 +16,8 @@ object ButlerLightTheme : Theme {
             LocalMainToolBarColors provides LightTheme.MainToolBarColors.copy(
                 normalAreaColors = LightTheme.MainToolBarColors.normalAreaColors.copy(
                     text = LightTheme.NormalAreaColors.text,
-                    startBackground = Color.Black.copy(alpha = 0.1f),
-                    endBackground = Color.Black.copy(alpha = 0.1f),
+                    startBackground = Color.Black.copy(alpha = 0.0f),
+                    endBackground = Color.Black.copy(alpha = 0.0f),
                 ),
                 inactiveAreaColors = LightTheme.MainToolBarColors.inactiveAreaColors.copy(
                     text = LightTheme.NormalAreaColors.text,

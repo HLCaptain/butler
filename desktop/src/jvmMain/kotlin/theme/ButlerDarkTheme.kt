@@ -16,8 +16,8 @@ object ButlerDarkTheme : Theme {
         return DarkTheme.provideValues() + arrayOf(
             LocalMainToolBarColors provides DarkTheme.MainToolBarColors.copy(
                 normalAreaColors = DarkTheme.MainToolBarColors.normalAreaColors.copy(
-                    startBackground = Color.White.copy(alpha = 0.06f),
-                    endBackground = Color.White.copy(alpha = 0.06f),
+                    startBackground = Color.White.copy(alpha = 0.0f),
+                    endBackground = Color.White.copy(alpha = 0.0f),
                 ),
                 inactiveAreaColors = DarkTheme.MainToolBarColors.inactiveAreaColors.copy(
                     startBackground = Color.Transparent,

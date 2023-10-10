@@ -3,7 +3,6 @@ import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,13 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
-import androidx.compose.material.MenuDefaults
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,23 +26,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.input.pointer.pointerMoveFilter
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.AwtWindow
-import androidx.compose.ui.window.MenuBar
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
-import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.mayakapps.compose.windowstyler.WindowBackdrop
@@ -57,27 +43,15 @@ import illyan.butler.common.App
 import io.kanro.compose.jetbrains.expui.control.ActionButton
 import io.kanro.compose.jetbrains.expui.control.Icon
 import io.kanro.compose.jetbrains.expui.control.Tooltip
-import io.kanro.compose.jetbrains.expui.theme.DarkTheme
-import io.kanro.compose.jetbrains.expui.theme.LightTheme
 import io.kanro.compose.jetbrains.expui.window.JBWindow
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
-import org.jetbrains.skia.impl.Log
 import theme.ButlerDarkTheme
-import theme.ButlerDarkThemeInverted
 import theme.ButlerLightTheme
-import theme.ButlerLightThemeInverted
-import theme.GlossyDarkTheme
-import theme.GlossyLightTheme
 import java.awt.Desktop
-import java.awt.event.WindowEvent
-import java.awt.event.WindowFocusListener
 import java.net.URI
 import javax.swing.JFrame
-import javax.swing.JInternalFrame
-import javax.swing.JToolBar
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 fun main() = application {
     val state = rememberWindowState()
     var isDark by remember { mutableStateOf(false) }
@@ -107,36 +81,23 @@ fun main() = application {
                     ActionButton(
                         { isDark = !isDark }, Modifier.size(40.dp), shape = RectangleShape
                     ) {
-                        if (isDark) {
-                            Icon("icons/darkTheme.svg")
-                        } else {
-                            Icon("icons/lightTheme.svg")
-                        }
+                        Icon("icons/${if (isDark) "dark" else "light"}Theme.svg")
                     }
                 }
             }
         }
     ) {
-        WindowStyle(
-            isDarkTheme = isDark,
-            backdropType = WindowBackdrop.Mica,
-            frameStyle = WindowFrameStyle(
-                cornerPreference = WindowCornerPreference.ROUNDED,
-            ),
-        )
-
+//        WindowStyle(
+//            isDarkTheme = isDark,
+//            backdropType = WindowBackdrop.Mica,
+//            frameStyle = WindowFrameStyle(
+//                cornerPreference = WindowCornerPreference.ROUNDED,
+//            ),
+//        )
         var isWindowFocused by remember { mutableStateOf(window.isFocused) }
+        LaunchedEffect(window.isFocused) { isWindowFocused = window.isFocused }
         val backgroundOpacity by animateFloatAsState(if (isWindowFocused) 0f else 1f)
         val colorShift by animateIntAsState(if (isDark) 22 else 255)
-
-        DisposableEffect(Unit) {
-            val windowFocusListener = object : WindowFocusListener {
-                override fun windowGainedFocus(e: WindowEvent?) { isWindowFocused = true }
-                override fun windowLostFocus(e: WindowEvent?) { isWindowFocused = false }
-            }
-            window.addWindowFocusListener(windowFocusListener)
-            onDispose { window.removeWindowFocusListener(windowFocusListener) }
-        }
 
         Column(
             modifier = Modifier
