@@ -4,7 +4,7 @@ plugins {
     kotlin("android")
 }
 
-group = "nest"
+group = "illyan"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -12,10 +12,10 @@ repositories {
 }
 
 android {
-    namespace = "nest.butler"
+    namespace = "illyan.butler"
     compileSdk = 34
     defaultConfig {
-        applicationId = "nest.butler"
+        applicationId = "illyan.butler"
         minSdk = 21
         targetSdk = 34
         versionCode = 1

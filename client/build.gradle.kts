@@ -1,4 +1,4 @@
-group = "nest"
+group = "illyan"
 version = "1.0-SNAPSHOT"
 
 allprojects {

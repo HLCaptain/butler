@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-group = "nest"
+group = "illyan"
 version = "1.0-SNAPSHOT"
 
 kotlin {
@@ -51,7 +51,7 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "nest.butler"
+            packageName = "illyan.butler"
             packageVersion = "1.0.0"
             modules("jdk.unsupported")
         }

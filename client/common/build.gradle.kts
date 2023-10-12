@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.google.ksp)
 }
 
-group = "nest"
+group = "illyan"
 version = "1.0-SNAPSHOT"
 
 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
@@ -83,7 +83,7 @@ kotlin {
 }
 
 android {
-    namespace = "nest.butler"
+    namespace = "illyan.butler"
     compileSdk = 34
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
@@ -111,7 +111,7 @@ ksp {
 sqldelight {
     databases {
         create("Database") {
-            packageName.set("nest")
+            packageName.set("illyan.butler.db")
         }
     }
 }
