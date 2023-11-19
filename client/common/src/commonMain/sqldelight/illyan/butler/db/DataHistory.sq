@@ -1,0 +1,25 @@
+CREATE TABLE DataHistory (
+    uuid TEXT PRIMARY KEY NOT NULL,
+    timestamp INTEGER NOT NULL,
+    fromTable TEXT NOT NULL
+);
+
+-- CRUD for Bookkeeper
+
+select:
+SELECT *
+FROM DataHistory
+WHERE uuid = ?
+LIMIT 1;
+
+upsert:
+INSERT OR REPLACE INTO DataHistory
+VALUES ?;
+
+delete:
+DELETE FROM DataHistory
+WHERE uuid = ?;
+
+deleteAllFromTable:
+DELETE FROM DataHistory
+WHERE fromTable = ?;

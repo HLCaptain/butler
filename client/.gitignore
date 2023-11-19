@@ -46,3 +46,7 @@ bin/
 .externalNativeBuild
 .cxx
 local.properties
+
+### Configuration files ###
+**/google-services.json
+**/*.keystore

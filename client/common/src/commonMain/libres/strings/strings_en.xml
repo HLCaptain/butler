@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="app_name">MR</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="hello_x">Hello ${name}!</string>
+    <plurals name="clicked_x_times">
+        <item quantity="one">Clicked ${clickNumber} time!</item>
+        <item quantity="other">Clicked ${clickNumber} times!</item>
+    </plurals>
+    <string name="click_me">Click me!</string>
+    <string name="reset_clicks">Reset clicks</string>
+    <string name="sign_in_anonymously">Sign in anonymously</string>
+    <string name="anonymous_user">Anonymous User</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_out">Sign out</string>
+    <string name="login">Login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="loading">Loading</string>
+    <string name="plant_no_name">No name</string>
+    <string name="plant_no_description">No description</string>
+    <string name="plant_owned_by">${owner}'s plant</string>
+    <string name="name">Name</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="phone">Phone</string>
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="profile">Profile</string>
+    <string name="unknown">Unknown</string>
+    <string name="user_id">User ID</string>
+    <string name="locked">Locked</string>
+    <string name="hidden_field_string">********</string>
+    <string name="copied_to_clipboard">Copied to Clipboard!</string>
+    <string name="description">Description</string>
+    <string name="empty_plant_list">No plants</string>
+    <string name="add_plant">Add plant</string>
+    <string name="remove_plant">Remove plant</string>
+    <string name="edit_sensors">Edit sensors</string>
+    <string name="available_sensors">Available sensors</string>
+    <string name="assigned_sensors">Assigned sensors</string>
+    <string name="no_assigned_sensors">No assigned sensors</string>
+    <string name="no_available_sensors">No available sensors</string>
+    <string name="assign_sensor">Assign</string>
+    <string name="unassign_sensor">Unassign</string>
+    <string name="pairing_brokers">Pairing brokers</string>
+    <string name="pair_broker">Pair broker</string>
+</resources>

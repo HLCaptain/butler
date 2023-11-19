@@ -1,85 +1,131 @@
+import org.jetbrains.compose.internal.utils.localPropertiesFile
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+
 plugins {
-    kotlin("multiplatform")
-    id("com.android.library")
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.libres)
     alias(libs.plugins.google.ksp)
+    alias(libs.plugins.buildconfig)
 }
 
 group = "illyan"
-version = "1.0-SNAPSHOT"
+version = "0.1.3-alpha"
 
-@OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
 kotlin {
     jvmToolchain(17)
     androidTarget()
-    jvm("desktop")
-    js(IR) {
-        browser()
-    }
+    jvm()
+    js(IR) { browser() }
+
     sourceSets {
-        val commonMain by getting {
+        commonMain {
+            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies {
-                api(compose.runtime)
-                api(compose.ui)
-                api(compose.foundation)
-                api(compose.materialIconsExtended)
-                api(compose.material3)
+                implementation(compose.runtime)
+                implementation(compose.ui)
+                implementation(compose.foundation)
+                implementation(compose.materialIconsExtended)
+                implementation(compose.material3)
+                // FIXME: use compose resources for loading images in the future
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                implementation(compose.components.resources)
                 implementation(libs.voyager.navigator)
                 implementation(libs.voyager.bottomSheetNavigator)
                 implementation(libs.voyager.tabNavigator)
                 implementation(libs.voyager.transitions)
                 implementation(libs.voyager.koin)
                 implementation(libs.ktor.core)
-                implementation(project.dependencies.platform(libs.koin.bom))
-                implementation(libs.koin.core)
-                implementation(project.dependencies.platform(libs.koin.annotations.bom))
+                api(project.dependencies.platform(libs.koin.bom))
+                api(libs.koin.core)
                 implementation(libs.koin.annotations)
-                implementation(libs.napier)
+                implementation(libs.koin.compose)
+                api(libs.napier)
                 implementation(libs.store)
+                implementation(libs.kotlinx.atomicfu)
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.libres.compose)
+                implementation(libs.sqldelight.coroutines)
+                implementation(libs.sqldelight.adapters)
+                api(libs.gitlive.firebase.common)
+                api(libs.gitlive.firebase.auth)
+                api(libs.gitlive.firebase.firestore)
+                implementation(libs.uuid)
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
 
-        val androidMain by getting {
+        androidMain {
             dependencies {
-                api(libs.androidx.appcompat)
-                api(libs.androidx.core)
+                implementation(libs.androidx.appcompat)
+                implementation(libs.androidx.core)
                 implementation(libs.ktor.jvm)
-                implementation(libs.voyager.androidx)
+                implementation(libs.koin.android)
+                implementation(libs.koin.logger.slf4j)
+                implementation(libs.sqldelight.android)
+                implementation(libs.kotlinx.coroutines.android)
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation(compose.preview)
+                implementation(compose.desktop.common)
+                implementation(libs.ktor.jvm)
                 implementation(libs.koin.ktor)
                 implementation(libs.koin.logger.slf4j)
+                implementation(libs.sqldelight.jvm)
             }
         }
 
-        val desktopMain by getting {
+        jsMain {
             dependencies {
-                api(compose.preview)
-                implementation(libs.ktor.jvm)
-                implementation(libs.koin.ktor)
-                implementation(libs.koin.logger.slf4j)
-                implementation(libs.jetbrains.compose.material.desktop)
-                implementation(libs.mayakapps.compose.window.styler)
+                implementation(compose.html.core)
+                implementation(libs.kotlinx.coroutines.js)
+                implementation(libs.sqldelight.js)
+                implementation(npm("kotlinx-coroutines-core", libs.versions.coroutines.get()))
+                implementation(npm("sql.js", "1.8.0"))
+                implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
+                implementation(devNpm("copy-webpack-plugin", "11.0.0"))
             }
         }
-
-        val desktopTest by getting
-
-        val jsMain by getting {
-            dependencies {
-                api(compose.html.core)
-                implementation(libs.ktor.js)
-                implementation(libs.ktor.jsonjs)
-            }
-        }
-
-        val jsTest by getting
     }
+}
+
+dependencies {
+    add("kspCommonMainMetadata", libs.koin.ksp)
+    api(project.dependencies.platform(libs.google.firebase.bom))
+    api(libs.google.firebase.common)
+    api(libs.google.firebase.auth)
+    api(libs.google.firebase.firestore)
+}
+
+// WORKAROUND: ADD this dependsOn("kspCommonMainKotlinMetadata") instead of above dependencies
+tasks.withType<KotlinCompile<*>>().configureEach {
+    if (name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
+afterEvaluate {
+    tasks.filter {
+        it.name.contains("SourcesJar", true)
+    }.forEach {
+        println("SourceJarTask====>${it.name}")
+        it.dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
+
+ksp {
+    arg("KOIN_CONFIG_CHECK", "true")
 }
 
 android {
@@ -89,29 +135,50 @@ android {
     defaultConfig {
         minSdk = 21
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-
-dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-    add("kspCommonMainMetadata", libs.koin.ksp)
-    // DO NOT add bellow dependencies
-//    add("kspAndroid", libs.koin.ksp)
-//    add("kspDesktop", libs.koin.ksp)
-//    add("kspJs", libs.koin.ksp)
-}
-
-ksp {
-    arg("KOIN_CONFIG_CHECK","true")
+    version = project.version.toString()
 }
 
 sqldelight {
     databases {
         create("Database") {
-            packageName.set("illyan.butler.db")
+            packageName = "illyan.butler.db"
+            generateAsync = true
         }
     }
+}
+
+libres {
+    generatedClassName = "Res" // "Res" by default
+    generateNamedArguments = true // false by default
+    baseLocaleLanguageCode = "en" // "en" by default
+    camelCaseNamesForAppleFramework = false // false by default
+}
+
+kotlin.sourceSets.all {
+    languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
+}
+
+buildConfig {
+    // Use local.properties file to store secrets
+    val properties = localPropertiesFile.readLines().associate {
+        if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
+        val (key, value) = it.split("=", limit = 2)
+        key to value
+    }
+
+    val firebaseWebAndDesktopApiKey = properties["FIREBASE_WEB_AND_DESKTOP_API_KEY"].toString()
+    val firebaseMessagingSenderId = properties["FIREBASE_MESSAGING_SENDER_ID"].toString()
+    val firebaseDesktopAppId = properties["FIREBASE_DESKTOP_APP_ID"].toString()
+    val firebaseWebAppId = properties["FIREBASE_WEB_APP_ID"].toString()
+    val firebaseStorageBucket = properties["FIREBASE_STORAGE_BUCKET"].toString()
+    val firebaseProjectId = properties["FIREBASE_PROJECT_ID"].toString()
+    val firebaseAuthDomain = properties["FIREBASE_AUTH_DOMAIN"].toString()
+
+    buildConfigField("String", "FIREBASE_WEB_AND_DESKTOP_API_KEY", "\"$firebaseWebAndDesktopApiKey\"")
+    buildConfigField("String", "FIREBASE_MESSAGING_SENDER_ID", "\"$firebaseMessagingSenderId\"")
+    buildConfigField("String", "FIREBASE_DESKTOP_APP_ID", "\"$firebaseDesktopAppId\"")
+    buildConfigField("String", "FIREBASE_WEB_APP_ID", "\"$firebaseWebAppId\"")
+    buildConfigField("String", "FIREBASE_STORAGE_BUCKET", "\"$firebaseStorageBucket\"")
+    buildConfigField("String", "FIREBASE_PROJECT_ID", "\"$firebaseProjectId\"")
+    buildConfigField("String", "FIREBASE_AUTH_DOMAIN", "\"$firebaseAuthDomain\"")
 }
