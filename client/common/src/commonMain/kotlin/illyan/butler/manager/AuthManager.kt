@@ -1,7 +1,7 @@
 package illyan.butler.manager
 
-import kotlinx.coroutines.flow.map
 import illyan.butler.repository.UserRepository
+import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
 @Single

@@ -8,9 +8,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.initialize
-import io.github.aakira.napier.Napier
 import illyan.butler.data.firebase.getDesktopFirebaseOptions
 import illyan.butler.util.log.initNapier
+import io.github.aakira.napier.Napier
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.defaultModule
 

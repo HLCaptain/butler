@@ -43,9 +43,9 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.Res
-import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.ButlerDialogSurface
+import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.dialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest

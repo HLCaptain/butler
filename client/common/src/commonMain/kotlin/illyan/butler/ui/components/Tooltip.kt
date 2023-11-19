@@ -50,9 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import illyan.butler.Res
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import illyan.butler.Res
 
 // Values got from material3/Tooltip.kt
 private const val TooltipFadeInDuration = 150L

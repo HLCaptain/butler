@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import illyan.butler.Res
-import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.ButlerDialogContent
+import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 
 class LoginScreen : Screen {

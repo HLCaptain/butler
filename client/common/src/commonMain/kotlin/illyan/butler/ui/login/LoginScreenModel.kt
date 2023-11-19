@@ -20,14 +20,14 @@ package illyan.butler.ui.login
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.manager.AuthManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import illyan.butler.di.NamedCoroutineDispatcherIO
-import illyan.butler.manager.AuthManager
 import org.koin.core.annotation.Factory
 
 @Factory
