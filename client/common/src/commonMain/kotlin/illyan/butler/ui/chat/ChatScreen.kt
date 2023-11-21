@@ -11,6 +11,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import cafe.adriel.voyager.koin.getScreenModel
 import illyan.butler.Res
 import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
+import io.github.aakira.napier.Napier
 import org.koin.core.parameter.parametersOf
 
 class ChatScreen(private val chatUUID: String) : Screen {
@@ -27,6 +29,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
     override fun Content() {
         val screenModel = getScreenModel<ChatScreenModel> { parametersOf(chatUUID) }
         val chat by screenModel.chat.collectAsState()
+        LaunchedEffect(Unit) { Napier.d("ChatScreen: $chat") }
         MessageList(chat = chat)
     }
 
@@ -35,9 +38,9 @@ class ChatScreen(private val chatUUID: String) : Screen {
         chat: DomainChat?,
     ) {
         Crossfade(
-            targetState = chat == null
+            targetState = chat
         ) {
-            if (chat == null) {
+            if (it == null) {
                 Text(
                     text = Res.string.no_messages,
                     style = MaterialTheme.typography.headlineLarge
@@ -47,7 +50,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
                     reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    items(chat.messages) { message ->
+                    items(it.messages) { message ->
                         MessageItem(message = message)
                     }
                 }

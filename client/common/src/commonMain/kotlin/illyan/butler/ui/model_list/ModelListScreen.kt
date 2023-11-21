@@ -37,6 +37,7 @@ class ModelListScreen : Screen {
             if (newChatUUID != null) {
                 navigator.pop()
                 navigator.push(ChatScreen(newChatUUID!!))
+                screenModel.onNavigateToChat()
             }
         }
         ModelList(

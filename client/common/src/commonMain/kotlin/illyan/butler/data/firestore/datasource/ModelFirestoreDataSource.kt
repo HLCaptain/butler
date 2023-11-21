@@ -6,6 +6,7 @@ import illyan.butler.data.network.ModelNetworkDataSource
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
@@ -17,6 +18,7 @@ class ModelFirestoreDataSource(
         return firestore.collection(FirestoreModel.COLLECTION_NAME)
             .document(uuid)
             .snapshots()
+            .filter { it.exists }
             .map { it.data(FirestoreModel.serializer()) }
             .catch { Napier.d("Error fetching model with uuid $uuid") }
     }

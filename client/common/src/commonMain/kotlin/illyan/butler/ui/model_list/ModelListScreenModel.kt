@@ -36,4 +36,8 @@ class ModelListScreenModel(
             _newChatUUID.update { chatManager.startNewChat(modelUUID) }
         }
     }
+
+    fun onNavigateToChat() {
+        _newChatUUID.update { null }
+    }
 }

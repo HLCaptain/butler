@@ -26,6 +26,8 @@ class ChatManager(
         chats?.groupBy { it.modelUUID }
     }
 
+    fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
+
     suspend fun startNewChat(modelUUID: String): String {
         val chatUUID = randomUUID()
         authManager.signedInUser.first()?.uid?.let { userUUID ->
