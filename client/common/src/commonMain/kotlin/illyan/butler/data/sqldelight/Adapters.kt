@@ -16,6 +16,19 @@ val mapAdapter = object : ColumnAdapter<Map<String, String>, String> {
     }
 }
 
+fun <T> getListAdapter(
+    decode: (String) -> T,
+    encode: (T) -> String
+) = object : ColumnAdapter<List<T>, String> {
+    override fun decode(databaseValue: String): List<T> {
+        if (databaseValue.isEmpty()) return emptyList()
+        return databaseValue.split(",").map { decode(it) }
+    }
+    override fun encode(value: List<T>): String {
+        return value.joinToString(",") { encode(it) }
+    }
+}
+
 val listAdapter = object : ColumnAdapter<List<String>, String> {
     override fun decode(databaseValue: String): List<String> {
         if (databaseValue.isEmpty()) return emptyList()

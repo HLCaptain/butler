@@ -4,7 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FirestoreUser(
-    val id: String,
-    val ownedBrokers: List<String>,
-    val ownedPlants: List<String>,
-)
+    val uuid: String,
+    val favoriteModels: List<String>,
+) {
+    companion object {
+        const val COLLECTION_NAME = "users"
+    }
+}

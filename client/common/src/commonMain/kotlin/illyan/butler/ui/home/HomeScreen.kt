@@ -1,6 +1,7 @@
 package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.Res
 import illyan.butler.getPlatformName
+import illyan.butler.ui.chat_list.ChatListScreen
+import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.profile.ProfileDialogScreen
 
@@ -66,10 +71,28 @@ class HomeScreen : Screen {
                     }
 
                     val signedInUser by screenModel.signedInUser.collectAsState()
+                    Crossfade(
+                        targetState = signedInUser != null
+                    ) {
+                        Text(text = Res.string.hello_x.format(signedInUser?.displayName ?: Res.string.anonymous_user))
+                    }
+
+                    val navigator = LocalNavigator.currentOrThrow
                     AnimatedVisibility(
                         visible = signedInUser != null
                     ) {
-                        Text(text = Res.string.hello_x.format(signedInUser?.displayName ?: Res.string.anonymous_user))
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            MenuButton(
+                                text = Res.string.chats,
+                                onClick = { navigator.push(ChatListScreen()) }
+                            )
+//                            MenuButton(
+//                                text = Res.string.new_chat,
+//                                onClick = { navigator.push(ModelList()) }
+//                            )
+                        }
                     }
                 }
             }
