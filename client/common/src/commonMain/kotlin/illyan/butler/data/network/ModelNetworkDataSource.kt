@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface ModelNetworkDataSource {
     fun fetch(uuid: String): Flow<FirestoreModel>
+    fun fetchAll(): Flow<List<FirestoreModel>>
 }

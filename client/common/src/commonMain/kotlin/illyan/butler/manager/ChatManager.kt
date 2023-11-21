@@ -26,17 +26,19 @@ class ChatManager(
         chats?.groupBy { it.modelUUID }
     }
 
-    suspend fun startNewChat(modelUUID: String) {
-        authManager.signedInUser.map { it?.uid }.first()?.let { userUUID ->
+    suspend fun startNewChat(modelUUID: String): String {
+        val chatUUID = randomUUID()
+        authManager.signedInUser.first()?.uid?.let { userUUID ->
             chatRepository.upsert(
                 DomainChat(
-                    uuid = randomUUID(),
+                    uuid = chatUUID,
                     userUUID = userUUID,
                     modelUUID = modelUUID,
                     messages = emptyList()
                 )
             )
         }
+        return chatUUID
     }
 
     suspend fun nameChat(chatUUID: String, name: String) {
