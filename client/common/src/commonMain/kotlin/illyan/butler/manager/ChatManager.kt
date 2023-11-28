@@ -1,5 +1,6 @@
 package illyan.butler.manager
 
+import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.repository.ChatRepository
 import illyan.butler.util.log.randomUUID
@@ -9,6 +10,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.Single
 
 @Single
@@ -47,5 +52,24 @@ class ChatManager(
         userChats.first()?.firstOrNull { it.uuid == chatUUID }?.let { chat ->
             chatRepository.upsert(chat.copy(name = name))
         }
+    }
+
+    suspend fun sendMessage(chatUUID: String, message: String) {
+        authManager.signedInUser.first()?.uid?.let { userUUID ->
+            userChats.first()?.firstOrNull { it.uuid == chatUUID }?.let { chat ->
+                chatRepository.upsert(
+                    chat.copy(
+                        messages = chat.messages + ChatMessage(
+                            uuid = randomUUID(),
+                            senderUUID = userUUID,
+                            message = message,
+                            role = ChatMessage.UserRole,
+                            timestamp = Clock.System.now().toLocalDateTime(TimeZone.UTC).toInstant(TimeZone.UTC).toEpochMilliseconds()
+                        )
+                    )
+                )
+            }
+        }
+
     }
 }

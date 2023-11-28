@@ -9,4 +9,10 @@ data class ChatMessage(
     val role: String,
     val message: String,
     val timestamp: Long,
-)
+) {
+    companion object {
+        const val UserRole = "user"
+        const val BotRole = "bot"
+        const val SystemRole = "system"
+    }
+}

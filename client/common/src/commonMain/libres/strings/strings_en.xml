@@ -29,4 +29,5 @@
     <string name="new_chat">New chat</string>
     <string name="no_messages">No messages</string>
     <string name="select">Select</string>
+    <string name="send">Send</string>
 </resources>

@@ -67,8 +67,16 @@ android {
             }
         }
     }
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
     kotlin {
         jvmToolchain(17)
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/**"
+        }
     }
 }
 
@@ -83,6 +91,8 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     ksp(libs.koin.ksp)
+
+    coreLibraryDesugaring(libs.desugar)
 }
 
 tasks.register("BuildAndRun") {
