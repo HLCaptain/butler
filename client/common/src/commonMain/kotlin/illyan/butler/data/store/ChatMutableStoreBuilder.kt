@@ -56,6 +56,7 @@ fun provideChatMutableStore(
                 Napier.d("Deleting chat at $key")
                 it.chatQueries.delete(key)
             }
+            chatNetworkDataSource.delete(uuid = key)
         },
         deleteAll = {
             databaseHelper.withDatabase {

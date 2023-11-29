@@ -31,6 +31,7 @@ import illyan.butler.getPlatformName
 import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.dialog.ButlerDialog
+import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 
 class HomeScreen : Screen {
@@ -88,10 +89,10 @@ class HomeScreen : Screen {
                                 text = Res.string.chats,
                                 onClick = { navigator.push(ChatListScreen()) }
                             )
-//                            MenuButton(
-//                                text = Res.string.new_chat,
-//                                onClick = { navigator.push(ModelList()) }
-//                            )
+                            MenuButton(
+                                text = Res.string.new_chat,
+                                onClick = { navigator.push(ModelListScreen()) }
+                            )
                         }
                     }
                 }

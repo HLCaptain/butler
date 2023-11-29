@@ -1,34 +1,43 @@
-package illyan.butler.ui.chat
+package illyan.butler.ui.model_list
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.NamedCoroutineDispatcherIO
 import illyan.butler.manager.ChatManager
+import illyan.butler.manager.ModelManager
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
-import org.koin.core.annotation.InjectedParam
 
 @Factory
-class ChatScreenModel(
-    @InjectedParam private val chatUUID: String,
+class ModelListScreenModel(
+    modelManager: ModelManager,
     private val chatManager: ChatManager,
     @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
-    val chat = chatManager.getChatFlow(chatUUID)
-        .map { chat -> chat?.copy(messages = chat.messages.sortedBy { it.timestamp }.reversed()) }
+
+    val availableModels = modelManager.availableModels
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
-            null
+            emptyList()
         )
 
-    fun sendMessage(message: String) {
+    private val _newChatUUID = MutableStateFlow<String?>(null)
+    val newChatUUID = _newChatUUID.asStateFlow()
+
+    fun startNewChat(modelUUID: String) {
         screenModelScope.launch(dispatcherIO) {
-            chatManager.sendMessage(chatUUID, message)
+            _newChatUUID.update { chatManager.startNewChat(modelUUID) }
         }
+    }
+
+    fun onNavigateToChat() {
+        _newChatUUID.update { null }
     }
 }

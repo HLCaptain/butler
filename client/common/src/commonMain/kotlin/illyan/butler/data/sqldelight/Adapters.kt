@@ -5,27 +5,27 @@ import app.cash.sqldelight.ColumnAdapter
 val mapAdapter = object : ColumnAdapter<Map<String, String>, String> {
     override fun decode(databaseValue: String): Map<String, String> {
         if (databaseValue.isEmpty()) return emptyMap()
-        return databaseValue.split(",").associate {
+        return databaseValue.split(",").filter { it.isNotBlank() }.associate {
             val (key, value) = it.split("=")
             key to value
         }
     }
 
     override fun encode(value: Map<String, String>): String {
-        return value.map { "${it.key},${it.value}" }.joinToString(",")
+        return value.map { "${it.key}=${it.value}" }.joinToString(",")
     }
 }
 
 fun <T> getListAdapter(
-    decode: (String) -> T,
-    encode: (T) -> String
+    decode: (String) -> List<T>,
+    encode: (List<T>) -> String
 ) = object : ColumnAdapter<List<T>, String> {
     override fun decode(databaseValue: String): List<T> {
         if (databaseValue.isEmpty()) return emptyList()
-        return databaseValue.split(",").map { decode(it) }
+        return decode(databaseValue)
     }
     override fun encode(value: List<T>): String {
-        return value.joinToString(",") { encode(it) }
+        return encode(value)
     }
 }
 
