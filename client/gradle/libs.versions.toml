@@ -1,8 +1,8 @@
 [versions]
-kotlin = "1.9.20"
-ksp = "1.9.20-1.0.14"
-agp = "8.2.0-rc03"
-compose = "1.5.10"
+kotlin = "1.9.21"
+ksp = "1.9.21-1.0.15"
+agp = "8.2.0"
+compose = "1.5.11"
 ktor = "2.3.4"
 koin = "3.5.1"
 koin-annotations = "1.3.0"
@@ -11,7 +11,7 @@ sqldelight = "2.0.0"
 libres = "1.2.0"
 coroutines = "1.7.3"
 gitlive-firebase = "1.10.4"
-google-firebase-bom = "32.5.0"
+google-firebase-bom = "32.7.0"
 serialization = "1.6.1"
 
 [plugins]
