@@ -1,5 +1,6 @@
 package illyan.butler.manager
 
+import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.repository.ChatRepository
 import illyan.butler.util.log.randomUUID
@@ -9,6 +10,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.Single
 
 @Single
@@ -26,22 +31,45 @@ class ChatManager(
         chats?.groupBy { it.modelUUID }
     }
 
-    suspend fun startNewChat(modelUUID: String) {
-        authManager.signedInUser.map { it?.uid }.first()?.let { userUUID ->
+    fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
+
+    suspend fun startNewChat(modelUUID: String): String {
+        val chatUUID = randomUUID()
+        authManager.signedInUser.first()?.uid?.let { userUUID ->
             chatRepository.upsert(
                 DomainChat(
-                    uuid = randomUUID(),
+                    uuid = chatUUID,
                     userUUID = userUUID,
                     modelUUID = modelUUID,
                     messages = emptyList()
                 )
             )
         }
+        return chatUUID
     }
 
     suspend fun nameChat(chatUUID: String, name: String) {
         userChats.first()?.firstOrNull { it.uuid == chatUUID }?.let { chat ->
             chatRepository.upsert(chat.copy(name = name))
         }
+    }
+
+    suspend fun sendMessage(chatUUID: String, message: String) {
+        authManager.signedInUser.first()?.uid?.let { userUUID ->
+            userChats.first()?.firstOrNull { it.uuid == chatUUID }?.let { chat ->
+                chatRepository.upsert(
+                    chat.copy(
+                        messages = chat.messages + ChatMessage(
+                            uuid = randomUUID(),
+                            senderUUID = userUUID,
+                            message = message,
+                            role = ChatMessage.UserRole,
+                            timestamp = Clock.System.now().toLocalDateTime(TimeZone.UTC).toInstant(TimeZone.UTC).toEpochMilliseconds()
+                        )
+                    )
+                )
+            }
+        }
+
     }
 }

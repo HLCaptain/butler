@@ -110,7 +110,7 @@ class ChatListScreen : Screen {
             ) {
                 Column {
                     Text(
-                        text = chat.uuid.take(16),
+                        text = chat.name ?: Res.string.new_chat,
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
