@@ -1,16 +1,18 @@
 package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +29,6 @@ import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.Res
-import illyan.butler.getPlatformName
 import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.dialog.ButlerDialog
@@ -57,26 +58,28 @@ class HomeScreen : Screen {
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = Res.string.hello_x.format(getPlatformName()))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = Res.string.app_name,
+                            style = MaterialTheme.typography.headlineLarge
+                        )
 
-                    var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
-                    ButlerDialog(
-                        startScreen = ProfileDialogScreen(),
-                        isDialogOpen = isProfileDialogShowing,
-                        onDialogClosed = { isProfileDialogShowing = false }
-                    )
+                        var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
+                        ButlerDialog(
+                            startScreen = ProfileDialogScreen(),
+                            isDialogOpen = isProfileDialogShowing,
+                            onDialogClosed = { isProfileDialogShowing = false }
+                        )
 
-                    Button(onClick = { isProfileDialogShowing = true }) {
-                        Text(Res.string.profile)
+                        Button(onClick = { isProfileDialogShowing = true }) {
+                            Text(Res.string.profile)
+                        }
                     }
 
                     val signedInUser by screenModel.signedInUser.collectAsState()
-                    Crossfade(
-                        targetState = signedInUser != null
-                    ) {
-                        Text(text = Res.string.hello_x.format(signedInUser?.displayName ?: Res.string.anonymous_user))
-                    }
-
                     val navigator = LocalNavigator.currentOrThrow
                     AnimatedVisibility(
                         visible = signedInUser != null
@@ -84,6 +87,10 @@ class HomeScreen : Screen {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Text(
+                                text = Res.string.hello_x.format(signedInUser?.uid?.take(8) ?: Res.string.anonymous_user),
+                                style = MaterialTheme.typography.headlineMedium
+                            )
                             MenuButton(
                                 text = Res.string.chats,
                                 onClick = { navigator.push(ChatListScreen()) }

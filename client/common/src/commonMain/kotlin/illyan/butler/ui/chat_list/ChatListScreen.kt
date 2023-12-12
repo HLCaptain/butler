@@ -45,7 +45,9 @@ class ChatListScreen : Screen {
         openChat: (uuid: String) -> Unit,
     ) {
         Crossfade(
-            modifier = Modifier.animateContentSize(),
+            modifier = Modifier
+                .padding(8.dp)
+                .animateContentSize(),
             targetState = chatsPerModel.isEmpty()
         ) {
             if (it) {
