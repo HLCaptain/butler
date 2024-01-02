@@ -1,1 +1,1 @@
-rootProject.name = "api_gateway"
+rootProject.name = "Butler API Gateway"
