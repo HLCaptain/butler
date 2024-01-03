@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "illyan"
-version = "0.1.3-alpha"
+version = libs.versions.butler.get()
 
 kotlin {
     jvmToolchain(17)
@@ -134,9 +134,9 @@ android {
     compileSdk = 34
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdk = 21
+        minSdk = 26
     }
-    version = project.version.toString()
+    version = libs.versions.butler.get()
 }
 
 sqldelight {
