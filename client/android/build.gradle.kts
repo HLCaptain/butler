@@ -45,7 +45,7 @@ android {
     compileSdk = 34
     defaultConfig {
         applicationId = "illyan.butler"
-        minSdk = 21
+        minSdk = 26
         targetSdk = 34
         versionCode = 4
         versionName = project.version.toString()
