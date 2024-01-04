@@ -62,7 +62,6 @@ dependencies {
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.serialization.kotlinx.protobuf)
-
 }
 
 ksp {
