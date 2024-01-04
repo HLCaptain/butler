@@ -14,12 +14,15 @@ import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.server.engine.applicationEnvironment
 import io.ktor.util.Attributes
-import io.ktor.util.AttributeKey
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.seconds
+
+@Single
+fun provideHttpClientAttribute(): Attributes {
+    return Attributes(true)
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 @Single
