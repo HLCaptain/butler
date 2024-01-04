@@ -1,0 +1,12 @@
+ktor:
+  deployment:
+    port: "$PORT:8080"
+  application:
+    modules:
+      - ai.nest.api_gateway.ApplicationKt.module
+
+jwt:
+  secret: "$JWT_SECRET:your_jwt_secret"
+  issuer: "$JWT_ISSUER:your_jwt_issuer"
+  audience: "$JWT_AUDIENCE:your_jwt_audience"
+  realm: "$JWT_REALM:your_jwt_realm"
