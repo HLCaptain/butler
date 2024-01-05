@@ -10,5 +10,5 @@ data class UserDto(
     val country: String,
     val phone: String,
     val email: String,
-    val permission: Int,
+    val permission: Int
 )

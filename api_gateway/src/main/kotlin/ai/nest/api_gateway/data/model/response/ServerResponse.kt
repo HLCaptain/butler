@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class ServerResponse<T>(
     val value: T?,
     val isSuccess: Boolean = true,
-    val status: ResponseStatus,
+    val status: ResponseStatus
 ) {
 
     companion object {

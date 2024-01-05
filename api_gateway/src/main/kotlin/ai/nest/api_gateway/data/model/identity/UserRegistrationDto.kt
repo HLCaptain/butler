@@ -9,5 +9,5 @@ data class UserRegistrationDto(
     val phone: String,
     val password: String,
     val email: String,
-    val address: String,
+    val address: String
 )
