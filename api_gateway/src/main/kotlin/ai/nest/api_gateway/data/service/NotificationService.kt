@@ -13,9 +13,10 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.util.Attributes
 import io.ktor.utils.io.InternalAPI
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
 @Single
@@ -24,74 +25,83 @@ class NotificationService(
     private val attributes: Attributes,
     private val errorHandler: ErrorHandler
 ) {
-    suspend fun getUserToken(id: String, languageCode: String): List<String> {
-        return client.tryToExecute<List<String>>(
-            APIs.NOTIFICATION_API, attributes = attributes, setErrorMessage = { errorCodes ->
-                errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
-            }
-        ) {
-            get("tokens/user/$id")
+    suspend fun getUserToken(
+        id: String,
+        languageCode: String
+    ) = client.tryToExecute<List<String>>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        get("tokens/user/$id")
+    }
+
+    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
+    suspend fun getAllUsersTokens(
+        ids: List<String>,
+        languageCode: String
+    ) = client.tryToExecute<List<String>>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        post("tokens/users") {
+            body = ProtoBuf.encodeToByteArray(ListSerializer(String.serializer()), ids)
         }
     }
 
-    @OptIn(InternalAPI::class)
-    suspend fun getAllUsersTokens(ids: List<String>, languageCode: String) {
-        client.tryToExecute<List<String>>(
-            APIs.NOTIFICATION_API, attributes = attributes, setErrorMessage = { errorCodes ->
-                errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
-            }
-        ) {
-            post("tokens/users") {
-                body = Json.encodeToString(ListSerializer(String.serializer()), ids)
-            }
-        }
+    suspend fun deleteNotificationCollection() = client.tryToExecute<Boolean>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        method = { delete("notifications/deleteCollection") }
+    )
+
+    suspend fun saveToken(
+        userId: String,
+        token: String,
+        languageCode: String
+    ) = client.tryToExecute<Boolean>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        post("tokens/save-token/$userId?token=$token")
     }
 
-    suspend fun deleteNotificationCollection(): Boolean {
-        return client.tryToExecute<Boolean>(
-            APIs.NOTIFICATION_API,
-            attributes = attributes,
-            method = { delete("notifications/deleteCollection") }
-        )
+    suspend fun deleteDeviceToken(
+        userId: String,
+        token: String,
+        languageCode: String
+    ) = client.tryToExecute<Boolean>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        delete("device/token/$userId?deviceToken=$token")
     }
 
-    suspend fun saveToken(userId: String, token: String, languageCode: String): Boolean {
-        return client.tryToExecute<Boolean>(
-            APIs.NOTIFICATION_API,
-            attributes = attributes,
-            setErrorMessage = { errorCodes -> errorHandler.getLocalizedErrorMessage(errorCodes, languageCode) },
-            method = { post("tokens/save-token/$userId?token=$token") }
-        )
+    suspend fun clearDevicesTokens(
+        userId: String,
+        languageCode: String
+    ) = client.tryToExecute<Boolean>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        delete("device/allTokens/$userId")
     }
 
-    suspend fun deleteDeviceToken(userId: String, token: String, languageCode: String): Boolean {
-        return client.tryToExecute<Boolean>(
-            APIs.NOTIFICATION_API,
-            attributes = attributes,
-            setErrorMessage = { errorCodes -> errorHandler.getLocalizedErrorMessage(errorCodes, languageCode) },
-            method = { delete("device/token/$userId?deviceToken=$token") }
-        )
-    }
-
-    suspend fun clearDevicesTokens(userId: String, languageCode: String): Boolean {
-        return client.tryToExecute<Boolean>(
-            APIs.NOTIFICATION_API,
-            attributes = attributes,
-            setErrorMessage = { errorCodes -> errorHandler.getLocalizedErrorMessage(errorCodes, languageCode) },
-            method = { delete("device/allTokens/$userId") }
-        )
-    }
-
-    @OptIn(InternalAPI::class)
-    suspend fun sendNotificationToUser(notificationDto: NotificationDto, languageCode: String): Boolean {
-        return client.tryToExecute<Boolean>(
-            api = APIs.NOTIFICATION_API,
-            attributes = attributes,
-            setErrorMessage = { errorCodes -> errorHandler.getLocalizedErrorMessage(errorCodes, languageCode) }
-        ) {
-            post("notifications/send/user") {
-                body = Json.encodeToString(NotificationDto.serializer(), notificationDto)
-            }
+    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
+    suspend fun sendNotificationToUser(
+        notificationDto: NotificationDto,
+        languageCode: String
+    ) = client.tryToExecute<Boolean>(
+        api = APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        post("notifications/send/user") {
+            body = ProtoBuf.encodeToByteArray(NotificationDto.serializer(), notificationDto)
         }
     }
 
@@ -100,28 +110,25 @@ class NotificationService(
         page: String,
         limit: String,
         languageCode: String
-    ): PaginationResponse<NotificationHistoryDto> {
-        return client.tryToExecute<PaginationResponse<NotificationHistoryDto>>(
-            APIs.NOTIFICATION_API,
-            attributes = attributes,
-            setErrorMessage = { errorCodes -> errorHandler.getLocalizedErrorMessage(errorCodes, languageCode) }
-        ) {
-            get("notifications/history/$userId") {
-                parameter("page", page)
-                parameter("limit", limit)
-            }
+    ) = client.tryToExecute<PaginationResponse<NotificationHistoryDto>>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        get("notifications/history/$userId") {
+            parameter("page", page)
+            parameter("limit", limit)
         }
     }
 
     suspend fun getNotificationHistoryForUserInLast24Hours(
         userId: String,
         languageCode: String
-    ): List<NotificationHistoryDto> {
-        return client.tryToExecute<List<NotificationHistoryDto>>(
-            APIs.NOTIFICATION_API,
-            attributes = attributes,
-            setErrorMessage = { errorCodes -> errorHandler.getLocalizedErrorMessage(errorCodes, languageCode) },
-            method = { get("notifications/history-24hours/$userId") }
-        )
+    ) = client.tryToExecute<List<NotificationHistoryDto>>(
+        APIs.NOTIFICATION_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        get("notifications/history-24hours/$userId")
     }
 }
