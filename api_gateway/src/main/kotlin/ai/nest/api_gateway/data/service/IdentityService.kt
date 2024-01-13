@@ -30,10 +30,11 @@ import io.ktor.client.request.put
 import io.ktor.http.Parameters
 import io.ktor.util.Attributes
 import io.ktor.utils.io.InternalAPI
-import java.util.*
+import java.util.Date
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
 @Single
@@ -42,7 +43,7 @@ class IdentityService(
     private val attributes: Attributes,
     private val errorHandler: ErrorHandler
 ) {
-    @OptIn(InternalAPI::class)
+    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun createUser(
         newUser: UserRegistrationDto,
         languageCode: String
@@ -52,7 +53,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/user") {
-            body = Json.encodeToString(UserRegistrationDto.serializer(), newUser)
+            body = ProtoBuf.encodeToByteArray(UserRegistrationDto.serializer(), newUser)
         }
     }
 
@@ -80,7 +81,7 @@ class IdentityService(
         return generateUserTokens(user.id, userName, user.permission, tokenConfiguration)
     }
 
-    @OptIn(InternalAPI::class)
+    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun getUsers(
         options: UserOptions,
         languageCode: String
@@ -90,7 +91,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/dashboard/user") {
-            body = Json.encodeToString(UserOptions.serializer(), options)
+            body = ProtoBuf.encodeToByteArray(UserOptions.serializer(), options)
         }
     }
 
@@ -158,7 +159,7 @@ class IdentityService(
         }
     }
 
-    @OptIn(InternalAPI::class)
+    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun updateUserPermission(
         userId: String,
         permission: List<Int>,
@@ -169,7 +170,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         put("/dashboard/user/$userId/permission") {
-            body = Json.encodeToString(ListSerializer(Int.serializer()), permission)
+            body = ProtoBuf.encodeToByteArray(ListSerializer(Int.serializer()), permission)
         }
     }
 
@@ -257,7 +258,7 @@ class IdentityService(
         .withClaim(TOKEN_TYPE, tokenType.name)
         .sign(Algorithm.HMAC256(tokenConfiguration.secret))
 
-    @OptIn(InternalAPI::class)
+    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun updateUserLocation(
         userId: String,
         location: LocationDto,
@@ -268,7 +269,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/user/$userId/address/location") {
-            body = Json.encodeToString(LocationDto.serializer(), location)
+            body = ProtoBuf.encodeToByteArray(LocationDto.serializer(), location)
         }
     }
 

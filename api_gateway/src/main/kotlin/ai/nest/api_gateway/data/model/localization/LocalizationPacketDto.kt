@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LocalizationPacketDto(
-    val language: String,
+    val languageCode: String,
     val labels: List<LabelDto>? = null,
 ) {
     val keys by lazy { labels?.map { it.id } ?: emptyList() }

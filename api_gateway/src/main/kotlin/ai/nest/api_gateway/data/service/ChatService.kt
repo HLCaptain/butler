@@ -54,7 +54,7 @@ class ChatService(
     suspend fun receiveTicket(supportId: String) = client.tryToExecuteWebSocket<TicketDto>(
         api = APIs.CHAT_API,
         attributes = attributes,
-        path = "/chat/tickets/$supportId",
+        path = "/chat/tickets/$supportId"
     )
 
     suspend fun sendAndReceiveMessage(
