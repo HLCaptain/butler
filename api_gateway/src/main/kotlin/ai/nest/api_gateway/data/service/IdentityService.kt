@@ -123,22 +123,26 @@ class IdentityService(
     @OptIn(InternalAPI::class)
     suspend fun updateUserProfile(id: String, fullName: String?, phone: String?, languageCode: String): UserDetailsDto {
         return client.tryToExecute(
-            APIs.IDENTITY_API, attributes = attributes, setErrorMessage = { errorCodes ->
+            APIs.IDENTITY_API,
+            attributes = attributes,
+            setErrorMessage = { errorCodes ->
                 errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
             }
         ) {
-            val formData = FormDataContent(Parameters.build {
-                fullName?.let { append("fullName", it) }
-                phone?.let { append("phone", it) }
-            })
-            put("/user/$id") {
-                body = formData
-            }
+            val formData = FormDataContent(
+                Parameters.build {
+                    fullName?.let { append("fullName", it) }
+                    phone?.let { append("phone", it) }
+                }
+            )
+            put("/user/$id") { body = formData }
         }
     }
 
     suspend fun getUserByUsername(username: String?, languageCode: String): UserDto = client.tryToExecute<UserDto>(
-        APIs.IDENTITY_API, attributes = attributes, setErrorMessage = { errorCodes ->
+        APIs.IDENTITY_API,
+        attributes = attributes,
+        setErrorMessage = { errorCodes ->
             errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
         }
     ) {
@@ -150,7 +154,8 @@ class IdentityService(
     @OptIn(InternalAPI::class)
     suspend fun updateUserPermission(userId: String, permission: List<Int>, languageCode: String): UserDto {
         return client.tryToExecute<UserDto>(
-            APIs.IDENTITY_API, attributes = attributes,
+            APIs.IDENTITY_API,
+            attributes = attributes,
             setErrorMessage = { errorCodes ->
                 errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
             }
@@ -167,7 +172,8 @@ class IdentityService(
             attributes = attributes,
             setErrorMessage = { errorCodes ->
                 errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
-            }) {
+            }
+        ) {
             delete("/user/$userId")
         }
     }
@@ -177,7 +183,8 @@ class IdentityService(
         attributes = attributes,
         setErrorMessage = { errorCodes ->
             errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
-        }) {
+        }
+    ) {
         get("/user/$userId/favorite")
     }
 
@@ -187,7 +194,8 @@ class IdentityService(
             attributes = attributes,
             setErrorMessage = { errorCodes ->
                 errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
-            }) {
+            }
+        ) {
             post("/user/$userId/favorite") {
                 formData {
                     parameter("restaurantId", restaurantId)
@@ -201,7 +209,8 @@ class IdentityService(
             attributes = attributes,
             setErrorMessage = { errorCodes ->
                 errorHandler.getLocalizedErrorMessage(errorCodes, languageCode)
-            }) {
+            }
+        ) {
             delete("/user/$userId/favorite") {
                 formData {
                     parameter("restaurantId", restaurantId)
@@ -216,10 +225,8 @@ class IdentityService(
         val accessTokenExpirationDate = getExpirationDate(tokenConfiguration.accessTokenExpirationTimestamp)
         val refreshTokenExpirationDate = getExpirationDate(tokenConfiguration.refreshTokenExpirationTimestamp)
 
-        val refreshToken =
-            generateToken(userId, username, userPermission, tokenConfiguration, TokenType.REFRESH_TOKEN)
-        val accessToken =
-            generateToken(userId, username, userPermission, tokenConfiguration, TokenType.ACCESS_TOKEN)
+        val refreshToken = generateToken(userId, username, userPermission, tokenConfiguration, TokenType.REFRESH_TOKEN)
+        val accessToken = generateToken(userId, username, userPermission, tokenConfiguration, TokenType.ACCESS_TOKEN)
 
         return UserTokensResponse(
             accessTokenExpirationDate.time,
@@ -244,10 +251,10 @@ class IdentityService(
             .withIssuer(tokenConfiguration.issuer)
             .withAudience(tokenConfiguration.audience)
             .withExpiresAt(Date(System.currentTimeMillis() + tokenConfiguration.accessTokenExpirationTimestamp))
-            .withClaim(USER_ID.value, userId)
-            .withClaim(PERMISSION.value, userPermission.toString())
-            .withClaim(USERNAME.value, username)
-            .withClaim(TOKEN_TYPE.value, tokenType.name)
+            .withClaim(USER_ID, userId)
+            .withClaim(PERMISSION, userPermission.toString())
+            .withClaim(USERNAME, username)
+            .withClaim(TOKEN_TYPE, tokenType.name)
 
         return accessToken.sign(Algorithm.HMAC256(tokenConfiguration.secret))
     }
@@ -259,7 +266,8 @@ class IdentityService(
             attributes = attributes,
             setErrorMessage = { errorCodes ->
                 errorHandler.getLocalizedErrorMessage(errorCodes, language)
-            }) {
+            }
+        ) {
             post("/user/$userId/address/location") {
                 body = Json.encodeToString(LocationDto.serializer(), location)
             }

@@ -14,14 +14,15 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.intercept
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.util.pipeline.PipelineContext
 
-suspend inline fun <reified T> PipelineContext<Unit, ApplicationCall>.respondWithResult(
+suspend inline fun <reified T> RoutingContext.respondWithResult(
     statusCode: HttpStatusCode, result: T, message: String? = null
 ) {
-    context.respond(statusCode, ServerResponse.success(result, message))
+    call.respond(statusCode, ServerResponse.success(result, message))
 }
 
 suspend fun respondWithError(
@@ -30,13 +31,13 @@ suspend fun respondWithError(
     call.respond(statusCode, ServerResponse.error(errorMessage, statusCode.value))
 }
 
-fun PipelineContext<Unit, ApplicationCall>.extractLocalizationHeader(): String {
-    val headers = context.request.headers
+fun RoutingContext.extractLocalizationHeader(): String {
+    val headers = call.request.headers
     return headers["Accept-Language"]?.trim() ?: LocalizedMessages.defaultLocalizedMessages.languageCode
 }
 
-fun PipelineContext<Unit, ApplicationCall>.extractApplicationIdHeader(): String {
-    val headers = context.request.headers
+fun RoutingContext.extractApplicationIdHeader(): String {
+    val headers = call.request.headers
     return headers["Application-Id"]?.trim() ?: ""
 }
 
@@ -47,7 +48,7 @@ fun WebSocketServerSession.extractLocalizationHeaderFromWebSocket(): String {
 
 private fun PipelineContext<Unit, PipelineCall>.extractPermission(): Int {
     val principal = context.principal<JWTPrincipal>()
-    return principal?.getClaim(Claim.PERMISSION.value, Int::class) ?: -1
+    return principal?.getClaim(Claim.PERMISSION, Int::class) ?: -1
 }
 
 fun Route.authenticateWithRole(role: Int, block: Route.() -> Unit) {

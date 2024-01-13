@@ -4,7 +4,10 @@ import org.koin.core.annotation.Single
 
 @Single
 class LocalizedMessagesFactory {
-    val defaultLocalizedMessages = EnglishLocalizedMessages()
+    companion object {
+        val defaultLocalizedMessages = EnglishLocalizedMessages()
+    }
+
     fun createLocalizedMessages(languageCode: String): LocalizedMessages {
         return map[languageCode.uppercase()] ?: EnglishLocalizedMessages()
     }

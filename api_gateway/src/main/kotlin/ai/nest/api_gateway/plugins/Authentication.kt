@@ -11,7 +11,7 @@ import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 
-fun Application.configureSecurity() {
+fun Application.configureAuthentication() {
 
     // Configuration file set from resources/application.yaml
     val jwtSecret = environment.config.property("jwt.secret").getString()
