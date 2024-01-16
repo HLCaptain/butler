@@ -1,12 +1,26 @@
 ktor:
+  development: "$KTOR_DEVELOPMENT:false"
   deployment:
     port: "$PORT:8080"
   application:
     modules:
       - ai.nest.api_gateway.ApplicationKt.module
+  defaultContentType: "$KTOR_DEFAULT_CONTENT_TYPE:application/json"
 
 jwt:
   secret: "$JWT_SECRET:your_jwt_secret"
   issuer: "$JWT_ISSUER:your_jwt_issuer"
   audience: "$JWT_AUDIENCE:your_jwt_audience"
   realm: "$JWT_REALM:your_jwt_realm"
+
+apis:
+  - name: IDENTITY_API
+    url: "$IDENTITY_API_URL:http://localhost:8081"
+  - name: CHAT_API
+    url: "$CHAT_API_URL:http://localhost:8082"
+  - name: NOTIFICATION_API
+    url: "$NOTIFICATION_API_URL:http://localhost:8083"
+  - name: LOCALIZATION_API
+    url: "$LOCALIZATION_API_URL:http://localhost:8084"
+
+

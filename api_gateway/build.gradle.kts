@@ -27,6 +27,7 @@ dependencies {
     // Ktor Core
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.protobuf.jvm)
+    implementation(libs.ktor.serialization.kotlinx.json.jvm)
     implementation(libs.ktor.server.content.negotiation)
 
     // Ktor Server
@@ -62,6 +63,7 @@ dependencies {
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.serialization.kotlinx.protobuf)
+    implementation(libs.ktor.serialization.kotlinx.json)
 }
 
 ksp {

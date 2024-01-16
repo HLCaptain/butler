@@ -1,6 +1,8 @@
 package ai.nest.api_gateway.data.utils
 
 import ai.nest.api_gateway.data.model.identity.UserOptions
+import ai.nest.api_gateway.di.apiHosts
+import ai.nest.api_gateway.di.apiKeyToRequestFrom
 import ai.nest.api_gateway.endpoints.utils.toListOfIntOrNull
 import ai.nest.api_gateway.endpoints.utils.toListOfStringOrNull
 import ai.nest.api_gateway.utils.APIs
@@ -25,7 +27,7 @@ suspend inline fun <reified T> HttpClient.tryToExecute(
     setErrorMessage: (errorCodes: List<Int>) -> Map<Int, String> = { emptyMap() },
     method: HttpClient.() -> HttpResponse
 ): T {
-    attributes.put(AttributeKey("API"), api.value)
+    attributes.apiKeyToRequestFrom = api.key
     val response = this.method()
     if (response.status.isSuccess()) {
         return response.body<T>()
@@ -40,21 +42,20 @@ suspend inline fun <reified T> HttpClient.tryToExecuteWebSocket(
     api: APIs,
     path: String,
     attributes: Attributes
-): Flow<T> {
-    attributes.put(AttributeKey("API"), api.value)
-    val host = System.getenv(attributes[AttributeKey("API")])
-    return flow {
-        webSocket(urlString = "ws://$host$path") {
-            while (true) {
-                try {
-                    emit(receiveDeserialized<T>())
-                } catch (e: Exception) {
-                    throw Exception(e.message.toString())
-                }
+) = flow {
+    attributes.apiKeyToRequestFrom = api.key
+    val host = attributes.apiHosts[api.key]
+    webSocket(urlString = "ws://$host$path") {
+        while (true) {
+            try {
+                emit(receiveDeserialized<T>())
+            } catch (e: Exception) {
+                throw Exception(e.message.toString())
             }
         }
-    }.flowOn(Dispatchers.IO)
-}
+    }
+}.flowOn(Dispatchers.IO)
+
 
 suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
     data: T,
@@ -62,8 +63,8 @@ suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
     path: String,
     attributes: Attributes
 ) {
-    attributes.put(AttributeKey("API"), api.value)
-    val host = System.getenv(attributes[AttributeKey("API")])
+    attributes.apiKeyToRequestFrom = api.key
+    val host = attributes.apiHosts[api.key]
     webSocket(urlString = "ws://$host$path") {
         try {
             sendSerialized(data)
@@ -78,14 +79,12 @@ suspend inline fun <reified T> HttpClient.tryToSendAndReceiveWebSocketData(
     api: APIs,
     path: String,
     attributes: Attributes
-): Flow<T> {
-    attributes.put(AttributeKey("API"), api.value)
-    val host = System.getenv(attributes[AttributeKey("API")])
-    return flow {
-        webSocket(urlString = "ws://$host$path") {
-            sendSerialized(data)
-            emit(receiveDeserialized<T>())
-        }
+) = flow {
+    attributes.apiKeyToRequestFrom = api.key
+    val host = attributes.apiHosts[api.key]
+    webSocket(urlString = "ws://$host$path") {
+        sendSerialized(data)
+        emit(receiveDeserialized<T>())
     }
 }
 

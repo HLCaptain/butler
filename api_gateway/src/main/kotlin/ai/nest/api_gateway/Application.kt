@@ -1,6 +1,7 @@
 package ai.nest.api_gateway
 
 import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
+import ai.nest.api_gateway.plugins.configureAttributes
 import ai.nest.api_gateway.plugins.configureAuthentication
 import ai.nest.api_gateway.plugins.configureDependencyInjection
 import ai.nest.api_gateway.plugins.configureMonitoring
@@ -10,6 +11,7 @@ import ai.nest.api_gateway.plugins.configureStatusPages
 import ai.nest.api_gateway.plugins.configureWebSockets
 import io.ktor.server.application.Application
 import io.ktor.server.netty.EngineMain
+import org.koin.ktor.ext.get
 import kotlin.time.Duration.Companion.days
 
 fun main(args: Array<String>) = EngineMain.main(args)
@@ -29,6 +31,7 @@ fun Application.module() {
 
     configureMonitoring()
     configureDependencyInjection()
+    configureAttributes(get())
     configureAuthentication()
     configureSerialization()
     configureRouting(tokenConfig)
