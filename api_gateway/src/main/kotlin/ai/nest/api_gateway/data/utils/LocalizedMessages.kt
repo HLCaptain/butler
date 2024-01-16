@@ -110,5 +110,6 @@ interface LocalizedMessages {
 
     companion object {
         val defaultLocalizedMessages = EnglishLocalizedMessages()
+        val defaultLanguageCode = defaultLocalizedMessages.languageCode
     }
 }

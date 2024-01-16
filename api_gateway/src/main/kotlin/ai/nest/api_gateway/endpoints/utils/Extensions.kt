@@ -3,6 +3,9 @@ package ai.nest.api_gateway.endpoints.utils
 import ai.nest.api_gateway.data.model.response.ServerResponse
 import ai.nest.api_gateway.data.utils.LocalizedMessages
 import ai.nest.api_gateway.utils.Claim
+import io.ktor.client.plugins.UserAgent
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.server.application.ApplicationCall
@@ -33,17 +36,17 @@ suspend fun respondWithError(
 
 fun RoutingContext.extractLocalizationHeader(): String {
     val headers = call.request.headers
-    return headers["Accept-Language"]?.trim() ?: LocalizedMessages.defaultLocalizedMessages.languageCode
+    return headers[HttpHeaders.AcceptLanguage]?.trim() ?: LocalizedMessages.defaultLanguageCode
 }
 
 fun RoutingContext.extractApplicationIdHeader(): String {
     val headers = call.request.headers
-    return headers["Application-Id"]?.trim() ?: ""
+    return headers[HttpHeaders.UserAgent]?.trim() ?: ""
 }
 
 fun WebSocketServerSession.extractLocalizationHeaderFromWebSocket(): String {
     val headers = call.request.headers
-    return headers["Accept-Language"]?.trim() ?: LocalizedMessages.defaultLocalizedMessages.languageCode
+    return headers[HttpHeaders.AcceptLanguage]?.trim() ?: LocalizedMessages.defaultLanguageCode
 }
 
 private fun PipelineContext<Unit, PipelineCall>.extractPermission(): Int {
@@ -63,24 +66,16 @@ fun Route.authenticateWithRole(role: Int, block: Route.() -> Unit) {
     }
 }
 
-fun hasPermission(permission: Int, role: Int): Boolean {
-    return (permission and role) == role
+fun hasPermission(permission: Int, role: Int) = (permission and role) == role
+
+fun String?.toListOfIntOrNull() = takeIf { !it.isNullOrBlank() }?.run {
+    val integerStrings = this.replace("[", "").replace("]", "").split(",")
+    integerStrings.mapNotNull(String::toIntOrNull)
 }
 
-fun String?.toListOfIntOrNull(): List<Int>? {
-    return takeIf { !it.isNullOrBlank() }?.run {
-        val integerStrings = this.replace("[", "").replace("]", "").split(",")
-        integerStrings.mapNotNull(String::toIntOrNull)
-    }
+fun String?.toListOfStringOrNull() = takeIf { !it.isNullOrBlank() }?.run {
+    val integerStrings = this.replace("[", "").replace("]", "").split(",")
+    integerStrings.map(String::trim)
 }
 
-fun String?.toListOfStringOrNull(): List<String>? {
-    return takeIf { !it.isNullOrBlank() }?.run {
-        val integerStrings = this.replace("[", "").replace("]", "").split(",")
-        integerStrings.map(String::trim)
-    }
-}
-
-fun Parameters.extractString(key: String): String {
-    return this[key]?.trim()?.takeIf { it.isNotEmpty() } ?: ""
-}
+fun Parameters.extractString(key: String) = this[key]?.trim()?.takeIf { it.isNotEmpty() } ?: ""

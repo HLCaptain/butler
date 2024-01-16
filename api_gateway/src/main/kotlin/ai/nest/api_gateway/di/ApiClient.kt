@@ -18,6 +18,8 @@ import io.ktor.util.AttributeKey
 import io.ktor.util.Attributes
 import io.ktor.util.appendIfNameAbsent
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialFormat
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.seconds
@@ -38,24 +40,13 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     developmentMode = attributes.developmentMode
 
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(ProtoBuf)
+        contentConverter = KotlinxWebsocketSerializationConverter(attributes.serializationFormat)
         pingInterval = 5.seconds.inWholeMilliseconds
     }
 
     defaultRequest {
         // Check if app is in development mode
-        if (attributes.developmentMode) {
-            ContentType.Application.Json.toString()
-        } else {
-            try {
-                attributes.defaultRequestContentType
-            } catch (e: Exception) {
-                e.printStackTrace()
-                ContentType.Application.Json.toString()
-            }
-        }.let { contentType ->
-            headers.appendIfNameAbsent(HttpHeaders.ContentType, contentType)
-        }
+        headers.appendIfNameAbsent(HttpHeaders.ContentType, attributes.contentType.toString())
         url(attributes.apiHosts[attributes.apiKeyToRequestFrom])
     }
 
@@ -67,16 +58,33 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
 
 var Attributes.developmentMode: Boolean
     get() = getOrNull(AttributeKey("developmentMode")) ?: false
-    set(value) { put(AttributeKey("developmentMode"), value) }
+    set(value) = put(AttributeKey("developmentMode"), value)
 
 var Attributes.defaultRequestContentType: String
     get() = getOrNull(AttributeKey("defaultRequestContentType")) ?: ContentType.Application.Json.toString()
-    set(value) { put(AttributeKey("defaultRequestContentType"), value) }
+    set(value) = put(AttributeKey("defaultRequestContentType"), value)
+
+val Attributes.contentType: ContentType
+    get() = if (developmentMode) ContentType.Application.Json
+    else when (defaultRequestContentType) {
+        ContentType.Application.Json.toString() -> ContentType.Application.Json
+        ContentType.Application.ProtoBuf.toString() -> ContentType.Application.ProtoBuf
+        else -> ContentType.Application.Json
+    }
+
+@OptIn(ExperimentalSerializationApi::class)
+val Attributes.serializationFormat: SerialFormat
+    get() = if (developmentMode) Json
+    else when (defaultRequestContentType) {
+        ContentType.Application.Json.toString() -> Json
+        ContentType.Application.ProtoBuf.toString() -> ProtoBuf
+        else -> Json
+    }
 
 var Attributes.apiHosts: Map<String, String>
     get() = getOrNull(AttributeKey("apiHosts")) ?: emptyMap()
-    set(value) { put(AttributeKey("apiHosts"), value) }
+    set(value) = put(AttributeKey("apiHosts"), value)
 
 var Attributes.apiKeyToRequestFrom: String
     get() = get(AttributeKey("apiKey"))
-    set(value) { put(AttributeKey("apiKey"), value) }
+    set(value) = put(AttributeKey("apiKey"), value)

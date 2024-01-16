@@ -33,7 +33,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         val newUser = call.receive<UserRegistrationDto>()
         val language = extractLocalizationHeader()
 
-        val result = identityService.createUser(newUser = newUser, languageCode = language)
+        val result = identityService.createUser(newUser, language)
         val successMessage = localizedMessagesFactory.createLocalizedMessages(language).userCreatedSuccessfully
         respondWithResult(HttpStatusCode.Created, result, successMessage)
     }
@@ -42,7 +42,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         val params = call.receiveParameters()
         val userName = params["username"]?.trim().toString()
         val password = params["password"]?.trim().toString()
-        val deviceToken = params["token"]?.trim().orEmpty()
+        val deviceToken = params["token"]?.trim()
 
         val language = extractLocalizationHeader()
         val appId = extractApplicationIdHeader()
@@ -50,7 +50,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
 
         respondWithResult(HttpStatusCode.OK, token)
 
-        if (deviceToken.isNotEmpty()) {
+        if (!deviceToken.isNullOrBlank()) {
             val jwt = JWT.decode(token.accessToken)
             val userId = jwt.getClaim(Claim.USER_ID).asString()
             notificationService.saveToken(userId, deviceToken, language)
