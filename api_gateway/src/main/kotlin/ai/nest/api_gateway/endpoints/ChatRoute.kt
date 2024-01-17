@@ -30,13 +30,26 @@ fun Route.chatRoute() {
     val chatSocketHandler: ChatSocketHandler by inject()
 
     route("/chat") {
-
         authenticateWithRole(Role.END_USER) {
             post("/ticket") {
                 val language = extractLocalizationHeader()
                 val ticket = call.receive<TicketDto>()
                 val result = chatService.createTicket(ticket, language)
                 respondWithResult(HttpStatusCode.Created, result)
+            }
+            post("/{chatId}") {
+                val chatId = call.parameters["chatId"]?.trim().orEmpty()
+                val message = call.receive<MessageDto>()
+                val result = chatService.sendChatMessage(message, chatId)
+                respondWithResult(HttpStatusCode.OK, result)
+            }
+            webSocket("/{chatId}") {
+                val chatId = call.parameters["chatId"]?.trim().orEmpty()
+                val chatMessages = chatService.receiveChatMessages(chatId)
+                webSocketServerHandler.sessions[chatId] = this
+                webSocketServerHandler.sessions[chatId]?.let {
+                    webSocketServerHandler.tryToCollect(chatMessages, it)
+                }
             }
         }
 

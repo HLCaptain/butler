@@ -1,13 +1,16 @@
 package ai.nest.api_gateway.data.service
 
+import ai.nest.api_gateway.data.model.chat.ChatDto
 import ai.nest.api_gateway.data.model.chat.MessageDto
 import ai.nest.api_gateway.data.model.chat.TicketDto
-import ai.nest.api_gateway.data.model.notification.NotificationHistoryDto
 import ai.nest.api_gateway.data.model.response.PaginationResponse
 import ai.nest.api_gateway.data.utils.ErrorHandler
+import ai.nest.api_gateway.data.utils.getLastMonthDate
+import ai.nest.api_gateway.data.utils.getLastWeekDate
 import ai.nest.api_gateway.data.utils.tryToExecute
 import ai.nest.api_gateway.data.utils.tryToExecuteWebSocket
 import ai.nest.api_gateway.data.utils.tryToSendAndReceiveWebSocketData
+import ai.nest.api_gateway.data.utils.tryToSendWebSocketData
 import ai.nest.api_gateway.utils.APIs
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -17,12 +20,9 @@ import io.ktor.client.request.put
 import io.ktor.util.Attributes
 import io.ktor.utils.io.InternalAPI
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
-import kotlin.time.Duration.Companion.days
 
 @Single
 class ChatService(
@@ -64,6 +64,22 @@ class ChatService(
         path = "/chat/tickets/$supportId"
     )
 
+    suspend fun receiveChatMessages(chatId: String) = client.tryToExecuteWebSocket<MessageDto>(
+        api = APIs.CHAT_API,
+        attributes = attributes,
+        path = "/chat/$chatId"
+    )
+
+    suspend fun sendChatMessage(
+        message: MessageDto,
+        chatId: String
+    ) = client.tryToSendWebSocketData(
+        data = message,
+        api = APIs.CHAT_API,
+        attributes = attributes,
+        path = "/chat/$chatId"
+    )
+
     suspend fun sendAndReceiveMessage(
         message: MessageDto,
         chatId: String
@@ -74,12 +90,17 @@ class ChatService(
         path = "/chat/$chatId"
     )
 
-    suspend fun getChatsHistoryByDate(
+    /**
+     * @param fromDate epoch milli
+     * @param toDate epoch milli
+     * @return list of [ChatDto]
+     */
+    suspend fun getUserChatHistoryByDate(
         userId: String,
-        fromDate: String,
-        toDate: String = Clock.System.now().toString(),
+        fromDate: Long,
+        toDate: Long = Clock.System.now().toEpochMilliseconds(),
         languageCode: String
-    ) = client.tryToExecute<List<NotificationHistoryDto>>(
+    ) = client.tryToExecute<List<ChatDto>>(
         APIs.CHAT_API,
         attributes = attributes,
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
@@ -90,36 +111,52 @@ class ChatService(
         }
     }
 
-    suspend fun getChatsHistoryLastMonth(
+    suspend fun getUserChatHistoryLastMonth(
         userId: String,
         languageCode: String
-    ) = getChatsHistoryByDate(
+    ) = getUserChatHistoryByDate(
         userId = userId,
-        fromDate = Clock.System.now().minus(30.days).toString(),
+        fromDate = getLastMonthDate().toEpochMilliseconds(),
         languageCode = languageCode
     )
 
-    suspend fun getChatsHistoryForUserInLastWeek(
+    suspend fun getUserChatHistoryLastWeek(
         userId: String,
         languageCode: String
-    ) = getChatsHistoryByDate(
+    ) = getUserChatHistoryByDate(
         userId = userId,
-        fromDate = Clock.System.now().minus(7.days).toString(),
+        fromDate = getLastWeekDate().toEpochMilliseconds(),
         languageCode = languageCode
     )
 
-    suspend fun getChatsHistoryForUser(
+    suspend fun getUserChatHistory(
         userId: String,
-        page: String,
-        limit: String,
+        page: Int,
+        limit: Int,
         languageCode: String
-    ) = client.tryToExecute<PaginationResponse<NotificationHistoryDto>>(
+    ) = client.tryToExecute<PaginationResponse<ChatDto>>(
         APIs.CHAT_API,
         attributes = attributes,
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         get("/chat/history/$userId") {
             parameter("page", page)
+            parameter("limit", limit)
+        }
+    }
+
+    suspend fun getPreviousChatMessages(
+        chatId: String,
+        untilDate: Long,
+        limit: Int,
+        languageCode: String
+    ) = client.tryToExecute<List<MessageDto>>(
+        APIs.CHAT_API,
+        attributes = attributes,
+        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+    ) {
+        get("/chat/$chatId") {
+            parameter("untilDate", untilDate)
             parameter("limit", limit)
         }
     }
