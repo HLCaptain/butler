@@ -5,10 +5,10 @@ import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
 import ai.nest.api_gateway.data.service.IdentityService
 import ai.nest.api_gateway.data.service.NotificationService
 import ai.nest.api_gateway.data.utils.LocalizedMessagesFactory
-import ai.nest.api_gateway.endpoints.utils.authenticateWithRole
 import ai.nest.api_gateway.endpoints.utils.extractApplicationIdHeader
 import ai.nest.api_gateway.endpoints.utils.extractLocalizationHeader
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
+import ai.nest.api_gateway.endpoints.utils.withRoles
 import ai.nest.api_gateway.utils.Claim
 import ai.nest.api_gateway.utils.Role
 import com.auth0.jwt.JWT
@@ -38,26 +38,27 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         respondWithResult(HttpStatusCode.Created, result, successMessage)
     }
 
-    post("/login") {
-        val params = call.receiveParameters()
-        val userName = params["username"]?.trim().toString()
-        val password = params["password"]?.trim().toString()
-        val deviceToken = params["token"]?.trim()
+    withRoles(Role.END_USER) {
+        post("/login") {
+            val params = call.receiveParameters()
+            val userName = params["username"]?.trim().toString()
+            val password = params["password"]?.trim().toString()
+            val deviceToken = params["token"]?.trim()
 
-        val language = extractLocalizationHeader()
-        val appId = extractApplicationIdHeader()
-        val token = async { identityService.loginUser(userName, password, tokenConfiguration, language, appId) }.await()
+            val language = extractLocalizationHeader()
+            val appId = extractApplicationIdHeader()
+            val token =
+                async { identityService.loginUser(userName, password, tokenConfiguration, language, appId) }.await()
 
-        respondWithResult(HttpStatusCode.OK, token)
+            respondWithResult(HttpStatusCode.OK, token)
 
-        if (!deviceToken.isNullOrBlank()) {
-            val jwt = JWT.decode(token.accessToken)
-            val userId = jwt.getClaim(Claim.USER_ID).asString()
-            notificationService.saveToken(userId, deviceToken, language)
+            if (!deviceToken.isNullOrBlank()) {
+                val jwt = JWT.decode(token.accessToken)
+                val userId = jwt.getClaim(Claim.USER_ID).asString()
+                notificationService.saveToken(userId, deviceToken, language)
+            }
         }
-    }
 
-    authenticateWithRole(Role.END_USER) {
         get("/me") {
             val tokenClaim = call.principal<JWTPrincipal>()
             val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
@@ -68,7 +69,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
             val tokenClaim = call.principal<JWTPrincipal>()
             val userId = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
             val username = tokenClaim?.payload?.getClaim(Claim.USERNAME).toString()
-            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.asString()?.toInt() ?: 1
+            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.`as`(Role::class.java) ?: Role.END_USER
             val token = identityService.generateUserTokens(userId, username, userPermission, tokenConfiguration)
             respondWithResult(HttpStatusCode.Created, token)
         }

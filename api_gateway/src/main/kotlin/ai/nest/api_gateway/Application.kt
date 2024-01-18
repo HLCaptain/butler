@@ -25,8 +25,8 @@ fun Application.module() {
         secret = jwtSecret,
         issuer = jwtIssuer,
         audience = jwtAudience,
-        accessTokenExpirationTimestamp = 365.days.inWholeMilliseconds,
-        refreshTokenExpirationTimestamp = 365.days.inWholeMilliseconds
+        accessTokenExpireDuration = 365.days,
+        refreshTokenExpireDuration = 365.days
     )
 
     configureMonitoring()

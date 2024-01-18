@@ -17,6 +17,7 @@ import ai.nest.api_gateway.utils.Claim.PERMISSION
 import ai.nest.api_gateway.utils.Claim.TOKEN_TYPE
 import ai.nest.api_gateway.utils.Claim.USERNAME
 import ai.nest.api_gateway.utils.Claim.USER_ID
+import ai.nest.api_gateway.utils.Role
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.client.HttpClient
@@ -27,13 +28,14 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.util.Attributes
 import io.ktor.utils.io.InternalAPI
-import java.util.Date
+import kotlinx.datetime.Clock
+import kotlinx.datetime.toJavaInstant
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
@@ -70,7 +72,7 @@ class IdentityService(
             setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
         ) {
             post("/user/login") {
-                headers.append("Application-Id", applicationId)
+                headers.append(HttpHeaders.UserAgent, applicationId)
                 formData {
                     parameter("username", userName)
                     parameter("password", password)
@@ -78,7 +80,7 @@ class IdentityService(
             }
         }
         val user = getUserByUsername(username = userName, languageCode)
-        return generateUserTokens(user.id, userName, user.permission, tokenConfiguration)
+        return generateUserTokens(user.id, userName, user.permission.first { it == Role.END_USER }, tokenConfiguration)
     }
 
     @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
@@ -162,7 +164,7 @@ class IdentityService(
     @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun updateUserPermission(
         userId: String,
-        permission: List<Int>,
+        permission: Set<Role>,
         languageCode: String
     ) = client.tryToExecute<UserDto>(
         APIs.IDENTITY_API,
@@ -170,7 +172,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         put("/dashboard/user/$userId/permission") {
-            body = ProtoBuf.encodeToByteArray(ListSerializer(Int.serializer()), permission)
+            body = ProtoBuf.encodeToByteArray(SetSerializer(Role.serializer()), permission)
         }
     }
 
@@ -231,27 +233,24 @@ class IdentityService(
     fun generateUserTokens(
         userId: String,
         username: String,
-        userPermission: Int,
+        userPermission: Role,
         tokenConfiguration: TokenConfiguration
     ) = UserTokensResponse(
-        getExpirationDate(tokenConfiguration.accessTokenExpirationTimestamp).time,
-        getExpirationDate(tokenConfiguration.refreshTokenExpirationTimestamp).time,
+        Clock.System.now() + tokenConfiguration.accessTokenExpireDuration,
+        Clock.System.now() + tokenConfiguration.refreshTokenExpireDuration,
         generateToken(userId, username, userPermission, tokenConfiguration, TokenType.ACCESS_TOKEN),
         generateToken(userId, username, userPermission, tokenConfiguration, TokenType.REFRESH_TOKEN)
     )
-
-    private fun getExpirationDate(timestamp: Long) = Date(System.currentTimeMillis() + timestamp)
-
     private fun generateToken(
         userId: String,
         username: String,
-        userPermission: Int,
+        userPermission: Role,
         tokenConfiguration: TokenConfiguration,
         tokenType: TokenType
     ) = JWT.create()
         .withIssuer(tokenConfiguration.issuer)
         .withAudience(tokenConfiguration.audience)
-        .withExpiresAt(Date(System.currentTimeMillis() + tokenConfiguration.accessTokenExpirationTimestamp))
+        .withExpiresAt((Clock.System.now() + tokenConfiguration.accessTokenExpireDuration).toJavaInstant())
         .withClaim(USER_ID, userId)
         .withClaim(PERMISSION, userPermission.toString())
         .withClaim(USERNAME, username)
