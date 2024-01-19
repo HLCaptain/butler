@@ -28,6 +28,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.util.Attributes
@@ -35,8 +36,6 @@ import io.ktor.utils.io.InternalAPI
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.SetSerializer
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
 @Single
@@ -55,7 +54,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/user") {
-            body = ProtoBuf.encodeToByteArray(UserRegistrationDto.serializer(), newUser)
+            setBody(newUser)
         }
     }
 
@@ -93,7 +92,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/dashboard/user") {
-            body = ProtoBuf.encodeToByteArray(UserOptions.serializer(), options)
+            setBody(options)
         }
     }
 
@@ -145,7 +144,7 @@ class IdentityService(
                 phone?.let { append("phone", it) }
             }
         )
-        put("/user/$id") { body = formData }
+        put("/user/$id") { setBody(formData) }
     }
 
     suspend fun getUserByUsername(
@@ -172,7 +171,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         put("/dashboard/user/$userId/permission") {
-            body = ProtoBuf.encodeToByteArray(SetSerializer(Role.serializer()), permission)
+            setBody(permission)
         }
     }
 
@@ -268,7 +267,7 @@ class IdentityService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/user/$userId/address/location") {
-            body = ProtoBuf.encodeToByteArray(LocationDto.serializer(), location)
+            setBody(location)
         }
     }
 

@@ -17,11 +17,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.util.Attributes
 import io.ktor.utils.io.InternalAPI
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
 @Single
@@ -40,7 +40,7 @@ class ChatService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("/chat/ticket") {
-            body = ProtoBuf.encodeToByteArray(TicketDto.serializer(), ticket)
+            setBody(ticket)
         }
     }
 

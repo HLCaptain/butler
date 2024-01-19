@@ -36,5 +36,5 @@ fun Application.module() {
     configureSerialization()
     configureRouting(tokenConfig)
     configureStatusPages()
-    configureWebSockets()
+    configureWebSockets(get())
 }

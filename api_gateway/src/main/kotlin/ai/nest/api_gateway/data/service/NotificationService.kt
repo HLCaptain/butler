@@ -11,6 +11,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.util.Attributes
 import io.ktor.utils.io.InternalAPI
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -46,7 +47,7 @@ class NotificationService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("tokens/users") {
-            body = ProtoBuf.encodeToByteArray(ListSerializer(String.serializer()), ids)
+            setBody(ProtoBuf.encodeToByteArray(ListSerializer(String.serializer()), ids))
         }
     }
 
@@ -65,7 +66,9 @@ class NotificationService(
         attributes = attributes,
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
-        post("tokens/save-token/$userId?token=$token")
+        post("tokens/save-token/$userId") {
+            parameter("token", token)
+        }
     }
 
     suspend fun deleteDeviceToken(
@@ -77,7 +80,9 @@ class NotificationService(
         attributes = attributes,
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
-        delete("device/token/$userId?deviceToken=$token")
+        delete("device/token/$userId") {
+            parameter("deviceToken", token)
+        }
     }
 
     suspend fun clearDevicesTokens(
@@ -101,7 +106,7 @@ class NotificationService(
         setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
     ) {
         post("notifications/send/user") {
-            body = ProtoBuf.encodeToByteArray(NotificationDto.serializer(), notificationDto)
+            setBody(notificationDto)
         }
     }
 

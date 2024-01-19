@@ -10,15 +10,19 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.util.AttributeKey
 import io.ktor.util.Attributes
-import io.ktor.util.appendIfNameAbsent
+import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialFormat
+import kotlinx.serialization.StringFormat
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
@@ -45,8 +49,7 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     }
 
     defaultRequest {
-        // Check if app is in development mode
-        headers.appendIfNameAbsent(HttpHeaders.ContentType, attributes.contentType.toString())
+        contentType(attributes.contentType)
         url(attributes.apiHosts[attributes.apiKeyToRequestFrom])
     }
 
@@ -80,6 +83,37 @@ val Attributes.serializationFormat: SerialFormat
         ContentType.Application.ProtoBuf.toString() -> ProtoBuf
         else -> Json
     }
+
+inline fun <reified T> Attributes.encodeContent(content: T): Any {
+    return when (serializationFormat) {
+        is StringFormat -> (serializationFormat as StringFormat).encodeToString(content)
+        is BinaryFormat -> (serializationFormat as BinaryFormat).encodeToByteArray(content)
+        else -> Json.encodeToString(content)
+    }
+}
+
+fun <T> Attributes.decodeContent(deserializationStrategy: DeserializationStrategy<T>, content: Any): T {
+    return when (serializationFormat) {
+        is StringFormat -> {
+            if (content is String)
+                (serializationFormat as StringFormat).decodeFromString(deserializationStrategy, content)
+            else
+                throw IllegalArgumentException("Content is not a String")
+        }
+        is BinaryFormat -> {
+            if (content is ByteArray)
+                (serializationFormat as BinaryFormat).decodeFromByteArray(deserializationStrategy, content)
+            else
+                throw IllegalArgumentException("Content is not a ByteArray")
+        }
+        else -> {
+            if (content is String)
+                Json.decodeFromString(deserializationStrategy, content)
+            else
+                throw IllegalArgumentException("Content is not a String")
+        }
+    }
+}
 
 var Attributes.apiHosts: Map<String, String>
     get() = getOrNull(AttributeKey("apiHosts")) ?: emptyMap()
