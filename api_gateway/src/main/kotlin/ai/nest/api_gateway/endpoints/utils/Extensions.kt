@@ -35,7 +35,7 @@ suspend fun respondWithError(
     statusCode: HttpStatusCode,
     errorMessage: List<LabelDto>? = null
 ) {
-    call.respond(statusCode, ServerResponse.error(errorMessage, statusCode.value))
+    call.respond(statusCode, ServerResponse.error(errorMessage, statusCode))
 }
 
 fun PipelineContext<Unit, ApplicationCall>.extractLocaleHeader(): Locale {
