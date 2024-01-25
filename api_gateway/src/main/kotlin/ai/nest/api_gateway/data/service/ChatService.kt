@@ -4,7 +4,6 @@ import ai.nest.api_gateway.data.model.chat.ChatDto
 import ai.nest.api_gateway.data.model.chat.MessageDto
 import ai.nest.api_gateway.data.model.chat.TicketDto
 import ai.nest.api_gateway.data.model.response.PaginationResponse
-import ai.nest.api_gateway.data.utils.ErrorHandler
 import ai.nest.api_gateway.data.utils.getLastMonthDate
 import ai.nest.api_gateway.data.utils.getLastWeekDate
 import ai.nest.api_gateway.data.utils.tryToExecute
@@ -19,25 +18,23 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.util.Attributes
-import io.ktor.utils.io.InternalAPI
+import java.util.Locale
 import kotlinx.datetime.Clock
-import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 
 @Single
 class ChatService(
     private val client: HttpClient,
     private val attributes: Attributes,
-    private val errorHandler: ErrorHandler
+    private val localizationService: LocalizationService
 ) {
-    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun createTicket(
         ticket: TicketDto,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<TicketDto>(
         api = APIs.CHAT_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         post("/chat/ticket") {
             setBody(ticket)
@@ -47,11 +44,11 @@ class ChatService(
     suspend fun updateTicketState(
         ticketId: String,
         state: Boolean,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<Boolean>(
         api = APIs.CHAT_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         put("/chat/$ticketId") {
             parameter("state", state)
@@ -99,11 +96,11 @@ class ChatService(
         userId: String,
         fromDate: Long,
         toDate: Long = Clock.System.now().toEpochMilliseconds(),
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<List<ChatDto>>(
         APIs.CHAT_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("/chat/history/$userId") {
             parameter("fromDate", fromDate)
@@ -113,31 +110,31 @@ class ChatService(
 
     suspend fun getUserChatHistoryLastMonth(
         userId: String,
-        languageCode: String
+        locale: Locale
     ) = getUserChatHistoryByDate(
         userId = userId,
         fromDate = getLastMonthDate().toEpochMilliseconds(),
-        languageCode = languageCode
+        locale = locale
     )
 
     suspend fun getUserChatHistoryLastWeek(
         userId: String,
-        languageCode: String
+        locale: Locale
     ) = getUserChatHistoryByDate(
         userId = userId,
         fromDate = getLastWeekDate().toEpochMilliseconds(),
-        languageCode = languageCode
+        locale = locale
     )
 
     suspend fun getUserChatHistory(
         userId: String,
         page: Int,
         limit: Int,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<PaginationResponse<ChatDto>>(
         APIs.CHAT_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("/chat/history/$userId") {
             parameter("page", page)
@@ -149,11 +146,11 @@ class ChatService(
         chatId: String,
         untilDate: Long,
         limit: Int,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<List<MessageDto>>(
         APIs.CHAT_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("/chat/$chatId") {
             parameter("untilDate", untilDate)

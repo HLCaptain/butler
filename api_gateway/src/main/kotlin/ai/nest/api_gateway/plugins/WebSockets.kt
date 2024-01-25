@@ -8,11 +8,9 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import io.ktor.util.Attributes
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-@OptIn(ExperimentalSerializationApi::class)
 fun Application.configureWebSockets(attributes: Attributes) {
     install(WebSockets) {
         contentConverter = KotlinxWebsocketSerializationConverter(attributes.serializationFormat)

@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LabelDto(
-    val id: Int,
-    val localizedLabel: String? = null,
+    val key: String,
+    val value: String
 )

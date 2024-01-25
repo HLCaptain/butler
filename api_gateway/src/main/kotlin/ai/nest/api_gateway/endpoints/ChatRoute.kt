@@ -7,11 +7,12 @@ import ai.nest.api_gateway.data.service.ChatService
 import ai.nest.api_gateway.endpoints.utils.ChatSocketHandler
 import ai.nest.api_gateway.endpoints.utils.Connection
 import ai.nest.api_gateway.endpoints.utils.WebSocketServerHandler
-import ai.nest.api_gateway.endpoints.utils.extractLocalizationHeader
+import ai.nest.api_gateway.endpoints.utils.extractLocaleHeader
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
 import ai.nest.api_gateway.endpoints.utils.withRoles
 import ai.nest.api_gateway.utils.Role
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
@@ -32,7 +33,7 @@ fun Route.chatRoute() {
     route("/chat") {
         withRoles(Role.END_USER) {
             post("/ticket") {
-                val language = extractLocalizationHeader()
+                val language = extractLocaleHeader()
                 val ticket = call.receive<TicketDto>()
                 val result = chatService.createTicket(ticket, language)
                 respondWithResult(HttpStatusCode.Created, result)
@@ -58,7 +59,7 @@ fun Route.chatRoute() {
             put("/{ticketId}") {
                 val ticketId = call.parameters["ticketId"]?.trim().orEmpty()
                 val state = call.parameters["state"].toBoolean()
-                val language = extractLocalizationHeader()
+                val language = extractLocaleHeader()
                 val result = chatService.updateTicketState(ticketId, state, language)
                 respondWithResult(HttpStatusCode.OK, result)
             }

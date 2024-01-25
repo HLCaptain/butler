@@ -10,7 +10,6 @@ import ai.nest.api_gateway.data.model.identity.UserOptions
 import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
 import ai.nest.api_gateway.data.model.response.PaginationResponse
 import ai.nest.api_gateway.data.model.response.UserTokensResponse
-import ai.nest.api_gateway.data.utils.ErrorHandler
 import ai.nest.api_gateway.data.utils.tryToExecute
 import ai.nest.api_gateway.utils.APIs
 import ai.nest.api_gateway.utils.Claim.PERMISSION
@@ -32,26 +31,24 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.util.Attributes
-import io.ktor.utils.io.InternalAPI
+import java.util.Locale
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
-import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 
 @Single
 class IdentityService(
     private val client: HttpClient,
     private val attributes: Attributes,
-    private val errorHandler: ErrorHandler
+    private val localizationService: LocalizationService
 ) {
-    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun createUser(
         newUser: UserRegistrationDto,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<UserDetailsDto>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         post("/user") {
             setBody(newUser)
@@ -62,13 +59,13 @@ class IdentityService(
         userName: String,
         password: String,
         tokenConfiguration: TokenConfiguration,
-        languageCode: String,
+        locale: Locale,
         applicationId: String
     ): UserTokensResponse {
         client.tryToExecute<Boolean>(
             api = APIs.IDENTITY_API,
             attributes = attributes,
-            setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+            setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
         ) {
             post("/user/login") {
                 headers.append(HttpHeaders.UserAgent, applicationId)
@@ -78,18 +75,17 @@ class IdentityService(
                 }
             }
         }
-        val user = getUserByUsername(username = userName, languageCode)
+        val user = getUserByUsername(username = userName, locale)
         return generateUserTokens(user.id, userName, user.permission.first { it == Role.END_USER }, tokenConfiguration)
     }
 
-    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun getUsers(
         options: UserOptions,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<PaginationResponse<UserDto>>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         post("/dashboard/user") {
             setBody(options)
@@ -107,36 +103,35 @@ class IdentityService(
 
     suspend fun getUserAddresses(
         userId: String,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<List<AddressDto>>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("/user/$userId/address")
     }
 
     suspend fun getUserById(
         id: String,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<UserDetailsDto>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("user/$id")
     }
 
-    @OptIn(InternalAPI::class)
     suspend fun updateUserProfile(
         id: String,
         fullName: String?,
         phone: String?,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<UserDetailsDto>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         val formData = FormDataContent(
             Parameters.build {
@@ -149,26 +144,25 @@ class IdentityService(
 
     suspend fun getUserByUsername(
         username: String?,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<UserDto>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("user/get-user") {
             parameter("username", username)
         }
     }
 
-    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun updateUserPermission(
         userId: String,
         permission: Set<Role>,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<UserDto>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         put("/dashboard/user/$userId/permission") {
             setBody(permission)
@@ -177,22 +171,22 @@ class IdentityService(
 
     suspend fun deleteUser(
         userId: String,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<Boolean>(
         api = APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         delete("/user/$userId")
     }
 
     suspend fun getFavoriteRestaurantsIds(
         userId: String,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<List<String>>(
         api = APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("/user/$userId/favorite")
     }
@@ -200,11 +194,11 @@ class IdentityService(
     suspend fun addRestaurantToFavorite(
         userId: String,
         restaurantId: String,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<Boolean>(
         api = APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         post("/user/$userId/favorite") {
             formData {
@@ -216,11 +210,11 @@ class IdentityService(
     suspend fun deleteRestaurantFromFavorite(
         userId: String,
         restaurantId: String,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<Boolean>(
         api = APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         delete("/user/$userId/favorite") {
             formData {
@@ -256,15 +250,14 @@ class IdentityService(
         .withClaim(TOKEN_TYPE, tokenType.name)
         .sign(Algorithm.HMAC256(tokenConfiguration.secret))
 
-    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun updateUserLocation(
         userId: String,
         location: LocationDto,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<AddressDto>(
         api = APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         post("/user/$userId/address/location") {
             setBody(location)
@@ -273,11 +266,11 @@ class IdentityService(
 
     suspend fun isUserExistedInDb(
         userId: String?,
-        languageCode: String
+        locale: Locale
     ) = client.tryToExecute<Boolean>(
         APIs.IDENTITY_API,
         attributes = attributes,
-        setErrorMessage = { errorHandler.getLocalizedErrorMessage(it, languageCode) }
+        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         get("user/isExisted/$userId")
     }

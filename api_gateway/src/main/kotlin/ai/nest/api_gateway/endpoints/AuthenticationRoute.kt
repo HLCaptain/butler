@@ -3,16 +3,19 @@ package ai.nest.api_gateway.endpoints
 import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
 import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
 import ai.nest.api_gateway.data.service.IdentityService
+import ai.nest.api_gateway.data.service.LocalizationService
 import ai.nest.api_gateway.data.service.NotificationService
-import ai.nest.api_gateway.data.utils.LocalizedMessagesFactory
+import ai.nest.api_gateway.endpoints.utils.LabelKeys
 import ai.nest.api_gateway.endpoints.utils.extractApplicationIdHeader
-import ai.nest.api_gateway.endpoints.utils.extractLocalizationHeader
+import ai.nest.api_gateway.endpoints.utils.extractLocaleHeader
+import ai.nest.api_gateway.endpoints.utils.respondWithError
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
 import ai.nest.api_gateway.endpoints.utils.withRoles
 import ai.nest.api_gateway.utils.Claim
 import ai.nest.api_gateway.utils.Role
 import com.auth0.jwt.JWT
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
@@ -26,15 +29,14 @@ import org.koin.ktor.ext.inject
 fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
     val identityService: IdentityService by inject()
     val notificationService: NotificationService by inject()
-
-    val localizedMessagesFactory: LocalizedMessagesFactory by inject()
+    val localizationService: LocalizationService by inject()
 
     post("/signup") {
         val newUser = call.receive<UserRegistrationDto>()
-        val language = extractLocalizationHeader()
+        val locale = extractLocaleHeader()
 
-        val result = identityService.createUser(newUser, language)
-        val successMessage = localizedMessagesFactory.createLocalizedMessages(language).userCreatedSuccessfully
+        val result = identityService.createUser(newUser, locale)
+        val successMessage = localizationService.getLocalizedMessage(LabelKeys.USER_CREATED_SUCCESSFULLY, locale)
         respondWithResult(HttpStatusCode.Created, result, successMessage)
     }
 
@@ -45,10 +47,9 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
             val password = params["password"]?.trim().toString()
             val deviceToken = params["token"]?.trim()
 
-            val language = extractLocalizationHeader()
+            val language = extractLocaleHeader()
             val appId = extractApplicationIdHeader()
-            val token =
-                async { identityService.loginUser(userName, password, tokenConfiguration, language, appId) }.await()
+            val token = async { identityService.loginUser(userName, password, tokenConfiguration, language, appId) }.await()
 
             respondWithResult(HttpStatusCode.OK, token)
 
@@ -69,9 +70,13 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
             val tokenClaim = call.principal<JWTPrincipal>()
             val userId = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
             val username = tokenClaim?.payload?.getClaim(Claim.USERNAME).toString()
-            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.`as`(Role::class.java) ?: Role.END_USER
-            val token = identityService.generateUserTokens(userId, username, userPermission, tokenConfiguration)
-            respondWithResult(HttpStatusCode.Created, token)
+            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.`as`(Role::class.java)
+            if (userPermission != null) {
+                val token = identityService.generateUserTokens(userId, username, userPermission, tokenConfiguration)
+                respondWithResult(HttpStatusCode.Created, token)
+            } else {
+                respondWithError(call, HttpStatusCode.Unauthorized)
+            }
         }
     }
 }

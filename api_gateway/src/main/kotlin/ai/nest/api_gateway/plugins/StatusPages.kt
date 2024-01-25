@@ -19,14 +19,15 @@ private fun StatusPagesConfig.handleStatusPagesExceptions() {
     exception<LocalizedMessageException> { call, t ->
         respondWithError(call, HttpStatusCode.BadRequest, t.errorMessages)
     }
-    exception<SecurityException>{ call, t ->
-        respondWithError(call, HttpStatusCode.Unauthorized, t.message?.let { mapOf(401 to it) })
+    exception<SecurityException>{ call, throwable ->
+        // TODO: Log throwable message with OpenTelemetry or Napier
+        respondWithError(call, HttpStatusCode.Unauthorized)
     }
 }
 
 
-private fun StatusPagesConfig.handleUnauthorizedAccess(){
+private fun StatusPagesConfig.handleUnauthorizedAccess() {
     status(HttpStatusCode.Unauthorized) { call, _ ->
-        respondWithError(call, statusCode = HttpStatusCode.Unauthorized , mapOf(401 to "Access denied"))
+        respondWithError(call, HttpStatusCode.Unauthorized)
     }
 }

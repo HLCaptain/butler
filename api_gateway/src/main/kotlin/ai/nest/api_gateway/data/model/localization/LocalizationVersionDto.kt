@@ -4,7 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LocalizationVersionDto(
-    val version: Long, // Last updated at time
-    val oldVersion: Long? = null,
-    val changedLabelIds: List<Int>? = null
+    val currentVersion: Long, // Last updated at time
 )

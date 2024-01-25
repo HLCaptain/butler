@@ -34,7 +34,7 @@ fun Application.module() {
     configureAttributes(get())
     configureAuthentication()
     configureSerialization()
-    configureRouting(tokenConfig)
-    configureStatusPages()
     configureWebSockets(get())
+    configureStatusPages()
+    configureRouting(tokenConfig)
 }

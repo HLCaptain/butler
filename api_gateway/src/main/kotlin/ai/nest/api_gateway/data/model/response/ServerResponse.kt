@@ -1,5 +1,6 @@
 package ai.nest.api_gateway.data.model.response
 
+import ai.nest.api_gateway.data.model.localization.LabelDto
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,7 +11,7 @@ data class ServerResponse<T>(
 ) {
 
     companion object {
-        fun error(errorMessages: Map<Int, String>?, httpStatusCode: Int): ServerResponse<String> {
+        fun error(errorMessages: List<LabelDto>?, httpStatusCode: Int): ServerResponse<String> {
             return ServerResponse(
                 value = null,
                 isSuccess = false,

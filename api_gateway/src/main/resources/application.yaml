@@ -14,13 +14,9 @@ jwt:
   realm: "$JWT_REALM:your_jwt_realm"
 
 apis:
-  - name: IDENTITY_API
-    url: "$IDENTITY_API_URL:http://localhost:8081"
-  - name: CHAT_API
-    url: "$CHAT_API_URL:http://localhost:8082"
-  - name: NOTIFICATION_API
-    url: "$NOTIFICATION_API_URL:http://localhost:8083"
-  - name: LOCALIZATION_API
-    url: "$LOCALIZATION_API_URL:http://localhost:8084"
+  IDENTITY_API: "$IDENTITY_API_URL:http://localhost:8081"
+  CHAT_API: "$CHAT_API_URL:http://localhost:8082"
+  NOTIFICATION_API: "$NOTIFICATION_API_URL:http://localhost:8083"
+  LOCALIZATION_API: "$LOCALIZATION_API_URL:http://localhost:8084"
 
 

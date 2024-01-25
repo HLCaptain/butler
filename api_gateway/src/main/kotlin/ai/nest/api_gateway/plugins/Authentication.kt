@@ -10,6 +10,7 @@ import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.response.respond
 
 fun Application.configureAuthentication() {
 
@@ -71,6 +72,6 @@ fun Application.configureAuthentication() {
 
 private fun JWTAuthenticationProvider.Config.respondUnauthorized() {
     challenge { scheme, realm ->
-        call.respond(UnauthorizedResponse(HttpAuthHeader.bearerAuthChallenge(scheme, realm)), null)
+        call.respond(UnauthorizedResponse(HttpAuthHeader.bearerAuthChallenge(scheme, realm)))
     }
 }
