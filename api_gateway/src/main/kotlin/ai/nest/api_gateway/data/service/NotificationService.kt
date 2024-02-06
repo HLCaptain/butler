@@ -12,11 +12,8 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.util.Attributes
-import java.util.Locale
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
+import java.util.Locale
 
 @Single
 class NotificationService(
@@ -44,7 +41,7 @@ class NotificationService(
         setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
     ) {
         post("tokens/users") {
-            setBody(ProtoBuf.encodeToByteArray(ListSerializer(String.serializer()), ids))
+            setBody(ids)
         }
     }
 

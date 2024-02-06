@@ -19,7 +19,6 @@ import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
-import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -42,10 +41,9 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
 
     withRoles(Role.END_USER) {
         post("/login") {
-            val params = call.receiveParameters()
-            val userName = params["username"]?.trim().toString()
-            val password = params["password"]?.trim().toString()
-            val deviceToken = params["token"]?.trim()
+            val userName = call.parameters["username"]?.trim().toString()
+            val password = call.parameters["password"]?.trim().toString()
+            val deviceToken = call.parameters["token"]?.trim()
 
             val language = extractLocaleHeader()
             val appId = extractApplicationIdHeader()

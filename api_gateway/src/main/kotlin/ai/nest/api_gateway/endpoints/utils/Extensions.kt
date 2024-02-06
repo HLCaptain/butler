@@ -40,7 +40,7 @@ suspend fun respondWithError(
 
 fun PipelineContext<Unit, ApplicationCall>.extractLocaleHeader(): Locale {
     val headers = call.request.headers
-    return Locale.of(headers[HttpHeaders.AcceptLanguage]?.trim())
+    return Locale(headers[HttpHeaders.AcceptLanguage]?.trim())
 }
 
 fun PipelineContext<Unit, ApplicationCall>.extractApplicationIdHeader(): String {
@@ -50,7 +50,7 @@ fun PipelineContext<Unit, ApplicationCall>.extractApplicationIdHeader(): String 
 
 fun WebSocketServerSession.extractLocaleHeaderFromWebSocket(): Locale {
     val headers = call.request.headers
-    return Locale.of(headers[HttpHeaders.AcceptLanguage]?.trim())
+    return Locale(headers[HttpHeaders.AcceptLanguage]?.trim())
 }
 
 private fun PipelineContext<Unit, ApplicationCall>.extractPermission(): Int {
