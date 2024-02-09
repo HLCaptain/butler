@@ -1,5 +1,6 @@
 package ai.nest.api_gateway.di
 
+import ai.nest.api_gateway.utils.APIs
 import ai.nest.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -46,7 +47,7 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     }
 
     defaultRequest {
-        url(attributes.apiHosts[attributes.apiKeyToRequestFrom])
+        url(apiHosts[attributes.apiKeyToRequestFrom])
     }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
@@ -88,9 +89,8 @@ class ContentTypeFallbackConfig {
 
 // TODO: add fallback to WebSocket serialization
 
-var Attributes.apiHosts: Map<String, String>
-    get() = getOrNull(AttributeKey("apiHosts")) ?: emptyMap()
-    set(value) = put(AttributeKey("apiHosts"), value)
+val apiHosts: Map<String, String>
+    get() = APIs.entries.associate { it.key to it.url }
 
 var Attributes.apiKeyToRequestFrom: String
     get() = get(AttributeKey("apiKey"))
