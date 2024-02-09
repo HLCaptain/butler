@@ -1,6 +1,7 @@
 package ai.nest.api_gateway.plugins
 
 import ai.nest.api_gateway.data.model.authenticate.TokenType
+import ai.nest.api_gateway.utils.AppConfig
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.http.auth.HttpAuthHeader
@@ -15,10 +16,10 @@ import io.ktor.server.response.respond
 fun Application.configureAuthentication() {
 
     // Configuration file set from resources/application.yaml
-    val jwtSecret = environment.config.property("jwt.secret").getString()
-    val jwtDomain = environment.config.property("jwt.issuer").getString()
-    val jwtAudience = environment.config.property("jwt.audience").getString()
-    val jwtRealm = environment.config.property("jwt.realm").getString()
+    val jwtSecret = AppConfig.Jwt.SECRET
+    val jwtDomain = AppConfig.Jwt.ISSUER
+    val jwtAudience = AppConfig.Jwt.AUDIENCE
+    val jwtRealm = AppConfig.Jwt.REALM
 
     authentication {
         jwt("auth-jwt") {
