@@ -22,9 +22,6 @@ import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.util.AttributeKey
 import io.ktor.util.Attributes
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialFormat
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.seconds
 
@@ -44,7 +41,7 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     developmentMode = AppConfig.Ktor.DEVELOPMENT
 
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(attributes.serializationFormat)
+        contentConverter = KotlinxWebsocketSerializationConverter(AppConfig.Ktor.SERIALIZATION_FORMAT)
         pingInterval = 5.seconds.inWholeMilliseconds
     }
 
@@ -73,7 +70,7 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     }
 
     install(fallbackPlugin) {
-        supportedContentTypes = attributes.supportedContentTypes
+        supportedContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES
     }
 
     install(ContentNegotiation) {
@@ -90,25 +87,6 @@ class ContentTypeFallbackConfig {
 }
 
 // TODO: add fallback to WebSocket serialization
-
-var Attributes.defaultRequestContentType: ContentType
-    get() = getOrNull(AttributeKey("defaultRequestContentType")) ?: ContentType.Application.Json
-    set(value) = put(AttributeKey("defaultRequestContentType"), value)
-
-val fallbackRequestContentType: ContentType
-    get() = ContentType.Application.Json
-
-val Attributes.supportedContentTypes: List<ContentType>
-    get() = listOf(defaultRequestContentType, fallbackRequestContentType).distinct()
-
-@OptIn(ExperimentalSerializationApi::class)
-val Attributes.serializationFormat: SerialFormat
-    get() = if (AppConfig.Ktor.DEVELOPMENT) Json
-    else when (defaultRequestContentType) {
-        ContentType.Application.Json -> Json
-        ContentType.Application.ProtoBuf -> ProtoBuf
-        else -> Json
-    }
 
 var Attributes.apiHosts: Map<String, String>
     get() = getOrNull(AttributeKey("apiHosts")) ?: emptyMap()

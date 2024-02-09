@@ -1,10 +1,26 @@
 package ai.nest.api_gateway.utils
 
+import io.ktor.http.ContentType
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
+
 data object AppConfig {
     data object Ktor {
         val DEVELOPMENT = System.getenv("KTOR_DEVELOPMENT").toBoolean()
         val PORT = System.getenv("PORT")?.toIntOrNull() ?: 8080
-        val DEFAULT_CONTENT_TYPE = System.getenv("KTOR_DEFAULT_CONTENT_TYPE") ?: "application/json"
+        val DEBUG_CONTENT_TYPE = ContentType.Application.Json
+        val DEFAULT_CONTENT_TYPE = if (DEVELOPMENT) DEBUG_CONTENT_TYPE else ContentType.parse(System.getenv("KTOR_DEFAULT_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
+        val FALLBACK_CONTENT_TYPE = ContentType.parse(System.getenv("KTOR_FALLBACK_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
+        val SUPPORTED_CONTENT_TYPES =  listOf(DEFAULT_CONTENT_TYPE, FALLBACK_CONTENT_TYPE).distinct()
+        @OptIn(ExperimentalSerializationApi::class)
+        val SERIALIZATION_FORMAT = SUPPORTED_CONTENT_TYPES.first().let { contentType ->
+            when (contentType) {
+                ContentType.Application.Json -> Json
+                ContentType.Application.ProtoBuf -> ProtoBuf
+                else -> Json
+            }
+        }
     }
     data object Jwt {
         val SECRET = System.getenv("JWT_SECRET") ?: "your_jwt_secret"

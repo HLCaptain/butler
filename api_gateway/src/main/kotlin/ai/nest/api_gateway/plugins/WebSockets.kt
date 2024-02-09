@@ -1,6 +1,6 @@
 package ai.nest.api_gateway.plugins
 
-import ai.nest.api_gateway.di.serializationFormat
+import ai.nest.api_gateway.utils.AppConfig
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -13,7 +13,7 @@ import kotlin.time.toJavaDuration
 
 fun Application.configureWebSockets(attributes: Attributes) {
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(attributes.serializationFormat)
+        contentConverter = KotlinxWebsocketSerializationConverter(AppConfig.Ktor.SERIALIZATION_FORMAT)
         pingPeriod = 10000.seconds.toJavaDuration()
         timeout = 10000.seconds.toJavaDuration()
         maxFrameSize = Long.MAX_VALUE

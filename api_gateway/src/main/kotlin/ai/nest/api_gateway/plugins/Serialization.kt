@@ -1,5 +1,7 @@
 package ai.nest.api_gateway.plugins
 
+import ai.nest.api_gateway.utils.AppConfig
+import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.server.application.Application
@@ -10,8 +12,12 @@ import kotlinx.serialization.ExperimentalSerializationApi
 @OptIn(ExperimentalSerializationApi::class)
 fun Application.configureSerialization() {
     install(ContentNegotiation) {
-        // Order matters! First is the default serialization
-        protobuf() // Default Serialization
-        json() // Fallback Serialization
+        // Order matters! First is the default serialization format
+        AppConfig.Ktor.SUPPORTED_CONTENT_TYPES.forEach {
+            when (it) {
+                ContentType.Application.Json -> json()
+                ContentType.Application.ProtoBuf -> protobuf()
+            }
+        }
     }
 }
