@@ -12,7 +12,10 @@ data object AppConfig {
         val DEBUG_CONTENT_TYPE = ContentType.Application.Json
         val DEFAULT_CONTENT_TYPE = if (DEVELOPMENT) DEBUG_CONTENT_TYPE else ContentType.parse(System.getenv("KTOR_DEFAULT_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
         val FALLBACK_CONTENT_TYPE = ContentType.parse(System.getenv("KTOR_FALLBACK_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
-        val SUPPORTED_CONTENT_TYPES =  listOf(DEFAULT_CONTENT_TYPE, FALLBACK_CONTENT_TYPE).distinct()
+        val SUPPORTED_CONTENT_TYPES =  listOf(
+            DEFAULT_CONTENT_TYPE, // First is used as default
+            FALLBACK_CONTENT_TYPE // Second is used as fallback
+        ).distinct()
         @OptIn(ExperimentalSerializationApi::class)
         val SERIALIZATION_FORMAT = SUPPORTED_CONTENT_TYPES.first().let { contentType ->
             when (contentType) {
