@@ -1,7 +1,6 @@
 package ai.nest.api_gateway
 
 import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
-import ai.nest.api_gateway.plugins.configureAttributes
 import ai.nest.api_gateway.plugins.configureAuthentication
 import ai.nest.api_gateway.plugins.configureDependencyInjection
 import ai.nest.api_gateway.plugins.configureMonitoring
@@ -39,7 +38,6 @@ fun Application.module() {
 
     configureMonitoring()
     configureDependencyInjection()
-    configureAttributes(get())
     configureAuthentication()
     configureSerialization()
     configureWebSockets(get())
