@@ -1,7 +1,10 @@
 package ai.nest.api_gateway.di
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.UnsupportedContentTypeException
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.api.Send
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.DEFAULT
@@ -10,6 +13,8 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
@@ -49,8 +54,30 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     }
 
     defaultRequest {
-        contentType(attributes.contentType)
         url(attributes.apiHosts[attributes.apiKeyToRequestFrom])
+    }
+
+    val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
+        on(Send) { request ->
+            when (request.body) {
+                is OutgoingContent -> {
+                    try {
+                        pluginConfig.supportedContentTypes.firstNotNullOf {
+                            request.contentType(it)
+                            val call = proceed(request)
+                            if (call.response.status != HttpStatusCode.UnsupportedMediaType) call else null
+                        }
+                    } catch (e: NoSuchElementException) {
+                        throw UnsupportedContentTypeException(request.body as OutgoingContent)
+                    }
+                }
+                else -> proceed(request)
+            }
+        }
+    }
+
+    install(fallbackPlugin) {
+        supportedContentTypes = attributes.supportedContentTypes
     }
 
     install(ContentNegotiation) {
@@ -59,28 +86,37 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     }
 }
 
+class ContentTypeFallbackConfig {
+    var supportedContentTypes: List<ContentType> = emptyList()
+}
+
 var Attributes.developmentMode: Boolean
     get() = getOrNull(AttributeKey("developmentMode")) ?: false
     set(value) = put(AttributeKey("developmentMode"), value)
 
-var Attributes.defaultRequestContentType: String
-    get() = getOrNull(AttributeKey("defaultRequestContentType")) ?: ContentType.Application.Json.toString()
+var Attributes.defaultRequestContentType: ContentType
+    get() = getOrNull(AttributeKey("defaultRequestContentType")) ?: ContentType.Application.Json
     set(value) = put(AttributeKey("defaultRequestContentType"), value)
 
 val Attributes.contentType: ContentType
     get() = if (developmentMode) ContentType.Application.Json
-    else when (defaultRequestContentType) {
-        ContentType.Application.Json.toString() -> ContentType.Application.Json
-        ContentType.Application.ProtoBuf.toString() -> ContentType.Application.ProtoBuf
-        else -> ContentType.Application.Json
-    }
+    else defaultRequestContentType
+
+val Attributes.fallbackRequestContentType: ContentType
+    get() = ContentType.Application.Json
+
+/**
+ * Order matters! First is the default serialization we want to use
+ */
+val Attributes.supportedContentTypes: List<ContentType>
+    get() = listOf(defaultRequestContentType, fallbackRequestContentType).distinct()
 
 @OptIn(ExperimentalSerializationApi::class)
 val Attributes.serializationFormat: SerialFormat
     get() = if (developmentMode) Json
     else when (defaultRequestContentType) {
-        ContentType.Application.Json.toString() -> Json
-        ContentType.Application.ProtoBuf.toString() -> ProtoBuf
+        ContentType.Application.Json -> Json
+        ContentType.Application.ProtoBuf -> ProtoBuf
         else -> Json
     }
 
