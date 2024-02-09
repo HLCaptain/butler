@@ -66,7 +66,7 @@ inline fun <reified T> HttpClient.tryToExecuteWebSocket(
 ): StateFlow<T?> {
     val stateFlow = MutableStateFlow<T?>(null)
     attributes.apiKeyToRequestFrom = api.key
-    val host = attributes.apiHosts[api.key]
+    val host = apiHosts[api.key]
     launch(Dispatchers.IO) {
         webSocket(urlString = "ws://$host$path") {
             while (true) {
@@ -88,7 +88,7 @@ suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
     attributes: Attributes
 ) {
     attributes.apiKeyToRequestFrom = api.key
-    val host = attributes.apiHosts[api.key]
+    val host = apiHosts[api.key]
     webSocket(urlString = "ws://$host$path") {
         try {
             sendSerialized(data)
@@ -105,7 +105,7 @@ suspend inline fun <reified T> HttpClient.tryToSendAndReceiveWebSocketData(
     attributes: Attributes
 ) = flow {
     attributes.apiKeyToRequestFrom = api.key
-    val host = attributes.apiHosts[api.key]
+    val host = apiHosts[api.key]
     webSocket(urlString = "ws://$host$path") {
         sendSerialized(data)
         emit(receiveDeserialized<T>())
