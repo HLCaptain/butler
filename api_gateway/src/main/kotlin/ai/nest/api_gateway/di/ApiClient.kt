@@ -1,7 +1,6 @@
 package ai.nest.api_gateway.di
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.UnsupportedContentTypeException
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
@@ -62,13 +61,14 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
             when (request.body) {
                 is OutgoingContent -> {
                     try {
+                        if (pluginConfig.supportedContentTypes.isEmpty()) throw IllegalStateException("No supported content types.\nPlease add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
                         pluginConfig.supportedContentTypes.firstNotNullOf {
                             request.contentType(it)
                             val call = proceed(request)
                             if (call.response.status != HttpStatusCode.UnsupportedMediaType) call else null
                         }
                     } catch (e: NoSuchElementException) {
-                        throw UnsupportedContentTypeException(request.body as OutgoingContent)
+                        throw IllegalStateException("Server does not support any of the content types in the supportedContentTypes list configured in ContentTypeFallbackConfig.\nPlease add at least one server supported content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
                     }
                 }
                 else -> proceed(request)
@@ -87,8 +87,16 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
 }
 
 class ContentTypeFallbackConfig {
+    /**
+     * Order matters! First is the default serialization we want to use.
+     */
     var supportedContentTypes: List<ContentType> = emptyList()
 }
+
+// TODO: rework serialization methods
+//  DEBUG serialization: Should always be JSON
+//  PRODUCTION (default) serialization: Should be the defaultRequestContentType
+//  FALLBACK serialization: Should be a list of enabled serialization formats used only on the client side
 
 var Attributes.developmentMode: Boolean
     get() = getOrNull(AttributeKey("developmentMode")) ?: false
@@ -105,9 +113,6 @@ val Attributes.contentType: ContentType
 val Attributes.fallbackRequestContentType: ContentType
     get() = ContentType.Application.Json
 
-/**
- * Order matters! First is the default serialization we want to use
- */
 val Attributes.supportedContentTypes: List<ContentType>
     get() = listOf(defaultRequestContentType, fallbackRequestContentType).distinct()
 
@@ -136,12 +141,14 @@ fun <T> Attributes.decodeContent(deserializationStrategy: DeserializationStrateg
             else
                 throw IllegalArgumentException("Content is not a String")
         }
+
         is BinaryFormat -> {
             if (content is ByteArray)
                 (serializationFormat as BinaryFormat).decodeFromByteArray(deserializationStrategy, content)
             else
                 throw IllegalArgumentException("Content is not a ByteArray")
         }
+
         else -> {
             if (content is String)
                 Json.decodeFromString(deserializationStrategy, content)
