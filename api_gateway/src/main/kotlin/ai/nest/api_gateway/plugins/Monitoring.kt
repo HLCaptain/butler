@@ -31,7 +31,7 @@ fun Application.configureMonitoring() {
         .put(ResourceAttributes.SERVICE_NAME, BuildConfig.PROJECT_NAME)
         .put(ResourceAttributes.SERVICE_NAMESPACE, BuildConfig.PROJECT_GROUP)
         .put(ResourceAttributes.SERVICE_VERSION, BuildConfig.PROJECT_VERSION)
-        .put(ResourceAttributes.DEPLOYMENT_ENVIRONMENT, if (AppConfig.Ktor.DEVELOPMENT) "debug" else "prod")
+        .put(ResourceAttributes.DEPLOYMENT_ENVIRONMENT, AppConfig.DEPLOYMENT_ENVIRONMENT)
         .build()
 
     // Connecting to Jaeger

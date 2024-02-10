@@ -6,6 +6,13 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 
 data object AppConfig {
+    /**
+     * Deployment may be one of the following values:
+     *  - development
+     *  - staging
+     *  - production
+     */
+    val DEPLOYMENT_ENVIRONMENT = System.getenv("DEPLOYMENT_ENVIRONMENT") ?: "development"
     data object Ktor {
         val DEVELOPMENT = System.getenv("KTOR_DEVELOPMENT").toBoolean()
         val PORT = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8080
