@@ -22,6 +22,8 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.util.AttributeKey
 import io.ktor.util.Attributes
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.seconds
@@ -46,6 +48,10 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
         pingInterval = 5.seconds.inWholeMilliseconds
     }
 
+    install(KtorClientTracing) {
+        setOpenTelemetry(GlobalOpenTelemetry.get())
+    }
+
     defaultRequest {
         url(apiHosts[attributes.apiKeyToRequestFrom])
     }
@@ -55,14 +61,14 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
             when (request.body) {
                 is OutgoingContent -> {
                     try {
-                        if (pluginConfig.supportedContentTypes.isEmpty()) throw IllegalStateException("No supported content types.\nPlease add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
+                        if (pluginConfig.supportedContentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
                         pluginConfig.supportedContentTypes.firstNotNullOf {
                             request.contentType(it)
                             val call = proceed(request)
                             if (call.response.status != HttpStatusCode.UnsupportedMediaType) call else null
                         }
                     } catch (e: NoSuchElementException) {
-                        throw IllegalStateException("Server does not support any of the content types in the supportedContentTypes list configured in ContentTypeFallbackConfig.\nPlease add at least one server supported content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
+                        throw IllegalStateException("Server does not support any of the content types in the supportedContentTypes list configured in ContentTypeFallbackConfig. Please add at least one server supported content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
                     }
                 }
                 else -> proceed(request)
@@ -89,8 +95,7 @@ class ContentTypeFallbackConfig {
 
 // TODO: add fallback to WebSocket serialization
 
-val apiHosts: Map<String, String>
-    get() = APIs.entries.associate { it.key to it.url }
+val apiHosts by lazy { APIs.entries.associate { it.key to it.url } }
 
 var Attributes.apiKeyToRequestFrom: String
     get() = get(AttributeKey("apiKey"))

@@ -38,7 +38,6 @@ dependencies {
     implementation(libs.ktor.server.netty)
     testImplementation(libs.ktor.server.tests)
     testImplementation(libs.kotlin.test.junit)
-    implementation(libs.ktor.server.config.yaml)
     implementation(libs.logback.classic)
 
     // Koin DI
@@ -66,6 +65,16 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.kotlinx.datetime)
+
+    // OpenTelemetry
+    implementation(libs.opentelemetry.api)
+    implementation(libs.opentelemetry.sdk)
+    implementation(libs.opentelemetry.exporter.otlp)
+    implementation(libs.opentelemetry.exporter.prometheus)
+    implementation(libs.opentelemetry.trace)
+    implementation(libs.opentelemetry.autoconfigure)
+    implementation(libs.opentelemetry.ktor)
+    implementation(libs.opentelemetry.instrumentation.annotations)
 }
 
 ksp {
