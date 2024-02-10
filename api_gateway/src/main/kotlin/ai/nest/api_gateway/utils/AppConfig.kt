@@ -37,4 +37,7 @@ data object AppConfig {
         val NOTIFICATION_API_URL = System.getenv("NOTIFICATION_API_URL") ?: "http://localhost:8083"
         val LOCALIZATION_API_URL = System.getenv("LOCALIZATION_API_URL") ?: "http://localhost:8084"
     }
+    data object Telemetry {
+        val OTLP_EXPORTER_ENDPOINT = System.getenv("OTLP_EXPORTER_ENDPOINT") ?: "http://localhost:4317"
+    }
 }

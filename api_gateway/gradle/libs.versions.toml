@@ -42,8 +42,8 @@ ktor-server-websockets = { module = "io.ktor:ktor-server-websockets-jvm", versio
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version = "1.34.1" }
 opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version = "1.34.1" }
-opentelemetry-exporter-otlp = { module = "io.opentelemetry.exporter:opentelemetry-exporter-otlp", version = "1.34.1" }
-opentelemetry-exporter-prometheus = { module = "io.opentelemetry.exporter:opentelemetry-exporter-prometheus", version = "1.34.1" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version = "1.34.1" }
+opentelemetry-exporter-prometheus = { module = "io.opentelemetry:opentelemetry-exporter-prometheus", version = "1.34.1-alpha" }
 opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.34.1" }
 opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.34.1" }
 opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0", version = "2.0.0-alpha" }
@@ -54,3 +54,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "4.1.2" }

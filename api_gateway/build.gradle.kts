@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ktor)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.buildconfig)
     application
 }
 
@@ -17,6 +18,12 @@ ktor {
     fatJar {
         archiveFileName = "api_gateway.jar"
     }
+}
+
+buildConfig {
+    buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
+    buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")
+    buildConfigField("String", "PROJECT_GROUP", "\"$group\"")
 }
 
 repositories {
