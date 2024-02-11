@@ -1,0 +1,23 @@
+CREATE TABLE ${NAME} (
+    uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
+    ownerUUID TEXT NOT NULL
+);
+
+select:
+SELECT * FROM ${NAME} WHERE uuid = ?;
+
+selectByOwner:
+SELECT * FROM ${NAME} WHERE ownerUUID = ?;
+
+upsert:
+INSERT OR REPLACE INTO ${NAME}
+VALUES ?;
+
+delete:
+DELETE FROM ${NAME} WHERE uuid = ?;
+
+deleteByOwner:
+DELETE FROM ${NAME} WHERE ownerUUID = ?;
+
+deleteAll:
+DELETE FROM ${NAME};
