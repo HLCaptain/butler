@@ -1,4 +1,5 @@
-import androidx.compose.ui.window.Window
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.window.CanvasBasedWindow
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.initialize
 import illyan.butler.App
@@ -8,6 +9,7 @@ import org.jetbrains.skiko.wasm.onWasmReady
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.defaultModule
 
+@OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     initNapier()
     startKoin { defaultModule() }
@@ -18,7 +20,7 @@ fun main() {
     )
 
     onWasmReady {
-        Window("demo") {
+        CanvasBasedWindow("Butler App") {
             App()
         }
     }

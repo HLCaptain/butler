@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "illyan"
-version = "0.1.3-alpha"
+version = libs.versions.butler.get()
 
 kotlin {
     jvmToolchain(17)
@@ -136,7 +136,7 @@ android {
     defaultConfig {
         minSdk = 26
     }
-    version = project.version.toString()
+    version = libs.versions.butler.get()
 }
 
 sqldelight {

@@ -9,7 +9,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = "Butler Client App"
+rootProject.name = "ButlerClientApp"
 
 include(":android")
 include(":desktop")
