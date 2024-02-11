@@ -3,9 +3,7 @@ package ai.nest.api_gateway.endpoints
 import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
 import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
 import ai.nest.api_gateway.data.service.IdentityService
-import ai.nest.api_gateway.data.service.LocalizationService
 import ai.nest.api_gateway.data.service.NotificationService
-import ai.nest.api_gateway.endpoints.utils.LabelKeys
 import ai.nest.api_gateway.endpoints.utils.extractApplicationIdHeader
 import ai.nest.api_gateway.endpoints.utils.extractLocaleHeader
 import ai.nest.api_gateway.endpoints.utils.respondWithError
@@ -28,15 +26,13 @@ import org.koin.ktor.ext.inject
 fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
     val identityService: IdentityService by inject()
     val notificationService: NotificationService by inject()
-    val localizationService: LocalizationService by inject()
 
     post("/signup") {
         val newUser = call.receive<UserRegistrationDto>()
         val locale = extractLocaleHeader()
 
         val result = identityService.createUser(newUser, locale)
-        val successMessage = localizationService.getLocalizedMessage(LabelKeys.USER_CREATED_SUCCESSFULLY, locale)
-        respondWithResult(HttpStatusCode.Created, result, successMessage)
+        respondWithResult(HttpStatusCode.Created, result)
     }
 
     withRoles(Role.END_USER) {
