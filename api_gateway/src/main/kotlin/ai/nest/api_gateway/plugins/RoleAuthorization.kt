@@ -10,8 +10,8 @@ import io.ktor.server.auth.principal
 import io.ktor.server.response.respond
 
 class RoleBaseConfiguration {
-    val requiredRoles = mutableSetOf<Role>()
-    fun roles(roles: Set<Role>) {
+    val requiredRoles = mutableSetOf<Int>()
+    fun roles(roles: Set<Int>) {
         requiredRoles.addAll(roles)
     }
 }

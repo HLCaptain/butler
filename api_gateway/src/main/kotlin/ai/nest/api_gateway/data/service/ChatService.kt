@@ -4,77 +4,50 @@ import ai.nest.api_gateway.data.model.chat.ChatDto
 import ai.nest.api_gateway.data.model.chat.MessageDto
 import ai.nest.api_gateway.data.model.chat.TicketDto
 import ai.nest.api_gateway.data.model.response.PaginationResponse
+import ai.nest.api_gateway.data.utils.bodyOrThrow
 import ai.nest.api_gateway.data.utils.getLastMonthDate
 import ai.nest.api_gateway.data.utils.getLastWeekDate
-import ai.nest.api_gateway.data.utils.tryToExecute
 import ai.nest.api_gateway.data.utils.tryToExecuteWebSocket
 import ai.nest.api_gateway.data.utils.tryToSendAndReceiveWebSocketData
 import ai.nest.api_gateway.data.utils.tryToSendWebSocketData
-import ai.nest.api_gateway.utils.APIs
+import ai.nest.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
-import io.ktor.util.Attributes
-import java.util.Locale
+import io.ktor.http.isSuccess
 import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
-class ChatService(
-    private val client: HttpClient,
-    private val attributes: Attributes,
-    private val localizationService: LocalizationService
-) {
+class ChatService(private val client: HttpClient) {
     suspend fun createTicket(
         ticket: TicketDto,
-        locale: Locale
-    ) = client.tryToExecute<TicketDto>(
-        api = APIs.CHAT_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        post("/chat/ticket") {
-            setBody(ticket)
-        }
-    }
+    ) = client.post("${AppConfig.Api.CHAT_API_URL}/chat/ticket") {
+        setBody(ticket)
+    }.bodyOrThrow<TicketDto>()
 
     suspend fun updateTicketState(
         ticketId: String,
         state: Boolean,
-        locale: Locale
-    ) = client.tryToExecute<Boolean>(
-        api = APIs.CHAT_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        put("/chat/$ticketId") {
-            parameter("state", state)
-        }
-    }
+    ) = client.put("${AppConfig.Api.CHAT_API_URL}/chat/$ticketId") {
+        parameter("state", state)
+    }.status.isSuccess()
 
-    suspend fun receiveTicket(supportId: String) = client.tryToExecuteWebSocket<TicketDto>(
-        api = APIs.CHAT_API,
-        attributes = attributes,
-        path = "/chat/tickets/$supportId"
-    )
+    fun receiveTicket(supportId: String) =
+        client.tryToExecuteWebSocket<TicketDto>("${AppConfig.Api.CHAT_API_URL}/chat/tickets/$supportId")
 
-    suspend fun receiveChatMessages(chatId: String) = client.tryToExecuteWebSocket<MessageDto>(
-        api = APIs.CHAT_API,
-        attributes = attributes,
-        path = "/chat/$chatId"
-    )
+    fun receiveChatMessages(chatId: String) =
+        client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/chat/$chatId")
 
     suspend fun sendChatMessage(
         message: MessageDto,
         chatId: String
     ) = client.tryToSendWebSocketData(
         data = message,
-        api = APIs.CHAT_API,
-        attributes = attributes,
-        path = "/chat/$chatId"
+        path = "${AppConfig.Api.CHAT_API_URL}/chat/$chatId"
     )
 
     suspend fun sendAndReceiveMessage(
@@ -82,9 +55,7 @@ class ChatService(
         chatId: String
     ) = client.tryToSendAndReceiveWebSocketData(
         data = message,
-        api = APIs.CHAT_API,
-        attributes = attributes,
-        path = "/chat/$chatId"
+        path = "${AppConfig.Api.CHAT_API_URL}/chat/$chatId"
     )
 
     /**
@@ -96,65 +67,40 @@ class ChatService(
         userId: String,
         fromDate: Long,
         toDate: Long = Clock.System.now().toEpochMilliseconds(),
-        locale: Locale
-    ) = client.tryToExecute<List<ChatDto>>(
-        APIs.CHAT_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("/chat/history/$userId") {
-            parameter("fromDate", fromDate)
-            parameter("toDate", toDate)
-        }
-    }
+    ) = client.get("${AppConfig.Api.CHAT_API_URL}/chat/history/$userId") {
+        parameter("fromDate", fromDate)
+        parameter("toDate", toDate)
+    }.bodyOrThrow<List<ChatDto>>()
 
     suspend fun getUserChatHistoryLastMonth(
         userId: String,
-        locale: Locale
     ) = getUserChatHistoryByDate(
         userId = userId,
         fromDate = getLastMonthDate().toEpochMilliseconds(),
-        locale = locale
     )
 
     suspend fun getUserChatHistoryLastWeek(
         userId: String,
-        locale: Locale
     ) = getUserChatHistoryByDate(
         userId = userId,
         fromDate = getLastWeekDate().toEpochMilliseconds(),
-        locale = locale
     )
 
     suspend fun getUserChatHistory(
         userId: String,
         page: Int,
         limit: Int,
-        locale: Locale
-    ) = client.tryToExecute<PaginationResponse<ChatDto>>(
-        APIs.CHAT_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("/chat/history/$userId") {
-            parameter("page", page)
-            parameter("limit", limit)
-        }
-    }
+    ) = client.get("${AppConfig.Api.CHAT_API_URL}/chat/history/$userId") {
+        parameter("page", page)
+        parameter("limit", limit)
+    }.bodyOrThrow<PaginationResponse<ChatDto>>()
 
     suspend fun getPreviousChatMessages(
         chatId: String,
         untilDate: Long,
         limit: Int,
-        locale: Locale
-    ) = client.tryToExecute<List<MessageDto>>(
-        APIs.CHAT_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("/chat/$chatId") {
-            parameter("untilDate", untilDate)
-            parameter("limit", limit)
-        }
-    }
+    ) = client.get("${AppConfig.Api.CHAT_API_URL}/chat/$chatId") {
+        parameter("untilDate", untilDate)
+        parameter("limit", limit)
+    }.bodyOrThrow<List<MessageDto>>()
 }

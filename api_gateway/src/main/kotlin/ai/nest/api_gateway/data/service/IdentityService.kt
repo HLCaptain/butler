@@ -11,7 +11,7 @@ import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
 import ai.nest.api_gateway.data.model.response.PaginationResponse
 import ai.nest.api_gateway.data.model.response.UserTokensResponse
 import ai.nest.api_gateway.data.utils.tryToExecute
-import ai.nest.api_gateway.utils.APIs
+import ai.nest.api_gateway.utils.AppConfig
 import ai.nest.api_gateway.utils.Claim.PERMISSION
 import ai.nest.api_gateway.utils.Claim.TOKEN_TYPE
 import ai.nest.api_gateway.utils.Claim.USERNAME
@@ -30,7 +30,6 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
-import io.ktor.util.Attributes
 import java.util.Locale
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
@@ -39,18 +38,9 @@ import org.koin.core.annotation.Single
 @Single
 class IdentityService(
     private val client: HttpClient,
-    private val attributes: Attributes,
-    private val localizationService: LocalizationService
 ) {
-    suspend fun createUser(
-        newUser: UserRegistrationDto,
-        locale: Locale
-    ) = client.tryToExecute<UserDetailsDto>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        post("/user") {
+    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<UserDetailsDto> {
+        post("${AppConfig.Api.IDENTITY_API_URL}/user") {
             setBody(newUser)
         }
     }
@@ -59,15 +49,10 @@ class IdentityService(
         userName: String,
         password: String,
         tokenConfiguration: TokenConfiguration,
-        locale: Locale,
         applicationId: String
     ): UserTokensResponse {
-        client.tryToExecute<Boolean>(
-            api = APIs.IDENTITY_API,
-            attributes = attributes,
-            setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-        ) {
-            post("/user/login") {
+        client.tryToExecute<Boolean> {
+            post("${AppConfig.Api.IDENTITY_API_URL}/user/login") {
                 headers.append(HttpHeaders.UserAgent, applicationId)
                 formData {
                     parameter("username", userName)
@@ -75,148 +60,74 @@ class IdentityService(
                 }
             }
         }
-        val user = getUserByUsername(username = userName, locale)
+        val user = getUserByUsername(userName)
         return generateUserTokens(user.id, userName, user.permission.first { it == Role.END_USER }, tokenConfiguration)
     }
 
-    suspend fun getUsers(
-        options: UserOptions,
-        locale: Locale
-    ) = client.tryToExecute<PaginationResponse<UserDto>>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        post("/dashboard/user") {
+    suspend fun getUsers(options: UserOptions) = client.tryToExecute<PaginationResponse<UserDto>> {
+        post("${AppConfig.Api.IDENTITY_API_URL}/dashboard/user") {
             setBody(options)
         }
     }
 
-    suspend fun getLastRegisteredUsers(limit: Int) = client.tryToExecute<List<UserDto>>(
-        APIs.IDENTITY_API,
-        attributes = attributes
-    ) {
-        get("/dashboard/user/last-register") {
+    suspend fun getLastRegisteredUsers(limit: Int) = client.tryToExecute<List<UserDto>> {
+        get("${AppConfig.Api.IDENTITY_API_URL}/dashboard/user/last-register") {
             parameter("limit", limit)
         }
     }
 
-    suspend fun getUserAddresses(
-        userId: String,
-        locale: Locale
-    ) = client.tryToExecute<List<AddressDto>>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("/user/$userId/address")
+    suspend fun getUserAddresses(userId: String) = client.tryToExecute<List<AddressDto>> {
+        get("${AppConfig.Api.IDENTITY_API_URL}/user/$userId/address")
     }
 
-    suspend fun getUserById(
-        id: String,
-        locale: Locale
-    ) = client.tryToExecute<UserDetailsDto>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("user/$id")
+    suspend fun getUserById(id: String) = client.tryToExecute<UserDetailsDto> {
+        get("${AppConfig.Api.IDENTITY_API_URL}/user/$id")
     }
 
     suspend fun updateUserProfile(
         id: String,
         fullName: String?,
         phone: String?,
-        locale: Locale
-    ) = client.tryToExecute<UserDetailsDto>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
+    ) = client.tryToExecute<UserDetailsDto> {
         val formData = FormDataContent(
             Parameters.build {
                 fullName?.let { append("fullName", it) }
                 phone?.let { append("phone", it) }
             }
         )
-        put("/user/$id") { setBody(formData) }
+        put("${AppConfig.Api.IDENTITY_API_URL}/user/$id") { setBody(formData) }
     }
 
-    suspend fun getUserByUsername(
-        username: String?,
-        locale: Locale
-    ) = client.tryToExecute<UserDto>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("user/get-user") {
+    suspend fun getUserByUsername(username: String?) = client.tryToExecute<UserDto> {
+        get("${AppConfig.Api.IDENTITY_API_URL}/user/get-user") {
             parameter("username", username)
         }
     }
 
-    suspend fun updateUserPermission(
-        userId: String,
-        permission: Set<Role>,
-        locale: Locale
-    ) = client.tryToExecute<UserDto>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        put("/dashboard/user/$userId/permission") {
+    suspend fun updateUserPermission(userId: String, permission: Set<Int>) = client.tryToExecute<UserDto> {
+        put("${AppConfig.Api.IDENTITY_API_URL}/dashboard/user/$userId/permission") {
             setBody(permission)
         }
     }
 
-    suspend fun deleteUser(
-        userId: String,
-        locale: Locale
-    ) = client.tryToExecute<Boolean>(
-        api = APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        delete("/user/$userId")
+    suspend fun deleteUser(userId: String) = client.tryToExecute<Boolean> {
+        delete("${AppConfig.Api.IDENTITY_API_URL}/user/$userId")
     }
 
-    suspend fun getFavoriteRestaurantsIds(
-        userId: String,
-        locale: Locale
-    ) = client.tryToExecute<List<String>>(
-        api = APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("/user/$userId/favorite")
+    suspend fun getFavoriteRestaurantsIds(userId: String) = client.tryToExecute<List<String>> {
+        get("${AppConfig.Api.IDENTITY_API_URL}/user/$userId/favorite")
     }
 
-    suspend fun addRestaurantToFavorite(
-        userId: String,
-        restaurantId: String,
-        locale: Locale
-    ) = client.tryToExecute<Boolean>(
-        api = APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        post("/user/$userId/favorite") {
+    suspend fun addRestaurantToFavorite(userId: String, restaurantId: String) = client.tryToExecute<Boolean> {
+        post("${AppConfig.Api.IDENTITY_API_URL}/user/$userId/favorite") {
             formData {
                 parameter("restaurantId", restaurantId)
             }
         }
     }
 
-    suspend fun deleteRestaurantFromFavorite(
-        userId: String,
-        restaurantId: String,
-        locale: Locale
-    ) = client.tryToExecute<Boolean>(
-        api = APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        delete("/user/$userId/favorite") {
+    suspend fun deleteRestaurantFromFavorite(userId: String, restaurantId: String) = client.tryToExecute<Boolean> {
+        delete("${AppConfig.Api.IDENTITY_API_URL}/user/$userId/favorite") {
             formData {
                 parameter("restaurantId", restaurantId)
             }
@@ -226,7 +137,7 @@ class IdentityService(
     fun generateUserTokens(
         userId: String,
         username: String,
-        userPermission: Role,
+        userPermission: Int,
         tokenConfiguration: TokenConfiguration
     ) = UserTokensResponse(
         Clock.System.now() + tokenConfiguration.accessTokenExpireDuration,
@@ -237,7 +148,7 @@ class IdentityService(
     private fun generateToken(
         userId: String,
         username: String,
-        userPermission: Role,
+        userPermission: Int,
         tokenConfiguration: TokenConfiguration,
         tokenType: TokenType
     ) = JWT.create()
@@ -254,12 +165,8 @@ class IdentityService(
         userId: String,
         location: LocationDto,
         locale: Locale
-    ) = client.tryToExecute<AddressDto>(
-        api = APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        post("/user/$userId/address/location") {
+    ) = client.tryToExecute<AddressDto> {
+        post("${AppConfig.Api.IDENTITY_API_URL}/user/$userId/address/location") {
             setBody(location)
         }
     }
@@ -267,18 +174,11 @@ class IdentityService(
     suspend fun isUserExistedInDb(
         userId: String?,
         locale: Locale
-    ) = client.tryToExecute<Boolean>(
-        APIs.IDENTITY_API,
-        attributes = attributes,
-        setErrorMessage = { localizationService.getLocalizedMessages(it, locale) }
-    ) {
-        get("user/isExisted/$userId")
+    ) = client.tryToExecute<Boolean> {
+        get("${AppConfig.Api.IDENTITY_API_URL}/user/isExisted/$userId")
     }
 
-    suspend fun clearIdentityDB() = client.tryToExecute<Boolean>(
-        APIs.IDENTITY_API,
-        attributes = attributes
-    ) {
-        delete("/collection")
+    suspend fun clearIdentityDB() = client.tryToExecute<Boolean> {
+        delete("${AppConfig.Api.IDENTITY_API_URL}/collection")
     }
 }

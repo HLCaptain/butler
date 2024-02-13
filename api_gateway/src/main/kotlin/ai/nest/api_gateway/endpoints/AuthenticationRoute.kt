@@ -5,7 +5,6 @@ import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
 import ai.nest.api_gateway.data.service.IdentityService
 import ai.nest.api_gateway.data.service.NotificationService
 import ai.nest.api_gateway.endpoints.utils.extractApplicationIdHeader
-import ai.nest.api_gateway.endpoints.utils.extractLocaleHeader
 import ai.nest.api_gateway.endpoints.utils.respondWithError
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
 import ai.nest.api_gateway.endpoints.utils.withRoles
@@ -29,9 +28,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
 
     post("/signup") {
         val newUser = call.receive<UserRegistrationDto>()
-        val locale = extractLocaleHeader()
-
-        val result = identityService.createUser(newUser, locale)
+        val result = identityService.createUser(newUser)
         respondWithResult(HttpStatusCode.Created, result)
     }
 
@@ -41,16 +38,15 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
             val password = call.parameters["password"]?.trim().toString()
             val deviceToken = call.parameters["token"]?.trim()
 
-            val language = extractLocaleHeader()
             val appId = extractApplicationIdHeader()
-            val token = async { identityService.loginUser(userName, password, tokenConfiguration, language, appId) }.await()
+            val token = async { identityService.loginUser(userName, password, tokenConfiguration, appId) }.await()
 
             respondWithResult(HttpStatusCode.OK, token)
 
             if (!deviceToken.isNullOrBlank()) {
                 val jwt = JWT.decode(token.accessToken)
                 val userId = jwt.getClaim(Claim.USER_ID).asString()
-                notificationService.saveToken(userId, deviceToken, language)
+                notificationService.saveToken(userId, deviceToken)
             }
         }
 
@@ -64,7 +60,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
             val tokenClaim = call.principal<JWTPrincipal>()
             val userId = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
             val username = tokenClaim?.payload?.getClaim(Claim.USERNAME).toString()
-            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.`as`(Role::class.java)
+            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.asInt()
             if (userPermission != null) {
                 val token = identityService.generateUserTokens(userId, username, userPermission, tokenConfiguration)
                 respondWithResult(HttpStatusCode.Created, token)

@@ -1,12 +1,8 @@
 package ai.nest.api_gateway.data.utils
 
 import ai.nest.api_gateway.data.model.identity.UserOptions
-import ai.nest.api_gateway.data.model.localization.LabelDto
-import ai.nest.api_gateway.di.apiHosts
-import ai.nest.api_gateway.di.apiKeyToRequestFrom
 import ai.nest.api_gateway.endpoints.utils.toListOfIntOrNull
 import ai.nest.api_gateway.endpoints.utils.toListOfStringOrNull
-import ai.nest.api_gateway.utils.APIs
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
@@ -15,14 +11,11 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
-import io.ktor.util.Attributes
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -33,42 +26,30 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.days
 
 suspend inline fun <reified T> HttpClient.tryToExecute(
-    api: APIs,
-    attributes: Attributes,
-    noinline setErrorMessage: (errorCodes: List<String>) -> Flow<List<LabelDto>> = { flowOf(emptyList()) },
     method: HttpClient.() -> HttpResponse
 ): T {
-    attributes.apiKeyToRequestFrom = api.key
     val response = method()
     if (response.status.isSuccess()) {
         return response.body<T>()
     } else {
-//        val errorResponse = response.body<List<String>>()
-//        val errorMessages = setErrorMessage(errorResponse).first()
-//        throw LocalizedMessageException(errorMessages)
-//        throw response.getLocalizedException(setErrorMessage)
         throw ApiException(response.status.value)
     }
 }
 
-//suspend fun HttpResponse.getLocalizedException(
-//    getErrorMessages: (errorCodes: List<String>) -> Flow<List<LabelDto>>
-//): LocalizedMessageException {
-//    val errorResponse = body<List<String>>()
-//    val errorMessages = getErrorMessages(errorResponse).first()
-//    return LocalizedMessageException(errorMessages)
-//}
+suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
+    if (status.isSuccess()) {
+        return body()
+    } else {
+        throw ApiException(status.value)
+    }
+}
 
 inline fun <reified T> HttpClient.tryToExecuteWebSocket(
-    api: APIs,
     path: String,
-    attributes: Attributes
 ): StateFlow<T?> {
     val stateFlow = MutableStateFlow<T?>(null)
-    attributes.apiKeyToRequestFrom = api.key
-    val host = apiHosts[api.key]
     launch(Dispatchers.IO) {
-        webSocket(urlString = "ws://$host$path") {
+        webSocket(urlString = "ws://$path") {
             while (true) {
                 try {
                     stateFlow.update { receiveDeserialized<T>() }
@@ -83,13 +64,9 @@ inline fun <reified T> HttpClient.tryToExecuteWebSocket(
 
 suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
     data: T,
-    api: APIs,
-    path: String,
-    attributes: Attributes
+    path: String
 ) {
-    attributes.apiKeyToRequestFrom = api.key
-    val host = apiHosts[api.key]
-    webSocket(urlString = "ws://$host$path") {
+    webSocket(urlString = "ws://$path") {
         try {
             sendSerialized(data)
         } catch (e: Exception) {
@@ -100,13 +77,9 @@ suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
 
 suspend inline fun <reified T> HttpClient.tryToSendAndReceiveWebSocketData(
     data: T,
-    api: APIs,
-    path: String,
-    attributes: Attributes
+    path: String
 ) = flow {
-    attributes.apiKeyToRequestFrom = api.key
-    val host = apiHosts[api.key]
-    webSocket(urlString = "ws://$host$path") {
+    webSocket(urlString = "ws://$path") {
         sendSerialized(data)
         emit(receiveDeserialized<T>())
     }

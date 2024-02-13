@@ -3,7 +3,6 @@ package ai.nest.api_gateway.endpoints.utils
 import ai.nest.api_gateway.data.model.response.ServerResponse
 import ai.nest.api_gateway.plugins.RoleAuthorizationPlugin
 import ai.nest.api_gateway.utils.Claim
-import ai.nest.api_gateway.utils.Role
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
@@ -56,7 +55,7 @@ private fun PipelineContext<Unit, ApplicationCall>.extractPermission(): Int {
     return principal?.getClaim(Claim.PERMISSION, Int::class) ?: -1
 }
 
-fun Route.withRoles(vararg roles: Role, build: Route.() -> Unit) {
+fun Route.withRoles(vararg roles: Int, build: Route.() -> Unit) {
     // Creating a child route to avoid installing the same plugin twice on a route
     val route = createChild(object : RouteSelector() {
         override fun evaluate(

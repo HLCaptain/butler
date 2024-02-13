@@ -7,7 +7,6 @@ import ai.nest.api_gateway.data.service.ChatService
 import ai.nest.api_gateway.endpoints.utils.ChatSocketHandler
 import ai.nest.api_gateway.endpoints.utils.Connection
 import ai.nest.api_gateway.endpoints.utils.WebSocketServerHandler
-import ai.nest.api_gateway.endpoints.utils.extractLocaleHeader
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
 import ai.nest.api_gateway.endpoints.utils.withRoles
 import ai.nest.api_gateway.utils.Role
@@ -33,9 +32,8 @@ fun Route.chatRoute() {
     route("/chat") {
         withRoles(Role.END_USER) {
             post("/ticket") {
-                val language = extractLocaleHeader()
                 val ticket = call.receive<TicketDto>()
-                val result = chatService.createTicket(ticket, language)
+                val result = chatService.createTicket(ticket)
                 respondWithResult(HttpStatusCode.Created, result)
             }
             post("/{chatId}") {
@@ -59,8 +57,7 @@ fun Route.chatRoute() {
             put("/{ticketId}") {
                 val ticketId = call.parameters["ticketId"]?.trim().orEmpty()
                 val state = call.parameters["state"].toBoolean()
-                val language = extractLocaleHeader()
-                val result = chatService.updateTicketState(ticketId, state, language)
+                val result = chatService.updateTicketState(ticketId, state)
                 respondWithResult(HttpStatusCode.OK, result)
             }
 

@@ -24,13 +24,14 @@ data object AppConfig {
             FALLBACK_CONTENT_TYPE // Second is used as fallback
         ).distinct()
         @OptIn(ExperimentalSerializationApi::class)
-        val SERIALIZATION_FORMAT = SUPPORTED_CONTENT_TYPES.first().let { contentType ->
+        val SERIALIZATION_FORMATS = SUPPORTED_CONTENT_TYPES.map { contentType ->
             when (contentType) {
                 ContentType.Application.Json -> Json
                 ContentType.Application.ProtoBuf -> ProtoBuf
                 else -> Json
             }
-        }
+        }.distinct()
+        val SERIALIZATION_FORMAT = SERIALIZATION_FORMATS.first()
     }
     data object Jwt {
         val SECRET = System.getenv("JWT_SECRET") ?: "your_jwt_secret"

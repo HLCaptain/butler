@@ -1,6 +1,5 @@
 package ai.nest.api_gateway.di
 
-import ai.nest.api_gateway.utils.APIs
 import ai.nest.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -20,7 +19,6 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
-import io.ktor.util.AttributeKey
 import io.ktor.util.Attributes
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
@@ -53,7 +51,7 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
     }
 
     defaultRequest {
-        url(apiHosts[attributes.apiKeyToRequestFrom])
+
     }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
@@ -94,9 +92,3 @@ class ContentTypeFallbackConfig {
 }
 
 // TODO: add fallback to WebSocket serialization
-
-val apiHosts by lazy { APIs.entries.associate { it.key to it.url } }
-
-var Attributes.apiKeyToRequestFrom: String
-    get() = get(AttributeKey("apiKey"))
-    set(value) = put(AttributeKey("apiKey"), value)
