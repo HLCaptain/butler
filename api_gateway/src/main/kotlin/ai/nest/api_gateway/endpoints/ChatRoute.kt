@@ -87,7 +87,7 @@ fun Route.chatRoute() {
                     val receiveMessage = receiveDeserialized<MessageDto>()
                     chatService.sendAndReceiveMessage(receiveMessage, ticketId).collectLatest { message ->
                         chatSocketHandler.connections[ticketId]?.forEach {
-                            it.session.sendSerialized(ServerResponse.success(message, null))
+                            it.session.sendSerialized(ServerResponse.success(message))
                         }
                     }
                 }

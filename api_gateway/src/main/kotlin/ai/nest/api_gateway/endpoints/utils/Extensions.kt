@@ -1,6 +1,5 @@
 package ai.nest.api_gateway.endpoints.utils
 
-import ai.nest.api_gateway.data.model.localization.LabelDto
 import ai.nest.api_gateway.data.model.response.ServerResponse
 import ai.nest.api_gateway.plugins.RoleAuthorizationPlugin
 import ai.nest.api_gateway.utils.Claim
@@ -25,17 +24,16 @@ import java.util.Locale
 suspend inline fun <reified T> PipelineContext<Unit, ApplicationCall>.respondWithResult(
     statusCode: HttpStatusCode,
     result: T,
-    message: String? = null
 ) {
-    call.respond(statusCode, ServerResponse.success(result, message))
+    call.respond(statusCode, ServerResponse.success(result))
 }
 
 suspend fun respondWithError(
     call: ApplicationCall,
     statusCode: HttpStatusCode,
-    errorMessage: List<LabelDto>? = null
+    errorCodes: List<Int>? = null
 ) {
-    call.respond(statusCode, ServerResponse.error(errorMessage, statusCode))
+    call.respond(statusCode, ServerResponse.error(errorCodes, statusCode))
 }
 
 fun PipelineContext<Unit, ApplicationCall>.extractLocaleHeader(): Locale {

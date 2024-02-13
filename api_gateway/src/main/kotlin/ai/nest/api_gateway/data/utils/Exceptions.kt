@@ -1,7 +1,9 @@
 package ai.nest.api_gateway.data.utils
 
-import ai.nest.api_gateway.data.model.localization.LabelDto
+import ai.nest.api_gateway.endpoints.utils.errorMessages
 
-open class ApiGatewayException(message: String) : Throwable(message)
+open class ApiException(val errorCodes: List<Int>) : Throwable(errorCodes.joinToString { errorMessages[it] ?: "" }) {
+    constructor(errorCode: Int) : this(listOf(errorCode))
+}
 
-class LocalizedMessageException(val errorMessages: List<LabelDto>) : ApiGatewayException(errorMessages.toString())
+open class ApiGatewayException(errorCodes: List<Int>) : ApiException(errorCodes)

@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ResponseStatus(
-    val errorMessages: List<LabelDto>? = null, // map of error codes and messages
-    val successMessage: String? = null,
+    val errorCodes: List<Int>? = null, // map of error codes and messages
     val httpStatusCode: Int? // http status code
 )

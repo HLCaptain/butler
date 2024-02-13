@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -47,17 +46,18 @@ suspend inline fun <reified T> HttpClient.tryToExecute(
 //        val errorResponse = response.body<List<String>>()
 //        val errorMessages = setErrorMessage(errorResponse).first()
 //        throw LocalizedMessageException(errorMessages)
-        throw response.getLocalizedException(setErrorMessage)
+//        throw response.getLocalizedException(setErrorMessage)
+        throw ApiException(response.status.value)
     }
 }
 
-suspend fun HttpResponse.getLocalizedException(
-    getErrorMessages: (errorCodes: List<String>) -> Flow<List<LabelDto>>
-): LocalizedMessageException {
-    val errorResponse = body<List<String>>()
-    val errorMessages = getErrorMessages(errorResponse).first()
-    return LocalizedMessageException(errorMessages)
-}
+//suspend fun HttpResponse.getLocalizedException(
+//    getErrorMessages: (errorCodes: List<String>) -> Flow<List<LabelDto>>
+//): LocalizedMessageException {
+//    val errorResponse = body<List<String>>()
+//    val errorMessages = getErrorMessages(errorResponse).first()
+//    return LocalizedMessageException(errorMessages)
+//}
 
 inline fun <reified T> HttpClient.tryToExecuteWebSocket(
     api: APIs,
