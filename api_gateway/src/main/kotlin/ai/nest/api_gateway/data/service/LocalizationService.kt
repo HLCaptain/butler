@@ -27,7 +27,6 @@ class LocalizationService(private val client: HttpClient) {
             val localizationFlow = getLocalization(locale)
             cachedLocalizedMessages[locale] = localizationFlow
         } catch (e: Exception) {
-            // TODO: log error with OpenTelemetry or Napier
             val defaultLocalizationFlow = getDefaultLocalization()
             cachedLocalizedMessages[locale] = defaultLocalizationFlow
         }

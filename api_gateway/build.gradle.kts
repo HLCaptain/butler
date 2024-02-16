@@ -9,6 +9,7 @@ plugins {
 
 group = "ai.nest"
 version = "0.0.1"
+val apiVersion = "0.0.1"
 
 application {
     mainClass = "ai.nest.api_gateway.ApplicationKt"
@@ -21,6 +22,7 @@ ktor {
 }
 
 buildConfig {
+    buildConfigField("String", "API_VERSION", "\"$apiVersion\"")
     buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
     buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")
     buildConfigField("String", "PROJECT_GROUP", "\"$group\"")
@@ -43,6 +45,7 @@ dependencies {
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.headers)
     testImplementation(libs.ktor.server.tests)
     testImplementation(libs.kotlin.test.junit)
     implementation(libs.logback.classic)

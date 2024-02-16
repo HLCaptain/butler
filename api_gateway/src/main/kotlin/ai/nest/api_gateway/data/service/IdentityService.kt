@@ -21,7 +21,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
-import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
@@ -29,7 +28,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
-import io.ktor.http.Parameters
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import org.koin.core.annotation.Single
@@ -88,12 +86,10 @@ class IdentityService(
         fullName: String?,
         phone: String?,
     ) = client.tryToExecute<UserDetailsDto> {
-        val formData = FormDataContent(
-            Parameters.build {
-                fullName?.let { append("fullName", it) }
-                phone?.let { append("phone", it) }
-            }
-        )
+        val formData = formData {
+            fullName?.let { append("fullName", it) }
+            phone?.let { append("phone", it) }
+        }
         put("${AppConfig.Api.IDENTITY_API_URL}/user/$id") { setBody(formData) }
     }
 

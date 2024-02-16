@@ -41,6 +41,17 @@ fun PipelineContext<Unit, ApplicationCall>.extractLocaleHeader(): Locale {
     return Locale(headers[HttpHeaders.AcceptLanguage]?.trim())
 }
 
+val HttpHeaders.AcceptVersion: String
+    get() = "Accept-Version"
+
+val HttpHeaders.ContentVersion: String
+    get() = "Content-Version"
+
+fun PipelineContext<Unit, ApplicationCall>.extractApiVersionHeader(): String {
+    val headers = call.request.headers
+    return headers[HttpHeaders.AcceptVersion]?.trim() ?: ""
+}
+
 fun PipelineContext<Unit, ApplicationCall>.extractApplicationIdHeader(): String {
     val headers = call.request.headers
     return headers[HttpHeaders.UserAgent]?.trim() ?: ""

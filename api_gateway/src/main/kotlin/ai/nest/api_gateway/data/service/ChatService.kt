@@ -36,11 +36,9 @@ class ChatService(private val client: HttpClient) {
         parameter("state", state)
     }.status.isSuccess()
 
-    fun receiveTicket(supportId: String) =
-        client.tryToExecuteWebSocket<TicketDto>("${AppConfig.Api.CHAT_API_URL}/chat/tickets/$supportId")
+    fun receiveTicket(supportId: String) = client.tryToExecuteWebSocket<TicketDto>("${AppConfig.Api.CHAT_API_URL}/chat/tickets/$supportId")
 
-    fun receiveChatMessages(chatId: String) =
-        client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/chat/$chatId")
+    fun receiveChatMessages(chatId: String) = client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/chat/$chatId")
 
     suspend fun sendChatMessage(
         message: MessageDto,
