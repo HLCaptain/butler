@@ -7,9 +7,9 @@ import ai.nest.api_gateway.data.service.NotificationService
 import ai.nest.api_gateway.endpoints.utils.extractApplicationIdHeader
 import ai.nest.api_gateway.endpoints.utils.respondWithError
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
-import ai.nest.api_gateway.endpoints.utils.withRoles
+import ai.nest.api_gateway.endpoints.utils.withPermissions
 import ai.nest.api_gateway.utils.Claim
-import ai.nest.api_gateway.utils.Role
+import ai.nest.api_gateway.utils.Permission
 import com.auth0.jwt.JWT
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
@@ -32,7 +32,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         respondWithResult(HttpStatusCode.Created, result)
     }
 
-    withRoles(Role.END_USER) {
+    withPermissions(Permission.END_USER) {
         post("/login") {
             val userName = call.parameters["username"]?.trim().toString()
             val password = call.parameters["password"]?.trim().toString()
@@ -57,10 +57,10 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         }
 
         post("/refresh-access-token") {
-            val tokenClaim = call.principal<JWTPrincipal>()
-            val userId = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
-            val username = tokenClaim?.payload?.getClaim(Claim.USERNAME).toString()
-            val userPermission = tokenClaim?.payload?.getClaim(Claim.PERMISSION)?.asInt()
+            val payload = call.principal<JWTPrincipal>()?.payload
+            val userId = payload?.getClaim(Claim.USER_ID).toString()
+            val username = payload?.getClaim(Claim.USERNAME).toString()
+            val userPermission = payload?.getClaim(Claim.PERMISSIONS)?.asList(Permission::class.java)?.toSet()
             if (userPermission != null) {
                 val token = identityService.generateUserTokens(userId, username, userPermission, tokenConfiguration)
                 respondWithResult(HttpStatusCode.Created, token)

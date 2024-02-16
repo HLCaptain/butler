@@ -8,8 +8,8 @@ import ai.nest.api_gateway.endpoints.utils.ChatSocketHandler
 import ai.nest.api_gateway.endpoints.utils.Connection
 import ai.nest.api_gateway.endpoints.utils.WebSocketServerHandler
 import ai.nest.api_gateway.endpoints.utils.respondWithResult
-import ai.nest.api_gateway.endpoints.utils.withRoles
-import ai.nest.api_gateway.utils.Role
+import ai.nest.api_gateway.endpoints.utils.withPermissions
+import ai.nest.api_gateway.utils.Permission
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
@@ -30,7 +30,7 @@ fun Route.chatRoute() {
     val chatSocketHandler: ChatSocketHandler by inject()
 
     route("/chat") {
-        withRoles(Role.END_USER) {
+        withPermissions(Permission.END_USER) {
             post("/ticket") {
                 val ticket = call.receive<TicketDto>()
                 val result = chatService.createTicket(ticket)
@@ -52,7 +52,7 @@ fun Route.chatRoute() {
             }
         }
 
-        withRoles(Role.SUPPORT) {
+        withPermissions(Permission.SUPPORT) {
 
             put("/{ticketId}") {
                 val ticketId = call.parameters["ticketId"]?.trim().orEmpty()
@@ -89,7 +89,7 @@ fun Route.chatRoute() {
                     }
                 }
             } catch (e: Throwable) {
-                println(e.localizedMessage)
+                println(e.message)
             } finally {
                 chatSocketHandler.connections.remove(ticketId)
             }

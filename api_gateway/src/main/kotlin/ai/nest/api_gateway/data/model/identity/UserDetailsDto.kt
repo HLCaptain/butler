@@ -1,6 +1,6 @@
 package ai.nest.api_gateway.data.model.identity
 
-import ai.nest.api_gateway.utils.Role
+import ai.nest.api_gateway.utils.Permission
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,5 +14,5 @@ data class UserDetailsDto(
     val currency: String,
     val addresses: List<AddressDto> = emptyList(),
     val country: String,
-    val permission: Set<Role> = emptySet()
+    val permission: Set<Permission> = emptySet()
 )

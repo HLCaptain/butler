@@ -1,7 +1,7 @@
 package ai.nest.api_gateway.plugins
 
 import ai.nest.api_gateway.utils.Claim
-import ai.nest.api_gateway.utils.Role
+import ai.nest.api_gateway.utils.Permission
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.createRouteScopedPlugin
 import io.ktor.server.auth.AuthenticationChecked
@@ -10,19 +10,18 @@ import io.ktor.server.auth.principal
 import io.ktor.server.response.respond
 
 class RoleBaseConfiguration {
-    val requiredRoles = mutableSetOf<Int>()
-    fun roles(roles: Set<Int>) {
+    val requiredRoles = mutableSetOf<Permission>()
+    fun roles(roles: Set<Permission>) {
         requiredRoles.addAll(roles)
     }
 }
 
 val RoleAuthorizationPlugin = createRouteScopedPlugin("RoleAuthorizationPlugin", ::RoleBaseConfiguration) {
     on(AuthenticationChecked) { call ->
-        val principal = call.principal<JWTPrincipal>() ?: return@on
-        val roles = principal.getListClaim(Claim.PERMISSION, Role::class)
+        val principal = call.principal<JWTPrincipal>()
+        val roles = principal?.getListClaim(Claim.PERMISSIONS, Permission::class)
 
-        if (pluginConfig.requiredRoles.isNotEmpty() && roles.intersect(pluginConfig.requiredRoles).isEmpty()) {
-            call.respond(HttpStatusCode.Unauthorized)
-        }
+        val doesHavePermission = roles?.any { it in pluginConfig.requiredRoles } ?: false
+        if (!doesHavePermission) call.respond(HttpStatusCode.Forbidden)
     }
 }

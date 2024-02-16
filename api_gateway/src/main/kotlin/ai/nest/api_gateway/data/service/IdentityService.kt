@@ -12,11 +12,11 @@ import ai.nest.api_gateway.data.model.response.PaginationResponse
 import ai.nest.api_gateway.data.model.response.UserTokensResponse
 import ai.nest.api_gateway.data.utils.tryToExecute
 import ai.nest.api_gateway.utils.AppConfig
-import ai.nest.api_gateway.utils.Claim.PERMISSION
+import ai.nest.api_gateway.utils.Claim.PERMISSIONS
 import ai.nest.api_gateway.utils.Claim.TOKEN_TYPE
 import ai.nest.api_gateway.utils.Claim.USERNAME
 import ai.nest.api_gateway.utils.Claim.USER_ID
-import ai.nest.api_gateway.utils.Role
+import ai.nest.api_gateway.utils.Permission
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.client.HttpClient
@@ -30,7 +30,6 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
-import java.util.Locale
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import org.koin.core.annotation.Single
@@ -61,7 +60,7 @@ class IdentityService(
             }
         }
         val user = getUserByUsername(userName)
-        return generateUserTokens(user.id, userName, user.permission.first { it == Role.END_USER }, tokenConfiguration)
+        return generateUserTokens(user.id, userName, user.permissions, tokenConfiguration)
     }
 
     suspend fun getUsers(options: UserOptions) = client.tryToExecute<PaginationResponse<UserDto>> {
@@ -137,7 +136,7 @@ class IdentityService(
     fun generateUserTokens(
         userId: String,
         username: String,
-        userPermission: Int,
+        userPermission: Set<Permission>,
         tokenConfiguration: TokenConfiguration
     ) = UserTokensResponse(
         Clock.System.now() + tokenConfiguration.accessTokenExpireDuration,
@@ -148,7 +147,7 @@ class IdentityService(
     private fun generateToken(
         userId: String,
         username: String,
-        userPermission: Int,
+        userPermission: Set<Permission>,
         tokenConfiguration: TokenConfiguration,
         tokenType: TokenType
     ) = JWT.create()
@@ -156,25 +155,18 @@ class IdentityService(
         .withAudience(tokenConfiguration.audience)
         .withExpiresAt((Clock.System.now() + tokenConfiguration.accessTokenExpireDuration).toJavaInstant())
         .withClaim(USER_ID, userId)
-        .withClaim(PERMISSION, userPermission.toString())
+        .withClaim(PERMISSIONS, userPermission.toList())
         .withClaim(USERNAME, username)
         .withClaim(TOKEN_TYPE, tokenType.name)
         .sign(Algorithm.HMAC256(tokenConfiguration.secret))
 
-    suspend fun updateUserLocation(
-        userId: String,
-        location: LocationDto,
-        locale: Locale
-    ) = client.tryToExecute<AddressDto> {
+    suspend fun updateUserLocation(userId: String, location: LocationDto) = client.tryToExecute<AddressDto> {
         post("${AppConfig.Api.IDENTITY_API_URL}/user/$userId/address/location") {
             setBody(location)
         }
     }
 
-    suspend fun isUserExistedInDb(
-        userId: String?,
-        locale: Locale
-    ) = client.tryToExecute<Boolean> {
+    suspend fun isUserExistedInDb(userId: String?) = client.tryToExecute<Boolean> {
         get("${AppConfig.Api.IDENTITY_API_URL}/user/isExisted/$userId")
     }
 
