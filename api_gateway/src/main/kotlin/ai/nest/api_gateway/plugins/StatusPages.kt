@@ -20,7 +20,6 @@ private fun StatusPagesConfig.handleStatusPagesExceptions() {
         respondWithError(call, HttpStatusCode.BadRequest, t.errorCodes)
     }
     exception<SecurityException>{ call, throwable ->
-        // TODO: Log throwable message with OpenTelemetry or Napier
         respondWithError(call, HttpStatusCode.Unauthorized)
     }
 }
