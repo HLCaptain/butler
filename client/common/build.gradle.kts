@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.sqldelight)
-    alias(libs.plugins.libres)
+//    alias(libs.plugins.libres)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
 }
@@ -19,73 +19,65 @@ kotlin {
     jvmToolchain(17)
     androidTarget()
     jvm()
-    js(IR) { browser() }
+    js(IR) {
+        useCommonJs()
+        browser()
+    }
 
     sourceSets {
-        commonMain {
-            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
-            dependencies {
-                implementation(compose.runtime)
-                implementation(compose.ui)
-                implementation(compose.foundation)
-                implementation(compose.materialIconsExtended)
-                implementation(compose.material3)
-                // FIXME: use compose resources for loading images in the future
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
-                implementation(libs.voyager.navigator)
-                implementation(libs.voyager.bottomSheetNavigator)
-                implementation(libs.voyager.tabNavigator)
-                implementation(libs.voyager.transitions)
-                implementation(libs.voyager.koin)
-                implementation(libs.ktor.core)
-                api(project.dependencies.platform(libs.koin.bom))
-                api(libs.koin.core)
-                implementation(libs.koin.annotations)
-                implementation(libs.koin.compose)
-                api(libs.napier)
-                implementation(libs.store)
-                implementation(libs.kotlinx.atomicfu)
-                implementation(libs.kotlinx.coroutines)
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.kotlinx.datetime)
-                implementation(libs.libres.compose)
-                implementation(libs.sqldelight.coroutines)
-                implementation(libs.sqldelight.adapters)
-                api(libs.gitlive.firebase.common)
-                api(libs.gitlive.firebase.auth)
-                api(libs.gitlive.firebase.firestore)
-                implementation(libs.uuid)
-            }
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation(compose.materialIconsExtended)
+            implementation(compose.material3)
+            implementation(compose.components.resources)
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.bottomSheetNavigator)
+            implementation(libs.voyager.tabNavigator)
+            implementation(libs.voyager.transitions)
+            implementation(libs.voyager.koin)
+            implementation(libs.ktor.core)
+            api(project.dependencies.platform(libs.koin.bom))
+            api(libs.koin.core)
+            implementation(libs.koin.annotations)
+            implementation(libs.koin.compose)
+            api(libs.napier)
+            implementation(libs.store)
+            implementation(libs.kotlinx.atomicfu)
+            implementation(libs.kotlinx.coroutines)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+//                implementation(libs.libres.compose)
+            implementation(libs.sqldelight.coroutines)
+            implementation(libs.sqldelight.adapters)
+            api(libs.gitlive.firebase.common)
+            api(libs.gitlive.firebase.auth)
+            api(libs.gitlive.firebase.firestore)
+            implementation(libs.uuid)
         }
 
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
 
-        androidMain {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core)
-                implementation(libs.ktor.jvm)
-                implementation(libs.koin.android)
-                implementation(libs.koin.logger.slf4j)
-                implementation(libs.sqldelight.android)
-                implementation(libs.kotlinx.coroutines.android)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core)
+            implementation(libs.ktor.jvm)
+            implementation(libs.koin.android)
+            implementation(libs.koin.logger.slf4j)
+            implementation(libs.sqldelight.android)
+            implementation(libs.kotlinx.coroutines.android)
         }
 
-        jvmMain {
-            dependencies {
-                implementation(compose.preview)
-                implementation(compose.desktop.common)
-                implementation(libs.ktor.jvm)
-                implementation(libs.koin.ktor)
-                implementation(libs.koin.logger.slf4j)
-                implementation(libs.sqldelight.jvm)
-            }
+        jvmMain.dependencies {
+            implementation(compose.preview)
+            implementation(compose.desktop.common)
+            implementation(libs.ktor.jvm)
+            implementation(libs.koin.ktor)
+            implementation(libs.koin.logger.slf4j)
+            implementation(libs.sqldelight.jvm)
         }
 
         jsMain {
@@ -95,6 +87,7 @@ kotlin {
                 implementation(libs.sqldelight.js)
                 implementation(npm("kotlinx-coroutines-core", libs.versions.coroutines.get()))
                 implementation(npm("sql.js", "1.8.0"))
+                implementation(npm("dateformat", "4.0.2"))
                 implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
                 implementation(devNpm("copy-webpack-plugin", "11.0.0"))
             }
@@ -148,12 +141,12 @@ sqldelight {
     }
 }
 
-libres {
-    generatedClassName = "Res" // "Res" by default
-    generateNamedArguments = true // false by default
-    baseLocaleLanguageCode = "en" // "en" by default
-    camelCaseNamesForAppleFramework = false // false by default
-}
+//libres {
+//    generatedClassName = "Res" // "Res" by default
+//    generateNamedArguments = true // false by default
+//    baseLocaleLanguageCode = "en" // "en" by default
+//    camelCaseNamesForAppleFramework = false // false by default
+//}
 
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
@@ -175,7 +168,11 @@ buildConfig {
     val firebaseProjectId = properties["FIREBASE_PROJECT_ID"].toString()
     val firebaseAuthDomain = properties["FIREBASE_AUTH_DOMAIN"].toString()
 
-    buildConfigField("String", "FIREBASE_WEB_AND_DESKTOP_API_KEY", "\"$firebaseWebAndDesktopApiKey\"")
+    buildConfigField(
+        "String",
+        "FIREBASE_WEB_AND_DESKTOP_API_KEY",
+        "\"$firebaseWebAndDesktopApiKey\""
+    )
     buildConfigField("String", "FIREBASE_MESSAGING_SENDER_ID", "\"$firebaseMessagingSenderId\"")
     buildConfigField("String", "FIREBASE_DESKTOP_APP_ID", "\"$firebaseDesktopAppId\"")
     buildConfigField("String", "FIREBASE_WEB_APP_ID", "\"$firebaseWebAppId\"")

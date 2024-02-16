@@ -6,16 +6,26 @@ plugins {
     alias(libs.plugins.jetbrains.compose)
 }
 
-val copyJsResources = tasks.create("copyJsResourcesWorkaround", Copy::class.java) {
-    from(project(":common").file("src/commonMain/libres"))
-    into("build/processedResources/js/main")
-}
-
-afterEvaluate {
-    project.tasks.getByName("copyJsResourcesWorkaround").finalizedBy(copyJsResources)
-}
+//val copyJsResources = tasks.create("copyJsResourcesWorkaround", Copy::class.java) {
+//    from(project(":common").file("src/commonMain/libres"))
+//    into("build/processedResources/js/main")
+//}
+//
+//afterEvaluate {
+//    project.tasks.getByName("copyJsResourcesWorkaround").finalizedBy(copyJsResources)
+//}
 
 kotlin {
+//    @OptIn(ExperimentalWasmDsl::class)
+//    wasmJs {
+//        moduleName = rootProject.name
+//        browser {
+//            commonWebpackConfig {
+//                outputFileName = "web.js"
+//            }
+//        }
+//        binaries.executable()
+//    }
     js(IR) {
         moduleName = rootProject.name
         browser {
@@ -23,18 +33,14 @@ kotlin {
                 outputFileName = "web.js"
             }
         }
-        binaries.executable()
     }
     sourceSets {
-        val jsMain by getting {
-            dependencies {
-                implementation(project(":common"))
-                implementation(compose.runtime)
-                implementation(compose.runtimeSaveable)
-                implementation(compose.material)
-                implementation(compose.material3)
-                implementation(libs.napier)
-            }
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.runtimeSaveable)
+            implementation(compose.material)
+            implementation(compose.material3)
+            implementation(libs.napier)
         }
     }
 }
