@@ -1,17 +1,19 @@
 package illyan.butler.manager
 
 import illyan.butler.repository.UserRepository
-import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
 @Single
 class AuthManager(
     private val userRepository: UserRepository
 ) {
-    val signedInUser = userRepository.getSignedInUserFlow()
-    val isUserSignedIn = signedInUser.map { it != null }
+    val isUserSignedIn = userRepository.isUserSignedIn
+    val signedInUserUUID = userRepository.signedInUserUUID
+    val signedInUserEmail = userRepository.signedInUserEmail
+    val signedInUserPhoneNumber = userRepository.signedInUserPhoneNumber
+    val signedInUserPhotoURL = userRepository.signedInUserPhotoURL
+    val signedInUserName = userRepository.signedInUserName
 
-    suspend fun signInAnonymously() = userRepository.anonymousSignIn()
     suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
@@ -23,6 +25,5 @@ class AuthManager(
     ) = userRepository.createUserWithEmailAndPassword(email, password)
 
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)
-    suspend fun sendPasswordResetEmailToCurrentUser() = userRepository.sendPasswordResetEmailToCurrentUser()
     suspend fun signOut() = userRepository.signOut()
 }

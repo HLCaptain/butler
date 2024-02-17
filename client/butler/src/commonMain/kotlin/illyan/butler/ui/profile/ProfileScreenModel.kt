@@ -7,7 +7,6 @@ import illyan.butler.manager.AuthManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
@@ -31,39 +30,35 @@ class ProfileScreenModel(
             false
         )
 
-    val userPhotoUrl = authManager.signedInUser
-        .map { it?.photoURL }
+    val userPhotoUrl = authManager.signedInUserPhotoURL
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
         )
 
-    val userUUID = authManager.signedInUser.map { it?.uid }
+    val userUUID = authManager.signedInUserUUID
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
         )
 
-    val userEmail = authManager.signedInUser
-        .map { it?.email }
+    val userEmail = authManager.signedInUserEmail
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
         )
 
-    val userPhoneNumber = authManager.signedInUser
-        .map { it?.phoneNumber }
+    val userPhoneNumber = authManager.signedInUserPhoneNumber
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
         )
 
-    val userName = authManager.signedInUser
-        .map { it?.displayName }
+    val userName = authManager.signedInUserName
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,

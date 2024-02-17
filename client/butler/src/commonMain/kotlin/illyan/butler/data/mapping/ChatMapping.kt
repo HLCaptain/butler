@@ -1,6 +1,6 @@
 package illyan.butler.data.mapping
 
-import illyan.butler.data.firestore.model.FirestoreChat
+import illyan.butler.data.network.model.ChatDto
 import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
 
@@ -8,26 +8,23 @@ fun Chat.toDomainModel() = DomainChat(
     uuid = uuid,
     name = name,
     userUUID = userUUID,
-    modelUUID = modelUUID,
-    messages = messages
+    modelUUID = modelUUID
 )
 
-fun DomainChat.toNetworkModel() = FirestoreChat(
+fun DomainChat.toNetworkModel() = ChatDto(
     uuid = uuid,
     name = name,
     userUUID = userUUID,
-    modelUUID = modelUUID,
-    messages = messages
+    modelUUID = modelUUID
 )
 
-fun FirestoreChat.toLocalModel() = Chat(
+fun ChatDto.toLocalModel() = Chat(
     uuid = uuid,
     name = name,
     userUUID = userUUID,
-    modelUUID = modelUUID,
-    messages = messages
+    modelUUID = modelUUID
 )
 
 fun Chat.toNetworkModel() = toDomainModel().toNetworkModel()
 fun DomainChat.toLocalModel() = toNetworkModel().toLocalModel()
-fun FirestoreChat.toDomainModel() = toLocalModel().toDomainModel()
+fun ChatDto.toDomainModel() = toLocalModel().toDomainModel()

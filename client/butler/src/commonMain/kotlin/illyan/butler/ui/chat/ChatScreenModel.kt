@@ -19,12 +19,20 @@ class ChatScreenModel(
     @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     val chat = chatManager.getChatFlow(chatUUID)
-        .map { chat -> chat?.copy(messages = chat.messages.sortedBy { it.timestamp }.reversed()) }
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
         )
+
+    val messages = chatManager.getMessagesByChatFlow(chatUUID)
+        .map { messages -> messages?.sortedBy { it.timestamp }?.reversed() }
+        .stateIn(
+            screenModelScope,
+            SharingStarted.Eagerly,
+            null
+        )
+
 
     fun sendMessage(message: String) {
         screenModelScope.launch(dispatcherIO) {

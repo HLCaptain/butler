@@ -1,0 +1,27 @@
+CREATE TABLE Message (
+    uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
+    senderUUID TEXT NOT NULL,
+    role TEXT NOT NULL,
+    message TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    chatUUID TEXT NOT NULL
+);
+
+select:
+SELECT * FROM Message WHERE uuid = ?;
+
+selectByChat:
+SELECT * FROM Message WHERE chatUUID = ?;
+
+upsert:
+INSERT OR REPLACE INTO Message
+VALUES ?;
+
+delete:
+DELETE FROM Message WHERE uuid = ?;
+
+deleteAllChatMessagesForChat:
+DELETE FROM Message WHERE chatUUID = ?;
+
+deleteAll:
+DELETE FROM Message;

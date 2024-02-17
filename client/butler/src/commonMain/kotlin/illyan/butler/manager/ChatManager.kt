@@ -1,8 +1,9 @@
 package illyan.butler.manager
 
-import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.DomainMessage
 import illyan.butler.repository.ChatRepository
+import illyan.butler.repository.MessageRepository
 import illyan.butler.util.log.randomUUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.filterNot
@@ -11,19 +12,17 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.Single
 
 @Single
 class ChatManager(
     private val authManager: AuthManager,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val messageRepository: MessageRepository
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    val userChats = authManager.signedInUser.flatMapLatest { user ->
-        user?.uid?.let {
+    val userChats = authManager.signedInUserUUID.flatMapLatest { uuid ->
+        uuid?.let {
             chatRepository.getUserChatsFlow(it)
         }?.filterNot { it.second }?.map { it.first } ?: flowOf(emptyList())
     }
@@ -32,16 +31,16 @@ class ChatManager(
     }
 
     fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
+    fun getMessagesByChatFlow(uuid: String) = messageRepository.getChatFlow(uuid).map { it.first }
 
     suspend fun startNewChat(modelUUID: String): String {
         val chatUUID = randomUUID()
-        authManager.signedInUser.first()?.uid?.let { userUUID ->
+        authManager.signedInUserUUID.first()?.let { userUUID ->
             chatRepository.upsert(
                 DomainChat(
                     uuid = chatUUID,
                     userUUID = userUUID,
-                    modelUUID = modelUUID,
-                    messages = emptyList()
+                    modelUUID = modelUUID
                 )
             )
         }
@@ -55,21 +54,17 @@ class ChatManager(
     }
 
     suspend fun sendMessage(chatUUID: String, message: String) {
-        authManager.signedInUser.first()?.uid?.let { userUUID ->
-            userChats.first()?.firstOrNull { it.uuid == chatUUID }?.let { chat ->
-                chatRepository.upsert(
-                    chat.copy(
-                        messages = chat.messages + ChatMessage(
-                            uuid = randomUUID(),
-                            senderUUID = userUUID,
-                            message = message,
-                            role = ChatMessage.UserRole,
-                            timestamp = Clock.System.now().toLocalDateTime(TimeZone.UTC).toInstant(TimeZone.UTC).toEpochMilliseconds()
-                        )
-                    )
+        authManager.signedInUserUUID.first()?.let { userUUID ->
+            messageRepository.upsert(
+                DomainMessage(
+                    uuid = randomUUID(),
+                    chatUUID = chatUUID,
+                    role = DomainMessage.USER_ROLE,
+                    message = message,
+                    timestamp = Clock.System.now().toEpochMilliseconds(),
+                    senderUUID = userUUID
                 )
-            }
+            )
         }
-
     }
 }

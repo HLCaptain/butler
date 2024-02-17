@@ -3,11 +3,11 @@ package illyan.butler.data.store
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
-import illyan.butler.data.network.datasource.ChatNetworkDataSource
-import illyan.butler.data.network.model.ChatDto
+import illyan.butler.data.network.datasource.MessageNetworkDataSource
+import illyan.butler.data.network.model.MessageDto
 import illyan.butler.data.sqldelight.DatabaseHelper
-import illyan.butler.db.Chat
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.db.Message
+import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
@@ -21,74 +21,74 @@ import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
 
 @Single
-class UserChatMutableStoreBuilder(
+class ChatMessageMutableStoreBuilder(
     databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: ChatNetworkDataSource
+    chatNetworkDataSource: MessageNetworkDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideUserChatMutableStore(databaseHelper, chatNetworkDataSource)
+    val store = provideChatMessageMutableStore(databaseHelper, chatNetworkDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
-fun provideUserChatMutableStore(
+fun provideChatMessageMutableStore(
     databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: ChatNetworkDataSource
+    messageNetworkDataSource: MessageNetworkDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
-        Napier.d("Fetching chats for user $key")
-        chatNetworkDataSource.fetchByUser(userUUID = key)
+        Napier.d("Fetching messages $key")
+        messageNetworkDataSource.fetchByChat(key)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
             databaseHelper.queryAsListFlow {
-                Napier.d("Reading chats for user $key")
-                it.chatQueries.selectByUser(key)
-            }.map { chats ->
-                chats.map { it.toDomainModel() }
+                Napier.d("Reading messages at $key")
+                it.messageQueries.selectByChat(key)
+            }.map { messages ->
+                messages.map { it.toDomainModel() }
             }
         },
         writer = { key, local ->
             databaseHelper.withDatabase { db ->
                 local.forEach {
-                    Napier.d("Writing chat for user $key with $local")
-                    db.chatQueries.upsert(it)
+                    Napier.d("Writing messages for user $key with $local")
+                    db.messageQueries.upsert(it)
                 }
             }
         },
         delete = { key ->
             databaseHelper.withDatabase {
-                Napier.d("Deleting chat for user $key")
+                Napier.d("Deleting messages at $key")
                 it.chatQueries.deleteAllChatsForUser(key)
             }
         },
         deleteAll = {
             databaseHelper.withDatabase {
-                Napier.d("Deleting all chats")
+                Napier.d("Deleting all messages")
                 it.chatQueries.deleteAll()
             }
         }
     ),
-    converter = Converter.Builder<List<ChatDto>, List<Chat>, List<DomainChat>>()
-        .fromOutputToLocal { chats -> chats.map { it.toLocalModel() } }
-        .fromNetworkToLocal { chats -> chats.map { it.toLocalModel() } }
+    converter = Converter.Builder<List<MessageDto>, List<Message>, List<DomainMessage>>()
+        .fromOutputToLocal { messages -> messages.map { it.toLocalModel() } }
+        .fromNetworkToLocal { messages -> messages.map { it.toLocalModel() } }
         .build(),
 ).build(
     updater = Updater.by(
         post = { key, output ->
-            output.forEach { chatNetworkDataSource.upsert(it.toNetworkModel()) }
+            output.forEach { messageNetworkDataSource.upsert(it.toNetworkModel()) }
             UpdaterResult.Success.Typed(output)
         },
         onCompletion = OnUpdaterCompletion(
             onSuccess = { _ ->
-                Napier.d("Successfully updated chats")
+                Napier.d("Successfully updated messages")
             },
             onFailure = { _ ->
-                Napier.d("Failed to update chats")
+                Napier.d("Failed to update messages")
             }
         )
     ),
     bookkeeper = provideBookkeeper(
         databaseHelper,
-        DomainChat::class.simpleName.toString() + "UserList"
+        DomainMessage::class.simpleName.toString()
     ) { it }
 )

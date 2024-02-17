@@ -1,10 +1,10 @@
 package illyan.butler.data.store
 
-import illyan.butler.data.firestore.model.FirestoreChat
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
-import illyan.butler.data.network.ChatNetworkDataSource
+import illyan.butler.data.network.datasource.ChatNetworkDataSource
+import illyan.butler.data.network.model.ChatDto
 import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
@@ -65,7 +65,7 @@ fun provideChatMutableStore(
             }
         }
     ),
-    converter = Converter.Builder<FirestoreChat, Chat, DomainChat>()
+    converter = Converter.Builder<ChatDto, Chat, DomainChat>()
         .fromOutputToLocal { it.toLocalModel() }
         .fromNetworkToLocal { it.toLocalModel() }
         .build(),

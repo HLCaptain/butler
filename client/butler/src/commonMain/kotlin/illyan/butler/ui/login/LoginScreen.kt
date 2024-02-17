@@ -1,5 +1,6 @@
 package illyan.butler.ui.login
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -58,7 +59,6 @@ class LoginScreen : Screen {
         LoginDialogContent(
             modifier = Modifier.fillMaxWidth(),
             isUserSigningIn = isUserSigningIn,
-            signInAnonymously = screenModel::signInAnonymously,
             signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
             signUpWithEmailAndPassword = screenModel::signUpWithEmailAndPassword,
         )
@@ -69,7 +69,7 @@ class LoginScreen : Screen {
 fun LoginDialogContent(
     modifier: Modifier = Modifier,
     isUserSigningIn: Boolean = false,
-    signInAnonymously: () -> Unit = {},
+    signInAnonymously: (() -> Unit)? = null,
     signInWithEmailAndPassword: (email: String, password: String) -> Unit = { _, _ -> },
     signUpWithEmailAndPassword: (email: String, password: String) -> Unit = { _, _ -> },
 ) {
@@ -119,7 +119,7 @@ fun LoginTitle() {
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    signInAnonymously: () -> Unit = {},
+    signInAnonymously: (() -> Unit)? = null,
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {},
 ) {
@@ -127,14 +127,16 @@ fun LoginScreen(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = signInAnonymously
-        ) {
-            Text(
-                text = stringResource(Res.string.sign_in_anonymously),
-                textAlign = TextAlign.Center
-            )
+        AnimatedVisibility(visible = signInAnonymously != null) {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { signInAnonymously?.invoke() }
+            ) {
+                Text(
+                    text = stringResource(Res.string.sign_in_anonymously),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
         // TODO: make login via email/password combo
         var email by remember { mutableStateOf("") }

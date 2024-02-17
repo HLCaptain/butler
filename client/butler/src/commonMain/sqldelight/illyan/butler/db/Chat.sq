@@ -5,14 +5,13 @@ CREATE TABLE Chat (
     uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
     modelUUID TEXT NOT NULL,
     name TEXT,
-    userUUID TEXT NOT NULL,
-    messages TEXT AS List<ChatMessage> NOT NULL
+    userUUID TEXT NOT NULL
 );
 
 select:
 SELECT * FROM Chat WHERE uuid = ?;
 
-getChatsForUser:
+selectByUser:
 SELECT * FROM Chat WHERE userUUID = ?;
 
 upsert:
@@ -24,9 +23,6 @@ DELETE FROM Chat WHERE uuid = ?;
 
 deleteAllChatsForUser:
 DELETE FROM Chat WHERE userUUID = ?;
-
-deleteAllChatsForModel:
-DELETE FROM Chat WHERE modelUUID = ?;
 
 deleteAll:
 DELETE FROM Chat;

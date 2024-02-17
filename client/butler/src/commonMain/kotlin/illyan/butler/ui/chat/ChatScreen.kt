@@ -31,8 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
-import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
@@ -48,6 +48,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
     override fun Content() {
         val screenModel = getScreenModel<ChatScreenModel> { parametersOf(chatUUID) }
         val chat by screenModel.chat.collectAsState()
+        val messages by screenModel.messages.collectAsState()
         LaunchedEffect(Unit) { Napier.d("ChatScreen: $chat") }
         Column(
             modifier = Modifier
@@ -74,10 +75,11 @@ class ChatScreen(private val chatUUID: String) : Screen {
     fun MessageList(
         modifier: Modifier = Modifier,
         chat: DomainChat?,
+        messages: List<DomainMessage> = emptyList()
     ) {
         Crossfade(
             modifier = modifier,
-            targetState = chat == null || chat.messages.isEmpty()
+            targetState = chat == null || messages.isEmpty()
         ) {
             Column(
                 modifier = Modifier
@@ -95,7 +97,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
                     reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    items(chat?.messages ?: emptyList()) { message ->
+                    items(messages) { message ->
                         MessageItem(message = message)
                     }
                 }
@@ -105,7 +107,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
 
     @Composable
     fun MessageItem(
-        message: ChatMessage,
+        message: DomainMessage,
     ) {
         Column(
             modifier = Modifier
@@ -113,7 +115,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
                 .padding(8.dp)
                 .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = if (message.role == ChatMessage.UserRole) Alignment.End else Alignment.Start
+            horizontalAlignment = if (message.role == DomainMessage.USER_ROLE) Alignment.End else Alignment.Start
         ) {
             Text(
                 text = message.role.lowercase().replaceFirstChar { it.uppercase() },

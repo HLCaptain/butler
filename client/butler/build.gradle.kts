@@ -1,6 +1,8 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -11,7 +13,7 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
-    alias(libs.plugins.google.services)
+    alias(libs.plugins.ktorfit)
 }
 
 group = "illyan"
@@ -49,30 +51,39 @@ kotlin {
                 implementation(compose.materialIconsExtended)
                 implementation(compose.material3)
                 implementation(compose.components.resources)
-                api(libs.voyager.navigator)
+
+                implementation(libs.voyager.navigator)
                 implementation(libs.voyager.screenModel)
                 implementation(libs.voyager.bottomSheetNavigator)
                 implementation(libs.voyager.tabNavigator)
                 implementation(libs.voyager.transitions)
                 implementation(libs.voyager.koin)
+
                 implementation(libs.ktor.core)
+
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.client.websockets)
+                implementation(libs.ktor.serialization.kotlinx.protobuf)
+                implementation(libs.ktor.serialization.kotlinx.json)
+
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
                 implementation(libs.koin.annotations)
                 implementation(libs.koin.compose)
-                api(libs.napier)
-                implementation(libs.store)
+
                 implementation(libs.kotlinx.atomicfu)
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
+
                 implementation(libs.sqldelight.coroutines)
                 implementation(libs.sqldelight.adapters)
-                api(libs.gitlive.firebase.common)
-                api(libs.gitlive.firebase.auth)
-                api(libs.gitlive.firebase.firestore)
+
                 implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
+                implementation(libs.ktorfit)
+                implementation(libs.store)
+                api(libs.napier)
             }
         }
 
@@ -89,8 +100,8 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.appcompat)
             implementation(libs.androidx.core)
-            implementation(libs.ktor.jvm)
             implementation(libs.koin.android)
+            implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
             implementation(libs.sqldelight.android)
             implementation(libs.kotlinx.coroutines.android)
@@ -101,8 +112,8 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.preview)
             implementation(compose.desktop.common)
-            implementation(libs.ktor.jvm)
             implementation(libs.koin.ktor)
+            implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
             implementation(libs.sqldelight.jvm)
             implementation(compose.desktop.currentOs)
@@ -110,6 +121,7 @@ kotlin {
         }
 
         jsMain.dependencies {
+            implementation(libs.ktor.client.js)
             implementation(compose.material)
             implementation(compose.html.core)
             implementation(libs.kotlinx.coroutines.js)
@@ -125,10 +137,7 @@ kotlin {
 
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp)
-    api(project.dependencies.platform(libs.google.firebase.bom))
-    api(libs.google.firebase.common)
-    api(libs.google.firebase.auth)
-    api(libs.google.firebase.firestore)
+    add("kspCommonMainMetadata", libs.ktorfit.ksp)
 }
 
 // WORKAROUND: ADD this dependsOn("kspCommonMainKotlinMetadata") instead of above dependencies
@@ -283,4 +292,10 @@ compose.desktop.application {
         packageName = "desktop"
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
     }
+}
+
+rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+    rootProject.the<YarnRootExtension>().yarnLockMismatchReport = YarnLockMismatchReport.WARNING
+    rootProject.the<YarnRootExtension>().reportNewYarnLock = true
+    rootProject.the<YarnRootExtension>().yarnLockAutoReplace = true
 }

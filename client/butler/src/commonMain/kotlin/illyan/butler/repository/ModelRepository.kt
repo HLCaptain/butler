@@ -1,6 +1,6 @@
 package illyan.butler.repository
 
-import illyan.butler.data.network.ModelNetworkDataSource
+import illyan.butler.data.network.datasource.ModelNetworkDataSource
 import org.koin.core.annotation.Single
 
 @Single

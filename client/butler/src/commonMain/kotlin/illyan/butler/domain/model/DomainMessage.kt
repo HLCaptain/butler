@@ -1,18 +1,14 @@
 package illyan.butler.domain.model
 
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class ChatMessage(
+data class DomainMessage(
     val uuid: String,
     val senderUUID: String,
     val role: String,
     val message: String,
     val timestamp: Long,
+    val chatUUID: String
 ) {
     companion object {
-        const val UserRole = "user"
-        const val BotRole = "bot"
-        const val SystemRole = "system"
+        const val USER_ROLE = "user"
     }
 }

@@ -1,17 +1,13 @@
-package illyan.butler.data.firestore.model
+package illyan.butler.data.network.model
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class FirestoreModel(
+data class ModelDto(
     val name: String,
     val uuid: String,
     val type: String,
     val description: String,
     val greetingMessage: String,
-    val author: String,
-) {
-    companion object {
-        const val COLLECTION_NAME = "models"
-    }
-}
+    val author: String
+)

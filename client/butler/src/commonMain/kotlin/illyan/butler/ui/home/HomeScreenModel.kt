@@ -11,7 +11,7 @@ import org.koin.core.annotation.Factory
 class HomeScreenModel(
     authManager: AuthManager,
 ) : ScreenModel {
-    val signedInUser = authManager.signedInUser
+    val signedInUserUUID = authManager.signedInUserUUID
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,

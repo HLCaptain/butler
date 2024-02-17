@@ -1,41 +1,50 @@
 package illyan.butler.repository
 
-import dev.gitlive.firebase.auth.FirebaseAuth
+import illyan.butler.data.network.api.AuthApi
+import illyan.butler.data.network.model.auth.AuthCredentials
+import illyan.butler.data.network.model.auth.PasswordResetRequest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
 @Single
 class UserRepository(
-    private val auth: FirebaseAuth,
+    private val authApi: AuthApi
 ) {
-    fun getSignedInUserFlow() = auth.authStateChanged
+    private val _token = MutableStateFlow<String?>(null)
+    val isUserSignedIn = _token.map { it != null }
 
-    suspend fun anonymousSignIn() {
-        auth.signInAnonymously()
-    }
+    private val _signedInUserUUID = MutableStateFlow<String?>(null)
+    val signedInUserUUID = _signedInUserUUID.asStateFlow()
+
+    private val _signedInUserEmail: MutableStateFlow<String?> = MutableStateFlow("todo@todo.com")
+    val signedInUserEmail = _signedInUserEmail.asStateFlow()
+    private val _signedInUserPhoneNumber: MutableStateFlow<String?> = MutableStateFlow("+1 123-456-7890")
+    val signedInUserPhoneNumber = _signedInUserPhoneNumber.asStateFlow()
+    private val _signedInUserPhotoURL: MutableStateFlow<String?> = MutableStateFlow("https://picsum.photos/200")
+    val signedInUserPhotoURL = _signedInUserPhotoURL.asStateFlow()
+    private val _signedInUserName: MutableStateFlow<String?> = MutableStateFlow("Illyan")
+    val signedInUserName = _signedInUserName.asStateFlow()
 
     suspend fun signInWithEmailAndPassword(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email, password)
+        val response = authApi.signIn(AuthCredentials(email, password))
+        _token.update { response.token } // Store JWT token for future requests
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, password: String): Boolean {
-        return auth.createUserWithEmailAndPassword(email, password).user != null
+        val response = authApi.signUp(AuthCredentials(email, password))
+        _token.update { response.token } // Store JWT token
+        return true
     }
 
     suspend fun sendPasswordResetEmail(email: String) {
-        auth.sendPasswordResetEmail(email)
-    }
-
-    suspend fun sendPasswordResetEmailToCurrentUser() {
-        auth.currentUser?.email?.let { email ->
-            auth.sendPasswordResetEmail(email)
-        }
+        authApi.sendPasswordResetEmail(PasswordResetRequest(email))
     }
 
     suspend fun signOut() {
-        auth.signOut()
-    }
-
-    suspend fun delete() {
-        auth.currentUser?.delete()
+        authApi.signOut()
+        _token.update { null } // Clear token on sign-out
     }
 }

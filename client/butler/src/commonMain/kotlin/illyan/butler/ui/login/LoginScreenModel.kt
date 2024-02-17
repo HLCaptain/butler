@@ -45,12 +45,6 @@ class LoginScreenModel(
             initialValue = false
         )
 
-    fun signInAnonymously() {
-        screenModelScope.launch(dispatcherIO) {
-            authManager.signInAnonymously()
-        }
-    }
-
     fun signInWithEmailAndPassword(email: String, password: String) {
         screenModelScope.launch(dispatcherIO) {
             authManager.signInWithEmailAndPassword(email, password)

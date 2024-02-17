@@ -97,16 +97,16 @@ class HomeScreen : Screen {
                     }
 
                     item {
-                        val signedInUser by screenModel.signedInUser.collectAsState()
+                        val signedInUserUUID by screenModel.signedInUserUUID.collectAsState()
                         val navigator = LocalNavigator.currentOrThrow
                         AnimatedVisibility(
-                            visible = signedInUser != null
+                            visible = signedInUserUUID != null
                         ) {
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = stringResource(Res.string.hello_x, signedInUser?.uid?.take(8) ?: Res.string.anonymous_user),
+                                    text = stringResource(Res.string.hello_x, signedInUserUUID?.take(8) ?: Res.string.anonymous_user),
                                     style = MaterialTheme.typography.headlineMedium
                                 )
                                 MenuButton(
