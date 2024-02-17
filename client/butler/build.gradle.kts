@@ -110,6 +110,7 @@ kotlin {
         }
 
         jsMain.dependencies {
+            implementation(compose.material)
             implementation(compose.html.core)
             implementation(libs.kotlinx.coroutines.js)
             implementation(libs.sqldelight.js)
