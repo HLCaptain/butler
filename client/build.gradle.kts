@@ -28,6 +28,5 @@ plugins {
     alias(libs.plugins.jetbrains.compose) apply false
     alias(libs.plugins.google.ksp) apply false
     alias(libs.plugins.google.services) apply false
-//    alias(libs.plugins.libres) apply false
     alias(libs.plugins.buildconfig) apply false
 }

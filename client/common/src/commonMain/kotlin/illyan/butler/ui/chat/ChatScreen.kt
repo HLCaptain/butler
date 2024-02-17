@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,13 +31,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
-import illyan.butler.Res
 import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
+import illyan.common.generated.resources.Res
 import io.github.aakira.napier.Napier
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 
 class ChatScreen(private val chatUUID: String) : Screen {
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         val screenModel = getScreenModel<ChatScreenModel> { parametersOf(chatUUID) }
@@ -52,7 +55,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = chat?.name ?: Res.string.new_chat,
+                text = chat?.name ?: stringResource(Res.string.new_chat),
                 style = MaterialTheme.typography.headlineLarge
             )
             MessageList(
@@ -63,6 +66,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
         }
     }
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun MessageList(
         modifier: Modifier = Modifier,
@@ -80,7 +84,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
             ) {
                 if (it) {
                     Text(
-                        text = Res.string.no_messages,
+                        text = stringResource(Res.string.no_messages),
                         style = MaterialTheme.typography.headlineLarge
                     )
                 }
@@ -121,6 +125,7 @@ class ChatScreen(private val chatUUID: String) : Screen {
         }
     }
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun MessageField(
         modifier: Modifier = Modifier,
@@ -150,8 +155,8 @@ class ChatScreen(private val chatUUID: String) : Screen {
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Send,
-                        contentDescription = Res.string.send,
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = stringResource(Res.string.send),
                         tint =  MaterialTheme.colorScheme.primary
                     )
                 }

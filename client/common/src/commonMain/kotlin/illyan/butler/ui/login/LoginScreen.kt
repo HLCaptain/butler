@@ -24,10 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
-import illyan.butler.Res
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
+import illyan.common.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
 class LoginScreen : Screen {
     @Composable
@@ -101,11 +103,13 @@ fun LoginDialogContent(
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoginTitle() {
-    Text(text = Res.string.login)
+    Text(text = stringResource(Res.string.login))
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
@@ -122,7 +126,7 @@ fun LoginScreen(
             onClick = signInAnonymously
         ) {
             Text(
-                text = Res.string.sign_in_anonymously,
+                text = stringResource(Res.string.sign_in_anonymously),
                 textAlign = TextAlign.Center
             )
         }
@@ -137,7 +141,7 @@ fun LoginScreen(
                 emailChanged(it)
             },
             label = {
-                Text(text = Res.string.email)
+                Text(text = stringResource(Res.string.email))
             }
         )
         var password by remember { mutableStateOf("") }
@@ -150,12 +154,13 @@ fun LoginScreen(
                 passwordChanged(it)
             },
             label = {
-                Text(text = Res.string.password)
+                Text(text = stringResource(Res.string.password))
             }
         )
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoginButtons(
     modifier: Modifier = Modifier,
@@ -170,19 +175,19 @@ fun LoginButtons(
         TextButton(
             onClick = { onDialogClosed() }
         ) {
-            Text(text = Res.string.cancel)
+            Text(text = stringResource(Res.string.cancel))
         }
         Button(
             onClick = signInWithEmailAndPassword,
             enabled = true,
         ) {
-            Text(text = Res.string.login)
+            Text(text = stringResource(Res.string.login))
         }
         Button(
             onClick = signUpWithEmailAndPassword,
             enabled = true,
         ) {
-            Text(text = Res.string.sign_up)
+            Text(text = stringResource(Res.string.sign_up))
         }
     }
 }

@@ -42,7 +42,6 @@ import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import illyan.butler.Res
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
@@ -52,6 +51,9 @@ import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.util.log.randomUUID
+import illyan.common.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
 
 class ProfileDialogScreen : Screen {
@@ -64,6 +66,7 @@ class ProfileDialogScreen : Screen {
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileDialogScreen(
     screenModel: ProfileScreenModel,
@@ -77,9 +80,9 @@ fun ProfileDialogScreen(
     val phone by screenModel.userPhoneNumber.collectAsState()
     val name by screenModel.userName.collectAsState()
     val confidentialInfo = listOf(
-        Res.string.name to name,
-        Res.string.email to email,
-        Res.string.phone to phone
+        stringResource(Res.string.name) to name,
+        stringResource(Res.string.email) to email,
+        stringResource(Res.string.phone) to phone
     )
     ProfileDialogContent(
         userUUID = userUUID,
@@ -143,7 +146,7 @@ fun ProfileDialogContent(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalResourceApi::class)
 @Composable
 fun ProfileButtons(
     onShowSettingsScreen: () -> Unit = {},
@@ -169,7 +172,7 @@ fun ProfileButtons(
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = { onDialogClosed() }) {
-                Text(text = Res.string.close)
+                Text(text = stringResource(Res.string.close))
             }
             // FIXME: find out why Crossfade does not work here
             if (isUserSignedIn) {
@@ -177,13 +180,13 @@ fun ProfileButtons(
                     enabled = !isUserSigningOut,
                     onClick = onSignOut,
                 ) {
-                    Text(text = Res.string.sign_out)
+                    Text(text = stringResource(Res.string.sign_out))
                 }
             } else {
                 Button(
                     onClick = onLogin
                 ) {
-                    Text(text = Res.string.login)
+                    Text(text = stringResource(Res.string.login))
                 }
             }
         }
@@ -214,6 +217,7 @@ fun ProfileScreen(
     )
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun PreviewProfileDialogScreen(
     name: String = "Illyan",
@@ -228,9 +232,9 @@ private fun PreviewProfileDialogScreen(
                     userUUID = randomUUID(),
                     userPhotoUrl = null,
                     confidentialInfo = listOf(
-                        Res.string.name to name,
-                        Res.string.email to email, // I wish one day :)
-                        Res.string.phone to phone
+                        stringResource(Res.string.name) to name,
+                        stringResource(Res.string.email) to email, // I wish one day :)
+                        stringResource(Res.string.phone) to phone
                     ),
                     showConfidentialInfoInitially = true
                 )
@@ -239,7 +243,9 @@ private fun PreviewProfileDialogScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalResourceApi::class
+)
 @Composable
 fun ProfileTitleScreen(
     modifier: Modifier = Modifier,
@@ -253,7 +259,7 @@ fun ProfileTitleScreen(
         modifier = modifier.fillMaxWidth(),
     ) {
         Column {
-            Text(text = Res.string.profile)
+            Text(text = stringResource(Res.string.profile))
             AnimatedVisibility(visible = userUUID != null) {
                 if (userUUID != null) {
                     TooltipElevatedCard(
@@ -269,7 +275,7 @@ fun ProfileTitleScreen(
                                     tint = MaterialTheme.colorScheme.error
                                 )
                                 Text(
-                                    text = Res.string.locked,
+                                    text = stringResource(Res.string.locked),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -284,7 +290,7 @@ fun ProfileTitleScreen(
                     ) {
                         UserInfo(
                             modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                            infoName = Res.string.user_id,
+                            infoName = stringResource(Res.string.user_id),
                             info = userUUID.take(8),
                             show = showConfidentialInfo,
                             style = MaterialTheme.typography.bodyMedium,
@@ -385,11 +391,12 @@ fun ConfidentialInfoToggleButton(
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun UserInfo(
     modifier: Modifier = Modifier,
-    infoName: String = Res.string.unknown,
-    info: String = Res.string.unknown,
+    infoName: String = stringResource(Res.string.unknown),
+    info: String = stringResource(Res.string.unknown),
     show: Boolean = false,
     style: TextStyle = LocalTextStyle.current,
     nameStyle: TextStyle = style.plus(TextStyle(fontWeight = FontWeight.SemiBold)),
@@ -407,7 +414,7 @@ fun UserInfo(
             label = "User info"
         ) {
             Text(
-                text = if (it) info else Res.string.hidden_field_string,
+                text = if (it) info else stringResource(Res.string.hidden_field_string),
                 style = style
             )
         }

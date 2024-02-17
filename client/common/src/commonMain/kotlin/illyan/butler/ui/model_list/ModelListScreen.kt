@@ -21,10 +21,12 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import illyan.butler.Res
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.ui.chat.ChatScreen
 import illyan.butler.ui.components.MenuButton
+import illyan.common.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
 class ModelListScreen : Screen {
     @Composable
@@ -63,7 +65,7 @@ class ModelListScreen : Screen {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
     @Composable
     fun ModelListItem(
         model: DomainModel,
@@ -85,7 +87,7 @@ class ModelListScreen : Screen {
                 )
                 MenuButton(
                     onClick = selectModel,
-                    text = Res.string.select
+                    text = stringResource(Res.string.select)
                 )
             }
         }

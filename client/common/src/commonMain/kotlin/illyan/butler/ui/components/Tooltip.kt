@@ -34,10 +34,11 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.PlainTooltipBox
-import androidx.compose.material3.PlainTooltipState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -50,9 +51,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import illyan.butler.Res
+import illyan.common.generated.resources.Res
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
 // Values got from material3/Tooltip.kt
 private const val TooltipFadeInDuration = 150L
@@ -76,7 +79,7 @@ fun TooltipElevatedCard(
     onDismissTooltip: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    val tooltipState = remember { PlainTooltipState() }
+    val tooltipState = remember { TooltipState() }
     val coroutineScope = rememberCoroutineScope()
     val tryShowTooltip = {
         coroutineScope.launch {
@@ -132,7 +135,7 @@ fun TooltipButton(
     onDismissTooltip: () -> Unit = {},
     content: @Composable RowScope.() -> Unit
 ) {
-    val tooltipState = remember { PlainTooltipState() }
+    val tooltipState = remember { TooltipState() }
     val coroutineScope = rememberCoroutineScope()
     val tryShowTooltip = { coroutineScope.launch { tooltipState.show() } }
     ContentWithTooltip(
@@ -172,11 +175,11 @@ fun TooltipButton(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ContentWithTooltip(
     modifier: Modifier = Modifier,
-    tooltipState: PlainTooltipState = remember { PlainTooltipState() },
+    tooltipState: TooltipState = remember { TooltipState() },
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
@@ -197,17 +200,25 @@ fun ContentWithTooltip(
             currentTooltip = if (enabled || disabledTooltip == null) tooltip else disabledTooltip
         }
     }
-    PlainTooltipBox(
+//    PlainTooltipBox(
+//        modifier = modifier,
+//        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+//        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+//        tooltip = currentTooltip,
+//        tooltipState = tooltipState,
+//    ) {
+//        content()
+//    }
+    TooltipBox(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        tooltip = currentTooltip,
-        tooltipState = tooltipState,
-    ) {
-        content()
-    }
+        tooltip = { currentTooltip() },
+        state = tooltipState,
+        content = content,
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
+    )
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CopiedToKeyboardTooltip() {
     Row(
@@ -219,6 +230,6 @@ fun CopiedToKeyboardTooltip() {
             contentDescription = "",
             tint = MaterialTheme.colorScheme.primary
         )
-        Text(text = Res.string.copied_to_clipboard)
+        Text(text = stringResource(Res.string.copied_to_clipboard))
     }
 }

@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Butler</string>
     <string name="hello_world">Hello world!</string>
-    <string name="hello_x">Hello ${name}!</string>
+    <string name="hello_x">Hello %s!</string>
     <string name="sign_in_anonymously">Sign in anonymously</string>
     <string name="anonymous_user">Anonymous User</string>
     <string name="sign_in_with_google">Sign in with Google</string>

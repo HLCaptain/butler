@@ -8,9 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import illyan.butler.Res
 import illyan.butler.ui.MediumCircularProgressIndicator
+import illyan.common.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoadingIndicator(
     progressIndicator: @Composable () -> Unit = {
@@ -18,7 +21,7 @@ fun LoadingIndicator(
     },
     leadingComposable: @Composable () -> Unit = {},
     trailingComposable: @Composable () -> Unit = {
-        Text(text = Res.string.loading)
+        Text(text = stringResource(Res.string.loading))
     }
 ) {
     Row(

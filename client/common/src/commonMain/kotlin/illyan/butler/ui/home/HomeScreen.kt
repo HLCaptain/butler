@@ -30,13 +30,15 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import illyan.butler.Res
 import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
-import io.github.skeptick.libres.compose.painterResource
+import illyan.common.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 class HomeScreen : Screen {
     @Composable
@@ -44,6 +46,7 @@ class HomeScreen : Screen {
         HomeScreen()
     }
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     internal fun HomeScreen() {
         val screenModel = getScreenModel<HomeScreenModel>()
@@ -54,7 +57,7 @@ class HomeScreen : Screen {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = Res.string.app_name,
+                        text = stringResource(Res.string.app_name),
                         style = MaterialTheme.typography.headlineLarge
                     )
 
@@ -66,7 +69,7 @@ class HomeScreen : Screen {
                     )
 
                     Button(onClick = { isProfileDialogShowing = true }) {
-                        Text(Res.string.profile)
+                        Text(stringResource(Res.string.profile))
                     }
                 }
 
@@ -76,7 +79,7 @@ class HomeScreen : Screen {
                 ) {
                     item {
                         Image(
-                            painter = Res.image.butler_logo.painterResource(),
+                            painter = painterResource(Res.drawable.butler_logo),
                             contentDescription = "Butler logo",
                             modifier = Modifier
                                 .widthIn(max = 480.dp)
@@ -96,15 +99,15 @@ class HomeScreen : Screen {
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = Res.string.hello_x.format(signedInUser?.uid?.take(8) ?: Res.string.anonymous_user),
+                                    text = stringResource(Res.string.hello_x, signedInUser?.uid?.take(8) ?: Res.string.anonymous_user),
                                     style = MaterialTheme.typography.headlineMedium
                                 )
                                 MenuButton(
-                                    text = Res.string.chats,
+                                    text = stringResource(Res.string.chats),
                                     onClick = { navigator.push(ChatListScreen()) }
                                 )
                                 MenuButton(
-                                    text = Res.string.new_chat,
+                                    text = stringResource(Res.string.new_chat),
                                     onClick = { navigator.push(ModelListScreen()) }
                                 )
                             }

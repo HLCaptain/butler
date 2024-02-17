@@ -25,40 +25,48 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.ui)
-            implementation(compose.foundation)
-            implementation(compose.materialIconsExtended)
-            implementation(compose.material3)
-            implementation(compose.components.resources)
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.bottomSheetNavigator)
-            implementation(libs.voyager.tabNavigator)
-            implementation(libs.voyager.transitions)
-            implementation(libs.voyager.koin)
-            implementation(libs.ktor.core)
-            api(project.dependencies.platform(libs.koin.bom))
-            api(libs.koin.core)
-            implementation(libs.koin.annotations)
-            implementation(libs.koin.compose)
-            api(libs.napier)
-            implementation(libs.store)
-            implementation(libs.kotlinx.atomicfu)
-            implementation(libs.kotlinx.coroutines)
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
-//                implementation(libs.libres.compose)
-            implementation(libs.sqldelight.coroutines)
-            implementation(libs.sqldelight.adapters)
-            api(libs.gitlive.firebase.common)
-            api(libs.gitlive.firebase.auth)
-            api(libs.gitlive.firebase.firestore)
-            implementation(libs.uuid)
+        commonMain {
+
+        }
+        commonMain {
+            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+            dependencies {
+                implementation(compose.runtime)
+                implementation(compose.ui)
+                implementation(compose.foundation)
+                implementation(compose.materialIconsExtended)
+                implementation(compose.material3)
+                implementation(compose.components.resources)
+                implementation(libs.voyager.navigator)
+                implementation(libs.voyager.bottomSheetNavigator)
+                implementation(libs.voyager.tabNavigator)
+                implementation(libs.voyager.transitions)
+                implementation(libs.voyager.koin)
+                implementation(libs.ktor.core)
+                api(project.dependencies.platform(libs.koin.bom))
+                api(libs.koin.core)
+                implementation(libs.koin.annotations)
+                implementation(libs.koin.compose)
+                api(libs.napier)
+                implementation(libs.store)
+                implementation(libs.kotlinx.atomicfu)
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.sqldelight.coroutines)
+                implementation(libs.sqldelight.adapters)
+                api(libs.gitlive.firebase.common)
+                api(libs.gitlive.firebase.auth)
+                api(libs.gitlive.firebase.firestore)
+                implementation(libs.uuid)
+            }
         }
 
         commonTest.dependencies {
-            implementation(kotlin("test"))
+            implementation(libs.koin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(kotlin("test-common"))
+            implementation(kotlin("test-annotations-common"))
         }
 
         androidMain.dependencies {
@@ -80,17 +88,15 @@ kotlin {
             implementation(libs.sqldelight.jvm)
         }
 
-        jsMain {
-            dependencies {
-                implementation(compose.html.core)
-                implementation(libs.kotlinx.coroutines.js)
-                implementation(libs.sqldelight.js)
-                implementation(npm("kotlinx-coroutines-core", libs.versions.coroutines.get()))
-                implementation(npm("sql.js", "1.8.0"))
-                implementation(npm("dateformat", "4.0.2"))
-                implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
-                implementation(devNpm("copy-webpack-plugin", "11.0.0"))
-            }
+        jsMain.dependencies {
+            implementation(compose.html.core)
+//            implementation(libs.kotlinx.coroutines.js)
+            implementation(libs.sqldelight.js)
+            implementation(npm("kotlinx-coroutines-core", libs.versions.coroutines.get()))
+            implementation(npm("sql.js", "1.8.0"))
+            implementation(npm("dateformat", "4.0.2"))
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
+            implementation(devNpm("copy-webpack-plugin", "11.0.0"))
         }
     }
 }

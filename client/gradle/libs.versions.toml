@@ -26,7 +26,7 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.1" }
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "4.1.2" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.3.5" }
 
 [libraries]
 ktor-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -41,6 +41,7 @@ koin-compose = { module = "io.insert-koin:koin-compose" }
 koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines" }
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
+koin-test = { module = "io.insert-koin:koin-test" }
 
 # No Koin Annotations BOM due to problem with KSP being problematic to add to a multi-module project
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin-annotations" }
@@ -69,11 +70,10 @@ uuid = { module = "com.benasher44:uuid", version = "0.8.1" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.0.4" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-kotlinx-coroutines-wasm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-wasm", version = "coroutines" }
-kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
+#kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
-kotlinx-coroutines-js = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-js", version.ref = "coroutines" }
-kotlinx-serialization-wasm = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core-wasm", version = "1.5.2-wasm0" }
+#kotlinx-coroutines-js = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-js", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.23.2" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.5.0" }

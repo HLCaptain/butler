@@ -23,9 +23,11 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import illyan.butler.Res
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.ui.chat.ChatScreen
+import illyan.common.generated.resources.Res
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
 class ChatListScreen : Screen {
     @Composable
@@ -39,6 +41,7 @@ class ChatListScreen : Screen {
         )
     }
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun ChatList(
         chatsPerModel: Map<String, List<DomainChat>>,
@@ -52,13 +55,13 @@ class ChatListScreen : Screen {
         ) {
             if (it) {
                 Text(
-                    text = Res.string.no_chats,
+                    text = stringResource(Res.string.no_chats),
                     style = MaterialTheme.typography.headlineLarge
                 )
             } else {
                 Column {
                     Text(
-                        text = Res.string.chats,
+                        text = stringResource(Res.string.chats),
                         style = MaterialTheme.typography.headlineLarge
                     )
                     Column(
@@ -92,7 +95,7 @@ class ChatListScreen : Screen {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
     @Composable
     fun ChatCard(
         chat: DomainChat,
@@ -110,7 +113,7 @@ class ChatListScreen : Screen {
             ) {
                 Column {
                     Text(
-                        text = chat.name ?: Res.string.new_chat,
+                        text = chat.name ?: stringResource(Res.string.new_chat),
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
