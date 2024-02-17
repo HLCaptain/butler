@@ -48,5 +48,5 @@ bin/
 local.properties
 
 ### Configuration files ###
-butler/src/androidMain/google-services.json
+**/google-services.json
 **/*.keystore
