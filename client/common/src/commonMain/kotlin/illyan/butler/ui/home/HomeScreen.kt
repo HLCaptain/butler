@@ -36,6 +36,13 @@ import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.anonymous_user
+import illyan.common.generated.resources.app_name
+import illyan.common.generated.resources.butler_logo
+import illyan.common.generated.resources.chats
+import illyan.common.generated.resources.hello_x
+import illyan.common.generated.resources.new_chat
+import illyan.common.generated.resources.profile
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource

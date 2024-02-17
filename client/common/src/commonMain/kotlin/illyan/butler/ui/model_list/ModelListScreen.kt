@@ -25,6 +25,7 @@ import illyan.butler.domain.model.DomainModel
 import illyan.butler.ui.chat.ChatScreen
 import illyan.butler.ui.components.MenuButton
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.select
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

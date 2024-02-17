@@ -26,6 +26,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.ui.chat.ChatScreen
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.chats
+import illyan.common.generated.resources.new_chat
+import illyan.common.generated.resources.no_chats
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

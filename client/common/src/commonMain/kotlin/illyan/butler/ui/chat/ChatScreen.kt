@@ -34,6 +34,9 @@ import cafe.adriel.voyager.koin.getScreenModel
 import illyan.butler.domain.model.ChatMessage
 import illyan.butler.domain.model.DomainChat
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.new_chat
+import illyan.common.generated.resources.no_messages
+import illyan.common.generated.resources.send
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource

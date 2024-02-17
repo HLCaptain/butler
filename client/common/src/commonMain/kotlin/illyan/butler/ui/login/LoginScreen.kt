@@ -28,6 +28,12 @@ import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.cancel
+import illyan.common.generated.resources.email
+import illyan.common.generated.resources.login
+import illyan.common.generated.resources.password
+import illyan.common.generated.resources.sign_in_anonymously
+import illyan.common.generated.resources.sign_up
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

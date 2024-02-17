@@ -52,6 +52,17 @@ import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.util.log.randomUUID
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.close
+import illyan.common.generated.resources.email
+import illyan.common.generated.resources.hidden_field_string
+import illyan.common.generated.resources.locked
+import illyan.common.generated.resources.login
+import illyan.common.generated.resources.name
+import illyan.common.generated.resources.phone
+import illyan.common.generated.resources.profile
+import illyan.common.generated.resources.sign_out
+import illyan.common.generated.resources.unknown
+import illyan.common.generated.resources.user_id
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.common.generated.resources.Res
+import illyan.common.generated.resources.loading
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

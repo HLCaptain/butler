@@ -7,9 +7,9 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.sqldelight)
-//    alias(libs.plugins.libres)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
+    alias(libs.plugins.aboutlibraries)
 }
 
 group = "illyan"
@@ -19,15 +19,9 @@ kotlin {
     jvmToolchain(17)
     androidTarget()
     jvm()
-    js(IR) {
-        useCommonJs()
-        browser()
-    }
+    js(IR) { browser() }
 
     sourceSets {
-        commonMain {
-
-        }
         commonMain {
             kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies {
@@ -38,6 +32,7 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.components.resources)
                 implementation(libs.voyager.navigator)
+                implementation(libs.voyager.screenModel)
                 implementation(libs.voyager.bottomSheetNavigator)
                 implementation(libs.voyager.tabNavigator)
                 implementation(libs.voyager.transitions)
@@ -59,6 +54,7 @@ kotlin {
                 api(libs.gitlive.firebase.auth)
                 api(libs.gitlive.firebase.firestore)
                 implementation(libs.uuid)
+                implementation(libs.aboutlibraries.core)
             }
         }
 
@@ -90,13 +86,13 @@ kotlin {
 
         jsMain.dependencies {
             implementation(compose.html.core)
-//            implementation(libs.kotlinx.coroutines.js)
+            implementation(libs.kotlinx.coroutines.js)
             implementation(libs.sqldelight.js)
-            implementation(npm("kotlinx-coroutines-core", libs.versions.coroutines.get()))
-            implementation(npm("sql.js", "1.8.0"))
-            implementation(npm("dateformat", "4.0.2"))
-            implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
-            implementation(devNpm("copy-webpack-plugin", "11.0.0"))
+            implementation(npm("kotlinx-coroutines-core", "1.7.3"))
+            implementation(npm("sql.js", "1.10.2"))
+            implementation(npm("dateformat", "5.0.3"))
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.1"))
+            implementation(devNpm("copy-webpack-plugin", "12.0.2"))
         }
     }
 }
