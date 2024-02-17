@@ -1,3 +1,5 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
         google()
@@ -18,7 +20,4 @@ pluginManagement {
 
 rootProject.name = "ButlerClientApp"
 
-include(":android")
-include(":desktop")
-include(":web")
-include(":common")
+include(":butler")
