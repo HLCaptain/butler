@@ -1,12 +1,13 @@
 package illyan.butler.util.log
 
+import illyan.butler.isDebugBuild
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 
 // TODO: log based on user analytics preference
-fun initNapier(isDebug: Boolean = true) {
+fun initNapier() {
     Napier.takeLogarithm()
-    if (isDebug) {
+    if (isDebugBuild()) {
         Napier.base(DebugAntilog())
     }
 }

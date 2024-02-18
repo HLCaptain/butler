@@ -5,7 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class Permission {
     END_USER,
-    BOT_OWNER,
-    SUPPORT,
     ADMIN
 }

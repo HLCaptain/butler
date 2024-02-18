@@ -1,5 +1,6 @@
 package illyan.butler.di
 
+import illyan.butler.isDebugBuild
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
@@ -23,6 +24,8 @@ fun provideHttpClient() = HttpClient {
         protobuf()
     }
 
+    developmentMode = isDebugBuild()
+
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         on(Send) { request ->
             when (request.body) {
@@ -43,7 +46,13 @@ fun provideHttpClient() = HttpClient {
         }
     }
     install(fallbackPlugin) {
-        supportedContentTypes = listOf(ContentType.Application.ProtoBuf, ContentType.Application.Json)
+        val fallbackContentType = ContentType.Application.Json
+        val defaultContentType = ContentType.Application.ProtoBuf
+        supportedContentTypes = if (developmentMode) {
+            listOf(fallbackContentType, defaultContentType)
+        } else {
+            listOf(fallbackContentType)
+        }
     }
 }
 

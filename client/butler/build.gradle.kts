@@ -173,30 +173,24 @@ kotlin.sourceSets.all {
 }
 
 buildConfig {
+    // Setting required for collision avoidance with Android platform BuildConfig
     packageName = "illyan.butler.config"
 
-    // Use local.properties file to store secrets
-    val properties = localPropertiesFile.readLines().associate {
-        if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
-        val (key, value) = it.split("=", limit = 2)
-        key to value
+    // Checking if the task is a debug or release task to set DEBUG flag
+    // Parsing main task name to check if it contains debug or release type names
+    // Not 100% accurate but should work for most cases
+    // Defaults to DEBUG = true
+    gradle.taskGraph.whenReady {
+        val taskName = allTasks.last().name
+        val debugIndicatorNames = listOf("dev", "debug")
+        val prodIndicatorNames = listOf("release", "prod")
+        val isProd = debugIndicatorNames.none { taskName.contains(it, ignoreCase = true) } &&
+            prodIndicatorNames.any { taskName.contains(it, ignoreCase = true) }
+
+        println("Task [$taskName] isProd=$isProd")
+
+        buildConfigField("Boolean", "DEBUG", (!isProd).toString())
     }
-
-    val firebaseWebAndDesktopApiKey = properties["FIREBASE_WEB_AND_DESKTOP_API_KEY"].toString()
-    val firebaseMessagingSenderId = properties["FIREBASE_MESSAGING_SENDER_ID"].toString()
-    val firebaseDesktopAppId = properties["FIREBASE_DESKTOP_APP_ID"].toString()
-    val firebaseWebAppId = properties["FIREBASE_WEB_APP_ID"].toString()
-    val firebaseStorageBucket = properties["FIREBASE_STORAGE_BUCKET"].toString()
-    val firebaseProjectId = properties["FIREBASE_PROJECT_ID"].toString()
-    val firebaseAuthDomain = properties["FIREBASE_AUTH_DOMAIN"].toString()
-
-    buildConfigField("String", "FIREBASE_WEB_AND_DESKTOP_API_KEY", "\"$firebaseWebAndDesktopApiKey\"")
-    buildConfigField("String", "FIREBASE_MESSAGING_SENDER_ID", "\"$firebaseMessagingSenderId\"")
-    buildConfigField("String", "FIREBASE_DESKTOP_APP_ID", "\"$firebaseDesktopAppId\"")
-    buildConfigField("String", "FIREBASE_WEB_APP_ID", "\"$firebaseWebAppId\"")
-    buildConfigField("String", "FIREBASE_STORAGE_BUCKET", "\"$firebaseStorageBucket\"")
-    buildConfigField("String", "FIREBASE_PROJECT_ID", "\"$firebaseProjectId\"")
-    buildConfigField("String", "FIREBASE_AUTH_DOMAIN", "\"$firebaseAuthDomain\"")
 }
 
 android {

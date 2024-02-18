@@ -9,8 +9,6 @@ data class TokenConfiguration(
     val accessTokenExpireDuration: Duration,
     val refreshTokenExpireDuration: Duration
 ) {
-    val accessTokenExpireMilli: Long
-        get() = accessTokenExpireDuration.inWholeMilliseconds
-    val refreshTokenExpireMilli: Long
-        get() = refreshTokenExpireDuration.inWholeMilliseconds
+    val accessTokenExpireMilli = accessTokenExpireDuration.inWholeMilliseconds
+    val refreshTokenExpireMilli = refreshTokenExpireDuration.inWholeMilliseconds
 }

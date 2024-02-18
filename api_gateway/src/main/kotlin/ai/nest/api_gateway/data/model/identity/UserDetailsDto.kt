@@ -1,18 +1,14 @@
 package ai.nest.api_gateway.data.model.identity
 
-import ai.nest.api_gateway.utils.Permission
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserDetailsDto(
     val id: String,
-    val fullName: String,
-    val username: String,
     val email: String,
-    val phone: String,
-    val walletBalance: Double,
-    val currency: String,
-    val addresses: List<AddressDto> = emptyList(),
-    val country: String,
-    val permission: Set<Permission> = emptySet()
+    val displayName: String,
+    val legalName: String,
+    val username: String,
+    val phone: String?,
+    val address: AddressDto? = null
 )

@@ -2,7 +2,6 @@ package ai.nest.api_gateway.data.service
 
 import ai.nest.api_gateway.data.model.chat.ChatDto
 import ai.nest.api_gateway.data.model.chat.MessageDto
-import ai.nest.api_gateway.data.model.chat.TicketDto
 import ai.nest.api_gateway.data.model.response.PaginationResponse
 import ai.nest.api_gateway.data.utils.bodyOrThrow
 import ai.nest.api_gateway.data.utils.getLastMonthDate
@@ -14,30 +13,11 @@ import ai.nest.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import io.ktor.client.request.put
-import io.ktor.client.request.setBody
-import io.ktor.http.isSuccess
 import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
 class ChatService(private val client: HttpClient) {
-    suspend fun createTicket(
-        ticket: TicketDto,
-    ) = client.post("${AppConfig.Api.CHAT_API_URL}/chat/ticket") {
-        setBody(ticket)
-    }.bodyOrThrow<TicketDto>()
-
-    suspend fun updateTicketState(
-        ticketId: String,
-        state: Boolean,
-    ) = client.put("${AppConfig.Api.CHAT_API_URL}/chat/$ticketId") {
-        parameter("state", state)
-    }.status.isSuccess()
-
-    fun receiveTicket(supportId: String) = client.tryToExecuteWebSocket<TicketDto>("${AppConfig.Api.CHAT_API_URL}/chat/tickets/$supportId")
-
     fun receiveChatMessages(chatId: String) = client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/chat/$chatId")
 
     suspend fun sendChatMessage(

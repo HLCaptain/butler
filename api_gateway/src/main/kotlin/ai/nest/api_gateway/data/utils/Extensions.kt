@@ -1,15 +1,11 @@
 package ai.nest.api_gateway.data.utils
 
-import ai.nest.api_gateway.data.model.identity.UserOptions
-import ai.nest.api_gateway.endpoints.utils.toListOfIntOrNull
-import ai.nest.api_gateway.endpoints.utils.toListOfStringOrNull
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
 import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.statement.HttpResponse
-import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,16 +79,6 @@ suspend inline fun <reified T> HttpClient.tryToSendAndReceiveWebSocketData(
         sendSerialized(data)
         emit(receiveDeserialized<T>())
     }
-}
-
-fun Parameters.getUserOptions(): UserOptions {
-    val page = this["page"]?.toIntOrNull()
-    val limit = this["limit"]?.toIntOrNull()
-
-    val query = this["query"]?.trim()
-    val permissions = this["permissions"].toListOfIntOrNull()
-    val countries = this["countries"].toListOfStringOrNull()
-    return UserOptions(page, limit, query, permissions, countries)
 }
 
 // Utility function to get the date of the last month
