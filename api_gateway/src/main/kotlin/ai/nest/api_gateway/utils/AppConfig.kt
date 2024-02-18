@@ -17,7 +17,8 @@ data object AppConfig {
         val DEVELOPMENT = System.getenv("KTOR_DEVELOPMENT").toBoolean()
         val PORT = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8080
         val DEBUG_CONTENT_TYPE = ContentType.Application.Json
-        val DEFAULT_CONTENT_TYPE = if (DEVELOPMENT) DEBUG_CONTENT_TYPE else ContentType.parse(System.getenv("KTOR_DEFAULT_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
+        val BINARY_CONTENT_TYPE = ContentType.Application.ProtoBuf
+        val DEFAULT_CONTENT_TYPE = if (DEVELOPMENT) DEBUG_CONTENT_TYPE else ContentType.parse(System.getenv("KTOR_DEFAULT_CONTENT_TYPE") ?: BINARY_CONTENT_TYPE.toString())
         val FALLBACK_CONTENT_TYPE = ContentType.parse(System.getenv("KTOR_FALLBACK_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
         val SUPPORTED_CONTENT_TYPES =  listOf(
             DEFAULT_CONTENT_TYPE, // First is used as default

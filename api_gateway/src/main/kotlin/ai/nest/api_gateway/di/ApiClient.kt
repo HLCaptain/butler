@@ -6,7 +6,6 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -33,7 +32,7 @@ fun provideHttpClientAttribute(): Attributes {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Single
-fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
+fun provideHttpClient() = HttpClient(CIO) {
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
@@ -48,10 +47,6 @@ fun provideHttpClient(attributes: Attributes) = HttpClient(CIO) {
 
     install(KtorClientTracing) {
         setOpenTelemetry(GlobalOpenTelemetry.get())
-    }
-
-    defaultRequest {
-
     }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {

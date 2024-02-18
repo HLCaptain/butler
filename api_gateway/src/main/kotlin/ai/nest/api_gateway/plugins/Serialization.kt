@@ -14,6 +14,7 @@ fun Application.configureSerialization() {
     install(ContentNegotiation) {
         // Order matters! First is the default serialization format
         AppConfig.Ktor.SUPPORTED_CONTENT_TYPES.forEach {
+            println("Supported content type: $it")
             when (it) {
                 ContentType.Application.Json -> json()
                 ContentType.Application.ProtoBuf -> protobuf()
