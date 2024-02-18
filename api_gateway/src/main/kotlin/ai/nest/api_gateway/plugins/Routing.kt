@@ -5,8 +5,6 @@ import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
 import ai.nest.api_gateway.endpoints.authenticationRoutes
 import ai.nest.api_gateway.endpoints.chatRoute
 import ai.nest.api_gateway.endpoints.utils.ContentVersion
-import ai.nest.api_gateway.endpoints.utils.withPermissions
-import ai.nest.api_gateway.utils.Permission
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -25,11 +23,6 @@ fun Application.configureRouting(tokenConfiguration: TokenConfiguration) {
     routing {
         authenticationRoutes(tokenConfiguration)
         chatRoute()
-        withPermissions(Permission.ADMIN) {
-            get("/admin") {
-                call.respond("Hello" to "Admin!")
-            }
-        }
         get {
             call.respond("Hello" to "World!")
         }

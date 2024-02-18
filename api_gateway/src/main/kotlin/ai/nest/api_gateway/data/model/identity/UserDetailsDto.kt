@@ -6,9 +6,9 @@ import kotlinx.serialization.Serializable
 data class UserDetailsDto(
     val id: String,
     val email: String,
-    val displayName: String,
-    val legalName: String,
     val username: String,
+    val displayName: String?,
+    val fullName: String?,
     val phone: String?,
-    val address: AddressDto? = null
+    val address: AddressDto?
 )

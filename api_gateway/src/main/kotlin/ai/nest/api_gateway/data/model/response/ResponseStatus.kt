@@ -1,6 +1,5 @@
 package ai.nest.api_gateway.data.model.response
 
-import ai.nest.api_gateway.data.model.localization.LabelDto
 import kotlinx.serialization.Serializable
 
 @Serializable

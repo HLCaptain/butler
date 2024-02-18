@@ -9,7 +9,7 @@ plugins {
 
 group = "ai.nest"
 version = "0.0.1"
-val apiVersion = "0.0.1"
+val apiVersion = 1
 
 application {
     mainClass = "ai.nest.api_gateway.ApplicationKt"

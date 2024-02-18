@@ -1,7 +1,6 @@
 package ai.nest.api_gateway.endpoints.utils
 
 import ai.nest.api_gateway.data.service.IdentityService
-import ai.nest.api_gateway.data.service.NotificationService
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.CloseReason
@@ -16,7 +15,6 @@ import org.koin.core.annotation.Single
 @Single
 class WebSocketServerHandler(
     private val identityService: IdentityService,
-    val notificationService: NotificationService
 ) {
 
     val sessions: ConcurrentHashMap<String, DefaultWebSocketServerSession> = ConcurrentHashMap()
