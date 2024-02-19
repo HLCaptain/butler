@@ -2,6 +2,7 @@ package ai.nest
 
 import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
 import ai.nest.api_gateway.plugins.configureAuthentication
+import ai.nest.api_gateway.plugins.configureCompression
 import ai.nest.api_gateway.plugins.configureDependencyInjection
 import ai.nest.api_gateway.plugins.configureRouting
 import ai.nest.api_gateway.plugins.configureSerialization
@@ -9,18 +10,25 @@ import ai.nest.api_gateway.plugins.configureStatusPages
 import ai.nest.api_gateway.plugins.configureWebSockets
 import ai.nest.api_gateway.utils.AppConfig
 import io.ktor.client.call.body
+import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.client.request.header
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
+import io.ktor.server.application.call
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.ktor.ext.get
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
 
 class ApplicationTest {
@@ -43,6 +51,7 @@ class ApplicationTest {
             configureSerialization()
             configureWebSockets(get())
             configureStatusPages()
+            configureCompression()
             configureRouting(tokenConfig)
         }
         val client = createClient {
@@ -50,14 +59,53 @@ class ApplicationTest {
                 json()
                 protobuf()
             }
-        }
-        AppConfig.Ktor.SUPPORTED_CONTENT_TYPES.forEach {
-            client.get("/") {
-                header(HttpHeaders.ContentType, it)
-            }.apply {
-                assertEquals(HttpStatusCode.OK, status)
-                assertEquals("Hello" to "World!", body())
+            install(ContentEncoding) {
+                gzip(1.0f)
+                deflate(0.9f)
             }
+        }
+        client.get("/").apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertTrue {
+                val enabledContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES.map { it.toString() } + ContentType.Text.Plain.toString()
+                headers[HttpHeaders.ContentType]?.split(";")?.map { it.trim() }?.any {
+                    enabledContentTypes.contains(it)
+                } ?: false
+            }
+            assertEquals("Hello" to "World!", body())
+        }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun testLargePacket() = testApplication {
+        val largeData = Random.nextBytes(10000000).toString()
+        application {
+            routing {
+                get("/large-packet") {
+                    call.respond(largeData)
+                }
+            }
+        }
+        val client = createClient {
+            install(ContentNegotiation) {
+                json()
+                protobuf()
+            }
+            install(ContentEncoding) {
+                gzip(1.0f)
+                deflate(0.9f)
+            }
+        }
+        client.get("/large-packet").apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertTrue {
+                val enabledContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES.map { it.toString() } + ContentType.Text.Plain.toString()
+                headers[HttpHeaders.ContentType]?.split(";")?.map { it.trim() }?.any {
+                    enabledContentTypes.contains(it)
+                } ?: false
+            }
+            assertEquals(largeData, body())
         }
     }
 }

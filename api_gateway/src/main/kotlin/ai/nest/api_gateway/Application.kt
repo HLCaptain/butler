@@ -2,6 +2,7 @@ package ai.nest.api_gateway
 
 import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
 import ai.nest.api_gateway.plugins.configureAuthentication
+import ai.nest.api_gateway.plugins.configureCompression
 import ai.nest.api_gateway.plugins.configureDependencyInjection
 import ai.nest.api_gateway.plugins.configureMonitoring
 import ai.nest.api_gateway.plugins.configureRouting
@@ -42,5 +43,6 @@ fun Application.module() {
     configureSerialization()
     configureWebSockets(get())
     configureStatusPages()
+    configureCompression()
     configureRouting(tokenConfig)
 }

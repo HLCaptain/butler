@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
@@ -77,6 +78,8 @@ fun provideHttpClient() = HttpClient(CIO) {
         json()
         protobuf()
     }
+
+    install(ContentEncoding)
 }
 
 class ContentTypeFallbackConfig {
