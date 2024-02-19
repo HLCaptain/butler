@@ -286,6 +286,10 @@ compose.desktop.application {
         packageName = "desktop"
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
     }
+    buildTypes.release.proguard {
+        configurationFiles.from(project.file("compose-desktop.pro"))
+//        obfuscate.set(true)
+    }
 }
 
 rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
