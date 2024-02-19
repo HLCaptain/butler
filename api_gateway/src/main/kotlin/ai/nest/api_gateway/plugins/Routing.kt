@@ -13,6 +13,7 @@ import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import kotlin.random.Random
 
 fun Application.configureRouting(tokenConfiguration: TokenConfiguration) {
     install(DefaultHeaders) {
@@ -25,6 +26,10 @@ fun Application.configureRouting(tokenConfiguration: TokenConfiguration) {
         chatRoute()
         get {
             call.respond("Hello" to "World!")
+        }
+        get("/large-packet") {
+            val largeData = (1..1000).map { Random.nextInt(0, 100000).toString() }
+            call.respond(largeData)
         }
     }
 }
