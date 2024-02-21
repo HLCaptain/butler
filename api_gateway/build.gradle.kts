@@ -7,12 +7,12 @@ plugins {
     application
 }
 
-group = "ai.nest"
+group = "illyan"
 version = "0.0.1"
 val apiVersion = 1
 
 application {
-    mainClass = "ai.nest.api_gateway.ApplicationKt"
+    mainClass = "illyan.butler.api_gateway.ApplicationKt"
 }
 
 ktor {
