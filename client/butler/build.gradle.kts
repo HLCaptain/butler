@@ -283,7 +283,7 @@ compose.desktop.application {
     mainClass = "illyan.butler.MainKt"
     nativeDistributions {
         targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-        packageName = "desktop"
+        packageName = "Butler"
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
     }
     buildTypes.release.proguard {
