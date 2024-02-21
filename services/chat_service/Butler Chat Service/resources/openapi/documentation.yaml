@@ -1,0 +1,8 @@
+openapi: "3.0.3"
+info:
+  title: "Butler_Chat_Service API"
+  description: "Butler_Chat_Service API"
+  version: "1.0.0"
+servers:
+- url: "https://Butler_Chat_Service"
+paths: {}
