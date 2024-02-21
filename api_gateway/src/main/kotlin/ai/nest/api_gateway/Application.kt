@@ -17,6 +17,9 @@ import org.koin.ktor.ext.get
 import kotlin.time.Duration.Companion.days
 
 fun main() {
+    // Configure Ktor Server developmentMode
+    System.setProperty("io.ktor.development", AppConfig.Ktor.DEVELOPMENT.toString())
+
     embeddedServer(
         factory = Netty,
         port = AppConfig.Ktor.PORT,

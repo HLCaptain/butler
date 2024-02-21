@@ -14,5 +14,6 @@ data class MessageDto(
      * To include pictures, media, etc. for a message.
      */
     val contentUrls: List<String> = emptyList(),
-    val time: Long? = null // Unix timestamp
+    val time: Long? = null, // Unix timestamp
+    val chatId: String? = null
 )

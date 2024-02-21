@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 data class ChatDto(
     val id: String? = null,
     val name: String? = null,
-    val members: List<String>? = null,
-    val lastFewMessages: List<MessageDto>? = null
+    val members: List<String> = emptyList(),
+    val lastFewMessages: List<MessageDto> = emptyList()
 )
