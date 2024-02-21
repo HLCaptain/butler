@@ -1,7 +1,7 @@
 package illyan.butler.api_gateway.plugins
 
-import ai.nest.api_gateway.data.utils.ApiGatewayException
-import ai.nest.api_gateway.endpoints.utils.respondWithError
+import illyan.butler.api_gateway.data.utils.ApiGatewayException
+import illyan.butler.api_gateway.endpoints.utils.respondWithError
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install

@@ -1,6 +1,6 @@
 package illyan.butler.api_gateway.endpoints.utils
 
-import ai.nest.api_gateway.data.service.IdentityService
+import illyan.butler.api_gateway.data.service.IdentityService
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.CloseReason

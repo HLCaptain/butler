@@ -1,6 +1,6 @@
 package illyan.butler.api_gateway.plugins
 
-import ai.nest.api_gateway.utils.AppConfig
+import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.Application
 import io.ktor.server.application.install

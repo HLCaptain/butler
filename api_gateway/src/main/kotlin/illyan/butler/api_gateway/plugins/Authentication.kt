@@ -1,9 +1,9 @@
 package illyan.butler.api_gateway.plugins
 
-import ai.nest.api_gateway.data.model.authenticate.TokenType
-import ai.nest.api_gateway.utils.AppConfig
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import illyan.butler.api_gateway.data.model.authenticate.TokenType
+import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.Application
 import io.ktor.server.auth.UnauthorizedResponse

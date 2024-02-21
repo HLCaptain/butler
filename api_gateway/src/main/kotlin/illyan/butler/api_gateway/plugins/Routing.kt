@@ -1,10 +1,10 @@
 package illyan.butler.api_gateway.plugins
 
 import ai.nest.Butler_API_Gateway.BuildConfig
-import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
-import ai.nest.api_gateway.endpoints.authenticationRoutes
-import ai.nest.api_gateway.endpoints.chatRoute
-import ai.nest.api_gateway.endpoints.utils.ContentVersion
+import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
+import illyan.butler.api_gateway.endpoints.authenticationRoutes
+import illyan.butler.api_gateway.endpoints.chatRoute
+import illyan.butler.api_gateway.endpoints.utils.ContentVersion
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.call

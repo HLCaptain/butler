@@ -1,6 +1,6 @@
 package illyan.butler.api_gateway.di
 
-import ai.nest.api_gateway.utils.AppConfig
+import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.Send

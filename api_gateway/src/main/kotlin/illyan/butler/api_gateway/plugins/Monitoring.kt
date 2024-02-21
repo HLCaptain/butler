@@ -1,7 +1,7 @@
 package illyan.butler.api_gateway.plugins
 
 import ai.nest.Butler_API_Gateway.BuildConfig
-import ai.nest.api_gateway.utils.AppConfig
+import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.callloging.CallLogging

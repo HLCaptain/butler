@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.crypt)
+    implementation(libs.exposed.dao)
     implementation(libs.ktor.server.swagger.jvm)
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.call.logging.jvm)

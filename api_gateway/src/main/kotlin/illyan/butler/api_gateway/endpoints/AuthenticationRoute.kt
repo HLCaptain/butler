@@ -1,11 +1,11 @@
 package illyan.butler.api_gateway.endpoints
 
-import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
-import ai.nest.api_gateway.data.model.identity.UserLoginDto
-import ai.nest.api_gateway.data.model.identity.UserRegistrationDto
-import ai.nest.api_gateway.data.service.IdentityService
-import ai.nest.api_gateway.endpoints.utils.respondWithResult
-import ai.nest.api_gateway.utils.Claim
+import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
+import illyan.butler.api_gateway.data.model.identity.UserLoginDto
+import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
+import illyan.butler.api_gateway.data.service.IdentityService
+import illyan.butler.api_gateway.endpoints.utils.respondWithResult
+import illyan.butler.api_gateway.utils.Claim
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal

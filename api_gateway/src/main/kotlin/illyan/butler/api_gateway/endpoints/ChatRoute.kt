@@ -1,12 +1,12 @@
 package illyan.butler.api_gateway.endpoints
 
-import ai.nest.api_gateway.data.model.chat.ChatDto
-import ai.nest.api_gateway.data.model.chat.MessageDto
-import ai.nest.api_gateway.data.service.ChatService
-import ai.nest.api_gateway.endpoints.utils.ChatSocketHandler
-import ai.nest.api_gateway.endpoints.utils.WebSocketServerHandler
-import ai.nest.api_gateway.endpoints.utils.respondWithResult
-import ai.nest.api_gateway.utils.Claim
+import illyan.butler.api_gateway.data.model.chat.ChatDto
+import illyan.butler.api_gateway.data.model.chat.MessageDto
+import illyan.butler.api_gateway.data.service.ChatService
+import illyan.butler.api_gateway.endpoints.utils.ChatSocketHandler
+import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
+import illyan.butler.api_gateway.endpoints.utils.respondWithResult
+import illyan.butler.api_gateway.utils.Claim
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal

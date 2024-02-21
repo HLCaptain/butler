@@ -1,6 +1,6 @@
 package illyan.butler.api_gateway.data.utils
 
-import ai.nest.api_gateway.endpoints.utils.errorMessages
+import illyan.butler.api_gateway.endpoints.utils.errorMessages
 
 open class ApiException(val errorCodes: List<Int>) : Throwable(errorCodes.joinToString { errorMessages[it] ?: "" }) {
     constructor(errorCode: Int) : this(listOf(errorCode))

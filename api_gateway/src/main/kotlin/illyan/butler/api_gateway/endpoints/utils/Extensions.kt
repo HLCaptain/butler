@@ -1,6 +1,6 @@
 package illyan.butler.api_gateway.endpoints.utils
 
-import ai.nest.api_gateway.data.model.response.ServerResponse
+import illyan.butler.api_gateway.data.model.response.ServerResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters

@@ -1,13 +1,13 @@
 package illyan.butler.api_gateway.data.service
 
-import ai.nest.api_gateway.data.model.chat.ChatDto
-import ai.nest.api_gateway.data.model.chat.MessageDto
-import ai.nest.api_gateway.data.model.response.PaginationResponse
-import ai.nest.api_gateway.data.utils.bodyOrThrow
-import ai.nest.api_gateway.data.utils.getLastMonthDate
-import ai.nest.api_gateway.data.utils.getLastWeekDate
-import ai.nest.api_gateway.data.utils.tryToExecuteWebSocket
-import ai.nest.api_gateway.utils.AppConfig
+import illyan.butler.api_gateway.data.model.chat.ChatDto
+import illyan.butler.api_gateway.data.model.chat.MessageDto
+import illyan.butler.api_gateway.data.model.response.PaginationResponse
+import illyan.butler.api_gateway.data.utils.bodyOrThrow
+import illyan.butler.api_gateway.data.utils.getLastMonthDate
+import illyan.butler.api_gateway.data.utils.getLastWeekDate
+import illyan.butler.api_gateway.data.utils.tryToExecuteWebSocket
+import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
