@@ -7,6 +7,8 @@ postgres = "42.5.1"
 h2 = "2.2.224"
 exposed = "0.47.0"
 prometheus = "1.12.3"
+koin = "3.5.3"
+koin-annotations = "1.3.0"
 
 [libraries]
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -33,6 +35,13 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 
 ktor-server-tests = { module = "io.ktor:ktor-server-tests", version.ref = "ktor" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
+koin-ktor = { module = "io.insert-koin:koin-ktor" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-annotations-bom = { module = "io.insert-koin:koin-annotations-bom", version.ref = "koin-annotations" }
+koin-annotations = { module = "io.insert-koin:koin-annotations" }
+koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
