@@ -40,8 +40,9 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
 
     // Ktor Server
-    implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.swagger)
+    implementation(libs.ktor.server.openapi)
+    implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.netty)
@@ -84,6 +85,13 @@ dependencies {
     implementation(libs.opentelemetry.autoconfigure)
     implementation(libs.opentelemetry.ktor)
     implementation(libs.opentelemetry.instrumentation.annotations)
+
+    // Ktor Metrics
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.metrics)
+    implementation(libs.ktor.server.call.id)
+    implementation(libs.ktor.server.metrics.micrometer)
+    implementation(libs.micrometer.registry.prometheus)
 }
 
 ksp {

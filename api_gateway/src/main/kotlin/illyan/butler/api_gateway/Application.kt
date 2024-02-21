@@ -13,7 +13,6 @@ import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import org.koin.ktor.ext.get
 import kotlin.time.Duration.Companion.days
 
 fun main() {
@@ -44,7 +43,7 @@ fun Application.module() {
     configureDependencyInjection()
     configureAuthentication()
     configureSerialization()
-    configureWebSockets(get())
+    configureWebSockets()
     configureStatusPages()
     configureCompression()
     configureRouting(tokenConfig)

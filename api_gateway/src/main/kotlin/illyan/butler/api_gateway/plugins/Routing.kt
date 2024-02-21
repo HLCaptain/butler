@@ -1,6 +1,6 @@
 package illyan.butler.api_gateway.plugins
 
-import ai.nest.Butler_API_Gateway.BuildConfig
+import illyan.Butler_API_Gateway.BuildConfig
 import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
 import illyan.butler.api_gateway.endpoints.authenticationRoutes
 import illyan.butler.api_gateway.endpoints.chatRoute

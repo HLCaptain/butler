@@ -1,4 +1,4 @@
-openapi: "3.0.3"
+openapi: "3.0.0"
 info:
   title: "Butler_API_Gateway API"
   description: "Butler_API_Gateway API"
@@ -13,13 +13,91 @@ paths:
         "200":
           description: "OK"
           content:
-            text/plain:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Pair_? extends String"
+  /chats:
+    get:
+      description: ""
+      parameters:
+      - name: "Connection"
+        in: "header"
+        required: true
+        description: "Websocket Connection parameter"
+        schema:
+          type: "string"
+      - name: "Upgrade"
+        in: "header"
+        required: true
+        description: "Websocket Upgrade parameter"
+        schema:
+          type: "string"
+      - name: "Sec-WebSocket-Key"
+        in: "header"
+        required: true
+        description: "Websocket Sec-WebSocket-Key parameter"
+        schema:
+          type: "string"
+      responses:
+        "101":
+          description: "Switching Protocols"
+          headers:
+            Connection:
+              required: true
               schema:
                 type: "string"
-              examples:
-                Example#1:
-                  value: "Hello World!"
-  /chat/{chatId}:
+            Upgrade:
+              required: true
+              schema:
+                type: "string"
+            Sec-WebSocket-Accept:
+              required: true
+              schema:
+                type: "string"
+  /chats/{chatId}:
+    get:
+      description: ""
+      parameters:
+      - name: "chatId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "Connection"
+        in: "header"
+        required: true
+        description: "Websocket Connection parameter"
+        schema:
+          type: "string"
+      - name: "Upgrade"
+        in: "header"
+        required: true
+        description: "Websocket Upgrade parameter"
+        schema:
+          type: "string"
+      - name: "Sec-WebSocket-Key"
+        in: "header"
+        required: true
+        description: "Websocket Sec-WebSocket-Key parameter"
+        schema:
+          type: "string"
+      responses:
+        "101":
+          description: "Switching Protocols"
+          headers:
+            Connection:
+              required: true
+              schema:
+                type: "string"
+            Upgrade:
+              required: true
+              schema:
+                type: "string"
+            Sec-WebSocket-Accept:
+              required: true
+              schema:
+                type: "string"
+  /chats/{chatId}/messages:
     post:
       description: ""
       parameters:
@@ -41,7 +119,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ServerResponse_T"
-    get:
+  /chats/{chatId}/messages/{messageId}:
+    delete:
       description: ""
       parameters:
       - name: "chatId"
@@ -49,54 +128,11 @@ paths:
         required: true
         schema:
           type: "string"
-      - name: "Connection"
-        in: "header"
-        required: true
-        description: "Websocket Connection parameter"
-        schema:
-          type: "string"
-      - name: "Upgrade"
-        in: "header"
-        required: true
-        description: "Websocket Upgrade parameter"
-        schema:
-          type: "string"
-      - name: "Sec-WebSocket-Key"
-        in: "header"
-        required: true
-        description: "Websocket Sec-WebSocket-Key parameter"
-        schema:
-          type: "string"
-      responses:
-        "101":
-          description: "Switching Protocols"
-          headers:
-            Connection:
-              required: true
-              schema:
-                type: "string"
-            Upgrade:
-              required: true
-              schema:
-                type: "string"
-            Sec-WebSocket-Accept:
-              required: true
-              schema:
-                type: "string"
-  /chat/{ticketId}:
-    put:
-      description: ""
-      parameters:
-      - name: "ticketId"
+      - name: "messageId"
         in: "path"
         required: true
         schema:
           type: "string"
-      - name: "state"
-        in: "query"
-        required: false
-        schema:
-          type: "boolean"
       responses:
         "200":
           description: ""
@@ -104,126 +140,53 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ServerResponse_T"
-    get:
+    put:
       description: ""
       parameters:
-      - name: "ticketId"
+      - name: "chatId"
         in: "path"
         required: true
         schema:
           type: "string"
-      - name: "Connection"
-        in: "header"
+      - name: "messageId"
+        in: "path"
         required: true
-        description: "Websocket Connection parameter"
         schema:
           type: "string"
-      - name: "Upgrade"
-        in: "header"
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/MessageDto"
         required: true
-        description: "Websocket Upgrade parameter"
-        schema:
-          type: "string"
-      - name: "Sec-WebSocket-Key"
-        in: "header"
-        required: true
-        description: "Websocket Sec-WebSocket-Key parameter"
-        schema:
-          type: "string"
       responses:
-        "101":
-          description: "Switching Protocols"
-          headers:
-            Connection:
-              required: true
+        "200":
+          description: ""
+          content:
+            '*/*':
               schema:
-                type: "string"
-            Upgrade:
-              required: true
+                $ref: "#/components/schemas/ServerResponse_T"
+  /large-packet:
+    get:
+      description: ""
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
               schema:
-                type: "string"
-            Sec-WebSocket-Accept:
-              required: true
-              schema:
-                type: "string"
-  /chat/ticket:
+                type: "array"
+                items:
+                  type: "string"
+  /login:
     post:
       description: ""
       requestBody:
         content:
           '*/*':
             schema:
-              $ref: "#/components/schemas/TicketDto"
+              $ref: "#/components/schemas/UserLoginDto"
         required: true
-      responses:
-        "200":
-          description: ""
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/ServerResponse_T"
-  /chat/tickets/{supportId}:
-    get:
-      description: ""
-      parameters:
-      - name: "supportId"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "Connection"
-        in: "header"
-        required: true
-        description: "Websocket Connection parameter"
-        schema:
-          type: "string"
-      - name: "Upgrade"
-        in: "header"
-        required: true
-        description: "Websocket Upgrade parameter"
-        schema:
-          type: "string"
-      - name: "Sec-WebSocket-Key"
-        in: "header"
-        required: true
-        description: "Websocket Sec-WebSocket-Key parameter"
-        schema:
-          type: "string"
-      responses:
-        "101":
-          description: "Switching Protocols"
-          headers:
-            Connection:
-              required: true
-              schema:
-                type: "string"
-            Upgrade:
-              required: true
-              schema:
-                type: "string"
-            Sec-WebSocket-Accept:
-              required: true
-              schema:
-                type: "string"
-  /login:
-    post:
-      description: ""
-      parameters:
-      - name: "username"
-        in: "query"
-        required: false
-        schema:
-          type: "string"
-      - name: "password"
-        in: "query"
-        required: false
-        schema:
-          type: "string"
-      - name: "token"
-        in: "query"
-        required: false
-        schema:
-          type: "string"
       responses:
         "200":
           description: ""
@@ -249,7 +212,8 @@ paths:
           description: ""
           content:
             '*/*':
-              schema: {}
+              schema:
+                $ref: "#/components/schemas/ServerResponse_T"
   /signup:
     post:
       description: ""
@@ -266,62 +230,16 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ServerResponse_T"
-  /json/kotlinx-serialization:
-    get:
-      description: ""
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/Map_String"
-  /protobuf/kotlinx-serialization:
-    get:
-      description: ""
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                type: "array"
-                items:
-                  type: "string"
-                  format: "byte"
 components:
   schemas:
-    MessageDto:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        senderId:
-          type: "string"
-        content:
-          type: "string"
-        time:
-          type: "integer"
-          format: "int64"
-    LabelDto:
-      type: "object"
-      properties:
-        key:
-          type: "string"
-        value:
-          type: "string"
-      required:
-      - "key"
-      - "value"
     ResponseStatus:
       type: "object"
       properties:
-        errorMessages:
+        errorCodes:
           type: "array"
           items:
-            $ref: "#/components/schemas/LabelDto"
-        successMessage:
-          type: "string"
+            type: "integer"
+            format: "int32"
         httpStatusCode:
           type: "integer"
           format: "int32"
@@ -339,49 +257,79 @@ components:
           type: "string"
         status:
           $ref: "#/components/schemas/ResponseStatus"
+    Pair:
+      type: "object"
+      properties: {}
+    Pair_? extends String:
+      type: "object"
+      properties:
+        first:
+          type: "object"
+        second:
+          type: "object"
     ServerResponse_T:
       type: "object"
       properties:
         status:
           $ref: "#/components/schemas/ResponseStatus"
-    TicketDto:
+    MessageDto:
       type: "object"
       properties:
         id:
           type: "string"
-        userId:
+        senderId:
           type: "string"
-        statusChanges:
+        message:
+          type: "string"
+        contentUrls:
+          type: "array"
+          items:
+            type: "string"
+        time:
           type: "integer"
           format: "int64"
         chatId:
           type: "string"
       required:
-      - "userId"
-    UserRegistrationDto:
+      - "contentUrls"
+    ChatDto:
       type: "object"
       properties:
-        fullName:
+        id:
           type: "string"
-        username:
+        name:
           type: "string"
-        phone:
+        members:
+          type: "array"
+          items:
+            type: "string"
+        lastFewMessages:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MessageDto"
+      required:
+      - "members"
+      - "lastFewMessages"
+    UserLoginDto:
+      type: "object"
+      properties:
+        email:
           type: "string"
         password:
           type: "string"
+      required:
+      - "email"
+      - "password"
+    UserRegistrationDto:
+      type: "object"
+      properties:
         email:
           type: "string"
-        address:
+        userName:
+          type: "string"
+        password:
           type: "string"
       required:
-      - "fullName"
-      - "username"
-      - "phone"
-      - "password"
       - "email"
-      - "address"
-    Map:
-      type: "object"
-      properties: {}
-    Map_String:
-      type: "string"
+      - "userName"
+      - "password"

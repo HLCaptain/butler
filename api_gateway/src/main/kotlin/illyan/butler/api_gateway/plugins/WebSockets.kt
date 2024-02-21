@@ -7,11 +7,10 @@ import io.ktor.server.application.install
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
-import io.ktor.util.Attributes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-fun Application.configureWebSockets(attributes: Attributes) {
+fun Application.configureWebSockets() {
     install(WebSockets) {
         contentConverter = KotlinxWebsocketSerializationConverter(AppConfig.Ktor.SERIALIZATION_FORMAT)
         pingPeriod = 10000.seconds.toJavaDuration()
