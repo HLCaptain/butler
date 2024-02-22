@@ -1,4 +1,4 @@
-package illyan.butler.api_gateway.endpoints.utils
+package illyan.butler.services.chat.endpoints.utils
 
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.sendSerialized

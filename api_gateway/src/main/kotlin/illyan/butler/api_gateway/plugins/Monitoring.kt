@@ -5,6 +5,7 @@ import illyan.Butler_API_Gateway.BuildConfig
 import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
+import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.metrics.dropwizard.DropwizardMetrics
@@ -16,6 +17,8 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.path
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
@@ -85,6 +88,11 @@ fun Application.configureMonitoring() {
     install(MicrometerMetrics) {
         registry = appMicrometerRegistry
     }
+    routing {
+        get("/metrics-micrometer") {
+            call.respond(appMicrometerRegistry.scrape())
+        }
+    }
 
     install(CallId) {
         header(HttpHeaders.XRequestId)
@@ -99,11 +107,7 @@ fun Application.configureMonitoring() {
     }
 
     routing {
-        openAPI(path = "openapi") {
-
-        }
-        swaggerUI(path = "openapi") {
-
-        }
+        openAPI(path = "openapi")
+        swaggerUI(path = "openapi")
     }
 }
