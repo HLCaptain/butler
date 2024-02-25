@@ -14,6 +14,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
+import io.ktor.server.websocket.webSocket
 import org.koin.ktor.ext.inject
 
 fun Route.chatRoute() {
@@ -37,6 +38,16 @@ fun Route.chatRoute() {
                 val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                 val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                 call.respond(chatService.getChat(userId, chatId))
+            }
+
+            webSocket {
+                val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
+                val chatId = call.parameters["chatId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
+                val messages = chatService.receiveMessages(userId, chatId)
+                webSocketServerHandler.sessions[userId] = this
+                webSocketServerHandler.sessions[userId]?.let {
+                    webSocketServerHandler.tryToCollect(messages, it)
+                }
             }
 
             delete {

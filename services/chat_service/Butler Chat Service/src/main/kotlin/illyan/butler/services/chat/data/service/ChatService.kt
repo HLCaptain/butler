@@ -1,15 +1,19 @@
 package illyan.butler.services.chat.data.service
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
+import illyan.butler.services.chat.data.cache.ChatCache
+import illyan.butler.services.chat.data.db.ChatDatabase
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
 import illyan.butler.services.chat.data.utils.NanoIdTable
 import illyan.butler.services.chat.data.utils.getLastMonthDate
 import illyan.butler.services.chat.data.utils.getLastWeekDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.rowNumber
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -17,15 +21,17 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.insertIgnore
 import org.jetbrains.exposed.sql.insertIgnoreAndGetId
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.koin.core.annotation.Single
+import kotlin.time.Duration.Companion.seconds
 
 @Single
-class ChatService {
+class ChatService(
+    private val chatServiceCache: ChatCache,
+    private val chatServiceDatabase: ChatDatabase
+) {
     object Chats : NanoIdTable() {
         val name = text("name").nullable()
     }
@@ -53,7 +59,44 @@ class ChatService {
         override val primaryKey = PrimaryKey(messageId, urlId)
     }
 
-    fun receiveMessages(userId: String, chatId: String) {}
+    // Polling messages and chats is not a good practice but im gonna do it anyway
+    val pollingInterval = 1.seconds
+    private val _chats = MutableStateFlow(emptyList<ChatDto>())
+    val chats = _chats.asStateFlow()
+    private val _messages = MutableStateFlow(emptyList<MessageDto>())
+    val messages = _messages.asStateFlow()
+
+    init {
+        // Poll for new messages
+        // Poll for new chats
+        newSuspendedTransaction(Dispatchers.IO) {
+            while (true) {
+                val newChats = Chats.selectAll().map { it.toChatDto() }
+                val newMessages = Messages.selectAll().map { it.toMessageDto() }
+                _chats.value = newChats
+                _messages.value = newMessages
+                kotlinx.coroutines.delay(pollingInterval)
+            }
+        }
+    }
+
+    // Returns a state flow of new messages
+    fun receiveMessages(userId: String, chatId: String) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+        val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
+        if (isUserInChat) {
+            Messages.selectAll().where(Messages.chatId eq chatId).map { it.toMessageDto() }
+        } else {
+            throw Exception("User is not in chat")
+        }
+    }
+    fun receiveMessages(userId: String) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChats = ChatMembers.userId eq userId
+        val chats = Chats.innerJoin(ChatMembers)
+            .selectAll()
+            .where { userChats }
+        chats.map { it.toChatDto() }
+    }
     suspend fun sendMessage(userId: String, message: MessageDto) = newSuspendedTransaction(Dispatchers.IO) {
         val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
         val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
@@ -68,7 +111,7 @@ class ChatService {
             throw Exception("User is not in chat")
         }
         // Insert content urls if not yet inserted in ContentUrls table
-        // Insert content urls' id to MessageContentUrls table
+        // Insert content urls id to MessageContentUrls table
         message.contentUrls.forEach { url ->
             var newUrlId = ContentUrls.insertIgnoreAndGetId { it[this.url] = url }
             // InsertIgnoreAndGetId returns null if the row already exists
@@ -96,7 +139,7 @@ class ChatService {
         }
         // Remove all content urls for the message
         // Insert content urls if not yet inserted in ContentUrls table
-        // Insert content urls' id to MessageContentUrls table
+        // Insert content urls id to MessageContentUrls table
         val currentMessageUrls = MessageContentUrls.selectAll().where(MessageContentUrls.messageId eq message.id!!)
         val newMessageUrls = message.contentUrls
         val removedMessageUrls = currentMessageUrls.filter { url ->
@@ -127,7 +170,7 @@ class ChatService {
         if (isUserInChat) {
             Messages.deleteWhere {
                 (id eq messageId) and (Messages.chatId eq chatId) and (senderId eq userId)
-            }
+            } > 0 // Deleted more than 0 rows
         } else {
             throw Exception("User is not in chat")
         }
@@ -138,7 +181,7 @@ class ChatService {
         val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
         val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
         if (isUserInChat) {
-            Chats.selectAll().where(Chats.id eq chatId).firstOrNull()
+            Chats.selectAll().where(Chats.id eq chatId).first().toChatDto()
         } else {
             throw Exception("User is not in chat")
         }
@@ -180,7 +223,7 @@ class ChatService {
         val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
         if (isUserInChat) {
             ChatMembers.deleteWhere { ChatMembers.chatId eq chatId }
-            Chats.deleteWhere { Chats.id eq chatId }
+            Chats.deleteWhere { Chats.id eq chatId } > 0 // Deleted more than 0 rows
         } else {
             throw Exception("User is not in chat")
         }
@@ -195,9 +238,13 @@ class ChatService {
         userId: String,
         fromDate: Long,
         toDate: Long = Clock.System.now().toEpochMilliseconds()
-    ) {
+    ) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChats = ChatMembers.userId eq userId
+        val chats = Chats.innerJoin(ChatMembers)
+            .selectAll()
+            .where { userChats and (Messages.time greaterEq fromDate) and (Messages.time lessEq toDate) }
+        chats.map { it.toChatDto() }
     }
-
     suspend fun getChatsLastMonth(userId: String) = getChats(
         userId = userId,
         fromDate = getLastMonthDate().toEpochMilliseconds()
@@ -212,21 +259,45 @@ class ChatService {
         userId: String,
         limit: Int,
         offset: Int
-    ) {
+    ) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChats = ChatMembers.userId eq userId
+        val chats = Chats.innerJoin(ChatMembers)
+            .selectAll()
+            .where { userChats }
+            .sortedBy { Messages.time }
+            .drop(offset)
+            .take(limit)
+        chats.map { it.toChatDto() }
     }
 
     suspend fun getPreviousChats(
         userId: String,
         limit: Int,
         timestamp: Long
-    ) {
+    ) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChats = ChatMembers.userId eq userId
+        val chats = Chats.innerJoin(ChatMembers)
+            .selectAll()
+            .where { userChats and (Messages.time lessEq timestamp) }
+            .sortedBy { Messages.time }
+            .take(limit)
+        chats.map { it.toChatDto() }
     }
 
     suspend fun getPreviousChats(
         userId: String,
         limit: Int,
         offset: Int
-    ) {
+    ) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChats = ChatMembers.userId eq userId
+        val chats = Chats.innerJoin(ChatMembers)
+            .selectAll()
+            .where { userChats }
+            .sortedBy { Messages.time }
+            .reversed()
+            .drop(offset)
+            .take(limit)
+        chats.map { it.toChatDto() }
     }
 
     suspend fun getPreviousMessages(
@@ -234,7 +305,18 @@ class ChatService {
         chatId: String,
         limit: Int,
         timestamp: Long
-    ) {
+    ) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+        val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
+        if (isUserInChat) {
+            val messages = Messages.selectAll().where { (Messages.time lessEq timestamp) and (Messages.chatId eq chatId) }
+                .sortedBy { Messages.time }
+                .reversed()
+                .take(limit)
+            messages.map { it.toMessageDto() }
+        } else {
+            throw Exception("User is not in chat")
+        }
     }
 
     suspend fun getMessages(
@@ -242,6 +324,34 @@ class ChatService {
         chatId: String,
         limit: Int,
         offset: Int
-    ) {
+    ) = newSuspendedTransaction(Dispatchers.IO) {
+        val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+        val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
+        if (isUserInChat) {
+            val messages = Messages.selectAll().where(Messages.chatId eq chatId)
+                .sortedBy { Messages.time }
+                .drop(offset)
+                .take(limit)
+            messages.map { it.toMessageDto() }
+        } else {
+            throw Exception("User is not in chat")
+        }
     }
+
+    private fun ResultRow.toMessageDto() = MessageDto(
+        id = this[Messages.id].value,
+        senderId = this[Messages.senderId],
+        message = this[Messages.message],
+        time = this[Messages.time],
+        contentUrls = MessageContentUrls
+            .selectAll()
+            .where(MessageContentUrls.messageId eq this[Messages.id])
+            .map { it[MessageContentUrls.urlId].value }
+    )
+
+    private fun ResultRow.toChatDto() = ChatDto(
+        id = this[Chats.id].value,
+        name = this[Chats.name],
+        members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.userId] }
+    )
 }
