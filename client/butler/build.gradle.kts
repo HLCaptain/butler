@@ -98,7 +98,6 @@ kotlin {
         jvmTest
 
         androidMain.dependencies {
-            implementation(libs.androidx.appcompat)
             implementation(libs.androidx.core)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.cio)
