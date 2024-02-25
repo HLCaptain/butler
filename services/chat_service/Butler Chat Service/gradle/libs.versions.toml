@@ -3,7 +3,7 @@ ktor = "2.3.8"
 kotlin = "1.9.22"
 ksp = "1.9.22-1.0.17"
 logback = "1.5.0"
-postgres = "42.5.1"
+postgres = "42.7.2"
 h2 = "2.2.224"
 exposed = "0.47.0"
 prometheus = "1.12.3"
@@ -35,6 +35,7 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor"
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 nanoid = { module = "com.aventrix.jnanoid:jnanoid", version = "2.0.0" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.3.0" }
+redisson = { module = "org.redisson:redisson", version = "3.27.0" }
 
 ktor-server-tests = { module = "io.ktor:ktor-server-tests", version.ref = "ktor" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

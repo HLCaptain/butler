@@ -1,11 +1,9 @@
 package illyan.butler.services.chat.data.service
 
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import illyan.butler.services.chat.data.cache.ChatCache
 import illyan.butler.services.chat.data.db.ChatDatabase
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
-import illyan.butler.services.chat.data.utils.NanoIdTable
 import illyan.butler.services.chat.data.utils.getLastMonthDate
 import illyan.butler.services.chat.data.utils.getLastWeekDate
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -32,32 +29,7 @@ class ChatService(
     private val chatServiceCache: ChatCache,
     private val chatServiceDatabase: ChatDatabase
 ) {
-    object Chats : NanoIdTable() {
-        val name = text("name").nullable()
-    }
 
-    object ChatMembers : Table() {
-        val chatId = entityId("chatId", Chats)
-        val userId = varchar("userId", NanoIdUtils.DEFAULT_SIZE)
-        override val primaryKey = PrimaryKey(chatId, userId)
-    }
-
-    object Messages : NanoIdTable() {
-        val senderId = varchar("senderId", NanoIdUtils.DEFAULT_SIZE)
-        val message = text("message").nullable()
-        val time = long("time")
-        val chatId = entityId("chat", Chats)
-    }
-
-    object ContentUrls : NanoIdTable() {
-        val url = text("url").uniqueIndex()
-    }
-
-    object MessageContentUrls : Table() {
-        val messageId = entityId("message", Messages)
-        val urlId = entityId("url", ContentUrls)
-        override val primaryKey = PrimaryKey(messageId, urlId)
-    }
 
     // Polling messages and chats is not a good practice but im gonna do it anyway
     val pollingInterval = 1.seconds

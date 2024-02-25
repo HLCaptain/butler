@@ -45,12 +45,6 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.postgresql)
-    implementation(libs.h2)
-    implementation(libs.exposed.core)
-    implementation(libs.exposed.jdbc)
-    implementation(libs.exposed.crypt)
-    implementation(libs.exposed.dao)
     implementation(libs.ktor.server.swagger)
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.call.logging)
@@ -63,6 +57,17 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.nanoid)
     implementation(libs.kotlinx.datetime)
+
+    // Database
+    implementation(libs.postgresql)
+    implementation(libs.h2)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.crypt)
+    implementation(libs.exposed.dao)
+
+    // Cache
+    implementation(libs.redisson)
 
     // Koin DI
     implementation(platform(libs.koin.bom))
