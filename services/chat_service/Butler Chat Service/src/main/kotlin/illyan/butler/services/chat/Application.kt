@@ -1,7 +1,6 @@
 package illyan.butler.services.chat
 
 import illyan.butler.services.chat.plugins.configureCompression
-import illyan.butler.services.chat.plugins.configureDatabases
 import illyan.butler.services.chat.plugins.configureMonitoring
 import illyan.butler.services.chat.plugins.configureRouting
 import illyan.butler.services.chat.plugins.configureSerialization
@@ -23,6 +22,5 @@ fun Application.module() {
     configureCompression()
     configureSerialization()
     configureWebSockets()
-    configureDatabases()
     configureRouting()
 }
