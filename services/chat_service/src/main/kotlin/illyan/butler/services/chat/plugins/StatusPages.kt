@@ -6,7 +6,6 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.response.respond
-import java.lang.Exception
 
 fun Application.configureStatusPages() {
     install(StatusPages) {

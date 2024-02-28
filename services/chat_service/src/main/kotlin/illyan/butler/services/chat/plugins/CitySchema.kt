@@ -1,9 +1,10 @@
 package illyan.butler.services.chat.plugins
 
-import kotlinx.coroutines.*
-import kotlinx.serialization.Serializable
 import java.sql.Connection
 import java.sql.Statement
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class City(val name: String, val population: Int)
