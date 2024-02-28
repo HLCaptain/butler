@@ -9,5 +9,5 @@ interface ChatCache {
     fun getChangedChatsAffectingUser(userId: String): Flow<ChatDto>
     fun getChangesFromChat(chatId: String): Flow<ChatDto>
     suspend fun setChat(chat: ChatDto): ChatDto
-    suspend fun deleteChat(chatId: String)
+    suspend fun deleteChat(chatId: String): Boolean
 }

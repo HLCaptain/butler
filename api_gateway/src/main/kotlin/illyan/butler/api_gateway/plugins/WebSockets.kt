@@ -12,7 +12,6 @@ import kotlin.time.toJavaDuration
 
 fun Application.configureWebSockets() {
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(AppConfig.Ktor.SERIALIZATION_FORMAT)
         pingPeriod = 10000.seconds.toJavaDuration()
         timeout = 10000.seconds.toJavaDuration()
         maxFrameSize = Long.MAX_VALUE

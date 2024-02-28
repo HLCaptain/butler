@@ -1,18 +1,26 @@
 package illyan.butler.services.chat.plugins
 
-import com.codahale.metrics.*
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.metrics.dropwizard.*
-import io.ktor.server.metrics.micrometer.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.micrometer.prometheus.*
+import com.codahale.metrics.Slf4jReporter
+import io.ktor.http.HttpHeaders
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.application.log
+import io.ktor.server.metrics.dropwizard.DropwizardMetrics
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.openapi.openAPI
+import io.ktor.server.plugins.swagger.swaggerUI
+import io.ktor.server.request.path
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import java.util.concurrent.TimeUnit
-import org.slf4j.event.*
+import org.slf4j.event.Level
 
 fun Application.configureMonitoring() {
     install(CallLogging) {
@@ -44,5 +52,9 @@ fun Application.configureMonitoring() {
         get("/metrics-micrometer") {
             call.respond(appMicrometerRegistry.scrape())
         }
+    }
+    routing {
+        swaggerUI(path = "openapi")
+        openAPI(path = "openapi")
     }
 }

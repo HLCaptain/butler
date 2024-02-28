@@ -15,7 +15,9 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.websocket.webSocket
+import kotlinx.datetime.Clock
 import org.koin.ktor.ext.inject
+import kotlin.time.Duration.Companion.days
 
 fun Route.chatRoute() {
     val chatService: ChatService by inject()
@@ -24,7 +26,13 @@ fun Route.chatRoute() {
     route("/{userId}/chats") {
         get {
             val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            call.respond(chatService.receiveChats(userId))
+            val limit = call.parameters["limit"]?.toInt() ?: 10
+            val offset = call.parameters["offset"]?.toInt()
+            val timestamp = call.parameters["timestamp"]?.toLong() ?: (Clock.System.now().toEpochMilliseconds() - 7.days.inWholeMilliseconds)
+            if (offset != null)
+                call.respond(chatService.getPreviousChats(userId, limit, offset))
+            else
+                call.respond(chatService.getPreviousChats(userId, limit, timestamp))
         }
 
         post {
@@ -43,7 +51,7 @@ fun Route.chatRoute() {
             webSocket {
                 val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
                 val chatId = call.parameters["chatId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-                val messages = chatService.receiveMessages(userId, chatId)
+                val messages = chatService.getChangedMessagesByChat(chatId)
                 webSocketServerHandler.sessions[userId] = this
                 webSocketServerHandler.sessions[userId]?.let {
                     webSocketServerHandler.tryToCollect(messages, it)
