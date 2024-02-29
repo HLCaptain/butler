@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MessageDto(
-    val uuid: String,
+    val id: String?,
     val senderUUID: String,
     val role: String,
     val message: String,

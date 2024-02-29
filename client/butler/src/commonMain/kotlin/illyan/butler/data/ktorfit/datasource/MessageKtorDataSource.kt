@@ -25,15 +25,15 @@ class MessageKtorDataSource(
         Napier.e("There was a problem while loading messages", exception)
     }
 
-    override suspend fun upsert(message: MessageDto) {
-        messageApi.upsertMessage(message)
+    override suspend fun upsert(message: MessageDto): MessageDto {
+        return messageApi.upsertMessage(message)
     }
 
-    override suspend fun delete(uuid: String) {
-        messageApi.deleteMessage(uuid)
+    override suspend fun delete(uuid: String): Boolean {
+        return messageApi.deleteMessage(uuid)
     }
 
-    override suspend fun deleteForChat(chatUUID: String) {
-        messageApi.deleteMessagesForChat(chatUUID)
+    override suspend fun deleteForChat(chatUUID: String): Boolean {
+        return messageApi.deleteMessagesForChat(chatUUID)
     }
 }

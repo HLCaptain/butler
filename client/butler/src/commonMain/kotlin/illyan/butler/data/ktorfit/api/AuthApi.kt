@@ -1,4 +1,4 @@
-package illyan.butler.data.network.api
+package illyan.butler.data.ktorfit.api
 
 import de.jensklingenberg.ktorfit.Response
 import de.jensklingenberg.ktorfit.http.Body

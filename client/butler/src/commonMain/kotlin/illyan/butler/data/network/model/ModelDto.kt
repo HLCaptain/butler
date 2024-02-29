@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ModelDto(
     val name: String,
-    val uuid: String,
+    val id: String?,
     val type: String,
     val description: String,
     val greetingMessage: String,

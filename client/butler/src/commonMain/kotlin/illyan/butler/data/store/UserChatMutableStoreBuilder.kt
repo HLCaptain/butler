@@ -75,8 +75,8 @@ fun provideUserChatMutableStore(
 ).build(
     updater = Updater.by(
         post = { key, output ->
-            output.forEach { chatNetworkDataSource.upsert(it.toNetworkModel()) }
-            UpdaterResult.Success.Typed(output)
+            val response = output.map { chatNetworkDataSource.upsert(it.toNetworkModel()).toDomainModel() }
+            UpdaterResult.Success.Typed(response)
         },
         onCompletion = OnUpdaterCompletion(
             onSuccess = { _ ->

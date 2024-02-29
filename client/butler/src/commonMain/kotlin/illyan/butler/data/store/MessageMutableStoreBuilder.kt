@@ -73,12 +73,13 @@ fun provideMessageMutableStore(
 ).build(
     updater = Updater.by(
         post = { key, output ->
-            messageNetworkDataSource.upsert(output.toNetworkModel())
-            UpdaterResult.Success.Typed(output)
+            val response = messageNetworkDataSource.upsert(output.toNetworkModel()).toDomainModel()
+            UpdaterResult.Success.Typed(response)
         },
         onCompletion = OnUpdaterCompletion(
-            onSuccess = { _ ->
+            onSuccess = { success ->
                 Napier.d("Successfully updated chat")
+
             },
             onFailure = { _ ->
                 Napier.d("Failed to update chat")

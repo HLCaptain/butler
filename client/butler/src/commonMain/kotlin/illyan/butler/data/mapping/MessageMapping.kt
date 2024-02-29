@@ -3,6 +3,7 @@ package illyan.butler.data.mapping
 import illyan.butler.data.network.model.MessageDto
 import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainMessage
+import illyan.butler.util.log.randomUUID
 
 fun Message.toDomainModel() = DomainMessage(
     uuid = uuid,
@@ -14,7 +15,7 @@ fun Message.toDomainModel() = DomainMessage(
 )
 
 fun DomainMessage.toNetworkModel() = MessageDto(
-    uuid = uuid,
+    id = uuid,
     senderUUID = senderUUID,
     role = role,
     message = message,
@@ -23,7 +24,7 @@ fun DomainMessage.toNetworkModel() = MessageDto(
 )
 
 fun MessageDto.toLocalModel() = Message(
-    uuid = uuid,
+    uuid = id ?: randomUUID(),
     senderUUID = senderUUID,
     role = role,
     message = message,

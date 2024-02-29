@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface MessageNetworkDataSource {
     fun fetch(uuid: String): Flow<MessageDto>
     fun fetchByChat(chatUUID: String): Flow<List<MessageDto>>
-    suspend fun upsert(message: MessageDto)
-    suspend fun delete(uuid: String)
-    suspend fun deleteForChat(chatUUID: String)
+    suspend fun upsert(message: MessageDto): MessageDto
+    suspend fun delete(uuid: String): Boolean
+    suspend fun deleteForChat(chatUUID: String): Boolean
 }

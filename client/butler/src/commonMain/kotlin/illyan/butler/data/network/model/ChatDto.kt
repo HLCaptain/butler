@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ChatDto(
-    val uuid: String,
+    val id: String?,
     val name: String?,
     val userUUID: String,
     val modelUUID: String

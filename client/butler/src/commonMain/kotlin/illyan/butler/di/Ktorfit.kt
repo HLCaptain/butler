@@ -1,10 +1,10 @@
 package illyan.butler.di
 
 import de.jensklingenberg.ktorfit.Ktorfit
+import illyan.butler.data.ktorfit.api.AuthApi
 import illyan.butler.data.ktorfit.api.ChatApi
 import illyan.butler.data.ktorfit.api.MessageApi
 import illyan.butler.data.ktorfit.api.ModelApi
-import illyan.butler.data.network.api.AuthApi
 import io.ktor.client.HttpClient
 import org.koin.core.annotation.Single
 

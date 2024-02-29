@@ -15,11 +15,11 @@ interface MessageApi {
     suspend fun fetchMessagesByChat(@Path("chatUUID") chatUUID: String): List<MessageDto>
 
     @POST("/messages")
-    suspend fun upsertMessage(@Body message: MessageDto)
+    suspend fun upsertMessage(@Body message: MessageDto): MessageDto
 
     @DELETE("/messages/{uuid}")
-    suspend fun deleteMessage(@Path("uuid") uuid: String)
+    suspend fun deleteMessage(@Path("uuid") uuid: String): Boolean
 
     @DELETE("/messages/chat/{chatUUID}")
-    suspend fun deleteMessagesForChat(@Path("chatUUID") chatUUID: String)
+    suspend fun deleteMessagesForChat(@Path("chatUUID") chatUUID: String): Boolean
 }

@@ -1,6 +1,6 @@
 package illyan.butler.repository
 
-import illyan.butler.data.network.api.AuthApi
+import illyan.butler.data.ktorfit.api.AuthApi
 import illyan.butler.data.network.model.auth.AuthCredentials
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -31,15 +31,15 @@ class ChatKtorDataSource(
         Napier.e("There was a problem while loading chats for model", exception)
     }
 
-    override suspend fun upsert(chat: ChatDto) {
-        chatApi.upsertChat(chat)
+    override suspend fun upsert(chat: ChatDto): ChatDto {
+        return chatApi.upsertChat(chat)
     }
 
-    override suspend fun delete(uuid: String) {
-        chatApi.deleteChat(uuid)
+    override suspend fun delete(uuid: String): Boolean {
+        return chatApi.deleteChat(uuid)
     }
 
-    override suspend fun deleteForUser(userUUID: String) {
-        chatApi.deleteChatsForUser(userUUID)
+    override suspend fun deleteForUser(userUUID: String): Boolean {
+        return chatApi.deleteChatsForUser(userUUID)
     }
 }

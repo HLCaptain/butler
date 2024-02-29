@@ -18,11 +18,11 @@ interface ChatApi {
     suspend fun fetchChatsByModel(@Path("modelUUID") modelUUID: String): List<ChatDto>
 
     @POST("/chats")
-    suspend fun upsertChat(@Body chat: ChatDto)
+    suspend fun upsertChat(@Body chat: ChatDto): ChatDto
 
     @DELETE("/chats/{uuid}")
-    suspend fun deleteChat(@Path("uuid") uuid: String)
+    suspend fun deleteChat(@Path("uuid") uuid: String): Boolean
 
     @DELETE("/chats/user/{userUUID}")
-    suspend fun deleteChatsForUser(@Path("userUUID") userUUID: String)
+    suspend fun deleteChatsForUser(@Path("userUUID") userUUID: String): Boolean
 }
