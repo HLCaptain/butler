@@ -35,7 +35,8 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
     get("/me") {
         val tokenClaim = call.principal<JWTPrincipal>()
         val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
-        respondWithResult(HttpStatusCode.OK, id)
+        val user = identityService.getUserById(id)
+        respondWithResult(HttpStatusCode.OK, user)
     }
 
     post("/refresh-access-token") {

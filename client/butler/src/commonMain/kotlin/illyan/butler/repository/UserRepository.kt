@@ -1,8 +1,8 @@
 package illyan.butler.repository
 
 import illyan.butler.data.ktorfit.api.AuthApi
-import illyan.butler.data.network.model.auth.AuthCredentials
 import illyan.butler.data.network.model.auth.PasswordResetRequest
+import illyan.butler.data.network.model.auth.UserLoginDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -29,12 +29,12 @@ class UserRepository(
     val signedInUserName = _signedInUserName.asStateFlow()
 
     suspend fun signInWithEmailAndPassword(email: String, password: String) {
-        val response = authApi.signIn(AuthCredentials(email, password))
+        val response = authApi.signup(UserLoginDto(email, password))
         _token.update { response.token } // Store JWT token for future requests
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, password: String): Boolean {
-        val response = authApi.signUp(AuthCredentials(email, password))
+        val response = authApi.login(UserLoginDto(email, password))
         _token.update { response.token } // Store JWT token
         return true
     }
@@ -44,7 +44,7 @@ class UserRepository(
     }
 
     suspend fun signOut() {
-        authApi.signOut()
+        // FIXME: remove JWT token if saved
         _token.update { null } // Clear token on sign-out
     }
 }
