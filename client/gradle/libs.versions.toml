@@ -73,8 +73,8 @@ sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", 
 sqldelight-adapters = { module = "app.cash.sqldelight:primitive-adapters", version.ref = "sqldelight" }
 
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
-store = { module = "org.mobilenativefoundation.store:store5", version = "5.0.0" }
-uuid = { module = "com.benasher44:uuid", version = "0.8.1" }
+store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha02" }
+uuid = { module = "com.benasher44:uuid", version = "0.8.2" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.0.4" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }

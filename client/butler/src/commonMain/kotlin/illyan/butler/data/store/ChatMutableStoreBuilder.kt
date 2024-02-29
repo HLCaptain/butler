@@ -11,8 +11,8 @@ import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
+import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
-import org.mobilenativefoundation.store.store5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
 import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.OnUpdaterCompletion
@@ -36,7 +36,7 @@ fun provideChatMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chat $key")
-        chatNetworkDataSource.fetch(uuid = key)
+        chatNetworkDataSource.fetch(key)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
@@ -56,7 +56,7 @@ fun provideChatMutableStore(
                 Napier.d("Deleting chat at $key")
                 it.chatQueries.delete(key)
             }
-            chatNetworkDataSource.delete(uuid = key)
+            chatNetworkDataSource.delete(key)
         },
         deleteAll = {
             databaseHelper.withDatabase {
