@@ -83,6 +83,7 @@ kotlin {
                 implementation(libs.aboutlibraries.core)
                 implementation(libs.ktorfit)
                 implementation(libs.store)
+                implementation(libs.settings)
                 api(libs.napier)
             }
         }
@@ -99,6 +100,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidx.core)
+            implementation(libs.androidx.crypto)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
@@ -111,12 +113,14 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.preview)
             implementation(compose.desktop.common)
+            implementation(libs.androidx.crypto)
             implementation(libs.koin.ktor)
             implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
             implementation(libs.sqldelight.jvm)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.credential.storage.jvm)
         }
 
         jsMain.dependencies {
@@ -130,6 +134,7 @@ kotlin {
             implementation(npm("dateformat", "5.0.3"))
             implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.1"))
             implementation(devNpm("copy-webpack-plugin", "12.0.2"))
+            implementation(devNpm("localstorage-slim", "2.7.0"))
         }
     }
 }

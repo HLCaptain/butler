@@ -63,6 +63,7 @@ voyager-koin = { module = "cafe.adriel.voyager:voyager-koin", version.ref = "voy
 
 androidx-core = { module = "androidx.core:core-ktx", version = "1.12.0" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.8.2" }
+androidx-crypto = { module = "androidx.security:security-crypto", version = "1.1.0-alpha06" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-android" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-android" }
 
@@ -76,6 +77,8 @@ napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha02" }
 uuid = { module = "com.benasher44:uuid", version = "0.8.2" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.0.4" }
+settings = { module = "com.russhwolf:multiplatform-settings", version = "1.1.1" }
+credential-storage-jvm = { module = "com.microsoft:credential-secure-storage", version = "1.0.0" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
