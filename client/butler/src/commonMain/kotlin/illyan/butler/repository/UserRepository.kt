@@ -8,12 +8,13 @@ import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDetailsDto
 import illyan.butler.di.NamedCoroutineScopeIO
-import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromHexString
+import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
@@ -33,20 +34,18 @@ class UserRepository(
         const val KEY_REFRESH_TOKEN_EXPIRATION = "refresh_token_expiration"
     }
 
-    @OptIn(ExperimentalSettingsApi::class)
-    val isUserSignedIn = settings.getStringOrNullFlow(KEY_USER_ID).map { it != null }
-
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     val userData = settings.getStringOrNullFlow(KEY_USER_ID).map { encodedUser ->
-        encodedUser?.let { ProtoBuf.decodeFromByteArray(UserDetailsDto.serializer(), encodedUser.toByteArray()) }
+        encodedUser?.let { ProtoBuf.decodeFromHexString<UserDetailsDto>(encodedUser) }
     }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+    val isUserSignedIn = userData.map { it != null }
     val signedInUserUUID = userData.map { it?.id }
     val signedInUserEmail = userData.map { it?.email }
     val signedInUserPhoneNumber = userData.map { it?.phone }
     val signedInUserPhotoURL = userData.map { it?.photoUrl }
     val signedInUserName = userData.map { it?.username }
 
-    @OptIn(ExperimentalSettingsApi::class)
+    @OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
         val response = authApi.login(UserLoginDto(email, password))
         settings.putString(KEY_AUTH_PROVIDER, "butler_api")
@@ -55,7 +54,7 @@ class UserRepository(
         settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, response.accessTokenExpirationMillis)
         settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, response.refreshTokenExpirationMillis)
         val me = authApi.getMe()
-        settings.putString(KEY_USER_ID, me.id)
+        settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(me))
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDetailsDto {
