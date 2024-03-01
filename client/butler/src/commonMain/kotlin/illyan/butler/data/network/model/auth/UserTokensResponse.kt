@@ -1,4 +1,4 @@
-package illyan.butler.api_gateway.data.model.response
+package illyan.butler.data.network.model.auth
 
 import kotlinx.serialization.Serializable
 

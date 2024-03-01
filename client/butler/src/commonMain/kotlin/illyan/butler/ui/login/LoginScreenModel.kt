@@ -51,11 +51,9 @@ class LoginScreenModel(
         }
     }
 
-    fun signUpWithEmailAndPassword(email: String, password: String) {
+    fun signUpWithEmailAndPassword(email: String, userName: String, password: String) {
         screenModelScope.launch(dispatcherIO) {
-            if (authManager.createUserWithEmailAndPassword(email, password)) {
-                authManager.signInWithEmailAndPassword(email, password)
-            }
+            authManager.createUserWithEmailAndPassword(email, userName, password)
         }
     }
 }

@@ -17,12 +17,13 @@ class AuthManager(
     suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
-    ) = userRepository.signInWithEmailAndPassword(email, password)
+    ) = userRepository.loginWithEmailAndPassword(email, password)
 
     suspend fun createUserWithEmailAndPassword(
         email: String,
+        userName: String,
         password: String
-    ) = userRepository.createUserWithEmailAndPassword(email, password)
+    ) = userRepository.createUserWithEmailAndPassword(email, userName, password)
 
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)
     suspend fun signOut() = userRepository.signOut()

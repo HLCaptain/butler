@@ -23,7 +23,7 @@ expect fun provideDispatcherIO(): CoroutineDispatcher
 
 @Single
 @NamedCoroutineDispatcherMain
-expect fun provideDispatcherMain(): CoroutineDispatcher
+fun provideDispatcherMain() = Dispatchers.Main
 
 @Single
 @NamedCoroutineDispatcherDefault

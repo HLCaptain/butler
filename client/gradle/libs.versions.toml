@@ -14,6 +14,7 @@ coroutines = "1.8.0"
 serialization = "1.6.3"
 aboutlibraries = "11.1.0"
 ktorfit = "1.12.0"
+dataStoreVersion = "1.1.0-beta01"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -31,6 +32,7 @@ ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
 
 [libraries]
 ktor-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
@@ -64,6 +66,8 @@ voyager-koin = { module = "cafe.adriel.voyager:voyager-koin", version.ref = "voy
 androidx-core = { module = "androidx.core:core-ktx", version = "1.12.0" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.8.2" }
 androidx-crypto = { module = "androidx.security:security-crypto", version = "1.1.0-alpha06" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core-okio", version.ref = "dataStoreVersion" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "dataStoreVersion" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-android" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-android" }
 
@@ -78,6 +82,8 @@ store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-a
 uuid = { module = "com.benasher44:uuid", version = "0.8.2" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.0.4" }
 settings = { module = "com.russhwolf:multiplatform-settings", version = "1.1.1" }
+settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version = "1.1.1" }
+settings-datastore = { module = "com.russhwolf:multiplatform-settings-datastore", version = "1.1.1" }
 credential-storage-jvm = { module = "com.microsoft:credential-secure-storage", version = "1.0.0" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }

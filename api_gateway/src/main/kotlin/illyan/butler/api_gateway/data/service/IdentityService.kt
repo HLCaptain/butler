@@ -72,8 +72,8 @@ class IdentityService(
         userId: String,
         tokenConfiguration: TokenConfiguration
     ) = UserTokensResponse(
-        Clock.System.now() + tokenConfiguration.accessTokenExpireDuration,
-        Clock.System.now() + tokenConfiguration.refreshTokenExpireDuration,
+        (Clock.System.now() + tokenConfiguration.accessTokenExpireDuration).toEpochMilliseconds(),
+        (Clock.System.now() + tokenConfiguration.refreshTokenExpireDuration).toEpochMilliseconds(),
         generateToken(userId, tokenConfiguration, TokenType.ACCESS_TOKEN),
         generateToken(userId, tokenConfiguration, TokenType.REFRESH_TOKEN)
     )

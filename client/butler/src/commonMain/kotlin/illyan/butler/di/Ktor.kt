@@ -1,23 +1,34 @@
 package illyan.butler.di
 
+import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.coroutines.FlowSettings
+import illyan.butler.config.BuildConfig
+import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.isDebugBuild
+import illyan.butler.repository.UserRepository
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.request.forms.submitForm
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
+import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 
-@OptIn(ExperimentalSerializationApi::class)
+@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Single
-fun provideHttpClient() = HttpClient {
+fun provideHttpClient(settings: FlowSettings) = HttpClient {
     install(WebSockets)
     install(ContentNegotiation) {
         json()
@@ -52,6 +63,30 @@ fun provideHttpClient() = HttpClient {
             listOf(fallbackContentType, defaultContentType)
         } else {
             listOf(fallbackContentType)
+        }
+    }
+
+    install(Auth) {
+        bearer {
+            loadTokens {
+                val accessToken = settings.getStringOrNull(UserRepository.KEY_ACCESS_TOKEN) ?: ""
+                val refreshToken = settings.getStringOrNull(UserRepository.KEY_REFRESH_TOKEN) ?: ""
+                BearerTokens(accessToken, refreshToken)
+            }
+            refreshTokens {
+                val refreshTokenInfo: TokenInfo = client.submitForm(
+                    url = "https://accounts.google.com/o/oauth2/token",
+                    formParameters = parameters {
+                        append("grant_type", "refresh_token")
+                        append("client_id", BuildConfig.GOOGLE_CLIENT_ID)
+                        append("refresh_token", oldTokens?.refreshToken ?: "")
+                    }
+                ) { markAsRefreshTokenRequest() }.body()
+                val newToken = BearerTokens(refreshTokenInfo.accessToken, oldTokens?.refreshToken!!)
+                settings.putString(UserRepository.KEY_ACCESS_TOKEN, refreshTokenInfo.accessToken)
+                settings.putString(UserRepository.KEY_REFRESH_TOKEN, oldTokens?.refreshToken!!)
+                newToken
+            }
         }
     }
 }

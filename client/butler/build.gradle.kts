@@ -60,7 +60,7 @@ kotlin {
                 implementation(libs.voyager.koin)
 
                 implementation(libs.ktor.core)
-
+                implementation(libs.ktor.auth)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
@@ -84,6 +84,8 @@ kotlin {
                 implementation(libs.ktorfit)
                 implementation(libs.store)
                 implementation(libs.settings)
+                implementation(libs.settings.coroutines)
+
                 api(libs.napier)
             }
         }
@@ -108,6 +110,9 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.settings.datastore)
+            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore.preferences)
         }
 
         jvmMain.dependencies {
@@ -121,6 +126,9 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.credential.storage.jvm)
+            implementation(libs.settings.datastore)
+            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore.preferences)
         }
 
         jsMain.dependencies {
@@ -195,6 +203,14 @@ buildConfig {
 
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
     }
+
+    // GOOGLE_CLIENT_ID from local.properties
+    val properties = localPropertiesFile.readLines().associate {
+        if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
+        val (key, value) = it.split("=", limit = 2)
+        key to value
+    }
+    buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${properties["GOOGLE_CLIENT_ID"]}\"")
 }
 
 android {

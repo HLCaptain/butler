@@ -32,6 +32,7 @@ import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.password
 import illyan.butler.generated.resources.sign_in_anonymously
 import illyan.butler.generated.resources.sign_up
+import illyan.butler.generated.resources.username
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
@@ -71,7 +72,7 @@ fun LoginDialogContent(
     isUserSigningIn: Boolean = false,
     signInAnonymously: (() -> Unit)? = null,
     signInWithEmailAndPassword: (email: String, password: String) -> Unit = { _, _ -> },
-    signUpWithEmailAndPassword: (email: String, password: String) -> Unit = { _, _ -> },
+    signUpWithEmailAndPassword: (email: String, userName: String, password: String) -> Unit = { _, _, _ -> },
 ) {
     Crossfade(
         modifier = modifier,
@@ -86,6 +87,7 @@ fun LoginDialogContent(
         } else {
             var email by rememberSaveable { mutableStateOf("") }
             var password by rememberSaveable { mutableStateOf("") }
+            var userName by rememberSaveable { mutableStateOf("") }
             ButlerDialogContent(
                 title = { LoginTitle() },
                 text = {
@@ -94,13 +96,14 @@ fun LoginDialogContent(
                         signInAnonymously = signInAnonymously,
                         emailChanged = { email = it },
                         passwordChanged = { password = it },
+                        userNameChanged = { userName = it }
                     )
                 },
                 buttons = {
                     LoginButtons(
                         modifier = Modifier.fillMaxWidth(),
                         signInWithEmailAndPassword = { signInWithEmailAndPassword(email, password) },
-                        signUpWithEmailAndPassword = { signUpWithEmailAndPassword(email, password) },
+                        signUpWithEmailAndPassword = { signUpWithEmailAndPassword(email, userName, password) },
                     )
                 },
                 containerColor = Color.Transparent,
@@ -122,6 +125,7 @@ fun LoginScreen(
     signInAnonymously: (() -> Unit)? = null,
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {},
+    userNameChanged: (String) -> Unit = {},
 ) {
     Column(
         modifier = modifier,
@@ -138,7 +142,17 @@ fun LoginScreen(
                 )
             }
         }
-        // TODO: make login via email/password combo
+        var userName by remember { mutableStateOf("") }
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = userName,
+            enabled = true,
+            onValueChange = {
+                userName = it
+                userNameChanged(it)
+            },
+            label = { Text(text = stringResource(Res.string.username)) }
+        )
         var email by remember { mutableStateOf("") }
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
