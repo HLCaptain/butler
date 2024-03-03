@@ -1,6 +1,5 @@
 package illyan.butler
 
-import io.github.aakira.napier.Napier
 import java.io.OutputStream
 import java.security.Key
 import java.security.SecureRandom
@@ -32,7 +31,6 @@ class EncryptedPreferences(
 
     private fun encrypt(value: String?): String? {
         return value?.let {
-            Napier.i { "Encrypting: $it" }
             encryptCipher.update(it.toByteArray())
             encryptCipher.doFinal(it.toByteArray()).toString(Charsets.UTF_8)
         }
@@ -40,7 +38,6 @@ class EncryptedPreferences(
 
     private fun decrypt(value: String?): String? {
         return value?.let {
-            Napier.i { "Decrypting: $it" }
             decryptCipher.update(it.toByteArray())
             decryptCipher.doFinal(it.toByteArray()).toString(Charsets.UTF_8)
         }

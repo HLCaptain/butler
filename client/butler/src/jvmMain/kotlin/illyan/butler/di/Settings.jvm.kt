@@ -33,11 +33,11 @@ fun provideEncryptedPreferencesSettings(): PreferencesSettings {
         val keyGenerator = KeyGenerator.getInstance("AES")
         val secretKey = keyGenerator.generateKey()
         val keyChars = Base64.encode(secretKey.encoded)
-        Napier.v { "Master key not found, creating $keyChars" }
+        Napier.v { "Master key not found secure storage, creating one" }
         credentialStorage.add("ButlerMasterKey", StoredCredential("ButlerChatApp", keyChars.toCharArray()))
         secretKey
     } else {
-        Napier.v { "Master key found ${storedMasterKey.concatToString()}"}
+        Napier.v { "Master key found for secure storage"}
         val decodedKey = Base64.decode(storedMasterKey.concatToString())
         SecretKeySpec(decodedKey, 0, decodedKey.size, "AES")
     }
