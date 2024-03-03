@@ -13,6 +13,7 @@ import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
+import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.forms.submitForm
@@ -30,10 +31,6 @@ import org.koin.core.annotation.Single
 @Single
 fun provideHttpClient(settings: FlowSettings) = HttpClient {
     install(WebSockets)
-    install(ContentNegotiation) {
-        json()
-        protobuf()
-    }
 
     developmentMode = isDebugBuild()
 
@@ -56,14 +53,20 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
             }
         }
     }
+
     install(fallbackPlugin) {
         val fallbackContentType = ContentType.Application.Json
         val defaultContentType = ContentType.Application.ProtoBuf
         supportedContentTypes = if (developmentMode) {
-            listOf(fallbackContentType, defaultContentType)
-        } else {
             listOf(fallbackContentType)
+        } else {
+            listOf(defaultContentType, fallbackContentType)
         }
+    }
+
+    install(ContentNegotiation) {
+        json()
+        protobuf()
     }
 
     install(Auth) {
@@ -89,6 +92,8 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
             }
         }
     }
+
+    install(ContentEncoding)
 }
 
 class ContentTypeFallbackConfig {

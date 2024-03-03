@@ -65,6 +65,7 @@ kotlin {
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
                 implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.encoding)
 
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
