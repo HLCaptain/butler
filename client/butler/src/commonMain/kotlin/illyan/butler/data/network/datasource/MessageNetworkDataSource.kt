@@ -1,12 +1,11 @@
 package illyan.butler.data.network.datasource
 
 import illyan.butler.data.network.model.MessageDto
-import kotlinx.coroutines.flow.Flow
 
 interface MessageNetworkDataSource {
-    fun fetch(uuid: String): Flow<MessageDto>
-    fun fetchByChat(chatUUID: String): Flow<List<MessageDto>>
-    suspend fun upsert(message: MessageDto): MessageDto
-    suspend fun delete(uuid: String): Boolean
-    suspend fun deleteForChat(chatUUID: String): Boolean
+    suspend fun fetchMessage(uuid: String): MessageDto
+    suspend fun fetchMessagesByChat(chatUUID: String): List<MessageDto>
+    suspend fun upsertMessage(message: MessageDto): MessageDto
+    suspend fun deleteMessage(uuid: String): Boolean
+    suspend fun deleteMessagesForChat(chatUUID: String): Boolean
 }

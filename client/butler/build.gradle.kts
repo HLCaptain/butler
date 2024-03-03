@@ -82,7 +82,6 @@ kotlin {
 
                 implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
-                implementation(libs.ktorfit)
                 implementation(libs.store)
                 implementation(libs.settings)
                 implementation(libs.settings.coroutines)
@@ -150,7 +149,6 @@ kotlin {
 
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp)
-    add("kspCommonMainMetadata", libs.ktorfit.ksp)
 }
 
 // WORKAROUND: ADD this dependsOn("kspCommonMainKotlinMetadata") instead of above dependencies

@@ -2,7 +2,7 @@ package illyan.butler.repository
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
-import illyan.butler.data.ktorfit.api.AuthApi
+import illyan.butler.data.network.datasource.AuthNetworkDataSource
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
@@ -21,7 +21,7 @@ import org.koin.core.annotation.Single
 @OptIn(ExperimentalSettingsApi::class)
 @Single
 class UserRepository(
-    private val authApi: AuthApi,
+    private val authNetworkDataSource: AuthNetworkDataSource,
     private val settings: FlowSettings,
     @NamedCoroutineScopeIO private val coroutineScope: CoroutineScope
 ) {
@@ -47,22 +47,22 @@ class UserRepository(
 
     @OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
-        val response = authApi.login(UserLoginDto(email, password))
+        val response = authNetworkDataSource.login(UserLoginDto(email, password))
         settings.putString(KEY_AUTH_PROVIDER, "butler_api")
         settings.putString(KEY_ACCESS_TOKEN, response.accessToken)
         settings.putString(KEY_REFRESH_TOKEN, response.refreshToken)
         settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, response.accessTokenExpirationMillis)
         settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, response.refreshTokenExpirationMillis)
-        val me = authApi.getMe()
+        val me = authNetworkDataSource.getMe()
         settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(me))
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDetailsDto {
-        return authApi.signup(UserRegistrationDto(email, userName, password))
+        return authNetworkDataSource.signup(UserRegistrationDto(email, userName, password))
     }
 
     suspend fun sendPasswordResetEmail(email: String) {
-        authApi.sendPasswordResetEmail(PasswordResetRequest(email))
+        authNetworkDataSource.sendPasswordResetEmail(PasswordResetRequest(email))
     }
 
     @OptIn(ExperimentalSettingsApi::class)
