@@ -1,5 +1,6 @@
 package illyan.butler
 
+import io.github.aakira.napier.Napier
 import java.io.OutputStream
 import java.security.Key
 import java.security.SecureRandom
@@ -9,30 +10,40 @@ import java.util.prefs.PreferenceChangeListener
 import java.util.prefs.Preferences
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.IvParameterSpec
+import kotlin.random.asKotlinRandom
 
 class EncryptedPreferences(
     key: Key,
-    private val delegate: Preferences = userRoot()
+    // New node needed to avoid interacting with other non-encrypted preferences
+    private val delegate: Preferences = userRoot().node("illyan.butler"),
+    javaRandom: SecureRandom = SecureRandom()
 ): Preferences() {
+    private val random = javaRandom.asKotlinRandom()
     private val encryptCipher = Cipher.getInstance("AES/GCM/NoPadding")
     private val decryptCipher = Cipher.getInstance("AES/GCM/NoPadding")
 
     init {
-        val ivSpec = IvParameterSpec(SecureRandom().generateSeed(16))
-        val gcmParameterSpec = GCMParameterSpec(128, ivSpec.iv, 0, 0)
+        // 128 is the tag length, 16 is the iv length
+        val iv = random.nextBytes(16)
+        val gcmParameterSpec = GCMParameterSpec(128, iv, 0, 16)
         encryptCipher.init(Cipher.ENCRYPT_MODE, key, gcmParameterSpec)
         decryptCipher.init(Cipher.DECRYPT_MODE, key, gcmParameterSpec)
     }
 
-    private fun encrypt(value: String?): String {
-        val encrypted = encryptCipher.doFinal(value?.toByteArray())
-        return encrypted.toString(Charsets.UTF_8)
+    private fun encrypt(value: String?): String? {
+        return value?.let {
+            Napier.i { "Encrypting: $it" }
+            encryptCipher.update(it.toByteArray())
+            encryptCipher.doFinal(it.toByteArray()).toString(Charsets.UTF_8)
+        }
     }
 
-    private fun decrypt(value: String?): String {
-        val decrypted = decryptCipher.doFinal(value?.toByteArray())
-        return decrypted.toString(Charsets.UTF_8)
+    private fun decrypt(value: String?): String? {
+        return value?.let {
+            Napier.i { "Decrypting: $it" }
+            decryptCipher.update(it.toByteArray())
+            decryptCipher.doFinal(it.toByteArray()).toString(Charsets.UTF_8)
+        }
     }
 
     override fun toString(): String {
@@ -43,7 +54,7 @@ class EncryptedPreferences(
         delegate.put(encrypt(p0), encrypt(p1))
     }
 
-    override fun get(p0: String?, p1: String?): String {
+    override fun get(p0: String?, p1: String?): String? {
         return decrypt(delegate.get(encrypt(p0), encrypt(p1)))
     }
 
@@ -60,7 +71,7 @@ class EncryptedPreferences(
     }
 
     override fun getInt(p0: String?, p1: Int): Int {
-        return get(p0, p1.toString()).toInt()
+        return get(p0, null)?.toInt() ?: p1
     }
 
     override fun putLong(p0: String?, p1: Long) {
@@ -68,7 +79,7 @@ class EncryptedPreferences(
     }
 
     override fun getLong(p0: String?, p1: Long): Long {
-        return get(p0, p1.toString()).toLong()
+        return get(p0, null)?.toLong() ?: p1
     }
 
     override fun putBoolean(p0: String?, p1: Boolean) {
@@ -84,7 +95,7 @@ class EncryptedPreferences(
     }
 
     override fun getFloat(p0: String?, p1: Float): Float {
-        return get(p0, p1.toString()).toFloat()
+        return get(p0, null)?.toFloat() ?: p1
     }
 
     override fun putDouble(p0: String?, p1: Double) {
@@ -92,18 +103,18 @@ class EncryptedPreferences(
     }
 
     override fun getDouble(p0: String?, p1: Double): Double {
-        return get(p0, p1.toString()).toDouble()
+        return get(p0, null)?.toDouble() ?: p1
     }
 
     override fun putByteArray(p0: String?, p1: ByteArray?) {
         put(p0, p1.toString())
     }
 
-    override fun getByteArray(p0: String?, p1: ByteArray?): ByteArray {
-        return get(p0, p1.toString()).toByteArray()
+    override fun getByteArray(p0: String?, p1: ByteArray?): ByteArray? {
+        return get(p0, null)?.toByteArray() ?: p1
     }
 
-    override fun keys(): Array<String> {
+    override fun keys(): Array<String?> {
         return delegate.keys().map { decrypt(it) }.toTypedArray()
     }
 
