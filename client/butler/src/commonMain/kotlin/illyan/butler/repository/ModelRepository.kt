@@ -7,5 +7,5 @@ import org.koin.core.annotation.Single
 class ModelRepository(
     private val modelNetworkDataSource: ModelNetworkDataSource
 ) {
-    fun getAvailableModels() = modelNetworkDataSource.fetchAll()
+    suspend fun getAvailableModels() = modelNetworkDataSource.fetchAll()
 }

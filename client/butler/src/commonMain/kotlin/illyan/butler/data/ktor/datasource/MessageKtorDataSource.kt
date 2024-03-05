@@ -9,23 +9,23 @@ import org.koin.core.annotation.Single
 class MessageKtorDataSource(
     private val client: HttpClient
 ) : MessageNetworkDataSource {
-    override suspend fun fetchMessage(uuid: String): MessageDto {
+    override suspend fun fetch(uuid: String): MessageDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchMessagesByChat(chatUUID: String): List<MessageDto> {
+    override suspend fun fetchByChat(chatUUID: String): List<MessageDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun upsertMessage(message: MessageDto): MessageDto {
+    override suspend fun upsert(message: MessageDto): MessageDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun deleteMessage(uuid: String): Boolean {
+    override suspend fun delete(uuid: String): Boolean {
         TODO("Not yet implemented")
     }
 
-    override suspend fun deleteMessagesForChat(chatUUID: String): Boolean {
+    override suspend fun deleteForChat(chatUUID: String): Boolean {
         TODO("Not yet implemented")
     }
 }

@@ -9,27 +9,27 @@ import org.koin.core.annotation.Single
 class ChatKtorDataSource(
     private val client: HttpClient
 ) : ChatNetworkDataSource {
-    override suspend fun fetchChat(uuid: String): ChatDto {
+    override suspend fun fetch(uuid: String): ChatDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchChatsByUser(userUUID: String): List<ChatDto> {
+    override suspend fun fetchByUser(userUUID: String): List<ChatDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchChatsByModel(modelUUID: String): List<ChatDto> {
+    override suspend fun fetchByModel(modelUUID: String): List<ChatDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun upsertChat(chat: ChatDto): ChatDto {
+    override suspend fun upsert(chat: ChatDto): ChatDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun deleteChat(uuid: String): Boolean {
+    override suspend fun delete(uuid: String): Boolean {
         TODO("Not yet implemented")
     }
 
-    override suspend fun deleteChatsForUser(userUUID: String): Boolean {
+    override suspend fun deleteForUser(userUUID: String): Boolean {
         TODO("Not yet implemented")
     }
 }

@@ -13,7 +13,6 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
-    alias(libs.plugins.ktorfit)
 }
 
 group = "illyan"

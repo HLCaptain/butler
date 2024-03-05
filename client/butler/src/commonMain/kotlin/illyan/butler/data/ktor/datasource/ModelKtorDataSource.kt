@@ -9,11 +9,11 @@ import org.koin.core.annotation.Single
 class ModelKtorDataSource(
     private val client: HttpClient
 ) : ModelNetworkDataSource {
-    override suspend fun fetchModel(uuid: String): ModelDto {
+    override suspend fun fetch(uuid: String): ModelDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchAllModels(): List<ModelDto> {
+    override suspend fun fetchAll(): List<ModelDto> {
         TODO("Not yet implemented")
     }
 }

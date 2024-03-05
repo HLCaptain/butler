@@ -29,5 +29,4 @@ plugins {
     alias(libs.plugins.google.ksp) apply false
     alias(libs.plugins.buildconfig) apply false
     alias(libs.plugins.aboutlibraries) apply false
-    alias(libs.plugins.ktorfit) apply false
 }

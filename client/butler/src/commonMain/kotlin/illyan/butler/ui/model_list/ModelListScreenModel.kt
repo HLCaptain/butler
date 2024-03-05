@@ -3,6 +3,7 @@ package illyan.butler.ui.model_list
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.domain.model.DomainModel
 import illyan.butler.manager.ChatManager
 import illyan.butler.manager.ModelManager
 import kotlinx.coroutines.CoroutineDispatcher
@@ -16,20 +17,22 @@ import org.koin.core.annotation.Factory
 
 @Factory
 class ModelListScreenModel(
-    modelManager: ModelManager,
+    private val modelManager: ModelManager,
     private val chatManager: ChatManager,
     @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
 
-    val availableModels = modelManager.availableModels
-        .stateIn(
-            screenModelScope,
-            SharingStarted.Eagerly,
-            emptyList()
-        )
+    private val _availableModels = MutableStateFlow(emptyList<DomainModel>())
+    val availableModels = _availableModels.asStateFlow()
 
     private val _newChatUUID = MutableStateFlow<String?>(null)
     val newChatUUID = _newChatUUID.asStateFlow()
+
+    init {
+        screenModelScope.launch(dispatcherIO) {
+            _availableModels.update { modelManager.getAvailableModels() }
+        }
+    }
 
     fun startNewChat(modelUUID: String) {
         screenModelScope.launch(dispatcherIO) {
