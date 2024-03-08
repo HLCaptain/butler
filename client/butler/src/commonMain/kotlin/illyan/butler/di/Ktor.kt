@@ -3,6 +3,7 @@ package illyan.butler.di
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.config.BuildConfig
+import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.isDebugBuild
 import illyan.butler.repository.UserRepository
@@ -22,15 +23,25 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.http.parameters
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Single
 fun provideHttpClient(settings: FlowSettings) = HttpClient {
-    install(WebSockets)
+    install(WebSockets) {
+        contentConverter = WebsocketContentConverterWithFallback(
+            listOf(
+                KotlinxWebsocketSerializationConverter(ProtoBuf),
+                KotlinxWebsocketSerializationConverter(Json)
+            )
+        )
+    }
 
     developmentMode = isDebugBuild()
 
