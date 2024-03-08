@@ -2,7 +2,7 @@ package illyan.butler.data.ktor.datasource
 
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.ChatDto
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import org.koin.core.annotation.Single
 
 @Single
@@ -26,10 +26,6 @@ class ChatKtorDataSource(
     }
 
     override suspend fun delete(uuid: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun deleteForUser(userUUID: String): Boolean {
         TODO("Not yet implemented")
     }
 }

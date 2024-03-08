@@ -24,12 +24,7 @@ import kotlin.time.Duration.Companion.days
 suspend inline fun <reified T> HttpClient.tryToExecute(
     method: HttpClient.() -> HttpResponse
 ): T {
-    val response = method()
-    if (response.status.isSuccess()) {
-        return response.body<T>()
-    } else {
-        throw ApiException(response.status.value)
-    }
+    return method().bodyOrThrow<T>()
 }
 
 suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
