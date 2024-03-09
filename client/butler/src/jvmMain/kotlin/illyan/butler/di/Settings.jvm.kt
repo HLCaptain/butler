@@ -10,11 +10,11 @@ import com.russhwolf.settings.coroutines.toFlowSettings
 import illyan.butler.EncryptedPreferences
 import io.github.aakira.napier.Napier
 import io.ktor.util.toCharArray
-import javax.crypto.KeyGenerator
-import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import org.koin.core.annotation.Single
+import javax.crypto.KeyGenerator
+import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -33,11 +33,11 @@ fun provideEncryptedPreferencesSettings(): PreferencesSettings {
         val keyGenerator = KeyGenerator.getInstance("AES")
         val secretKey = keyGenerator.generateKey()
         val keyChars = Base64.encode(secretKey.encoded)
-        Napier.v { "Master key not found secure storage, creating one" }
+        Napier.v { "Not found master key for secure storage, creating one" }
         credentialStorage.add("ButlerMasterKey", StoredCredential("ButlerChatApp", keyChars.toCharArray()))
         secretKey
     } else {
-        Napier.v { "Master key found for secure storage"}
+        Napier.v { "Found master key for secure storage"}
         val decodedKey = Base64.decode(storedMasterKey.concatToString())
         SecretKeySpec(decodedKey, 0, decodedKey.size, "AES")
     }

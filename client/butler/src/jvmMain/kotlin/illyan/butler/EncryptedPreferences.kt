@@ -52,6 +52,8 @@ class EncryptedPreferences(
     }
 
     override fun get(p0: String?, p1: String?): String? {
+        // Might sometimes throw an error for the key being null.
+        // Not found definitive reason for this exception.
         return decrypt(delegate.get(encrypt(p0), encrypt(p1)))
     }
 

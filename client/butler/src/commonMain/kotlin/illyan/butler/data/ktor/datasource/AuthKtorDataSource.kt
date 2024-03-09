@@ -14,8 +14,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.koin.core.annotation.Single
 
 @Single
@@ -41,11 +42,10 @@ class AuthKtorDataSource(
     }
 
     override suspend fun getMe(): Flow<UserDetailsDto?> {
-        val stateFlowOfMe = MutableStateFlow<UserDetailsDto?>(null)
-        client.webSocket("/me") {
-            val user = receiveDeserialized<UserDetailsDto?>()
-            stateFlowOfMe.update { user }
+        return flow {
+            client.webSocket("/me") {
+                incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }
+            }
         }
-        return stateFlowOfMe
     }
 }
