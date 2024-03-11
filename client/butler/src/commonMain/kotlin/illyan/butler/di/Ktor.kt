@@ -7,6 +7,7 @@ import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.isDebugBuild
 import illyan.butler.repository.UserRepository
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.api.Send
@@ -46,12 +47,19 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
     developmentMode = isDebugBuild()
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
+        val contentTypes = pluginConfig.supportedContentTypes
+        onRequest { request, content ->
+            if (request.contentType() == null && content is OutgoingContent) {
+                request.contentType(contentTypes.first())
+            }
+        }
         on(Send) { request ->
+            Napier.v("ContentTypeFallback plugin called on(Send)")
             when (request.body) {
                 is OutgoingContent -> {
                     try {
-                        if (pluginConfig.supportedContentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
-                        pluginConfig.supportedContentTypes.firstNotNullOf {
+                        if (contentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
+                        contentTypes.firstNotNullOf {
                             request.contentType(it)
                             val call = proceed(request)
                             if (call.response.status != HttpStatusCode.UnsupportedMediaType) call else null
