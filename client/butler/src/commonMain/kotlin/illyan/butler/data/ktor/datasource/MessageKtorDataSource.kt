@@ -2,18 +2,19 @@ package illyan.butler.data.ktor.datasource
 
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.MessageDto
-import io.ktor.client.*
+import io.ktor.client.HttpClient
+import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single
 
 @Single
 class MessageKtorDataSource(
     private val client: HttpClient
 ) : MessageNetworkDataSource {
-    override suspend fun fetch(uuid: String): MessageDto {
+    override suspend fun fetch(uuid: String): Flow<MessageDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchByChat(chatUUID: String): List<MessageDto> {
+    override suspend fun fetchByChat(chatUUID: String, limit: Int, timestamp: Long): List<MessageDto> {
         TODO("Not yet implemented")
     }
 

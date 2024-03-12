@@ -1,9 +1,10 @@
 package illyan.butler.data.network.datasource
 
 import illyan.butler.data.network.model.ChatDto
+import kotlinx.coroutines.flow.Flow
 
 interface ChatNetworkDataSource {
-    suspend fun fetch(uuid: String): ChatDto
+    suspend fun fetch(uuid: String): Flow<ChatDto>
 
     /**
      * Fetch chats the user is a member of.

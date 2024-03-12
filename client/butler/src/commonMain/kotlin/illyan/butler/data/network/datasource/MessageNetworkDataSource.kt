@@ -1,16 +1,17 @@
 package illyan.butler.data.network.datasource
 
 import illyan.butler.data.network.model.MessageDto
+import kotlinx.coroutines.flow.Flow
 
 interface MessageNetworkDataSource {
-    suspend fun fetch(uuid: String): MessageDto
+    suspend fun fetch(uuid: String): Flow<MessageDto>
 
     /**
      * Fetch messages from a chat.
      * TODO: make this paginated.
      * @return messages in the chat.
      */
-    suspend fun fetchByChat(chatUUID: String): List<MessageDto>
+    suspend fun fetchByChat(chatUUID: String, limit: Int, timestamp: Long): List<MessageDto>
 
     /**
      * Update a message.
