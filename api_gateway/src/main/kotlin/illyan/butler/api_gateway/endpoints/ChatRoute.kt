@@ -43,13 +43,6 @@ fun Route.chatRoute() {
             respondWithResult(HttpStatusCode.Created, result)
         }
 
-        put {
-            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
-            val chat = call.receive<ChatDto>()
-            val result = chatService.editChat(userId, chat)
-            respondWithResult(HttpStatusCode.OK, result)
-        }
-
         webSocket {
             val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
             val chats = chatService.receiveChats(userId)
@@ -64,6 +57,14 @@ fun Route.chatRoute() {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
                 val chatId = call.parameters["chatId"]?.trim().orEmpty()
                 val result = chatService.getChat(userId, chatId)
+                respondWithResult(HttpStatusCode.OK, result)
+            }
+
+            put {
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                val chatId = call.parameters["chatId"]?.trim().orEmpty()
+                val chat = call.receive<ChatDto>()
+                val result = chatService.editChat(userId, chatId, chat)
                 respondWithResult(HttpStatusCode.OK, result)
             }
 

@@ -19,6 +19,7 @@ import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.forms.submitForm
+import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
@@ -49,7 +50,10 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
         onRequest { request, content ->
-            if (request.contentType() == null && content is OutgoingContent) {
+            Napier.v("ContentTypeFallback plugin called onRequest, request: $request, content: $content")
+            // Default body is EmptyContent
+            // Don't set content type if content itself is not set
+            if (request.contentType() == null && content !is EmptyContent) {
                 request.contentType(contentTypes.first())
             }
         }

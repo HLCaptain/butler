@@ -8,22 +8,19 @@ import illyan.butler.util.log.randomUUID
 fun Chat.toDomainModel() = DomainChat(
     uuid = uuid,
     name = name,
-    userUUID = userUUID,
-    modelUUID = modelUUID
+    members = members
 )
 
 fun DomainChat.toNetworkModel() = ChatDto(
     id = uuid,
     name = name,
-    userUUID = userUUID,
-    modelUUID = modelUUID
+    members = members
 )
 
 fun ChatDto.toLocalModel() = Chat(
     uuid = id ?: randomUUID(),
     name = name,
-    userUUID = userUUID,
-    modelUUID = modelUUID
+    members = members
 )
 
 fun Chat.toNetworkModel() = toDomainModel().toNetworkModel()

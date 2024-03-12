@@ -21,14 +21,14 @@ import org.koin.core.annotation.Single
 @Single
 class ChatService(private val client: HttpClient) {
     fun receiveMessages(userId: String, chatId: String) = client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId")
-    suspend fun sendMessage(userId: String, message: MessageDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages") { setBody(message) }
-    suspend fun editMessage(userId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages/${message.id}") { setBody(message) }
+    suspend fun sendMessage(userId: String, message: MessageDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages") { setBody(message) }.bodyOrThrow<MessageDto>()
+    suspend fun editMessage(userId: String, messageId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages/$messageId") { setBody(message) }.bodyOrThrow<MessageDto>()
     suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages/$messageId").bodyOrThrow<Boolean>()
 
     fun receiveChats(userId: String) = client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/$userId/chats")
     suspend fun getChat(userId: String, chatId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").bodyOrThrow<ChatDto>()
     suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats") { setBody(chat) }.bodyOrThrow<ChatDto>()
-    suspend fun editChat(userId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${chat.id}") { setBody(chat) }
+    suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") { setBody(chat) }.bodyOrThrow<ChatDto>()
     suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").bodyOrThrow<Boolean>()
 
     /**
@@ -62,7 +62,7 @@ class ChatService(private val client: HttpClient) {
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats") {
         parameter("limit", limit)
         parameter("offset", offset)
-    }.bodyOrThrow<PaginationResponse<ChatDto>>()
+    }.bodyOrThrow<List<ChatDto>>()
 
     suspend fun getPreviousChats(
         userId: String,
@@ -71,7 +71,7 @@ class ChatService(private val client: HttpClient) {
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats") {
         parameter("limit", limit)
         parameter("timestamp", timestamp)
-    }.bodyOrThrow<PaginationResponse<ChatDto>>()
+    }.bodyOrThrow<List<ChatDto>>()
 
     suspend fun getPreviousChats(
         userId: String,
@@ -80,7 +80,7 @@ class ChatService(private val client: HttpClient) {
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats") {
         parameter("limit", limit)
         parameter("offset", offset)
-    }.bodyOrThrow<PaginationResponse<ChatDto>>()
+    }.bodyOrThrow<List<ChatDto>>()
 
     suspend fun getPreviousMessages(
         userId: String,
@@ -90,7 +90,7 @@ class ChatService(private val client: HttpClient) {
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") {
         parameter("limit", limit)
         parameter("timestamp", timestamp)
-    }.bodyOrThrow<PaginationResponse<MessageDto>>()
+    }.bodyOrThrow<List<MessageDto>>()
 
     suspend fun getMessages(
         userId: String,
@@ -100,5 +100,5 @@ class ChatService(private val client: HttpClient) {
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") {
         parameter("offset", offset)
         parameter("limit", limit)
-    }.bodyOrThrow<PaginationResponse<MessageDto>>()
+    }.bodyOrThrow<List<MessageDto>>()
 }

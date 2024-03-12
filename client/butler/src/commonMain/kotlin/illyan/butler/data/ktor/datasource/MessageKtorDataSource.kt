@@ -10,7 +10,7 @@ import org.koin.core.annotation.Single
 class MessageKtorDataSource(
     private val client: HttpClient
 ) : MessageNetworkDataSource {
-    override suspend fun fetch(uuid: String): Flow<MessageDto> {
+    override fun fetch(uuid: String): Flow<MessageDto> {
         TODO("Not yet implemented")
     }
 

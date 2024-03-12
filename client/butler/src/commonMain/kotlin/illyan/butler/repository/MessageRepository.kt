@@ -1,5 +1,6 @@
 package illyan.butler.repository
 
+import illyan.butler.data.store.ChatMessageKey
 import illyan.butler.data.store.ChatMessageMutableStoreBuilder
 import illyan.butler.data.store.MessageMutableStoreBuilder
 import illyan.butler.di.NamedCoroutineScopeIO
@@ -29,10 +30,10 @@ class MessageRepository(
 
     private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getChatFlow(uuid: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    fun getChatFlow(uuid: String, limit: Int, timestamp: Long): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatStateFlows.getOrPut(uuid) {
             chatMessageMutableStore.stream<StoreReadResponse<DomainMessage>>(
-                StoreReadRequest.fresh(key = uuid)
+                StoreReadRequest.fresh(ChatMessageKey(uuid, limit, timestamp))
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: $it")

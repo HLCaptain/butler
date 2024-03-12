@@ -1,19 +1,19 @@
 [versions]
-butler = "1.1.3-alpha"
+butler = "2.0.0-alpha"
 kotlin = "1.9.22"
-ksp = "1.9.22-1.0.17"
-agp = "8.2.2"
+ksp = "1.9.22-1.0.18"
+agp = "8.3.0"
 compose = "1.6.0"
-compose-android = "1.6.2"
-ktor = "2.3.8"
+compose-android = "1.6.3"
+ktor = "2.3.9"
 koin = "3.6.0-wasm-alpha2"
 koin-annotations = "1.3.1"
 voyager = "1.1.0-alpha03"
 sqldelight = "2.0.1"
-coroutines = "1.8.0"
+coroutines = "1.8.1-Beta"
 serialization = "1.6.3"
 aboutlibraries = "11.1.0"
-dataStoreVersion = "1.1.0-beta01"
+dataStoreVersion = "1.1.0-beta02"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

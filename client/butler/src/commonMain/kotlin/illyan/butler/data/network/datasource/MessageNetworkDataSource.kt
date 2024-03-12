@@ -4,7 +4,7 @@ import illyan.butler.data.network.model.MessageDto
 import kotlinx.coroutines.flow.Flow
 
 interface MessageNetworkDataSource {
-    suspend fun fetch(uuid: String): Flow<MessageDto>
+    fun fetch(uuid: String): Flow<MessageDto>
 
     /**
      * Fetch messages from a chat.

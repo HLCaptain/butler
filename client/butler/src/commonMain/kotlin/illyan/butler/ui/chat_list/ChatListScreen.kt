@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,10 +35,10 @@ class ChatListScreen : Screen {
     @Composable
     override fun Content() {
         val screenModel = getScreenModel<ChatListScreenModel>()
-        val chatsPerModel by screenModel.userChatsPerModel.collectAsState()
+        val chats by screenModel.userChats.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         ChatList(
-            chatsPerModel = chatsPerModel,
+            chats = chats,
             openChat = { navigator.push(ChatScreen(it)) }
         )
     }
@@ -47,14 +46,14 @@ class ChatListScreen : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun ChatList(
-        chatsPerModel: Map<String, List<DomainChat>>,
+        chats: List<DomainChat>,
         openChat: (uuid: String) -> Unit,
     ) {
         Crossfade(
             modifier = Modifier
                 .padding(8.dp)
                 .animateContentSize(),
-            targetState = chatsPerModel.isEmpty()
+            targetState = chats.isEmpty()
         ) {
             if (it) {
                 Text(
@@ -73,23 +72,17 @@ class ChatListScreen : Screen {
                             .padding(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        chatsPerModel.keys.toList().forEach { key ->
-                            Text(
-                                text = key.take(16),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            LazyColumn(
-                                modifier = Modifier
-                                    .animateContentSize()
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(chatsPerModel[key]!!) { chat ->
-                                    ChatCard(
-                                        chat = chat,
-                                        openChat = { openChat(chat.uuid) }
-                                    )
-                                }
+                        LazyColumn(
+                            modifier = Modifier
+                                .animateContentSize()
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(chats) { chat ->
+                                ChatCard(
+                                    chat = chat,
+                                    openChat = { openChat(chat.uuid) }
+                                )
                             }
                         }
                     }
@@ -98,7 +91,7 @@ class ChatListScreen : Screen {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun ChatCard(
         chat: DomainChat,
