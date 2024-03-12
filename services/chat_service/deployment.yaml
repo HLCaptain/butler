@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: butler-chat-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: butler-chat-service
+  template:
+    metadata:
+      labels:
+        app: butler-chat-service
+    spec:
+      containers:
+        - name: butler-api-gateway
+          image: illyan1337/butler-chat-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: butler-jwt-secret
+                  key: JWT_SECRET
+            - name: IDENTITY_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-api-urls
+                  key: IDENTITY_API_URL

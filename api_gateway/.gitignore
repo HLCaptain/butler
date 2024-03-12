@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker and Kubernetes ###
+*secret*.yaml
