@@ -106,7 +106,8 @@ fun Route.chatRoute() {
                     put {
                         val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
                         val message = call.receive<MessageDto>()
-                        val result = chatService.editMessage(userId, message)
+                        val messageId = call.parameters["messageId"]?.trim().orEmpty()
+                        val result = chatService.editMessage(userId, messageId, message)
                         respondWithResult(HttpStatusCode.OK, result)
                     }
 
