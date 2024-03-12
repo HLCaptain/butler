@@ -17,6 +17,7 @@ import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.utils.EmptyContent
@@ -117,6 +118,10 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
     }
 
     install(ContentEncoding)
+
+    defaultRequest {
+        url(BuildConfig.API_GATEWAY_URL)
+    }
 }
 
 class ContentTypeFallbackConfig {

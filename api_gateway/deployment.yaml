@@ -17,3 +17,19 @@ spec:
           image: illyan1337/butler-api-gateway:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: butler-jwt-secret
+                  key: JWT_SECRET
+            - name: IDENTITY_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-api-urls
+                  key: IDENTITY_API_URL
+            - name: CHAT_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-api-urls
+                  key: CHAT_API_URL
