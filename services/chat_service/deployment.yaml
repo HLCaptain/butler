@@ -13,8 +13,9 @@ spec:
         app: butler-chat-service
     spec:
       containers:
-        - name: butler-api-gateway
+        - name: butler-chat-service
           image: illyan1337/butler-chat-service:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           env:
