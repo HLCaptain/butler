@@ -17,7 +17,7 @@ application {
 
 ktor {
     fatJar {
-        archiveFileName = "api_gateway.jar"
+        archiveFileName = "butler_api_gateway.jar"
     }
 }
 

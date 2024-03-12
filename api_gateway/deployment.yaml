@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: butler-api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: butler-api-gateway
+  template:
+    metadata:
+      labels:
+        app: butler-api-gateway
+    spec:
+      containers:
+        - name: butler-api-gateway
+          image: illyan1337/butler-api-gateway:latest
+          ports:
+            - containerPort: 8080
