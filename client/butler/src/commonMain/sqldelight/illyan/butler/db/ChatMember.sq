@@ -20,5 +20,11 @@ VALUES ?;
 delete:
 DELETE FROM ChatMember WHERE uuid = ?;
 
+deleteAllUserChats:
+DELETE FROM ChatMember WHERE userUUID = ?;
+
+deleteAllChatMembers:
+DELETE FROM ChatMember WHERE chatUUID = ?;
+
 deleteAll:
 DELETE FROM ChatMember;

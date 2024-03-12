@@ -7,6 +7,7 @@ import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.ChatDto
 import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Chat
+import illyan.butler.db.ChatMember
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.map
@@ -49,9 +50,12 @@ fun provideUserChatMutableStore(
         },
         writer = { key, local ->
             databaseHelper.withDatabase { db ->
-                local.forEach {
+                local.forEach { chat ->
                     Napier.d("Writing chat for user $key with $local")
-                    db.chatQueries.upsert(it)
+                    val currentMembers = chat.members.map { ChatMember("${key.userUUID};${chat.uuid}", it, chat.uuid) }
+                    db.chatMemberQueries.deleteAllChatMembers(chat.uuid)
+                    currentMembers.forEach { db.chatMemberQueries.upsert(it) }
+                    db.chatQueries.upsert(chat)
                 }
             }
         },
@@ -59,6 +63,7 @@ fun provideUserChatMutableStore(
             databaseHelper.withDatabase {
                 Napier.d("Deleting chat for user $key")
                 it.chatMemberQueries.selectAllUserChats(key.userUUID).executeAsList().forEach { chat ->
+                    it.chatMemberQueries.deleteAllChatMembers(chat.uuid)
                     it.chatQueries.delete(chat.uuid)
                 }
             }
@@ -66,6 +71,7 @@ fun provideUserChatMutableStore(
         deleteAll = {
             databaseHelper.withDatabase {
                 Napier.d("Deleting all chats")
+                it.chatMemberQueries.deleteAll()
                 it.chatQueries.deleteAll()
             }
         }
