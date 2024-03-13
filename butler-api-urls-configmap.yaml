@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: butler-api-urls
-data:
-  IDENTITY_API_URL: "http://identity-service.default.svc.cluster.local"
-  CHAT_API_URL: "http://chat-service.default.svc.cluster.local"

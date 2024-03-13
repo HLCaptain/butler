@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: butler-configmap
+data:
+  IDENTITY_API_URL: "http://identity-service.default.svc.cluster.local"
+  CHAT_API_URL: "http://chat-service.default.svc.cluster.local"
+  POSTGRES_DB: "butlerdb"
+  POSTGRES_USER: "postgres"
+  POSTGRES_DRIVER: "org.postgresql.Driver"
+  POSTGRES_URL: "jdbc:postgresql://postgresql:5432/butlerdb"

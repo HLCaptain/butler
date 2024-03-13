@@ -22,10 +22,30 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: butler-jwt-secret
+                  name: butler-secrets
                   key: JWT_SECRET
             - name: IDENTITY_API_URL
               valueFrom:
                 configMapKeyRef:
-                  name: butler-api-urls
+                  name: butler-configmap
                   key: IDENTITY_API_URL
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: POSTGRES_URL
+            - name: DATABASE_DRIVER
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: POSTGRES_DRIVER
+            - name: DATABASE_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: POSTGRES_USER
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: butler-secrets
+                  key: POSTGRES_PASSWORD

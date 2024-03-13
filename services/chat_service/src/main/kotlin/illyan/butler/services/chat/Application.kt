@@ -10,9 +10,12 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
 fun main() {
+    // Configure Ktor Server developmentMode
+    System.setProperty("io.ktor.development", AppConfig.Ktor.DEVELOPMENT.toString())
+
     embeddedServer(
         factory = Netty,
-        port = 8080,
+        port = AppConfig.Ktor.PORT,
         module = Application::module
     ).start(wait = true)
 }

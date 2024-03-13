@@ -1,14 +1,14 @@
-package ai.nest
+package illyan.butler.api_gateway
 
-import ai.nest.api_gateway.data.model.authenticate.TokenConfiguration
-import ai.nest.api_gateway.plugins.configureAuthentication
-import ai.nest.api_gateway.plugins.configureCompression
-import ai.nest.api_gateway.plugins.configureDependencyInjection
-import ai.nest.api_gateway.plugins.configureRouting
-import ai.nest.api_gateway.plugins.configureSerialization
-import ai.nest.api_gateway.plugins.configureStatusPages
-import ai.nest.api_gateway.plugins.configureWebSockets
-import ai.nest.api_gateway.utils.AppConfig
+import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
+import illyan.butler.api_gateway.plugins.configureAuthentication
+import illyan.butler.api_gateway.plugins.configureCompression
+import illyan.butler.api_gateway.plugins.configureDependencyInjection
+import illyan.butler.api_gateway.plugins.configureRouting
+import illyan.butler.api_gateway.plugins.configureSerialization
+import illyan.butler.api_gateway.plugins.configureStatusPages
+import illyan.butler.api_gateway.plugins.configureWebSockets
+import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

@@ -22,15 +22,15 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: butler-jwt-secret
+                  name: butler-secrets
                   key: JWT_SECRET
             - name: IDENTITY_API_URL
               valueFrom:
                 configMapKeyRef:
-                  name: butler-api-urls
+                  name: butler-configmap
                   key: IDENTITY_API_URL
             - name: CHAT_API_URL
               valueFrom:
                 configMapKeyRef:
-                  name: butler-api-urls
+                  name: butler-configmap
                   key: CHAT_API_URL
