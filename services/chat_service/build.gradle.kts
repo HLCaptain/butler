@@ -12,6 +12,9 @@ val apiVersion = 1
 
 application {
     mainClass = "illyan.butler.services.chat.ApplicationKt"
+
+    val isDevelopment: Boolean = project.ext.has("development")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 ktor {
@@ -25,13 +28,6 @@ buildConfig {
     buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
     buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")
     buildConfigField("String", "PROJECT_GROUP", "\"$group\"")
-}
-
-application {
-    mainClass.set("ai.nest.ApplicationKt")
-
-    val isDevelopment: Boolean = project.ext.has("development")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 repositories {
@@ -65,7 +61,7 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
-    implementation(libs.exposed.crypt)
+//    implementation(libs.exposed.crypt)
     implementation(libs.exposed.dao)
 
     // Cache
