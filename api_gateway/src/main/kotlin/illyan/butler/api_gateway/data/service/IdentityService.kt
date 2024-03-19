@@ -27,7 +27,7 @@ import org.koin.core.annotation.Single
 class IdentityService(
     private val client: HttpClient,
 ) {
-    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<UserDetailsDto> {
+    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<String> {
         post("${AppConfig.Api.IDENTITY_API_URL}/users") {
             setBody(newUser)
         }
@@ -38,7 +38,7 @@ class IdentityService(
         password: String,
         tokenConfiguration: TokenConfiguration,
     ): UserTokensResponse {
-        client.tryToExecute<Boolean> {
+        val userId = client.tryToExecute<String> {
             post("${AppConfig.Api.IDENTITY_API_URL}/users/login") {
                 formData {
                     parameter("email", email)
@@ -46,8 +46,7 @@ class IdentityService(
                 }
             }
         }
-        val user = getUserByEmail(email)
-        return generateUserTokens(user.id, tokenConfiguration)
+        return generateUserTokens(userId, tokenConfiguration)
     }
 
     suspend fun getUserById(id: String) = client.tryToExecute<UserDetailsDto> {
