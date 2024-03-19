@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: butler-configmap
 data:
-  IDENTITY_API_URL: "http://identity-service.default.svc.cluster.local"
-  CHAT_API_URL: "http://chat-service.default.svc.cluster.local"
+  IDENTITY_API_URL: "http://butler-identity-service-service:8080"
+  CHAT_API_URL: "http://butler-chat-service-service:8080"
   POSTGRES_DB: "butlerdb"
   POSTGRES_USER: "postgres"
   POSTGRES_DRIVER: "org.postgresql.Driver"

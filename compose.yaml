@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  api_gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    image: illyan1337/butler-api-gateway:latest
+  chat_service:
+    build:
+      context: ./services/chat_service
+      dockerfile: Dockerfile
+    image: illyan1337/butler-chat-service:latest
