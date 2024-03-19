@@ -14,7 +14,7 @@ fun provideDatabase(): Database = if (AppConfig.Ktor.DEVELOPMENT) {
     )
 } else {
     Database.connect(
-        url = AppConfig.Exposed.DATABASE_URL,
+        url = "${AppConfig.Exposed.DATABASE_URL}/${AppConfig.Exposed.DATABASE_NAME}",
         driver = AppConfig.Exposed.DATABASE_DRIVER,
         user = AppConfig.Exposed.DATABASE_USER,
         password = AppConfig.Exposed.DATABASE_PASSWORD

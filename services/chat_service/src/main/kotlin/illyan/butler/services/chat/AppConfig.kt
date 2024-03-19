@@ -41,7 +41,8 @@ data object AppConfig {
         val OTLP_EXPORTER_ENDPOINT = System.getenv("OTLP_EXPORTER_ENDPOINT") ?: "http://localhost:4317"
     }
     data object Exposed {
-        val DATABASE_URL = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432/butler"
+        val DATABASE_URL = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432"
+        val DATABASE_NAME = System.getenv("DATABASE_NAME") ?: "butler"
         val DATABASE_DRIVER = System.getenv("DATABASE_DRIVER") ?: "org.postgresql.Driver"
         val DATABASE_USER = System.getenv("DATABASE_USER") ?: "butler"
         val DATABASE_PASSWORD = System.getenv("DATABASE_PASSWORD") ?: "butler"

@@ -8,4 +8,4 @@ data:
   POSTGRES_DB: "butlerdb"
   POSTGRES_USER: "postgres"
   POSTGRES_DRIVER: "org.postgresql.Driver"
-  POSTGRES_URL: "jdbc:postgresql://postgresql:5432/butlerdb"
+  POSTGRES_URL: "jdbc:postgresql://postgresql:5432"
