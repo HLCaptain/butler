@@ -81,7 +81,7 @@ class ChatListScreen : Screen {
                             items(chats) { chat ->
                                 ChatCard(
                                     chat = chat,
-                                    openChat = { openChat(chat.uuid) }
+                                    openChat = { openChat(chat.id) }
                                 )
                             }
                         }
@@ -113,7 +113,7 @@ class ChatListScreen : Screen {
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = chat.uuid.take(16),
+                        text = chat.id.take(16),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

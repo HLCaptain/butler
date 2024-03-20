@@ -1,5 +1,5 @@
 CREATE TABLE Model (
-    uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
+    id TEXT PRIMARY KEY NOT NULL UNIQUE,
     author TEXT NOT NULL,
     description TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -8,14 +8,14 @@ CREATE TABLE Model (
 );
 
 select:
-SELECT * FROM Model WHERE uuid = ?;
+SELECT * FROM Model WHERE id = ?;
 
 upsert:
 INSERT OR REPLACE INTO Model
 VALUES ?;
 
 delete:
-DELETE FROM Model WHERE uuid = ?;
+DELETE FROM Model WHERE id = ?;
 
 deleteAll:
 DELETE FROM Model;

@@ -5,6 +5,7 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.auth.UserTokensResponse
+import illyan.butler.data.network.model.identity.UserDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
@@ -22,7 +23,7 @@ import org.koin.core.annotation.Single
 class AuthKtorDataSource(
     private val client: HttpClient
 ) : AuthNetworkDataSource {
-    override suspend fun signup(credentials: UserRegistrationDto): UserDetailsDto {
+    override suspend fun signup(credentials: UserRegistrationDto): UserDto {
         return client.post("/signup") {
             setBody(credentials)
         }.body()
@@ -40,7 +41,7 @@ class AuthKtorDataSource(
         }.status.isSuccess()
     }
 
-    override suspend fun getMe(): Flow<UserDetailsDto?> {
+    override suspend fun getMe(): Flow<UserDto?> {
         return flow {
             client.webSocket("/me") {
                 incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }

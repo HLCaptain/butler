@@ -1,5 +1,5 @@
 CREATE TABLE DataHistory (
-    uuid TEXT PRIMARY KEY NOT NULL,
+    id TEXT PRIMARY KEY NOT NULL,
     timestamp INTEGER NOT NULL,
     fromTable TEXT NOT NULL
 );
@@ -9,7 +9,7 @@ CREATE TABLE DataHistory (
 select:
 SELECT *
 FROM DataHistory
-WHERE uuid = ?
+WHERE id = ?
 LIMIT 1;
 
 upsert:
@@ -18,7 +18,7 @@ VALUES ?;
 
 delete:
 DELETE FROM DataHistory
-WHERE uuid = ?;
+WHERE id = ?;
 
 deleteAllFromTable:
 DELETE FROM DataHistory

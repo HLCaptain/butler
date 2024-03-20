@@ -1,16 +1,16 @@
 CREATE TABLE User (
-    uuid TEXT PRIMARY KEY NOT NULL UNIQUE
+    id TEXT PRIMARY KEY NOT NULL UNIQUE
 );
 
 select:
-SELECT * FROM User WHERE uuid = ?;
+SELECT * FROM User WHERE id = ?;
 
 upsert:
 INSERT OR REPLACE INTO User
 VALUES ?;
 
 delete:
-DELETE FROM User WHERE uuid = ?;
+DELETE FROM User WHERE id = ?;
 
 deleteAll:
 DELETE FROM User;

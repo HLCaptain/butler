@@ -6,7 +6,7 @@ import illyan.butler.domain.model.DomainModel
 import illyan.butler.util.log.randomUUID
 
 fun Model.toDomainModel() = DomainModel(
-    uuid = uuid,
+    id = id,
     name = name,
     type = type,
     description = description,
@@ -15,7 +15,7 @@ fun Model.toDomainModel() = DomainModel(
 )
 
 fun DomainModel.toNetworkModel() = ModelDto(
-    id = uuid,
+    id = id,
     name = name,
     type = type,
     description = description,
@@ -24,7 +24,7 @@ fun DomainModel.toNetworkModel() = ModelDto(
 )
 
 fun ModelDto.toLocalModel() = Model(
-    uuid = id ?: randomUUID(),
+    id = id ?: randomUUID(),
     name = name,
     type = type,
     description = description,

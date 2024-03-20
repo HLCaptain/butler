@@ -44,7 +44,7 @@ class ChatManager(
         authManager.signedInUserUUID.first()?.let { userUUID ->
             chatRepository.upsert(
                 DomainChat(
-                    uuid = chatUUID,
+                    id = chatUUID,
                     members = listOf(userUUID, modelUUID)
                 )
             )
@@ -53,7 +53,7 @@ class ChatManager(
     }
 
     suspend fun nameChat(chatUUID: String, name: String) {
-        userChats.first().firstOrNull { it.uuid == chatUUID }?.let { chat ->
+        userChats.first().firstOrNull { it.id == chatUUID }?.let { chat ->
             chatRepository.upsert(chat.copy(name = name))
         }
     }
@@ -62,8 +62,8 @@ class ChatManager(
         authManager.signedInUserUUID.first()?.let { userUUID ->
             messageRepository.upsert(
                 DomainMessage(
-                    uuid = randomUUID(),
-                    chatUUID = chatUUID,
+                    id = randomUUID(),
+                    chatId = chatUUID,
                     role = DomainMessage.USER_ROLE,
                     message = message,
                     timestamp = Clock.System.now().toEpochMilliseconds(),

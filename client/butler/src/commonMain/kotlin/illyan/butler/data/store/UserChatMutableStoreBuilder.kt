@@ -37,13 +37,13 @@ fun provideUserChatMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.of { key ->
         Napier.d("Fetching chats for user $key")
-        chatNetworkDataSource.fetchByUser(key.userUUID, key.limit, key.timestamp)
+        chatNetworkDataSource.fetchByUser(key.userId, key.limit, key.timestamp)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: UserChatKey ->
             databaseHelper.queryAsListFlow {
                 Napier.d("Reading chats for user $key")
-                it.chatQueries.selectByUser(key.userUUID, key.limit.toLong(), key.timestamp)
+                it.chatQueries.selectByUser(key.userId, key.limit.toLong(), key.timestamp)
             }.map { chats ->
                 chats.map { it.toDomainModel() }
             }
@@ -52,8 +52,8 @@ fun provideUserChatMutableStore(
             databaseHelper.withDatabase { db ->
                 local.forEach { chat ->
                     Napier.d("Writing chat for user $key with $local")
-                    val currentMembers = chat.members.map { ChatMember("${key.userUUID};${chat.uuid}", it, chat.uuid) }
-                    db.chatMemberQueries.deleteAllChatMembers(chat.uuid)
+                    val currentMembers = chat.members.map { ChatMember("${key.userId};${chat.id}", it, chat.id) }
+                    db.chatMemberQueries.deleteAllChatMembers(chat.id)
                     currentMembers.forEach { db.chatMemberQueries.upsert(it) }
                     db.chatQueries.upsert(chat)
                 }
@@ -62,9 +62,9 @@ fun provideUserChatMutableStore(
         delete = { key ->
             databaseHelper.withDatabase {
                 Napier.d("Deleting chat for user $key")
-                it.chatMemberQueries.selectAllUserChats(key.userUUID).executeAsList().forEach { chat ->
-                    it.chatMemberQueries.deleteAllChatMembers(chat.uuid)
-                    it.chatQueries.delete(chat.uuid)
+                it.chatMemberQueries.selectAllUserChats(key.userId).executeAsList().forEach { chat ->
+                    it.chatMemberQueries.deleteAllChatMembers(chat.id)
+                    it.chatQueries.delete(chat.id)
                 }
             }
         },

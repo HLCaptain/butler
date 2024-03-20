@@ -6,6 +6,7 @@ import illyan.butler.data.network.datasource.AuthNetworkDataSource
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
+import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.NamedCoroutineScopeIO
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,7 +36,7 @@ class UserRepository(
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     val userData = settings.getStringOrNullFlow(KEY_USER_ID).map { encodedUser ->
-        encodedUser?.let { ProtoBuf.decodeFromHexString<UserDetailsDto>(encodedUser) }
+        encodedUser?.let { ProtoBuf.decodeFromHexString<UserDto>(encodedUser) }
     }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     val isUserSignedIn = userData.map { it != null }
     val signedInUserUUID = userData.map { it?.id }
@@ -56,7 +57,7 @@ class UserRepository(
         settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(me))
     }
 
-    suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDetailsDto {
+    suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDto {
         return authNetworkDataSource.signup(UserRegistrationDto(email, userName, password))
     }
 

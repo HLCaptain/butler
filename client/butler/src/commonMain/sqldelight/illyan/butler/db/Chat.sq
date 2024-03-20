@@ -2,24 +2,24 @@ import kotlin.String;
 import kotlin.collections.List;
 
 CREATE TABLE Chat (
-    uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
+    id TEXT PRIMARY KEY NOT NULL UNIQUE,
     name TEXT,
     members TEXT AS List<String> NOT NULL
 );
 
 select:
-SELECT * FROM Chat WHERE uuid = ?;
+SELECT * FROM Chat WHERE id = ?;
 
 -- Select chat by user and timestamp of last message above threshold descending with limit with join
 selectByUser:
-SELECT chat.* FROM ChatMember chatMember, Message message JOIN Chat chat ON message.chatUUID = chat.uuid WHERE chatMember.userUUID = ? AND chatMember.chatUUID = chat.uuid AND message.timestamp > ? ORDER BY message.timestamp DESC LIMIT ?;
+SELECT chat.* FROM ChatMember chatMember, Message message JOIN Chat chat ON message.chatId = chat.id WHERE chatMember.userId = ? AND chatMember.chatId = chat.id AND message.timestamp > ? ORDER BY message.timestamp DESC LIMIT ?;
 
 upsert:
 INSERT OR REPLACE INTO Chat
 VALUES ?;
 
 delete:
-DELETE FROM Chat WHERE uuid = ?;
+DELETE FROM Chat WHERE id = ?;
 
 deleteAll:
 DELETE FROM Chat;

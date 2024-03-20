@@ -4,6 +4,7 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.auth.UserTokensResponse
+import illyan.butler.data.network.model.identity.UserDto
 import kotlinx.coroutines.flow.Flow
 
 interface AuthNetworkDataSource {
@@ -11,7 +12,7 @@ interface AuthNetworkDataSource {
      * Signs up a new user based on [UserRegistrationDto].
      * @return details of the new user.
      */
-    suspend fun signup(credentials: UserRegistrationDto): UserDetailsDto
+    suspend fun signup(credentials: UserRegistrationDto): UserDto
 
     /**
      * Logs in the user.
@@ -25,5 +26,5 @@ interface AuthNetworkDataSource {
      */
     suspend fun sendPasswordResetEmail(request: PasswordResetRequest): Boolean
 
-    suspend fun getMe(): Flow<UserDetailsDto?>
+    suspend fun getMe(): Flow<UserDto?>
 }

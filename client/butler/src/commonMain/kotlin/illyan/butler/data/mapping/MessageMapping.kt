@@ -6,30 +6,30 @@ import illyan.butler.domain.model.DomainMessage
 import illyan.butler.util.log.randomUUID
 
 fun Message.toDomainModel() = DomainMessage(
-    uuid = uuid,
-    senderUUID = senderUUID,
+    id = id,
+    senderUUID = senderId,
     role = role,
     message = message,
     timestamp = timestamp,
-    chatUUID = chatUUID
+    chatId = chatId
 )
 
 fun DomainMessage.toNetworkModel() = MessageDto(
-    id = uuid,
-    senderUUID = senderUUID,
+    id = id,
+    senderId = senderUUID,
     role = role,
     message = message,
     timestamp = timestamp,
-    chatUUID = chatUUID
+    chatId = chatId
 )
 
 fun MessageDto.toLocalModel() = Message(
-    uuid = id ?: randomUUID(),
-    senderUUID = senderUUID,
+    id = id ?: randomUUID(),
+    senderId = senderId,
     role = role,
     message = message,
     timestamp = timestamp,
-    chatUUID = chatUUID
+    chatId = chatId
 )
 
 fun Message.toNetworkModel() = toDomainModel().toNetworkModel()

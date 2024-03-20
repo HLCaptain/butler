@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class DomainPreferences(
-    val userUUID: String? = null,
+    val userId: String? = null,
     val analyticsEnabled: Boolean = false,
     val theme: Theme = Theme.System,
 ) {

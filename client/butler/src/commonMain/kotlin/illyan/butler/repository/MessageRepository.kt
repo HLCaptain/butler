@@ -52,7 +52,7 @@ class MessageRepository(
     suspend fun upsert(message: DomainMessage) {
         messageMutableStore.write(
             StoreWriteRequest.of(
-                key = message.uuid,
+                key = message.id,
                 value = message,
             )
         )

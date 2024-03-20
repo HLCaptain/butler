@@ -1,30 +1,30 @@
 CREATE TABLE ChatMember (
-    uuid TEXT PRIMARY KEY NOT NULL UNIQUE, -- Must be hash of userUUID and chatUUID
-    userUUID TEXT REFERENCES User(uuid) ON DELETE CASCADE,
-    chatUUID TEXT REFERENCES Chat(uuid) ON DELETE CASCADE
+    id TEXT PRIMARY KEY NOT NULL UNIQUE, -- Must be hash of userUUID and chatUUID
+    userId TEXT REFERENCES User(id) ON DELETE CASCADE,
+    chatId TEXT REFERENCES Chat(id) ON DELETE CASCADE
 );
 
 select:
-SELECT * FROM ChatMember WHERE uuid = ?;
+SELECT * FROM ChatMember WHERE id = ?;
 
 selectAllUserChats:
-SELECT * FROM ChatMember WHERE userUUID = ?;
+SELECT * FROM ChatMember WHERE userId = ?;
 
 selectAllChatMembers:
-SELECT * FROM ChatMember WHERE chatUUID = ?;
+SELECT * FROM ChatMember WHERE chatId = ?;
 
 upsert:
 INSERT OR REPLACE INTO ChatMember
 VALUES ?;
 
 delete:
-DELETE FROM ChatMember WHERE uuid = ?;
+DELETE FROM ChatMember WHERE id = ?;
 
 deleteAllUserChats:
-DELETE FROM ChatMember WHERE userUUID = ?;
+DELETE FROM ChatMember WHERE userId = ?;
 
 deleteAllChatMembers:
-DELETE FROM ChatMember WHERE chatUUID = ?;
+DELETE FROM ChatMember WHERE chatId = ?;
 
 deleteAll:
 DELETE FROM ChatMember;

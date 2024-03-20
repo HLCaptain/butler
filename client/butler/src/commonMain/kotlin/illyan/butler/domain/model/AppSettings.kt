@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppSettings(
-    val clientUUID: String? = null,
+    val clientId: String? = null,
     val preferences: DomainPreferences = DomainPreferences.Default,
 ) {
     companion object {

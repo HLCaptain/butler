@@ -60,7 +60,7 @@ class ModelListScreen : Screen {
             items(models) {
                 ModelListItem(
                     model = it,
-                    selectModel = { selectModel(it.uuid) }
+                    selectModel = { selectModel(it.id) }
                 )
             }
         }

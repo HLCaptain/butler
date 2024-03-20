@@ -1,27 +1,27 @@
 CREATE TABLE Message (
-    uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
-    senderUUID TEXT NOT NULL,
+    id TEXT PRIMARY KEY NOT NULL UNIQUE,
+    senderId TEXT NOT NULL,
     role TEXT NOT NULL,
     message TEXT NOT NULL,
     timestamp INTEGER NOT NULL,
-    chatUUID TEXT NOT NULL
+    chatId TEXT NOT NULL
 );
 
 select:
-SELECT * FROM Message WHERE uuid = ?;
+SELECT * FROM Message WHERE id = ?;
 
 selectByChat:
-SELECT * FROM Message WHERE chatUUID = ? AND timestamp > ? ORDER BY timestamp ASC LIMIT ?;
+SELECT * FROM Message WHERE chatId = ? AND timestamp > ? ORDER BY timestamp ASC LIMIT ?;
 
 upsert:
 INSERT OR REPLACE INTO Message
 VALUES ?;
 
 delete:
-DELETE FROM Message WHERE uuid = ?;
+DELETE FROM Message WHERE id = ?;
 
 deleteAllChatMessagesForChat:
-DELETE FROM Message WHERE chatUUID = ?;
+DELETE FROM Message WHERE chatId = ?;
 
 deleteAll:
 DELETE FROM Message;

@@ -72,7 +72,7 @@ class ChatRepository(
     suspend fun upsert(chat: DomainChat) {
         chatMutableStore.write(
             StoreWriteRequest.of(
-                key = chat.uuid,
+                key = chat.id,
                 value = chat,
             )
         )
