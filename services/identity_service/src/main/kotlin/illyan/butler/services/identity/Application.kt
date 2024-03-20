@@ -1,6 +1,7 @@
 package illyan.butler.services.identity
 
 import illyan.butler.services.identity.plugins.configureCompression
+import illyan.butler.services.identity.plugins.configureDependencyInjection
 import illyan.butler.services.identity.plugins.configureMonitoring
 import illyan.butler.services.identity.plugins.configureRouting
 import illyan.butler.services.identity.plugins.configureSerialization
@@ -22,6 +23,7 @@ fun main() {
 
 fun Application.module() {
     configureMonitoring()
+    configureDependencyInjection()
     configureCompression()
     configureSerialization()
     configureWebSockets()
