@@ -55,6 +55,7 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
             // Default body is EmptyContent
             // Don't set content type if content itself is not set
             if (request.contentType() == null && content !is EmptyContent) {
+                Napier.v("Request content type is null and content is not EmptyContent, setting content type: ${contentTypes.first()}")
                 request.contentType(contentTypes.first())
             }
         }
