@@ -40,11 +40,14 @@ data object AppConfig {
     data object Telemetry {
         val OTLP_EXPORTER_ENDPOINT = System.getenv("OTLP_EXPORTER_ENDPOINT") ?: "http://localhost:4317"
     }
-    data object Exposed {
+    data object Database {
         val DATABASE_URL = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432"
         val DATABASE_NAME = System.getenv("DATABASE_NAME") ?: "butler"
         val DATABASE_DRIVER = System.getenv("DATABASE_DRIVER") ?: "org.postgresql.Driver"
         val DATABASE_USER = System.getenv("DATABASE_USER") ?: "butler"
         val DATABASE_PASSWORD = System.getenv("DATABASE_PASSWORD") ?: "butler"
+        val REDIS_URL = System.getenv("REDIS_URL") ?: "redis://localhost:6379"
+        val REDIS_USER = System.getenv("REDIS_USER") ?: "butler"
+        val REDIS_PASSWORD = System.getenv("REDIS_PASSWORD") ?: "butler"
     }
 }

@@ -6,6 +6,7 @@ data:
   IDENTITY_API_URL: "http://butler-identity-service-service:8080"
   CHAT_API_URL: "http://butler-chat-service-service:8080"
   REDIS_URL: "redis://redis:6379"
+  REDIS_USER: "redis"
   POSTGRES_DB: "butlerdb"
   POSTGRES_USER: "postgres"
   POSTGRES_DRIVER: "org.postgresql.Driver"

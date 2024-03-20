@@ -56,3 +56,23 @@ spec:
                 secretKeyRef:
                   name: butler-secret
                   key: POSTGRES_PASSWORD
+            - name: DATABASE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: POSTGRES_DB
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: REDIS_URL
+            - name: REDIS_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: REDIS_USER
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: butler-secret
+                  key: REDIS_PASSWORD
