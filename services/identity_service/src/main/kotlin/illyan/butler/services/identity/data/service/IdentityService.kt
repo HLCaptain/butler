@@ -7,7 +7,9 @@ import illyan.butler.services.identity.data.datasource.UserDataSource
 import illyan.butler.services.identity.data.db.UserDatabase
 import illyan.butler.services.identity.data.model.identity.UserDto
 import kotlinx.coroutines.flow.Flow
+import org.koin.core.annotation.Single
 
+@Single
 class IdentityService(
     private val userCache: UserCache,
     private val userDatabase: UserDatabase,
