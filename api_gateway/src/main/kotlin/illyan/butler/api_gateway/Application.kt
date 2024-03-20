@@ -10,6 +10,8 @@ import illyan.butler.api_gateway.plugins.configureSerialization
 import illyan.butler.api_gateway.plugins.configureStatusPages
 import illyan.butler.api_gateway.plugins.configureWebSockets
 import illyan.butler.api_gateway.utils.AppConfig
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -38,6 +40,10 @@ fun Application.module() {
         accessTokenExpireDuration = 365.days,
         refreshTokenExpireDuration = 365.days
     )
+
+    if (AppConfig.Ktor.DEVELOPMENT) {
+        Napier.base(DebugAntilog())
+    }
 
     configureMonitoring()
     configureDependencyInjection()

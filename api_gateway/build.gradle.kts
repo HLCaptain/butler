@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.ktor.server.call.id)
     implementation(libs.ktor.server.metrics.micrometer)
     implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.napier)
 }
 
 ksp {

@@ -60,6 +60,28 @@ minikube service butler-api-gateway-service --url
 
 See more information in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+To reset deployments and images, the following commands should help:
+
+```sh
+# Delete the deployments
+kubectl delete -n default deployment butler-api-gateway
+kubectl delete -n default deployment butler-chat-service
+kubectl delete -n default deployment butler-identity-service
+
+# Delete the images
+minikube image rm illyan1337/butler-api-gateway:latest
+minikube image rm illyan1337/butler-chat-service:latest
+minikube image rm illyan1337/butler-identity-service:latest
+
+# Build the images again
+docker-compose build
+
+# Redeploy the microservices
+kubectl apply -f api_gateway/deployment.yaml
+kubectl apply -f services/chat_service/deployment.yaml
+kubectl apply -f services/identity_service/deployment.yaml
+```
+
 ## License
 
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html)

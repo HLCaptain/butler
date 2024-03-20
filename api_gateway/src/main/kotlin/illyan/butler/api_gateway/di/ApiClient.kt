@@ -1,6 +1,7 @@
 package illyan.butler.api_gateway.di
 
 import illyan.butler.api_gateway.utils.AppConfig
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.Send
@@ -12,6 +13,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
@@ -51,12 +53,23 @@ fun provideHttpClient() = HttpClient(CIO) {
     }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
+        val contentTypes = pluginConfig.supportedContentTypes
+        onRequest { request, content ->
+            Napier.v("ContentTypeFallback plugin called onRequest, request: $request, content: $content")
+            // Default body is EmptyContent
+            // Don't set content type if content itself is not set
+            if (request.contentType() == null && content !is EmptyContent) {
+                Napier.v("Request content type is null and content is not EmptyContent, setting content type: ${contentTypes.first()}")
+                request.contentType(contentTypes.first())
+            }
+        }
         on(Send) { request ->
+            Napier.v("ContentTypeFallback plugin called on(Send)")
             when (request.body) {
                 is OutgoingContent -> {
                     try {
-                        if (pluginConfig.supportedContentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
-                        pluginConfig.supportedContentTypes.firstNotNullOf {
+                        if (contentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
+                        contentTypes.firstNotNullOf {
                             request.contentType(it)
                             val call = proceed(request)
                             if (call.response.status != HttpStatusCode.UnsupportedMediaType) call else null

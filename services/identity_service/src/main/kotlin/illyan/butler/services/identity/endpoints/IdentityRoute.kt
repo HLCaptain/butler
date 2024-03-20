@@ -22,20 +22,21 @@ fun Route.identityRoute() {
     val webSocketServerHandler: WebSocketServerHandler by inject()
 
     route("/users") {
+        post {
+            val user = call.receive<UserRegistrationDto>()
+            call.respond(identityService.registerUser(user.userName, user.email, user.password))
+        }
+
         post("/login") {
             val email = call.parameters["email"] ?: return@post call.respond(HttpStatusCode.BadRequest)
             val password = call.parameters["password"] ?: return@post call.respond(HttpStatusCode.BadRequest)
             call.respond(identityService.getUserIdByEmailAndPassword(email, password))
         }
+
         route("/{userId}") {
             get {
                 val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                 call.respond(identityService.getUser(userId))
-            }
-
-            post {
-                val user = call.receive<UserRegistrationDto>()
-                call.respond(identityService.registerUser(user.userName, user.email, user.password))
             }
 
             put {
