@@ -41,6 +41,14 @@ kubectl apply -f services/redis/redis-statefulset.yaml
 kubectl apply -f services/redis/sentinel-statefulset.yaml
 kubectl apply -f services/chat_service/deployment.yaml
 kubectl apply -f services/chat_service/service.yaml
+kubectl apply -f services/identity_service/deployment.yaml
+kubectl apply -f services/identity_service/service.yaml
+```
+
+To expose the API Gateway's port, use command
+
+```sh
+minikube service butler-api-gateway-service --url
 ```
 
 ## Usage

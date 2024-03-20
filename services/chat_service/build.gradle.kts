@@ -21,6 +21,7 @@ ktor {
 }
 
 buildConfig {
+    packageName = "illyan.butler.services.chat"
     buildConfigField("String", "API_VERSION", "\"$apiVersion\"")
     buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
     buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")

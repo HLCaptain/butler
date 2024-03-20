@@ -10,3 +10,8 @@ services:
       context: ./services/chat_service
       dockerfile: Dockerfile
     image: illyan1337/butler-chat-service:latest
+  identity_service:
+    build:
+      context: ./services/identity_service
+      dockerfile: Dockerfile
+    image: illyan1337/butler-identity-service:latest

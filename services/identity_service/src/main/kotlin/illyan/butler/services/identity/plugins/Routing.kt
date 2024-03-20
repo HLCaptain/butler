@@ -1,6 +1,6 @@
 package illyan.butler.services.identity.plugins
 
-import illyan.Butler_Chat_Service.BuildConfig
+import illyan.butler.services.identity.BuildConfig
 import illyan.butler.services.identity.endpoints.identityRoute
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
