@@ -4,7 +4,6 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.auth.UserTokensResponse
-import illyan.butler.data.network.model.identity.UserDetailsDto
 import kotlinx.coroutines.flow.Flow
 
 interface AuthNetworkDataSource {

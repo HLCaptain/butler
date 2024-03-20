@@ -44,7 +44,7 @@ class ChatExposedDatabase(
                     it[ChatMembers.userId] = member
                 }
             }
-            chat
+            chat.copy(id = chatId.value)
         }
     }
 

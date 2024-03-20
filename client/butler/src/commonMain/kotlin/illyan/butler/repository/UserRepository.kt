@@ -6,7 +6,6 @@ import illyan.butler.data.network.datasource.AuthNetworkDataSource
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
-import illyan.butler.data.network.model.identity.UserDetailsDto
 import illyan.butler.di.NamedCoroutineScopeIO
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted

@@ -30,6 +30,7 @@ buildConfig {
 
 repositories {
     mavenCentral()
+    maven("https://repo.repsy.io/mvn/chrynan/public")
 }
 
 dependencies {
@@ -53,6 +54,8 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.nanoid)
     implementation(libs.kotlinx.datetime)
+
+    implementation(libs.krypt.argon)
 
     // Database
     implementation(libs.postgresql)

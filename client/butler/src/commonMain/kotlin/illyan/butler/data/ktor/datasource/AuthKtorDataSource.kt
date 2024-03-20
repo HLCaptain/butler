@@ -5,7 +5,6 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.auth.UserTokensResponse
-import illyan.butler.data.network.model.identity.UserDetailsDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized

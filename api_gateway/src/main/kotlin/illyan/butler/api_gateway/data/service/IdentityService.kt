@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
 import illyan.butler.api_gateway.data.model.authenticate.TokenType
-import illyan.butler.api_gateway.data.model.identity.UserDetailsDto
 import illyan.butler.api_gateway.data.model.identity.UserDto
 import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
 import illyan.butler.api_gateway.data.model.response.UserTokensResponse
@@ -49,12 +48,12 @@ class IdentityService(
         return generateUserTokens(userId, tokenConfiguration)
     }
 
-    suspend fun getUserById(id: String) = client.tryToExecute<UserDetailsDto> {
+    suspend fun getUserById(id: String) = client.tryToExecute<UserDto> {
         get("${AppConfig.Api.IDENTITY_API_URL}/users/$id")
     }
 
-    suspend fun updateUserProfile(userDetailsDto: UserDetailsDto) = client.tryToExecute<UserDetailsDto> {
-        put("${AppConfig.Api.IDENTITY_API_URL}/users/${userDetailsDto.id}") { setBody(userDetailsDto) }
+    suspend fun updateUserProfile(user: UserDto) = client.tryToExecute<UserDto> {
+        put("${AppConfig.Api.IDENTITY_API_URL}/users/${user.id}") { setBody(user) }
     }
 
     suspend fun getUserByEmail(email: String) = client.tryToExecute<UserDto> {

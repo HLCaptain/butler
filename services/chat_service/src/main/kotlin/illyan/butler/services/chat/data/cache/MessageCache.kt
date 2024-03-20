@@ -4,7 +4,7 @@ import illyan.butler.services.chat.data.model.chat.MessageDto
 import kotlinx.coroutines.flow.Flow
 
 interface MessageCache {
-    suspend fun getMessage(messageId: String): MessageDto
+    suspend fun getMessage(messageId: String): MessageDto?
 
     /**
      * Returns a flow of messages that affects the user, like new messages for chats the user is in.
