@@ -33,7 +33,7 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: butler-secrets
+                  name: butler-secret
                   key: JWT_SECRET
             - name: IDENTITY_API_URL
               valueFrom:

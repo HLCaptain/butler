@@ -5,7 +5,8 @@ metadata:
 data:
   IDENTITY_API_URL: "http://butler-identity-service-service:8080"
   CHAT_API_URL: "http://butler-chat-service-service:8080"
+  REDIS_URL: "redis://redis:6379"
   POSTGRES_DB: "butlerdb"
   POSTGRES_USER: "postgres"
   POSTGRES_DRIVER: "org.postgresql.Driver"
-  POSTGRES_URL: "jdbc:postgresql://postgresql:5432"
+  POSTGRES_URL: "jdbc:postgresql://postgres:5432"

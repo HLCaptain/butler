@@ -10,7 +10,7 @@ The backend is organized into microservices. Each microservice is a separate pro
 
 #### Secrets
 
-You have to create a `butler-secrets.yaml` `kind: Secret` file with the following keys and values:
+You have to create a `butler-secret.yaml` `kind: Secret` file with the following keys and values:
 
 ```yaml
 data:
@@ -34,12 +34,11 @@ eval $(minikube docker-env)
 
 # Deploy the config files to Kubernetes
 kubectl apply -f butler-configmap.yaml
-kubectl apply -f butler-secrets.yaml # You have to create this file
-kubectl apply -f services/postgresql-claim.yaml
-kubectl apply -f services/postgresql-deployment.yaml
-kubectl apply -f services/postgresql-pv.yaml
-kubectl apply -f services/postgresql-service.yaml
-kubectl apply -f services/postgresql-pv.yaml
+kubectl apply -f butler-secret.yaml # You have to create this file
+kubectl apply -f services/postgresql/postgresql-statefulset.yaml
+kubectl apply -f services/redis/redis-configmap.yaml
+kubectl apply -f services/redis/redis-statefulset.yaml
+kubectl apply -f services/redis/sentinel-statefulset.yaml
 kubectl apply -f services/chat_service/deployment.yaml
 kubectl apply -f services/chat_service/service.yaml
 ```
