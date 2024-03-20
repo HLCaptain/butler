@@ -44,9 +44,9 @@ class IdentityService(
         return userCache.getUserChanges(userId)
     }
 
-    suspend fun registerUser(username: String, email: String, password: String): String {
-        return createUser(UserDto(null, username, email)).id!!.also {
-            userDatabase.upsertPasswordForUser(it, hasher.hash(password).hash.toInsecureString())
+    suspend fun registerUser(username: String, email: String, password: String): UserDto {
+        return createUser(UserDto(null, username, email)).also {
+            userDatabase.upsertPasswordForUser(it.id!!, hasher.hash(password).hash.toInsecureString())
         }
     }
 }

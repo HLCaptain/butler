@@ -18,18 +18,15 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.http.isSuccess
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import org.koin.core.annotation.Single
 
 @Single
-class IdentityService(
-    private val client: HttpClient,
-) {
-    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<String> {
-        post("${AppConfig.Api.IDENTITY_API_URL}/users") {
-            setBody(newUser)
-        }
+class IdentityService(private val client: HttpClient) {
+    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<UserDto> {
+        post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }
     }
 
     suspend fun loginUser(
@@ -37,7 +34,7 @@ class IdentityService(
         password: String,
         tokenConfiguration: TokenConfiguration,
     ): UserTokensResponse {
-        val userId = client.tryToExecute<String> {
+        val user = client.tryToExecute<UserDto> {
             post("${AppConfig.Api.IDENTITY_API_URL}/users/login") {
                 formData {
                     parameter("email", email)
@@ -45,7 +42,7 @@ class IdentityService(
                 }
             }
         }
-        return generateUserTokens(userId, tokenConfiguration)
+        return generateUserTokens(user.id, tokenConfiguration)
     }
 
     suspend fun getUserById(id: String) = client.tryToExecute<UserDto> {
@@ -56,15 +53,7 @@ class IdentityService(
         put("${AppConfig.Api.IDENTITY_API_URL}/users/${user.id}") { setBody(user) }
     }
 
-    suspend fun getUserByEmail(email: String) = client.tryToExecute<UserDto> {
-        get("${AppConfig.Api.IDENTITY_API_URL}/users/get-user") {
-            parameter("email", email)
-        }
-    }
-
-    suspend fun deleteUser(userId: String) = client.tryToExecute<Boolean> {
-        delete("${AppConfig.Api.IDENTITY_API_URL}/users/$userId")
-    }
+    suspend fun deleteUser(userId: String) = client.delete("${AppConfig.Api.IDENTITY_API_URL}/users/$userId").status.isSuccess()
 
     fun generateUserTokens(
         userId: String,
@@ -75,6 +64,7 @@ class IdentityService(
         generateToken(userId, tokenConfiguration, TokenType.ACCESS_TOKEN),
         generateToken(userId, tokenConfiguration, TokenType.REFRESH_TOKEN)
     )
+
     private fun generateToken(
         userId: String,
         tokenConfiguration: TokenConfiguration,
