@@ -1,6 +1,6 @@
 package illyan.butler.services.chat.plugins
 
-import illyan.Butler_Chat_Service.BuildConfig
+import illyan.butler.services.chat.BuildConfig
 import illyan.butler.services.chat.endpoints.chatRoute
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
