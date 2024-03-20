@@ -22,11 +22,17 @@ spec:
             secretKeyRef:
               name: butler-secret
               key: REDIS_PASSWORD
+        - name: REDIS_USER
+          valueFrom:
+            configMapKeyRef:
+              name: butler-configmap
+              key: REDIS_USER
         command: [ "sh", "-c" ]
         args:
           - |
             cp /tmp/redis/redis.conf /etc/redis/redis.conf
             sed -i "s/\$REDIS_PASSWORD/$REDIS_PASSWORD/g" /etc/redis/redis.conf
+            sed -i "s/\$REDIS_USER/$REDIS_USER/g" /etc/redis/redis.conf
 
             echo "finding master..."
             MASTER_FDQN=`hostname  -f | sed -e 's/redis-[0-9]\./redis-0./'`

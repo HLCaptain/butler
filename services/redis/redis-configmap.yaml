@@ -981,6 +981,9 @@ data:
     #
     # Basically ACL rules are processed left-to-right.
     #
+    # Set the default ACL for the default user.
+    user $REDIS_USER on +@all -@dangerous >$REDIS_PASSWORD
+    #
     # The following is a list of command categories and their meanings:
     # * keyspace - Writing or reading from keys, databases, or their metadata
     #     in a type agnostic way. Includes DEL, RESTORE, DUMP, RENAME, EXISTS, DBSIZE,
