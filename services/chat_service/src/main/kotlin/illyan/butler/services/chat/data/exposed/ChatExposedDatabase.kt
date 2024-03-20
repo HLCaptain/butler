@@ -8,6 +8,7 @@ import illyan.butler.services.chat.data.schema.Messages
 import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -15,6 +16,7 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.insertIgnore
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.koin.core.annotation.Single
 
@@ -23,6 +25,11 @@ class ChatExposedDatabase(
     private val database: Database,
     private val dispatcher: CoroutineDispatcher
 ) : ChatDatabase {
+    init {
+        transaction(database) {
+            SchemaUtils.create(Chats, ChatMembers)
+        }
+    }
     override suspend fun getChat(userId: String, chatId: String): ChatDto {
         return newSuspendedTransaction(dispatcher, database) {
             val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)

@@ -8,6 +8,7 @@ import illyan.butler.services.identity.data.schema.Users
 import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -15,6 +16,7 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.koin.core.annotation.Single
 
@@ -23,6 +25,12 @@ class UserExposedDatabase(
     private val database: Database,
     private val dispatcher: CoroutineDispatcher
 ) : UserDatabase {
+    init {
+        transaction(database) {
+            SchemaUtils.create(Users, UserPasswords)
+        }
+    }
+
     override suspend fun createUser(user: UserDto): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
             val userId = Users.insertAndGetId { setUser(it, user) }

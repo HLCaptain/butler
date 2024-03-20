@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -18,6 +19,7 @@ import org.jetbrains.exposed.sql.insertIgnore
 import org.jetbrains.exposed.sql.insertIgnoreAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.koin.core.annotation.Single
 
@@ -26,6 +28,11 @@ class MessageExposedDatabase(
     private val database: Database,
     private val dispatcher: CoroutineDispatcher
 ): MessageDatabase {
+    init {
+        transaction(database) {
+            SchemaUtils.create(Messages, ChatMembers, ContentUrls, MessageContentUrls)
+        }
+    }
     override suspend fun sendMessage(userId: String, message: MessageDto) {
         return newSuspendedTransaction(dispatcher, database) {
             val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
