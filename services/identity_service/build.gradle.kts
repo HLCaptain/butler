@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.kotlinx.datetime)
 
     implementation(libs.spring.security.crypto)
+    implementation(libs.bouncycastle)
     implementation(libs.napier)
 
     // Database

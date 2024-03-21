@@ -59,14 +59,14 @@ class UserExposedDatabase(
         }
     }
 
-    override suspend fun getUserIdByEmailAndPassword(email: String, password: String): String {
+    override suspend fun getUserByEmailAndPassword(email: String, password: String): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userId = Users.selectAll().where {
+            val user = Users.selectAll().where {
                 Users.email eq email
-            }.first().toUserDto().id ?: throw Exception("User not found")
+            }.first().toUserDto()
 
-            val potentialUser = UserPasswords.selectAll().where { UserPasswords.userId eq userId }.first()
-            if (passwordEncoder.matches(password, potentialUser[UserPasswords.hash])) userId else throw Exception("User not found")
+            val potentialUser = UserPasswords.selectAll().where { UserPasswords.userId eq user.id!! }.first()
+            if (passwordEncoder.matches(password, potentialUser[UserPasswords.hash])) user else throw Exception("User not found")
         }
     }
 

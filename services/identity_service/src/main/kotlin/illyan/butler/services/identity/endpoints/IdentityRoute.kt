@@ -30,7 +30,7 @@ fun Route.identityRoute() {
         post("/login") {
             val email = call.parameters["email"] ?: return@post call.respond(HttpStatusCode.BadRequest)
             val password = call.parameters["password"] ?: return@post call.respond(HttpStatusCode.BadRequest)
-            call.respond(identityService.getUserIdByEmailAndPassword(email, password))
+            call.respond(identityService.getUserByEmailAndPassword(email, password))
         }
 
         route("/{userId}") {

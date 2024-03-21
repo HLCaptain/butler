@@ -18,8 +18,8 @@ class IdentityService(
         }
     }
 
-    override suspend fun getUserIdByEmailAndPassword(email: String, password: String): String {
-        return userDatabase.getUserIdByEmailAndPassword(email, password)
+    override suspend fun getUserByEmailAndPassword(email: String, password: String): UserDto {
+        return userDatabase.getUserByEmailAndPassword(email, password)
     }
 
     override suspend fun createUser(user: UserDto): UserDto {

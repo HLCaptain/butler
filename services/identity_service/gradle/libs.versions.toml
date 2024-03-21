@@ -38,6 +38,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version 
 redisson = { module = "org.redisson:redisson", version = "3.27.0" }
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.2.3" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.77" }
 
 ktor-server-tests = { module = "io.ktor:ktor-server-tests", version.ref = "ktor" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
