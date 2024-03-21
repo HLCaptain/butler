@@ -4,17 +4,16 @@ import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
 import illyan.butler.api_gateway.data.model.identity.UserLoginDto
 import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
 import illyan.butler.api_gateway.data.service.IdentityService
-import illyan.butler.api_gateway.endpoints.utils.respondWithResult
 import illyan.butler.api_gateway.utils.Claim
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
+import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import kotlinx.coroutines.async
 import org.koin.ktor.ext.inject
 
 fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
@@ -23,26 +22,25 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
     post("/signup") {
         val newUser = call.receive<UserRegistrationDto>()
         val result = identityService.createUser(newUser)
-        respondWithResult(HttpStatusCode.Created, result)
+        call.respond(HttpStatusCode.Created, result)
     }
 
     post("/login") {
         val (email, password) = call.receive<UserLoginDto>()
-        val token = async { identityService.loginUser(email, password, tokenConfiguration) }.await()
-        respondWithResult(HttpStatusCode.OK, token)
+        call.respond(HttpStatusCode.Accepted, identityService.loginUser(email, password, tokenConfiguration))
     }
 
     get("/me") {
         val tokenClaim = call.principal<JWTPrincipal>()
         val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
         val user = identityService.getUserById(id)
-        respondWithResult(HttpStatusCode.OK, user)
+        call.respond(HttpStatusCode.OK, user)
     }
 
     post("/refresh-access-token") {
         val payload = call.principal<JWTPrincipal>()?.payload
         val userId = payload?.getClaim(Claim.USER_ID).toString()
         val token = identityService.generateUserTokens(userId, tokenConfiguration)
-        respondWithResult(HttpStatusCode.Created, token)
+        call.respond(HttpStatusCode.Created, token)
     }
 }

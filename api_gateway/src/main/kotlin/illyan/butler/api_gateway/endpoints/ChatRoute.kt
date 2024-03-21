@@ -5,13 +5,13 @@ import illyan.butler.api_gateway.data.model.chat.MessageDto
 import illyan.butler.api_gateway.data.service.ChatService
 import illyan.butler.api_gateway.endpoints.utils.ChatSocketHandler
 import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
-import illyan.butler.api_gateway.endpoints.utils.respondWithResult
 import illyan.butler.api_gateway.utils.Claim
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
+import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -33,14 +33,14 @@ fun Route.chatRoute() {
             val limit = call.parameters["limit"]?.toInt() ?: 10
             val timestamp = call.parameters["timestamp"]?.toLong() ?: System.currentTimeMillis()
             val result = chatService.getPreviousChats(userId, limit, timestamp)
-            respondWithResult(HttpStatusCode.OK, result)
+            call.respond(HttpStatusCode.OK, result)
         }
 
         post {
             val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
             val chat = call.receive<ChatDto>()
             val result = chatService.createChat(userId, chat)
-            respondWithResult(HttpStatusCode.Created, result)
+            call.respond(HttpStatusCode.Created, result)
         }
 
         webSocket {
@@ -57,7 +57,7 @@ fun Route.chatRoute() {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
                 val chatId = call.parameters["chatId"]?.trim().orEmpty()
                 val result = chatService.getChat(userId, chatId)
-                respondWithResult(HttpStatusCode.OK, result)
+                call.respond(HttpStatusCode.OK, result)
             }
 
             put {
@@ -65,14 +65,14 @@ fun Route.chatRoute() {
                 val chatId = call.parameters["chatId"]?.trim().orEmpty()
                 val chat = call.receive<ChatDto>()
                 val result = chatService.editChat(userId, chatId, chat)
-                respondWithResult(HttpStatusCode.OK, result)
+                call.respond(HttpStatusCode.OK, result)
             }
 
             delete {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
                 val chatId = call.parameters["chatId"]?.trim().orEmpty()
                 val result = chatService.deleteChat(userId, chatId)
-                respondWithResult(HttpStatusCode.OK, result)
+                call.respond(HttpStatusCode.OK, result)
             }
 
             webSocket {
@@ -92,14 +92,14 @@ fun Route.chatRoute() {
                     val limit = call.parameters["limit"]?.toInt() ?: 10
                     val timestamp = call.parameters["timestamp"]?.toLong() ?: System.currentTimeMillis()
                     val result = chatService.getPreviousMessages(userId, chatId, limit, timestamp)
-                    respondWithResult(HttpStatusCode.OK, result)
+                    call.respond(HttpStatusCode.OK, result)
                 }
 
                 post {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
                     val message = call.receive<MessageDto>()
                     val result = chatService.sendMessage(userId, message)
-                    respondWithResult(HttpStatusCode.Created, result)
+                    call.respond(HttpStatusCode.Created, result)
                 }
 
                 route("/{messageId}") {
@@ -108,7 +108,7 @@ fun Route.chatRoute() {
                         val message = call.receive<MessageDto>()
                         val messageId = call.parameters["messageId"]?.trim().orEmpty()
                         val result = chatService.editMessage(userId, messageId, message)
-                        respondWithResult(HttpStatusCode.OK, result)
+                        call.respond(HttpStatusCode.OK, result)
                     }
 
                     delete {
@@ -116,7 +116,7 @@ fun Route.chatRoute() {
                         val chatId = call.parameters["chatId"]?.trim().orEmpty()
                         val messageId = call.parameters["messageId"]?.trim().orEmpty()
                         val result = chatService.deleteMessage(userId, chatId, messageId)
-                        respondWithResult(HttpStatusCode.OK, result)
+                        call.respond(HttpStatusCode.OK, result)
                     }
                 }
             }
