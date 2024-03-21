@@ -68,7 +68,7 @@ spec:
       initContainers:
       - name: init
         image: postgres:15.0
-        command: [ "bash", "-c" ]
+        command: [ "sh", "-c" ]
         args:
         - |
           #create archive directory

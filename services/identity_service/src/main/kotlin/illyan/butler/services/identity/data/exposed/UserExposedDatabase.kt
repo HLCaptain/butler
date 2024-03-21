@@ -19,11 +19,13 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.koin.core.annotation.Single
+import org.springframework.security.crypto.password.PasswordEncoder
 
 @Single
 class UserExposedDatabase(
     private val database: Database,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val passwordEncoder: PasswordEncoder
 ) : UserDatabase {
     init {
         transaction(database) {
@@ -59,21 +61,24 @@ class UserExposedDatabase(
 
     override suspend fun getUserIdByEmailAndPassword(email: String, password: String): String {
         return newSuspendedTransaction(dispatcher, database) {
-            val userId = Users.selectAll().where { Users.email eq email }.first().toUserDto().id ?: throw Exception("User not found")
-            UserPasswords.selectAll().where { UserPasswords.userId eq userId }.first().let {
-                if (it[UserPasswords.passwordHash] == password) userId else throw Exception("User not found")
-            }
+            val userId = Users.selectAll().where {
+                Users.email eq email
+            }.first().toUserDto().id ?: throw Exception("User not found")
+
+            val potentialUser = UserPasswords.selectAll().where { UserPasswords.userId eq userId }.first()
+            if (passwordEncoder.matches(password, potentialUser[UserPasswords.hash])) userId else throw Exception("User not found")
         }
     }
 
     override suspend fun upsertPasswordForUser(userId: String, password: String) {
+        val encodedPassword = passwordEncoder.encode(password)
         return newSuspendedTransaction(dispatcher, database) {
             val isPasswordUpdated = UserPasswords.update({ UserPasswords.userId eq userId }) {
-                it[passwordHash] = password
+                it[hash] = encodedPassword
             } > 0
             if (!isPasswordUpdated) UserPasswords.insert {
                 it[UserPasswords.userId] = userId
-                it[passwordHash] = password
+                it[hash] = encodedPassword
             }
         }
     }

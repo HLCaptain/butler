@@ -1,7 +1,5 @@
 package illyan.butler.services.identity.data.service
 
-import com.chrynan.krypt.core.hash
-import com.chrynan.krypt.hash.argon.Argon2Hasher
 import illyan.butler.services.identity.data.cache.UserCache
 import illyan.butler.services.identity.data.datasource.UserDataSource
 import illyan.butler.services.identity.data.db.UserDatabase
@@ -12,8 +10,7 @@ import org.koin.core.annotation.Single
 @Single
 class IdentityService(
     private val userCache: UserCache,
-    private val userDatabase: UserDatabase,
-    private val hasher: Argon2Hasher
+    private val userDatabase: UserDatabase
 ) : UserDataSource {
     override suspend fun getUser(userId: String): UserDto {
         return userCache.getUser(userId) ?: userDatabase.getUser(userId).also {
@@ -22,7 +19,7 @@ class IdentityService(
     }
 
     override suspend fun getUserIdByEmailAndPassword(email: String, password: String): String {
-        return userDatabase.getUserIdByEmailAndPassword(email, hasher.hash(password).hash.toInsecureString())
+        return userDatabase.getUserIdByEmailAndPassword(email, password)
     }
 
     override suspend fun createUser(user: UserDto): UserDto {
@@ -47,8 +44,8 @@ class IdentityService(
     }
 
     suspend fun registerUser(username: String, email: String, password: String): UserDto {
-        return createUser(UserDto(null, username, email)).also {
-            userDatabase.upsertPasswordForUser(it.id!!, hasher.hash(password).hash.toInsecureString())
+        return createUser(UserDto(null, email, username)).also {
+            userDatabase.upsertPasswordForUser(it.id!!, password)
         }
     }
 }

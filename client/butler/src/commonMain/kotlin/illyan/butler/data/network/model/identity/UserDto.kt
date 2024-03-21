@@ -10,6 +10,6 @@ data class UserDto(
     val displayName: String?,
     val phone: String?,
     val fullName: String?,
-    val address: AddressDto?,
-    val photoUrl: String?
+    val photoUrl: String?,
+    val address: AddressDto?
 )

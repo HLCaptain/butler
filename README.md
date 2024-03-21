@@ -14,9 +14,13 @@ You have to create a `butler-secret.yaml` `kind: Secret` file with the following
 
 ```yaml
 data:
-    JWT_SECRET: asdf # your base64 encoded secret
-    POSTGRES_PASSWORD: asdf # your password
+    JWT_SECRET: cGFzc3dvcmQ= # "password" in base64
+    POSTGRES_PASSWORD: cGFzc3dvcmQ= # "password" in base64
+    REDIS_PASSWORD: cGFzc3dvcmQ= # "password" in base64
+    PGADMIN_DEFAULT_PASSWORD: cGFzc3dvcmQ= # "password" in base64
 ```
+
+#### Deployment to Kubernetes
 
 Run the following commands to build the Docker images and deploy them to Kubernetes:
 
@@ -39,6 +43,7 @@ kubectl apply -f butler-secret.yaml # You have to create this file
 kubectl apply -f api_gateway/deployment.yaml
 kubectl apply -f api_gateway/service.yaml
 kubectl apply -f services/postgresql/postgresql-statefulset.yaml
+kubectl apply -f services/postgresql/pgadmin-deployment.yaml
 kubectl apply -f services/redis/redis-configmap.yaml
 kubectl apply -f services/redis/redis-statefulset.yaml
 kubectl apply -f services/redis/sentinel-statefulset.yaml
@@ -48,10 +53,21 @@ kubectl apply -f services/identity_service/deployment.yaml
 kubectl apply -f services/identity_service/service.yaml
 ```
 
-To expose the API Gateway's port, use command
+To expose the API Gateway's and pgAdmin's port, use command
 
 ```sh
-minikube service butler-api-gateway-service --url
+minikube service butler-api-gateway-service
+minikube service pgadmin
+```
+
+#### Monitoring
+
+To monitor PostgreSQL, check the exposed url got from running `minikube service pgadmin` and login with the credentials, found in `butler-configmap.yaml` and `butler-secret.yaml` (created by you). Then you can connect to your database on port `5432` with the credentials found in `butler-secret.yaml`. Keep in mind, that you may have to modify the PostgreSQL superuser in a pod's shell with the following command:
+
+```sh
+psql -U postgres
+\password postgres
+# Enter the new password
 ```
 
 ## Usage

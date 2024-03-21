@@ -56,11 +56,12 @@ dependencies {
 
     // Database
     implementation(libs.postgresql)
-    implementation(libs.h2)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.crypt)
     implementation(libs.exposed.dao)
+
+    implementation(libs.napier)
 
     // Cache
     implementation(libs.redisson)
