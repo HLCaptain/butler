@@ -9,38 +9,65 @@ import java.util.prefs.PreferenceChangeListener
 import java.util.prefs.Preferences
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.random.asKotlinRandom
 
 class EncryptedPreferences(
-    key: Key,
+    private val secretKey: Key,
     // New node needed to avoid interacting with other non-encrypted preferences
     private val delegate: Preferences = userRoot().node("illyan.butler"),
     javaRandom: SecureRandom = SecureRandom()
 ): Preferences() {
+    companion object {
+        private const val AES_GCM_NOPADDING = "AES/GCM/NoPadding"
+        private const val IV_SIZE_BYTES = 12 // Size for GCM
+        private const val TAG_LENGTH_BIT = 128 // Recommended tag length for GCM
+    }
+
     private val random = javaRandom.asKotlinRandom()
-    private val encryptCipher = Cipher.getInstance("AES/GCM/NoPadding")
-    private val decryptCipher = Cipher.getInstance("AES/GCM/NoPadding")
 
-    init {
-        // 128 is the tag length, 16 is the iv length
-        val iv = random.nextBytes(16)
-        val gcmParameterSpec = GCMParameterSpec(128, iv, 0, 16)
-        encryptCipher.init(Cipher.ENCRYPT_MODE, key, gcmParameterSpec)
-        decryptCipher.init(Cipher.DECRYPT_MODE, key, gcmParameterSpec)
-    }
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun decryptWithIV(encryptedData: String?, ivSize: Int = IV_SIZE_BYTES): String? {
+        return encryptedData?.let {
+            val rawData = Base64.decode(it)
+            val iv = rawData.copyOfRange(0, ivSize) // Extract IV from value
+            val encryptedValue = rawData.copyOfRange(ivSize, rawData.size)
 
-    private fun encrypt(value: String?): String? {
-        return value?.let {
-            encryptCipher.update(it.toByteArray())
-            encryptCipher.doFinal(it.toByteArray()).toString(Charsets.UTF_8)
+            val cipher = Cipher.getInstance(AES_GCM_NOPADDING).apply {
+                init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(TAG_LENGTH_BIT, iv))
+            }
+
+            cipher.doFinal(encryptedValue).decodeToString()
         }
     }
 
-    private fun decrypt(value: String?): String? {
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun encryptWithIV(value: String?, iv: ByteArray = random.nextBytes(IV_SIZE_BYTES)): String? {
         return value?.let {
-            decryptCipher.update(it.toByteArray())
-            decryptCipher.doFinal(it.toByteArray()).toString(Charsets.UTF_8)
+            val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(TAG_LENGTH_BIT, iv))
+
+            val encryptedValue = cipher.doFinal(it.toByteArray())
+
+            // Add IV to the value to retrieve it later
+            Base64.encode(iv + encryptedValue)
         }
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun encryptWithHashedIV(value: String?): String? {
+        // IV derived from the encrypted data
+        val iv = value?.let { Base64.encode(value.toByteArray()).toByteArray().copyOfRange(0, IV_SIZE_BYTES) }
+        return iv?.let { encryptWithIV(value, it) }
+    }
+
+    private fun putEncrypted(key: String?, value: String?) {
+        delegate.put(encryptWithHashedIV(key), encryptWithIV(value))
+    }
+
+    private fun getDecrypted(key: String?): String? {
+        return decryptWithIV(delegate.get(encryptWithHashedIV(key), null))
     }
 
     override fun toString(): String {
@@ -48,17 +75,17 @@ class EncryptedPreferences(
     }
 
     override fun put(p0: String?, p1: String?) {
-        delegate.put(encrypt(p0), encrypt(p1))
+        putEncrypted(p0, p1)
     }
 
     override fun get(p0: String?, p1: String?): String? {
         // Might sometimes throw an error for the key being null.
         // Not found definitive reason for this exception.
-        return decrypt(delegate.get(encrypt(p0), encrypt(p1)))
+        return getDecrypted(p0) ?: p1
     }
 
     override fun remove(p0: String?) {
-        delegate.remove(encrypt(p0))
+        delegate.remove(encryptWithHashedIV(p0))
     }
 
     override fun clear() {
@@ -114,7 +141,7 @@ class EncryptedPreferences(
     }
 
     override fun keys(): Array<String?> {
-        return delegate.keys().map { decrypt(it) }.toTypedArray()
+        return delegate.keys().map { decryptWithIV(it) }.toTypedArray()
     }
 
     override fun childrenNames(): Array<String> {
@@ -161,8 +188,8 @@ class EncryptedPreferences(
     override fun addPreferenceChangeListener(p0: PreferenceChangeListener?) {
         p0?.let {
             val listener = PreferenceChangeListener { event ->
-                val decryptedKey = decrypt(event.key)
-                val decryptedNewValue = decrypt(event.newValue)
+                val decryptedKey = decryptWithIV(event.key)
+                val decryptedNewValue = decryptWithIV(event.newValue)
                 p0.preferenceChange(PreferenceChangeEvent(this, decryptedKey, decryptedNewValue))
             }
             preferenceChangeListeners[it] = listener

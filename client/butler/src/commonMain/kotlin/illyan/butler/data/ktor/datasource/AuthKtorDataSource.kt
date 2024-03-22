@@ -3,8 +3,8 @@ package illyan.butler.data.ktor.datasource
 import illyan.butler.data.network.datasource.AuthNetworkDataSource
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
+import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
-import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.data.network.model.identity.UserDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -29,7 +29,7 @@ class AuthKtorDataSource(
         }.body()
     }
 
-    override suspend fun login(credentials: UserLoginDto): UserTokensResponse {
+    override suspend fun login(credentials: UserLoginDto): UserLoginResponseDto {
         return client.post("/login") {
             setBody(credentials)
         }.body()

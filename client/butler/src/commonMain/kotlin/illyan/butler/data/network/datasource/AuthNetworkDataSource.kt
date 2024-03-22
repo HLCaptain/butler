@@ -2,8 +2,8 @@ package illyan.butler.data.network.datasource
 
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
+import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
-import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.data.network.model.identity.UserDto
 import kotlinx.coroutines.flow.Flow
 
@@ -18,7 +18,7 @@ interface AuthNetworkDataSource {
      * Logs in the user.
      * @return new JWT tokens for authentication.
      */
-    suspend fun login(credentials: UserLoginDto): UserTokensResponse
+    suspend fun login(credentials: UserLoginDto): UserLoginResponseDto
 
     /**
      * Sends a request to reset the password for an email.

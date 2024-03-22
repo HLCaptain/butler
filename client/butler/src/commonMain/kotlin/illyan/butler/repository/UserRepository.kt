@@ -48,13 +48,14 @@ class UserRepository(
     @OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
         val response = authNetworkDataSource.login(UserLoginDto(email, password))
+        val tokens = response.tokensResponse
         settings.putString(KEY_AUTH_PROVIDER, "butler_api")
-        settings.putString(KEY_ACCESS_TOKEN, response.accessToken)
-        settings.putString(KEY_REFRESH_TOKEN, response.refreshToken)
-        settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, response.accessTokenExpirationMillis)
-        settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, response.refreshTokenExpirationMillis)
-        val me = authNetworkDataSource.getMe()
-        settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(me))
+        settings.putString(KEY_ACCESS_TOKEN, tokens.accessToken)
+        settings.putString(KEY_REFRESH_TOKEN, tokens.refreshToken)
+        settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, tokens.accessTokenExpirationMillis)
+        settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, tokens.refreshTokenExpirationMillis)
+//        val me = authNetworkDataSource.getMe().first() // TODO: listen to this and update the user data dynamically
+        settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(response.user))
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDto {
