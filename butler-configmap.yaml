@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: butler-configmap
+data:
+  IDENTITY_API_URL: "http://butler-identity-service-service:8080"
+  CHAT_API_URL: "http://butler-chat-service-service:8080"
+  REDIS_URL: "redis://redis:6379"
+  REDIS_USER: "redis"
+  POSTGRES_DB: "butlerdb"
+  POSTGRES_USER: "postgres" # This is the default user for the postgres image. You have to modify `postgrespl-statefulset.yaml` to change superuser in the database.
+  POSTGRES_DRIVER: "org.postgresql.Driver"
+  POSTGRES_URL: "jdbc:postgresql://postgres:5432"
+  PGADMIN_DEFAULT_EMAIL: "admin@admin.com"

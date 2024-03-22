@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: butler-api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: butler-api-gateway
+  template:
+    metadata:
+      labels:
+        app: butler-api-gateway
+    spec:
+      containers:
+        - name: butler-api-gateway
+          image: illyan1337/butler-api-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "0.5"
+              memory: "200Mi"
+            limits:
+              cpu: "1"
+              memory: "500Mi"
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: butler-secret
+                  key: JWT_SECRET
+            - name: IDENTITY_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: IDENTITY_API_URL
+            - name: CHAT_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: CHAT_API_URL

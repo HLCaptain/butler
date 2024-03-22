@@ -1,0 +1,16 @@
+CREATE TABLE User (
+    id TEXT PRIMARY KEY NOT NULL UNIQUE
+);
+
+select:
+SELECT * FROM User WHERE id = ?;
+
+upsert:
+INSERT OR REPLACE INTO User
+VALUES ?;
+
+delete:
+DELETE FROM User WHERE id = ?;
+
+deleteAll:
+DELETE FROM User;

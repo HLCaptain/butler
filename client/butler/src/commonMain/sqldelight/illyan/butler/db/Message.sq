@@ -1,0 +1,27 @@
+CREATE TABLE Message (
+    id TEXT PRIMARY KEY NOT NULL UNIQUE,
+    senderId TEXT NOT NULL,
+    role TEXT NOT NULL,
+    message TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    chatId TEXT NOT NULL
+);
+
+select:
+SELECT * FROM Message WHERE id = ?;
+
+selectByChat:
+SELECT * FROM Message WHERE chatId = ? AND timestamp > ? ORDER BY timestamp ASC LIMIT ?;
+
+upsert:
+INSERT OR REPLACE INTO Message
+VALUES ?;
+
+delete:
+DELETE FROM Message WHERE id = ?;
+
+deleteAllChatMessagesForChat:
+DELETE FROM Message WHERE chatId = ?;
+
+deleteAll:
+DELETE FROM Message;

@@ -1,0 +1,21 @@
+CREATE TABLE Model (
+    id TEXT PRIMARY KEY NOT NULL UNIQUE,
+    author TEXT NOT NULL,
+    description TEXT NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    greetingMessage TEXT NOT NULL
+);
+
+select:
+SELECT * FROM Model WHERE id = ?;
+
+upsert:
+INSERT OR REPLACE INTO Model
+VALUES ?;
+
+delete:
+DELETE FROM Model WHERE id = ?;
+
+deleteAll:
+DELETE FROM Model;
