@@ -14,6 +14,8 @@ class AuthManager(
     val signedInUserPhotoURL = userRepository.signedInUserPhotoURL
     val signedInUserName = userRepository.signedInUserName
 
+    val isUserSigningIn = userRepository.isUserSigningIn
+
     suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
@@ -27,4 +29,8 @@ class AuthManager(
 
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)
     suspend fun signOut() = userRepository.signOut()
+
+    suspend fun deleteAccount() {
+        // TODO: Implement delete account by calling repositories and signing out user
+    }
 }

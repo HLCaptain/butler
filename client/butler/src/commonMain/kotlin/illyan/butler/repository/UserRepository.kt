@@ -9,9 +9,12 @@ import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.NamedCoroutineScopeIO
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromHexString
 import kotlinx.serialization.encodeToHexString
@@ -34,20 +37,28 @@ class UserRepository(
         const val KEY_REFRESH_TOKEN_EXPIRATION = "refresh_token_expiration"
     }
 
+    /**
+     * User data and auth state listed by property
+     */
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     val userData = settings.getStringOrNullFlow(KEY_USER_ID).map { encodedUser ->
         encodedUser?.let { ProtoBuf.decodeFromHexString<UserDto>(encodedUser) }
     }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
-    val isUserSignedIn = userData.map { it != null }
-    val signedInUserUUID = userData.map { it?.id }
-    val signedInUserEmail = userData.map { it?.email }
-    val signedInUserPhoneNumber = userData.map { it?.phone }
-    val signedInUserPhotoURL = userData.map { it?.photoUrl }
-    val signedInUserName = userData.map { it?.username }
+    val isUserSignedIn = userData.map { it != null }.stateIn(coroutineScope, SharingStarted.Eagerly, false)
+    val signedInUserUUID = userData.map { it?.id }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+    val signedInUserEmail = userData.map { it?.email }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+    val signedInUserPhoneNumber = userData.map { it?.phone }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+    val signedInUserPhotoURL = userData.map { it?.photoUrl }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+    val signedInUserName = userData.map { it?.username }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+
+    private val _isUserSigningIn = MutableStateFlow(false)
+    val isUserSigningIn = _isUserSigningIn.asStateFlow()
 
     @OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
+        _isUserSigningIn.update { true }
         val response = authNetworkDataSource.login(UserLoginDto(email, password))
+        _isUserSigningIn.update { false }
         val tokens = response.tokensResponse
         settings.putString(KEY_AUTH_PROVIDER, "butler_api")
         settings.putString(KEY_ACCESS_TOKEN, tokens.accessToken)
@@ -59,7 +70,10 @@ class UserRepository(
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDto {
-        return authNetworkDataSource.signup(UserRegistrationDto(email, userName, password))
+        _isUserSigningIn.update { true }
+        return authNetworkDataSource.signup(UserRegistrationDto(email, userName, password)).also {
+            _isUserSigningIn.update { false }
+        }
     }
 
     suspend fun sendPasswordResetEmail(email: String) {

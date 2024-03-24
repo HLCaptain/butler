@@ -6,6 +6,7 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.isDebugBuild
+import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -29,6 +30,9 @@ import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -36,7 +40,10 @@ import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Single
-fun provideHttpClient(settings: FlowSettings) = HttpClient {
+fun provideHttpClient(
+    settings: FlowSettings,
+    @NamedCoroutineScopeIO coroutineScopeIO: CoroutineScope
+) = HttpClient {
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
             listOf(
@@ -120,8 +127,11 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
 
     install(ContentEncoding)
 
-    defaultRequest {
-        url(BuildConfig.API_GATEWAY_URL)
+    val apiUrl = settings.getStringOrNullFlow(HostRepository.KEY_API_URL)
+    coroutineScopeIO.launch {
+        apiUrl.collectLatest {
+            defaultRequest { url(it) }
+        }
     }
 }
 

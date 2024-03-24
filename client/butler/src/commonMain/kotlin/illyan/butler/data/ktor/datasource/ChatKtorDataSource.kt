@@ -18,11 +18,6 @@ import org.koin.core.annotation.Single
 class ChatKtorDataSource(
     private val client: HttpClient
 ) : ChatNetworkDataSource {
-
-    init {
-
-    }
-
     override fun fetch(uuid: String): Flow<ChatDto> {
         TODO("Not yet implemented")
     }
