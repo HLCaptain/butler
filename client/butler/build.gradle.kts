@@ -19,15 +19,15 @@ group = "illyan"
 version = libs.versions.butler.get()
 
 kotlin {
-    js {
-        moduleName = rootProject.name
-        browser {
-            commonWebpackConfig {
-                outputFileName = "web.js"
-            }
-        }
-        binaries.executable()
-    }
+//    js {
+//        moduleName = rootProject.name
+//        browser {
+//            commonWebpackConfig {
+//                outputFileName = "web.js"
+//            }
+//        }
+//        binaries.executable()
+//    }
 
     androidTarget {
         compilations.all {
@@ -50,6 +50,8 @@ kotlin {
                 implementation(compose.materialIconsExtended)
                 implementation(compose.material3)
                 implementation(compose.components.resources)
+                implementation(compose.preview)
+                implementation(compose.uiTooling)
 
                 implementation(libs.voyager.navigator)
                 implementation(libs.voyager.screenModel)
@@ -96,7 +98,7 @@ kotlin {
             implementation(kotlin("test-annotations-common"))
         }
 
-        jsTest
+//        jsTest
         jvmTest
 
         androidMain.dependencies {
@@ -107,7 +109,6 @@ kotlin {
             implementation(libs.koin.logger.slf4j)
             implementation(libs.sqldelight.android)
             implementation(libs.kotlinx.coroutines.android)
-            implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.settings.datastore)
             implementation(libs.androidx.datastore.core)
@@ -130,19 +131,19 @@ kotlin {
             implementation(libs.androidx.datastore.preferences)
         }
 
-        jsMain.dependencies {
-            implementation(libs.ktor.client.js)
-            implementation(compose.material)
-            implementation(compose.html.core)
-            implementation(libs.kotlinx.coroutines.js)
-            implementation(libs.sqldelight.js)
-            implementation(npm("kotlinx-coroutines-core", "1.7.3"))
-            implementation(npm("sql.js", "1.10.2"))
-            implementation(npm("dateformat", "5.0.3"))
-            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.1"))
-            implementation(devNpm("copy-webpack-plugin", "12.0.2"))
-            implementation(devNpm("localstorage-slim", "2.7.0"))
-        }
+//        jsMain.dependencies {
+//            implementation(libs.ktor.client.js)
+//            implementation(compose.material)
+//            implementation(compose.html.core)
+//            implementation(libs.kotlinx.coroutines.js)
+//            implementation(libs.sqldelight.js)
+//            implementation(npm("kotlinx-coroutines-core", "1.7.3"))
+//            implementation(npm("sql.js", "1.10.2"))
+//            implementation(npm("dateformat", "5.0.3"))
+//            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.1"))
+//            implementation(devNpm("copy-webpack-plugin", "12.0.2"))
+//            implementation(devNpm("localstorage-slim", "2.7.0"))
+//        }
     }
 }
 
@@ -294,9 +295,9 @@ android {
     }
 }
 
-compose.experimental {
-    web.application {}
-}
+//compose.experimental {
+//    web.application {}
+//}
 
 compose.desktop.application {
     mainClass = "illyan.butler.MainKt"
