@@ -58,7 +58,6 @@ import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
-import illyan.butler.ui.components.dialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.theme.ButlerTheme
@@ -239,7 +238,7 @@ private fun PreviewProfileDialogScreen(
         Column {
             ButlerDialogSurface {
                 ProfileDialogContent(
-                    modifier = Modifier.dialogWidth(),
+                    modifier = Modifier,
                     userUUID = randomUUID(),
                     userPhotoUrl = null,
                     confidentialInfo = listOf(

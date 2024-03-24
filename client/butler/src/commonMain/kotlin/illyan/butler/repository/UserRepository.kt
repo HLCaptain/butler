@@ -5,6 +5,7 @@ import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.data.network.datasource.AuthNetworkDataSource
 import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
+import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.NamedCoroutineScopeIO
@@ -54,26 +55,30 @@ class UserRepository(
     private val _isUserSigningIn = MutableStateFlow(false)
     val isUserSigningIn = _isUserSigningIn.asStateFlow()
 
-    @OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
         _isUserSigningIn.update { true }
         val response = authNetworkDataSource.login(UserLoginDto(email, password))
         _isUserSigningIn.update { false }
+        setLoggedInUser(response)
+    }
+
+    suspend fun signUpAndLogin(email: String, userName: String, password: String) {
+        _isUserSigningIn.update { true }
+        authNetworkDataSource.signup(UserRegistrationDto(email, userName, password)).also {
+            setLoggedInUser(it)
+        }
+        _isUserSigningIn.update { false }
+    }
+
+    private suspend fun setLoggedInUser(response: UserLoginResponseDto) {
         val tokens = response.tokensResponse
         settings.putString(KEY_AUTH_PROVIDER, "butler_api")
         settings.putString(KEY_ACCESS_TOKEN, tokens.accessToken)
         settings.putString(KEY_REFRESH_TOKEN, tokens.refreshToken)
         settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, tokens.accessTokenExpirationMillis)
         settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, tokens.refreshTokenExpirationMillis)
-//        val me = authNetworkDataSource.getMe().first() // TODO: listen to this and update the user data dynamically
         settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(response.user))
-    }
-
-    suspend fun createUserWithEmailAndPassword(email: String, userName: String, password: String): UserDto {
-        _isUserSigningIn.update { true }
-        return authNetworkDataSource.signup(UserRegistrationDto(email, userName, password)).also {
-            _isUserSigningIn.update { false }
-        }
+//        val me = authNetworkDataSource.getMe().first() // TODO: listen to this and update the user data dynamically
     }
 
     suspend fun sendPasswordResetEmail(email: String) {

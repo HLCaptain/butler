@@ -46,7 +46,7 @@ fun ButlerDialogContent(
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     buttonContentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
-    ButlerDialogContent(
+    ButlerDialogContentHolder(
         modifier = modifier,
         surface = {
             ButlerDialogSurface(
@@ -67,8 +67,8 @@ fun ButlerDialogContent(
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .padding(iconPaddingValues)
-                                .align(Alignment.CenterHorizontally)
+                                .padding(iconPaddingValues),
+                            contentAlignment = Alignment.Center
                         ) {
                             icon()
                         }
@@ -84,14 +84,12 @@ fun ButlerDialogContent(
                                 // Align the title to the center when an icon is present.
                                 Modifier
                                     .fillMaxWidth()
-                                    .padding(titlePaddingValues)
-                                    .align(
-                                        if (icon == null) {
-                                            Alignment.Start
-                                        } else {
-                                            Alignment.CenterHorizontally
-                                        }
-                                    )
+                                    .padding(titlePaddingValues),
+                                contentAlignment = if (icon == null) {
+                                    Alignment.CenterStart
+                                } else {
+                                    Alignment.Center
+                                }
                             ) {
                                 title()
                             }
@@ -108,8 +106,8 @@ fun ButlerDialogContent(
                                 textModifier
                                     .fillMaxWidth()
                                     .weight(weight = 1f, fill = false)
-                                    .padding(textPaddingValues)
-                                    .align(Alignment.Start)
+                                    .padding(textPaddingValues),
+                                contentAlignment = Alignment.Center
                             ) {
                                 text()
                             }
@@ -123,9 +121,8 @@ fun ButlerDialogContent(
                         val textStyle = MaterialTheme.typography.labelLarge
                         ProvideTextStyle(value = textStyle) {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .align(Alignment.End)
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.CenterEnd
                             ) {
                                 buttons()
                             }
@@ -147,7 +144,7 @@ fun ButlerDialogSurface(
 ) {
     // Increase width to edge of the screen until reaching DialogMaxWidth
     Surface(
-        modifier = modifier.dialogWidth(),
+        modifier = modifier,
         shape = shape,
         color = color,
         tonalElevation = tonalElevation,
@@ -156,7 +153,7 @@ fun ButlerDialogSurface(
 }
 
 @Composable
-fun ButlerDialogContent(
+fun ButlerDialogContentHolder(
     modifier: Modifier = Modifier,
     surface: @Composable (@Composable () -> Unit) -> Unit = {
         ButlerDialogSurface(
@@ -171,10 +168,40 @@ val DialogMinWidth = 280.dp
 val DialogMaxWidth = 420.dp
 val DialogMargin = 64.dp
 
-fun Modifier.dialogWidth(screenWidthDp: Dp = 400.dp) = widthIn(
-    min = DialogMinWidth,
-    max = minOf(maxOf(DialogMinWidth, screenWidthDp - DialogMargin), DialogMaxWidth),
+fun Modifier.dialogWidth(
+    screenWidthDp: Dp = 400.dp,
+    min: Dp = DialogMinWidth,
+    max: Dp = DialogMaxWidth,
+    margin: Dp = DialogMargin,
+) = widthIn(
+    min = min,
+    max = minOf(maxOf(min, screenWidthDp - margin), max)
 )
+
+fun Modifier.smallDialogWidth() = dialogWidth(max = 320.dp)
+fun Modifier.mediumDialogWidth() = dialogWidth(max = 360.dp)
+fun Modifier.largeDialogWidth() = dialogWidth(max = 600.dp)
+
+val DialogMinHeight = 200.dp
+val DialogMaxHeight = 600.dp
+
+fun Modifier.dialogHeight(
+    screenHeightDp: Dp = 400.dp,
+    min: Dp = DialogMinHeight,
+    max: Dp = DialogMaxHeight,
+    margin: Dp = DialogMargin,
+) = heightIn(
+    min = min,
+    max = minOf(maxOf(min, screenHeightDp - margin), max)
+)
+
+fun Modifier.smallDialogHeight() = dialogHeight(max = 280.dp)
+fun Modifier.mediumDialogHeight() = dialogHeight(max = 400.dp)
+fun Modifier.largeDialogHeight() = dialogHeight(max = 800.dp)
+
+fun Modifier.smallDialogSize() = smallDialogWidth().smallDialogHeight()
+fun Modifier.mediumDialogSize() = mediumDialogWidth().mediumDialogHeight()
+fun Modifier.largeDialogSize() = largeDialogWidth().largeDialogHeight()
 
 // Paddings for each of the dialog's parts.
 val ButlerDialogContentPadding = PaddingValues(all = 24.dp)

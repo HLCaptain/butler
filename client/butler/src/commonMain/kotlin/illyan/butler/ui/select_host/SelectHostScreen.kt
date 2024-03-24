@@ -3,10 +3,7 @@ package illyan.butler.ui.select_host
 import androidx.compose.animation.Crossfade
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -36,6 +33,7 @@ import illyan.butler.generated.resources.test_connection
 import illyan.butler.ui.SmallCircularProgressIndicator
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.MenuButton
+import illyan.butler.ui.components.smallDialogWidth
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -71,33 +69,28 @@ fun SelectHostDialogContent(
     testHost: (String) -> Unit = {},
 ) {
     var hostUrl by rememberSaveable { mutableStateOf(state.currentHost) }
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        ButlerDialogContent(
-            title = {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = stringResource(Res.string.select_host),
-                )
-            },
-            text = {
-                SelectHostScreen(
-                    state = state,
-                    hostUrlChanged = { hostUrl = it }
-                )
-            },
-            buttons = {
-                SelectHostButtons(
-                    selectHost = { testAndSelectHost(hostUrl) },
-                    testConnection = { testHost(hostUrl) }
-                )
-            },
-            containerColor = Color.Transparent,
-        )
-    }
+    ButlerDialogContent(
+        modifier = modifier.smallDialogWidth(),
+        title = {
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = stringResource(Res.string.select_host)
+            )
+        },
+        text = {
+            SelectHostScreen(
+                state = state,
+                hostUrlChanged = { hostUrl = it }
+            )
+        },
+        buttons = {
+            SelectHostButtons(
+                selectHost = { testAndSelectHost(hostUrl) },
+                testConnection = { testHost(hostUrl) }
+            )
+        },
+        containerColor = Color.Transparent,
+    )
 }
 
 @Composable
@@ -138,7 +131,7 @@ fun SelectHostScreen(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun SelectHostButtons(
     modifier: Modifier = Modifier,

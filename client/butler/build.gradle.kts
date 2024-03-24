@@ -52,6 +52,7 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(compose.preview)
                 implementation(compose.uiTooling)
+                implementation(compose.uiUtil)
 
                 implementation(libs.voyager.navigator)
                 implementation(libs.voyager.screenModel)

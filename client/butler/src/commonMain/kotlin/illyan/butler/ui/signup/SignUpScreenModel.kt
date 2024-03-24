@@ -23,9 +23,9 @@ class SignUpScreenModel(
         SignUpScreenState(isUserSignedIn, isUserSigningIn)
     }.stateIn(screenModelScope, SharingStarted.Eagerly, SignUpScreenState())
 
-    fun signUpWithEmailAndPassword(email: String, userName: String, password: String) {
+    fun signUpAndLogin(email: String, userName: String, password: String) {
         screenModelScope.launch(dispatcherIO) {
-            authManager.createUserWithEmailAndPassword(email, userName, password)
+            authManager.signUpAndLogin(email, userName, password)
         }
     }
 }

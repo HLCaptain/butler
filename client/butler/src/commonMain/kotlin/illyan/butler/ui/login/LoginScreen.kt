@@ -6,7 +6,6 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -37,6 +36,7 @@ import illyan.butler.generated.resources.sign_up
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.MenuButton
+import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.select_host.SelectHostScreen
 import illyan.butler.ui.signup.SignUpScreen
@@ -55,8 +55,8 @@ class LoginScreen : Screen {
         }
         val navigator = LocalNavigator.currentOrThrow
         LoginDialogContent(
-            modifier = Modifier.fillMaxWidth(),
             isUserSigningIn = state.isSigningIn,
+            signInAnonymously = {}, // TODO: Implement sign in anonymously
             signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
             navigateToSignUp = { navigator.push(SignUpScreen()) },
             selectHost = { navigator.push(SelectHostScreen()) }
@@ -79,45 +79,38 @@ fun LoginDialogContent(
         targetState = isUserSigningIn,
         label = "Login Dialog Content"
     ) { userSignedIn ->
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            if (userSignedIn) {
-                ButlerDialogContent(
-                    text = { LoadingIndicator() },
-                    textPaddingValues = PaddingValues()
-                )
-            } else {
-                var email by rememberSaveable { mutableStateOf("") }
-                var password by rememberSaveable { mutableStateOf("") }
-                ButlerDialogContent(
-                    title = {
-                        Text(
-                            modifier = Modifier.align(Alignment.Center),
-                            text = stringResource(Res.string.login),
-                        )
-                    },
-                    text = {
-                        LoginScreen(
-                            modifier = Modifier.fillMaxWidth(),
-                            emailChanged = { email = it },
-                            passwordChanged = { password = it }
-                        )
-                    },
-                    buttons = {
-                        LoginButtons(
-                            modifier = Modifier.fillMaxWidth(),
-                            signInWithEmailAndPassword = { signInWithEmailAndPassword(email, password) },
-                            signInAnonymously = signInAnonymously,
-                            navigateToSignUp = navigateToSignUp,
-                            selectHost = selectHost
-                        )
-                    },
-                    containerColor = Color.Transparent,
-                )
-            }
+        if (userSignedIn) {
+            ButlerDialogContent(
+                text = { LoadingIndicator() },
+                textPaddingValues = PaddingValues()
+            )
+        } else {
+            var email by rememberSaveable { mutableStateOf("") }
+            var password by rememberSaveable { mutableStateOf("") }
+            ButlerDialogContent(
+                modifier = Modifier.smallDialogWidth(),
+                title = {
+                    Text(
+                        modifier = Modifier.align(Alignment.Center),
+                        text = stringResource(Res.string.login),
+                    )
+                },
+                text = {
+                    LoginScreen(
+                        emailChanged = { email = it },
+                        passwordChanged = { password = it }
+                    )
+                },
+                buttons = {
+                    LoginButtons(
+                        signInWithEmailAndPassword = { signInWithEmailAndPassword(email, password) },
+                        signInAnonymously = signInAnonymously,
+                        navigateToSignUp = navigateToSignUp,
+                        selectHost = selectHost
+                    )
+                },
+                containerColor = Color.Transparent,
+            )
         }
     }
 }
@@ -139,9 +132,7 @@ fun LoginScreen(
                 email = it
                 emailChanged(it)
             },
-            label = {
-                Text(text = stringResource(Res.string.email))
-            }
+            label = { Text(text = stringResource(Res.string.email)) }
         )
         var password by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
@@ -152,9 +143,7 @@ fun LoginScreen(
                 password = it
                 passwordChanged(it)
             },
-            label = {
-                Text(text = stringResource(Res.string.password))
-            }
+            label = { Text(text = stringResource(Res.string.password)) }
         )
     }
 }
@@ -187,9 +176,7 @@ fun LoginButtons(
         HorizontalDivider()
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            AnimatedVisibility(
-                visible = navigateToSignUp != null
-            ) {
+            AnimatedVisibility(visible = navigateToSignUp != null) {
                 MenuButton(
                     onClick = navigateToSignUp ?: {},
                     enabled = true,
@@ -208,9 +195,7 @@ fun LoginButtons(
 
         HorizontalDivider()
 
-        AnimatedVisibility(
-            visible = selectHost != null
-        ) {
+        AnimatedVisibility(visible = selectHost != null) {
             MenuButton(
                 onClick = selectHost ?: {},
                 enabled = true,

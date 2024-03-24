@@ -23,7 +23,7 @@ import org.koin.core.annotation.Single
 class AuthKtorDataSource(
     private val client: HttpClient
 ) : AuthNetworkDataSource {
-    override suspend fun signup(credentials: UserRegistrationDto): UserDto {
+    override suspend fun signup(credentials: UserRegistrationDto): UserLoginResponseDto {
         return client.post("/signup") {
             setBody(credentials)
         }.body()

@@ -21,11 +21,11 @@ class AuthManager(
         password: String
     ) = userRepository.loginWithEmailAndPassword(email, password)
 
-    suspend fun createUserWithEmailAndPassword(
+    suspend fun signUpAndLogin(
         email: String,
         userName: String,
         password: String
-    ) = userRepository.createUserWithEmailAndPassword(email, userName, password)
+    ) = userRepository.signUpAndLogin(email, userName, password)
 
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)
     suspend fun signOut() = userRepository.signOut()
