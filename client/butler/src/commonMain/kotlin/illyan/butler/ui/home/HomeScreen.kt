@@ -12,16 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,12 +33,12 @@ import illyan.butler.generated.resources.butler_logo
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.hello_x
 import illyan.butler.generated.resources.new_chat
-import illyan.butler.generated.resources.profile
+import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
-import illyan.butler.ui.profile.ProfileDialogScreen
+import illyan.butler.ui.onboarding.OnBoardingScreen
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -68,16 +64,17 @@ class HomeScreen : Screen {
                         style = MaterialTheme.typography.headlineLarge
                     )
 
-                    var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
+                    val isProfileDialogShowing by screenModel.signedInUserUUID.collectAsState()
+                    val firstSignInHappenedYet by screenModel.firstSignInHappenedYet.collectAsState()
                     ButlerDialog(
-                        startScreen = ProfileDialogScreen(),
-                        isDialogOpen = isProfileDialogShowing,
-                        onDialogClosed = { isProfileDialogShowing = false }
+                        startScreen = if (firstSignInHappenedYet) AuthScreen() else OnBoardingScreen(),
+                        isDialogOpen = isProfileDialogShowing == null,
+//                        onDialogClosed = { isProfileDialogShowing = false }
                     )
 
-                    Button(onClick = { isProfileDialogShowing = true }) {
-                        Text(stringResource(Res.string.profile))
-                    }
+//                    Button(onClick = { isProfileDialogShowing = true }) {
+//                        Text(stringResource(Res.string.profile))
+//                    }
                 }
 
                 LazyColumn(

@@ -1,7 +1,5 @@
 package illyan.butler.ui.onboarding
 
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -9,7 +7,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import illyan.butler.ui.login.LoginScreen
 
 class OnBoardingScreen : Screen {
     @Composable
@@ -18,10 +15,12 @@ class OnBoardingScreen : Screen {
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
         val navigator = LocalNavigator.currentOrThrow
-        Button(
-            onClick = { navigator.push(LoginScreen()) }
-        ) {
-            Text("Click me!")
-        }
+
+        // (language selection may be in a corner?)
+        // Show onboarding screen flow with small tutorials:
+        //  - Welcome to Butler and other basic onboarding screens
+        //  - Select host to connect
+        //  - Sign In flow with oauth option
+        //  - Return to Home screen (done automatically after sign in)
     }
 }

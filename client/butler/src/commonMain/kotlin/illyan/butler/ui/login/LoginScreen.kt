@@ -54,6 +54,7 @@ class LoginScreen : Screen {
             if (state.isSignedIn) dismissDialog()
         }
         val navigator = LocalNavigator.currentOrThrow
+        // TODO: implement oath authentication
         LoginDialogContent(
             isUserSigningIn = state.isSigningIn,
             signInAnonymously = {}, // TODO: Implement sign in anonymously

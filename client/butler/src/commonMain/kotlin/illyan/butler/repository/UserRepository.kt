@@ -36,6 +36,7 @@ class UserRepository(
         const val KEY_REFRESH_TOKEN = "refresh_token"
         const val KEY_ACCESS_TOKEN_EXPIRATION = "access_token_expiration"
         const val KEY_REFRESH_TOKEN_EXPIRATION = "refresh_token_expiration"
+        const val FIRST_SIGN_IN_HAPPENED_YET = "FIRST_SIGN_IN_HAPPENED_YET"
     }
 
     /**
@@ -77,6 +78,7 @@ class UserRepository(
         settings.putString(KEY_REFRESH_TOKEN, tokens.refreshToken)
         settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, tokens.accessTokenExpirationMillis)
         settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, tokens.refreshTokenExpirationMillis)
+        settings.putBoolean(FIRST_SIGN_IN_HAPPENED_YET, true)
         settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(response.user))
 //        val me = authNetworkDataSource.getMe().first() // TODO: listen to this and update the user data dynamically
     }
@@ -93,5 +95,10 @@ class UserRepository(
         settings.remove(KEY_REFRESH_TOKEN)
         settings.remove(KEY_ACCESS_TOKEN_EXPIRATION)
         settings.remove(KEY_REFRESH_TOKEN_EXPIRATION)
+    }
+
+    suspend fun deleteUserData() {
+        settings.remove(FIRST_SIGN_IN_HAPPENED_YET)
+        signOut()
     }
 }
