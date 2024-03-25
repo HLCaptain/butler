@@ -1,7 +1,7 @@
 package illyan.butler.ui.select_host
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.desktop.ui.tooling.preview.Preview
+//import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -156,7 +156,7 @@ fun SelectHostButtons(
     }
 }
 
-@Preview
+//@Preview
 @Composable
 fun SelectHostScreenPreview() {
     SelectHostDialogContent(

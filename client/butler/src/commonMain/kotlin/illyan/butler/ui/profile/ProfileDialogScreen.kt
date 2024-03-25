@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
@@ -65,13 +64,11 @@ import illyan.butler.util.log.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-
 class ProfileDialogScreen : Screen {
     @Composable
     override fun Content() {
         ProfileDialogScreen(
-            screenModel = getScreenModel<ProfileScreenModel>(),
-            navigator = LocalNavigator.currentOrThrow
+            screenModel = getScreenModel<ProfileScreenModel>()
         )
     }
 }
@@ -79,8 +76,7 @@ class ProfileDialogScreen : Screen {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileDialogScreen(
-    screenModel: ProfileScreenModel,
-    navigator: Navigator,
+    screenModel: ProfileScreenModel
 ) {
     val userUUID by screenModel.userUUID.collectAsState()
     val isUserSignedIn by screenModel.isUserSignedIn.collectAsState()
@@ -94,6 +90,7 @@ fun ProfileDialogScreen(
         stringResource(Res.string.email) to email,
         stringResource(Res.string.phone) to phone
     )
+    val navigator = LocalNavigator.currentOrThrow
     ProfileDialogContent(
         userUUID = userUUID,
         isUserSignedIn = isUserSignedIn,
@@ -184,7 +181,6 @@ fun ProfileButtons(
             TextButton(onClick = { onDialogClosed() }) {
                 Text(text = stringResource(Res.string.close))
             }
-            // FIXME: find out why Crossfade does not work here
             if (isUserSignedIn) {
                 TextButton(
                     enabled = !isUserSigningOut,

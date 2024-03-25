@@ -1,8 +1,8 @@
 package illyan.butler.ui.login
 
+//import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -205,7 +205,7 @@ fun LoginButtons(
     }
 }
 
-@Preview
+//@Preview
 @Composable
 fun LoginScreenPreview() {
     LoginDialogContent(

@@ -16,9 +16,7 @@ fun App() {
         ButlerTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
                 Navigator(HomeScreen()) { navigator ->
-                    SlideTransition(navigator) {
-                        it.Content()
-                    }
+                    SlideTransition(navigator)
                 }
             }
         }
