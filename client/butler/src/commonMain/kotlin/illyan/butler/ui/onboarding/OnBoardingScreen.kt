@@ -1,13 +1,9 @@
 package illyan.butler.ui.onboarding
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -42,84 +38,12 @@ class OnBoardingScreen : Screen {
         }
 
         LaunchedEffect(Unit) {
-            if (navigator.lastItem !is WelcomeScreen) {
-                navigator.push(WelcomeScreen {
-                    navigator.push(SelectHostTutorialScreen {
-                        navigator.push(SignUpTutorialScreen {
-                            navigator.replaceAll(
-                                AuthSuccessScreen(1000) {
-                                    navigator.replaceAll(UsageTutorialScreen {
-                                        screenModel.setTutorialDone()
-                                    })
-                                }
-                            )
-                        })
-                    })
-                })
-            }
-        }
-
-        var welcomeScreenShown by rememberSaveable { mutableStateOf(false) }
-        var usageTutorialShown by rememberSaveable { mutableStateOf(false) }
-//        OnBoardingScreen(
-//            state = state,
-//            welcomeScreenShown = welcomeScreenShown,
-//            usageTutorialShown = usageTutorialShown,
-//            showWelcomeScreen = {
-//
-//            },
-//            showHostSelectionTutorial = {
-//                if (navigator.lastItem !is SelectHostTutorialScreen) {
-//                    navigator.push(SelectHostTutorialScreen {  })
-//                }
-//            },
-//            showSignUpTutorial = {
-//                if (navigator.lastItem !is SignUpTutorialScreen) {
-//                    navigator.push(SelectHostTutorialScreen {  })
-//                }
-//            },
-//            showUsageTutorial = {
-//                if (navigator.lastItem !is UsageTutorialScreen) {
-//                    navigator.push(UsageTutorialScreen { usageTutorialShown = true })
-//                }
-//            },
-//            onboardingDone = {
-//                screenModel.setTutorialDone()
-//            }
-//        )
-    }
-}
-
-@Composable
-fun OnBoardingScreen(
-    state: OnBoardingState,
-    welcomeScreenShown: Boolean,
-    usageTutorialShown: Boolean,
-    showWelcomeScreen: () -> Unit,
-    showHostSelectionTutorial: () -> Unit,
-    showSignUpTutorial: () -> Unit,
-    showUsageTutorial: () -> Unit,
-    onboardingDone: () -> Unit
-) {
-    Crossfade(
-        targetState = Triple(state, welcomeScreenShown, usageTutorialShown)
-    ) { (targetState, welcomeShown, usageShown) ->
-        when {
-            !welcomeShown -> {
-                showWelcomeScreen()
-            }
-            !targetState.isHostSelected -> {
-                showHostSelectionTutorial()
-            }
-            !targetState.isUserSignedIn -> {
-                showSignUpTutorial()
-            }
-            !usageShown -> {
-                showUsageTutorial()
-            }
-            else -> {
-                onboardingDone()
-            }
+            val usageTutorialScreen by lazy { UsageTutorialScreen { screenModel.setTutorialDone() }}
+            val authSuccessScreen by lazy { AuthSuccessScreen(1000) { navigator.replaceAll(usageTutorialScreen) }}
+            val signUpTutorialScreen by lazy { SignUpTutorialScreen { navigator.replaceAll(authSuccessScreen) }}
+            val selectHostTutorialScreen by lazy { SelectHostTutorialScreen { navigator.push(signUpTutorialScreen) }}
+            val welcomeScreen by lazy { WelcomeScreen { navigator.push(selectHostTutorialScreen) }}
+            navigator.push(welcomeScreen)
         }
     }
 }
