@@ -13,16 +13,24 @@ class HomeScreenModel(
     authManager: AuthManager,
     appManager: AppManager
 ) : ScreenModel {
-    val firstSignInHappenedYet = appManager.firstSignInHappenedYet
+    val isUserSignedIn = authManager.isUserSignedIn
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             false
         )
+
     val signedInUserUUID = authManager.signedInUserUUID
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
+        )
+
+    val isTutorialDone = appManager.isTutorialDone
+        .stateIn(
+            screenModelScope,
+            SharingStarted.Eagerly,
+            false
         )
 }

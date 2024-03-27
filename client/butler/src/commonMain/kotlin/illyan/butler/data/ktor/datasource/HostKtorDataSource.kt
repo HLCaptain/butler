@@ -11,6 +11,6 @@ class HostKtorDataSource(
     private val client: HttpClient
 ) : HostNetworkDataSource {
     override suspend fun tryToConnect(url: String): Boolean {
-        return client.get {}.status.isSuccess() // Should get Hello World JSON message
+        return client.get(url).status.isSuccess() // Should get Hello World JSON message
     }
 }

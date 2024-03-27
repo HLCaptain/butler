@@ -37,21 +37,22 @@ import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
-import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.select_host.SelectHostScreen
 import illyan.butler.ui.signup.SignUpScreen
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class LoginScreen : Screen {
+class LoginScreen(
+    private val onSignIn: () -> Unit
+) : Screen {
+    // TODO: Implement LoginScreen with member composable methods and class variables
     @Composable
     override fun Content() {
         val screenModel = getScreenModel<LoginScreenModel>()
         val state by screenModel.state.collectAsState()
 
-        val dismissDialog = LocalDialogDismissRequest.current
         LaunchedEffect(state.isSignedIn) {
-            if (state.isSignedIn) dismissDialog()
+            if (state.isSignedIn) onSignIn()
         }
         val navigator = LocalNavigator.currentOrThrow
         // TODO: implement oath authentication
@@ -59,8 +60,8 @@ class LoginScreen : Screen {
             isUserSigningIn = state.isSigningIn,
             signInAnonymously = {}, // TODO: Implement sign in anonymously
             signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
-            navigateToSignUp = { navigator.push(SignUpScreen()) },
-            selectHost = { navigator.push(SelectHostScreen()) }
+            navigateToSignUp = { email, password -> navigator.push(SignUpScreen(email, password) { navigator.pop() }) },
+            selectHost = { navigator.push(SelectHostScreen { navigator.pop() }) }
         )
     }
 }
@@ -72,7 +73,7 @@ fun LoginDialogContent(
     isUserSigningIn: Boolean = false,
     signInAnonymously: (() -> Unit)? = null,
     signInWithEmailAndPassword: (email: String, password: String) -> Unit = { _, _ -> },
-    navigateToSignUp: (() -> Unit)? = null,
+    navigateToSignUp: (String, String) -> Unit = { _, _ -> },
     selectHost: (() -> Unit)? = null
 ) {
     Crossfade(
@@ -82,6 +83,7 @@ fun LoginDialogContent(
     ) { userSignedIn ->
         if (userSignedIn) {
             ButlerDialogContent(
+                modifier = Modifier.smallDialogWidth(),
                 text = { LoadingIndicator() },
                 textPaddingValues = PaddingValues()
             )
@@ -91,10 +93,7 @@ fun LoginDialogContent(
             ButlerDialogContent(
                 modifier = Modifier.smallDialogWidth(),
                 title = {
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = stringResource(Res.string.login),
-                    )
+                    Text(text = stringResource(Res.string.login))
                 },
                 text = {
                     LoginScreen(
@@ -106,7 +105,7 @@ fun LoginDialogContent(
                     LoginButtons(
                         signInWithEmailAndPassword = { signInWithEmailAndPassword(email, password) },
                         signInAnonymously = signInAnonymously,
-                        navigateToSignUp = navigateToSignUp,
+                        navigateToSignUp = { navigateToSignUp(email, password) },
                         selectHost = selectHost
                     )
                 },
@@ -118,7 +117,7 @@ fun LoginDialogContent(
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun LoginScreen(
+private fun LoginScreen(
     modifier: Modifier = Modifier,
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {}
@@ -155,7 +154,7 @@ fun LoginButtons(
     modifier: Modifier = Modifier,
     signInAnonymously: (() -> Unit)? = null,
     signInWithEmailAndPassword: (() -> Unit)? = null,
-    navigateToSignUp: (() -> Unit)? = null,
+    navigateToSignUp: (() -> Unit),
     selectHost: (() -> Unit)? = null
 ) {
     Column(
@@ -177,13 +176,11 @@ fun LoginButtons(
         HorizontalDivider()
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            AnimatedVisibility(visible = navigateToSignUp != null) {
-                MenuButton(
-                    onClick = navigateToSignUp ?: {},
-                    enabled = true,
-                    text = stringResource(Res.string.sign_up)
-                )
-            }
+            MenuButton(
+                onClick = navigateToSignUp,
+                enabled = true,
+                text = stringResource(Res.string.sign_up)
+            )
 
             AnimatedVisibility(visible = signInAnonymously != null) {
                 MenuButton(
@@ -213,7 +210,7 @@ fun LoginScreenPreview() {
         isUserSigningIn = false,
         signInAnonymously = {},
         signInWithEmailAndPassword = { _, _ -> },
-        navigateToSignUp = {},
+        navigateToSignUp = { _, _ -> },
         selectHost = {}
     )
 }

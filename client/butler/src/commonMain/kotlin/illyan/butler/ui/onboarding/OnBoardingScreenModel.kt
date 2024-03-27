@@ -2,42 +2,44 @@ package illyan.butler.ui.onboarding
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.manager.AppManager
+import illyan.butler.manager.AuthManager
+import illyan.butler.manager.HostManager
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
 
 @Factory
 class OnBoardingScreenModel(
-    // Inject your dependencies
+    private val appManager: AppManager,
+    authManager: AuthManager,
+    hostManager: HostManager,
+    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
-    private val dataFlow1 = MutableStateFlow(false)
-    private val dataFlow2 = MutableStateFlow(true)
-
     val state = combine(
-        dataFlow1,
-        dataFlow2
-    ) { flow1, flow2 ->
+        hostManager.currentHost,
+        authManager.isUserSignedIn,
+        appManager.isTutorialDone
+    ) { currentHost, isUserSignedIn, isTutorialDone ->
         OnBoardingState(
-            dataFlow1 = flow1,
-            dataFlow2 = flow2
+            isHostSelected = currentHost != null,
+            isUserSignedIn = isUserSignedIn,
+            isTutorialDone = isTutorialDone
         )
     }.stateIn(
         scope = screenModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = OnBoardingState(
-            dataFlow1 = dataFlow1.value,
-            dataFlow2 = dataFlow2.value
-        )
+        initialValue = OnBoardingState()
     )
 
-    fun setDataFlow1(state: Boolean) {
+    fun setTutorialDone() {
         // Use IO dispatcher if Voyager crashes unexpectedly
-        screenModelScope.launch {
-            dataFlow1.update { state }
+        screenModelScope.launch(dispatcherIO) {
+            appManager.setTutorialDone()
         }
     }
 }

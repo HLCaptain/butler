@@ -1,5 +1,6 @@
 package illyan.butler.ui.dialog
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,8 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -23,15 +30,18 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.ScreenTransition
 import illyan.butler.ui.components.ButlerDialogContentHolder
 import illyan.butler.ui.components.ButlerDialogSurface
+import illyan.butler.ui.components.dialogSize
 import io.github.aakira.napier.Napier
 
 val LocalDialogDismissRequest = compositionLocalOf { {} }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ButlerDialog(
-    startScreen: Screen,
+    getStartScreen: () -> Screen,
     isDialogOpen: Boolean = true,
-    onDialogClosed: () -> Unit = {},
+    isDialogFullscreen: Boolean = false,
+    onDialogClosed: () -> Unit = {}
 ) {
     if (isDialogOpen) {
         // Don't use exit animations because
@@ -43,44 +53,61 @@ fun ButlerDialog(
 //            Napier.d("currentScreen: $currentScreen, firstScreen: $firstScreen")
             Napier.d("navigator.items: ${navigator.items}")
 
-            if (currentScreen == startScreen) {
+            if (currentScreen == firstScreen) {
                 onDialogClosed()
             } else {
                 navigator.pop()
             }
         }
 //        Box(propagateMinConstraints = true) {}
+        val configuration = LocalWindowInfo.current
+        val density = LocalDensity.current
+        val screenDimensionsDp by remember { derivedStateOf { configuration.containerSize.width.dp / density.density to configuration.containerSize.height.dp / density.density } }
         Dialog(
             onDismissRequest = onDismissRequest,
             properties = DialogProperties(
                 usePlatformDefaultWidth = false,
                 dismissOnBackPress = true,
-                dismissOnClickOutside = false
+                dismissOnClickOutside = true
             ),
         ) {
             ButlerDialogContentHolder(
                 surface = {
+                    val animatedRoundedCornerShape by animateDpAsState(
+                        targetValue = if (isDialogFullscreen) 0.dp else 16.dp,
+                        animationSpec = tween(200)
+                    )
                     ButlerDialogSurface(
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(0.dp)
+                        shape = RoundedCornerShape(animatedRoundedCornerShape)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                            content = { it() }
-                        )
+                        if (isDialogFullscreen) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                                content = { it() }
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier.dialogSize(screenDimensionsDp.first, screenDimensionsDp.second),
+                                content = { it() }
+                            )
+                        }
                     }
                 }
             ) {
                 CompositionLocalProvider(
                     LocalDialogDismissRequest provides onDismissRequest,
                 ) {
+                    val startScreen by remember {
+                        derivedStateOf(getStartScreen)
+                    }
                     Navigator(
                         screen = startScreen
                     ) { nav ->
                         // This hack is needed to avoid navigation issues with Voyager
                         // https://github.com/adrielcafe/voyager/issues/378
-                        LaunchedEffect(Unit) {
+                        LaunchedEffect(startScreen) {
+                            Napier.d("${nav.items}")
                             nav.replaceAll(startScreen)
                         }
                         val animationTime = 200

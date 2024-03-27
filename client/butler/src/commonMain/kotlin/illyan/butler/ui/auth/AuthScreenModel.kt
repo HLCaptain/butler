@@ -2,42 +2,29 @@ package illyan.butler.ui.auth
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import illyan.butler.manager.AuthManager
+import illyan.butler.manager.HostManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
 
 @Factory
 class AuthScreenModel(
-    // Inject your dependencies
+    authManager: AuthManager,
+    hostManager: HostManager
 ) : ScreenModel {
-    private val dataFlow1 = MutableStateFlow(false)
-    private val dataFlow2 = MutableStateFlow(true)
-
     val state = combine(
-        dataFlow1,
-        dataFlow2
-    ) { flow1, flow2 ->
+        authManager.isUserSignedIn,
+        hostManager.currentHost
+    ) { isUserSignedIn, currentHost ->
         AuthState(
-            dataFlow1 = flow1,
-            dataFlow2 = flow2
+            isUserSignedIn = isUserSignedIn,
+            hostSelected = currentHost != null
         )
     }.stateIn(
         scope = screenModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = AuthState(
-            dataFlow1 = dataFlow1.value,
-            dataFlow2 = dataFlow2.value
-        )
+        initialValue = AuthState()
     )
-
-    fun setDataFlow1(state: Boolean) {
-        // Use IO dispatcher if Voyager crashes unexpectedly
-        screenModelScope.launch {
-            dataFlow1.update { state }
-        }
-    }
 }

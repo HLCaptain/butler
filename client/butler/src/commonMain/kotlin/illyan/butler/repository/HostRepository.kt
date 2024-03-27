@@ -21,20 +21,17 @@ class HostRepository(
     private val _isConnectingToHost = MutableStateFlow(false)
     val isConnectingToHost = _isConnectingToHost.asStateFlow()
 
-    private val _isConnectedToHost = MutableStateFlow<Boolean?>(null)
-    val isConnectedToHost = _isConnectedToHost.asStateFlow()
-
     val currentHost = settings.getStringOrNullFlow(KEY_API_URL)
 
-    suspend fun testAndSelectHost(url: String) {
-        if (testHost(url)) settings.putString(KEY_API_URL, url)
+    suspend fun testAndSelectHost(url: String): Boolean {
+        return testHost(url).also { isHostAvailable ->
+            if (isHostAvailable) settings.putString(KEY_API_URL, url)
+        }
     }
 
     suspend fun testHost(url: String): Boolean {
         _isConnectingToHost.update { true }
-        _isConnectedToHost.update { null }
-        return hostNetworkDataSource.tryToConnect(url).also { connected ->
-            _isConnectedToHost.update { connected }
+        return hostNetworkDataSource.tryToConnect(url).also { _ ->
             _isConnectingToHost.update { false }
         }
     }

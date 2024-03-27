@@ -34,10 +34,11 @@ import illyan.butler.ui.SmallCircularProgressIndicator
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class SelectHostScreen : Screen {
+class SelectHostScreen(private val selectedHost: () -> Unit) : Screen {
     @Composable
     override fun Content() {
         val screenModel = getScreenModel<SelectHostScreenModel>()
@@ -45,10 +46,18 @@ class SelectHostScreen : Screen {
 
         val navigator = LocalNavigator.currentOrThrow
 
-        val currentHost = rememberSaveable { state.currentHost }
-        LaunchedEffect(state.currentHost) {
-            if (currentHost != state.currentHost && state.currentHost.isNotBlank()) {
-                navigator.pop()
+        var triedToConnect by rememberSaveable { mutableStateOf(false)}
+        LaunchedEffect(state.isConnecting) {
+            Napier.d("isConnecting: ${state.isConnecting}")
+            if (state.isConnecting) {
+                triedToConnect = true
+            }
+        }
+        LaunchedEffect(state) {
+            if (state.isConnected == true && triedToConnect) {
+                triedToConnect = false // Tried to connect from last successful connection
+                Napier.d("Connected to host: ${state.currentHost}")
+                selectedHost()
             }
         }
 
@@ -73,7 +82,7 @@ fun SelectHostDialogContent(
         modifier = modifier.smallDialogWidth(),
         title = {
             Text(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 text = stringResource(Res.string.select_host)
             )
         },

@@ -9,6 +9,7 @@ import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.NamedCoroutineScopeIO
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,7 +45,9 @@ class UserRepository(
      */
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     val userData = settings.getStringOrNullFlow(KEY_USER_ID).map { encodedUser ->
-        encodedUser?.let { ProtoBuf.decodeFromHexString<UserDto>(encodedUser) }
+        encodedUser?.let {
+            ProtoBuf.decodeFromHexString<UserDto>(encodedUser).also { Napier.d("User data: $it") }
+        }
     }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     val isUserSignedIn = userData.map { it != null }.stateIn(coroutineScope, SharingStarted.Eagerly, false)
     val signedInUserUUID = userData.map { it?.id }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
@@ -59,19 +62,21 @@ class UserRepository(
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
         _isUserSigningIn.update { true }
         val response = authNetworkDataSource.login(UserLoginDto(email, password))
-        _isUserSigningIn.update { false }
         setLoggedInUser(response)
+        _isUserSigningIn.update { false }
     }
 
-    suspend fun signUpAndLogin(email: String, userName: String, password: String) {
+    suspend fun signUpAndLogin(email: String, password: String, userName: String) {
         _isUserSigningIn.update { true }
-        authNetworkDataSource.signup(UserRegistrationDto(email, userName, password)).also {
+        authNetworkDataSource.signup(UserRegistrationDto(email, password, userName)).also {
             setLoggedInUser(it)
         }
         _isUserSigningIn.update { false }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     private suspend fun setLoggedInUser(response: UserLoginResponseDto) {
+        Napier.d("Setting logged in user: $response")
         val tokens = response.tokensResponse
         settings.putString(KEY_AUTH_PROVIDER, "butler_api")
         settings.putString(KEY_ACCESS_TOKEN, tokens.accessToken)

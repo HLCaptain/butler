@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -58,7 +57,6 @@ import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
-import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.util.log.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -99,7 +97,7 @@ fun ProfileDialogScreen(
         confidentialInfo = confidentialInfo,
         showConfidentialInfoInitially = false,
         onSignOut = screenModel::signOut,
-        onShowLoginScreen = { navigator.push(LoginScreen()) },
+//        onShowLoginScreen = { navigator.push(LoginScreen()) },
 //        onShowAboutScreen = { navigator.push(AboutDialogScreen) },
 //        onShowSettingsScreen = { navigator.push(UserSettingsDialogScreen) },
     )
@@ -141,6 +139,7 @@ fun ProfileDialogContent(
         },
         buttons = {
             ProfileButtons(
+                modifier = Modifier.align(Alignment.End),
                 isUserSignedIn = isUserSignedIn,
                 isUserSigningOut = isUserSigningOut,
                 onLogin = onShowLoginScreen,
@@ -156,6 +155,7 @@ fun ProfileDialogContent(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalResourceApi::class)
 @Composable
 fun ProfileButtons(
+    modifier: Modifier = Modifier,
     onShowSettingsScreen: () -> Unit = {},
     onShowAboutScreen: () -> Unit = {},
     onLogin: () -> Unit = {},
@@ -165,7 +165,7 @@ fun ProfileButtons(
 ) {
     val onDialogClosed = LocalDialogDismissRequest.current
     FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         ProfileMenu(
@@ -174,7 +174,7 @@ fun ProfileButtons(
         )
         Row(
             modifier = Modifier
-                .weight(1f)
+//                .weight(1f)
                 .align(Alignment.Bottom),
             horizontalArrangement = Arrangement.End
         ) {
@@ -261,9 +261,7 @@ fun ProfileTitleScreen(
     userPhotoUrl: String? = null,
 ) {
     val clipboard = LocalClipboardManager.current
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    FlowRow {
         Column {
             Text(text = stringResource(Res.string.profile))
             AnimatedVisibility(visible = userUUID != null) {
@@ -320,7 +318,7 @@ fun ProfileDetailsScreen(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+//            modifier = Modifier.fillMaxWidth(),
         ) {
             ConfidentialInfoToggleButton(
                 showConfidentialInfo = showConfidentialInfo,
@@ -348,7 +346,7 @@ fun UserInfoList(
     ) {
         item {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+//                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(confidentialInfo) {

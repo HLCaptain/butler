@@ -23,8 +23,8 @@ class AuthManager(
 
     suspend fun signUpAndLogin(
         email: String,
-        userName: String,
-        password: String
+        password: String,
+        userName: String
     ) = userRepository.signUpAndLogin(email, userName, password)
 
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)

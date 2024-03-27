@@ -58,7 +58,7 @@ fun provideHttpClient(
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
         onRequest { request, content ->
-            Napier.v("ContentTypeFallback plugin called onRequest, request: $request, content: $content")
+            Napier.v("ContentTypeFallback plugin called onRequest, request: ${request.url}, content: $content")
             // Default body is EmptyContent
             // Don't set content type if content itself is not set
             if (request.contentType() == null && content !is EmptyContent) {
@@ -127,11 +127,16 @@ fun provideHttpClient(
 
     install(ContentEncoding)
 
-    val apiUrl = settings.getStringOrNullFlow(HostRepository.KEY_API_URL)
+    var currentApiUrl: String? = null
     coroutineScopeIO.launch {
-        apiUrl.collectLatest {
-            defaultRequest { url(it) }
+        settings.getStringOrNullFlow(HostRepository.KEY_API_URL).collectLatest {
+            Napier.d { "API URL changed to $it" }
+            currentApiUrl = it
         }
+    }
+    defaultRequest {
+        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl")
+        url(urlString = currentApiUrl ?: "")
     }
 }
 

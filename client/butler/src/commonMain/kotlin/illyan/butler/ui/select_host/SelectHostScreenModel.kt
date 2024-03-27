@@ -5,9 +5,11 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.NamedCoroutineDispatcherIO
 import illyan.butler.manager.HostManager
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
 
@@ -16,9 +18,10 @@ class SelectHostScreenModel(
     private val hostManager: HostManager,
     @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
+    private val isConnectedToHost = MutableStateFlow(false)
     val state = combine(
         hostManager.isConnectingToHost,
-        hostManager.isConnectedToHost,
+        isConnectedToHost,
         hostManager.currentHost
     ) { isConnecting, isConnected, currentHost ->
         SelectHostState(
@@ -34,13 +37,13 @@ class SelectHostScreenModel(
 
     fun testAndSelectHost(url: String) {
         screenModelScope.launch(dispatcherIO) {
-            hostManager.testAndSelectHost(url)
+            isConnectedToHost.update { hostManager.testAndSelectHost(url) }
         }
     }
 
     fun testHost(url: String) {
         screenModelScope.launch(dispatcherIO) {
-            hostManager.testHost(url)
+            isConnectedToHost.update { hostManager.testHost(url) }
         }
     }
 }
