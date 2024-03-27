@@ -87,7 +87,7 @@ class HomeScreen : Screen {
                             } else OnBoardingScreen()
                         },
                         isDialogOpen = !isAuthFlowEnded || !isTutorialDone || isProfileDialogShowing,
-                        isDialogFullscreen = !isAuthFlowEnded || !isTutorialDone,
+                        isDialogFullscreen = !isUserSignedIn || !isTutorialDone,
                         onDialogClosed = {
                             if (isTutorialDone) {
                                 isProfileDialogShowing = false

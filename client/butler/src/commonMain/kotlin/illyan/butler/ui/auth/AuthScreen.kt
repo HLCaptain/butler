@@ -9,6 +9,7 @@ import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import illyan.butler.ui.auth_success.AuthSuccessScreen
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.select_host.SelectHostScreen
@@ -39,24 +40,20 @@ fun AuthDialogContent(
     navigator: Navigator
 ) {
     val dismissDialog = LocalDialogDismissRequest.current
+    val close = {
+        navigator.popUntilRoot()
+        dismissDialog()
+    }
+    val authSuccessThenClose = suspend {
+        navigator.push(AuthSuccessScreen(1000) { close() })
+    }
     LaunchedEffect(state) {
-        if (state.isUserSignedIn) {
-            navigator.popUntilRoot()
-            dismissDialog()
-        } else {
-            if (state.hostSelected == false) {
-                navigator.replace(SelectHostScreen {
-                    navigator.push(LoginScreen {
-                        navigator.popUntilRoot()
-                        dismissDialog()
-                    })
-                })
-            } else if (state.hostSelected == true) {
-                navigator.replace(LoginScreen {
-                    navigator.popUntilRoot()
-                    dismissDialog()
-                })
-            }
+        if (state.hostSelected == false) {
+            navigator.replace(SelectHostScreen {
+                navigator.push(LoginScreen { authSuccessThenClose() })
+            })
+        } else if (state.hostSelected == true) {
+            navigator.replace(LoginScreen { authSuccessThenClose() })
         }
     }
 }

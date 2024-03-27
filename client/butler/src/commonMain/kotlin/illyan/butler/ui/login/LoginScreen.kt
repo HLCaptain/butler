@@ -43,7 +43,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
 class LoginScreen(
-    private val onSignIn: () -> Unit
+    private val onSignIn: suspend () -> Unit
 ) : Screen {
     // TODO: Implement LoginScreen with member composable methods and class variables
     @Composable

@@ -1,5 +1,6 @@
 package illyan.butler.ui.dialog
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -72,26 +73,26 @@ fun ButlerDialog(
             ),
         ) {
             ButlerDialogContentHolder(
+//                modifier = Modifier.animateContentSize(),
                 surface = {
                     val animatedRoundedCornerShape by animateDpAsState(
                         targetValue = if (isDialogFullscreen) 0.dp else 16.dp,
                         animationSpec = tween(200)
                     )
+                    val sizeModifier = if (isDialogFullscreen) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier.dialogSize(screenDimensionsDp.first, screenDimensionsDp.second)
+                    }
                     ButlerDialogSurface(
+                        modifier = Modifier.animateContentSize(),
                         shape = RoundedCornerShape(animatedRoundedCornerShape)
                     ) {
-                        if (isDialogFullscreen) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                                content = { it() }
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier.dialogSize(screenDimensionsDp.first, screenDimensionsDp.second),
-                                content = { it() }
-                            )
-                        }
+                        Box(
+                            modifier = sizeModifier,
+                            contentAlignment = Alignment.Center,
+                            content = { it() }
+                        )
                     }
                 }
             ) {

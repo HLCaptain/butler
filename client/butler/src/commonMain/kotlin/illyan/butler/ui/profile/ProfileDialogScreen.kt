@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -56,6 +57,7 @@ import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
+import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.util.log.randomUUID
@@ -119,7 +121,7 @@ fun ProfileDialogContent(
 ) {
     var showConfidentialInfo by remember { mutableStateOf(showConfidentialInfoInitially) }
     ButlerDialogContent(
-        modifier = modifier,
+        modifier = modifier.smallDialogWidth().fillMaxWidth(),
         title = {
             ProfileTitleScreen(
                 userUUID = userUUID,
@@ -139,7 +141,7 @@ fun ProfileDialogContent(
         },
         buttons = {
             ProfileButtons(
-                modifier = Modifier.align(Alignment.End),
+//                modifier = Modifier.align(Alignment.End),
                 isUserSignedIn = isUserSignedIn,
                 isUserSigningOut = isUserSigningOut,
                 onLogin = onShowLoginScreen,

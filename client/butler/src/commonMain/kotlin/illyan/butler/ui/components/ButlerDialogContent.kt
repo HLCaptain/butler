@@ -45,7 +45,6 @@ fun ButlerDialogContent(
     buttonContentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
     ButlerDialogContentHolder(
-        modifier = modifier,
         surface = {
             ButlerDialogSurface(
                 modifier = modifier,
@@ -57,7 +56,7 @@ fun ButlerDialogContent(
         }
     ) {
         Column(
-            modifier = Modifier.padding(dialogPaddingValues)
+            modifier = modifier.padding(dialogPaddingValues),
         ) {
             AnimatedVisibility(
                 modifier = Modifier
@@ -72,7 +71,7 @@ fun ButlerDialogContent(
                 }
             }
             AnimatedVisibility(
-                modifier = Modifier
+                modifier = textModifier
                     .align(if (icon == null) {
                         Alignment.Start
                     } else {
