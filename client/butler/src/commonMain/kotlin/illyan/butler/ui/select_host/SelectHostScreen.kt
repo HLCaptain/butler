@@ -46,25 +46,34 @@ class SelectHostScreen(private val selectedHost: () -> Unit) : Screen {
 
         val navigator = LocalNavigator.currentOrThrow
 
-        var triedToConnect by rememberSaveable { mutableStateOf(false)}
+        var triedToConnect by rememberSaveable { mutableStateOf(false) }
         LaunchedEffect(state.isConnecting) {
             Napier.d("isConnecting: ${state.isConnecting}")
             if (state.isConnecting) {
                 triedToConnect = true
             }
         }
+
+        var isTestingOnly by rememberSaveable { mutableStateOf(false) }
+
         LaunchedEffect(state) {
             if (state.isConnected == true && triedToConnect) {
                 triedToConnect = false // Tried to connect from last successful connection
                 Napier.d("Connected to host: ${state.currentHost}")
-                selectedHost()
+                if (!isTestingOnly) selectedHost()
             }
         }
 
         SelectHostDialogContent(
             state = state,
-            testAndSelectHost = screenModel::testAndSelectHost,
-            testHost = screenModel::testHost
+            testAndSelectHost = {
+                isTestingOnly = false
+                screenModel.testAndSelectHost(it)
+            },
+            testHost = {
+                isTestingOnly = true
+                screenModel.testHost(it)
+            }
         )
     }
 }

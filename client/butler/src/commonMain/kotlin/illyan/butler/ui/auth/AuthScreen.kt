@@ -46,7 +46,7 @@ fun AuthDialogContent(
     }
 
     val authSuccessThenClose = suspend {
-        navigator.push(AuthSuccessScreen(1000) { close() })
+        navigator.replaceAll(AuthSuccessScreen(1000) { close() })
     }
     LaunchedEffect(state) {
         if (state.isUserSignedIn == true) close()

@@ -48,7 +48,7 @@ class OnBoardingScreen : Screen {
                         navigator.push(SignUpTutorialScreen {
                             navigator.push(
                                 AuthSuccessScreen(1000) {
-                                    navigator.replace(UsageTutorialScreen {
+                                    navigator.replaceAll(UsageTutorialScreen {
                                         screenModel.setTutorialDone()
                                     })
                                 }
