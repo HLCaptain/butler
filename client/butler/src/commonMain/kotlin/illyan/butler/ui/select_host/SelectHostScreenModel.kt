@@ -18,7 +18,7 @@ class SelectHostScreenModel(
     private val hostManager: HostManager,
     @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
-    private val isConnectedToHost = MutableStateFlow(false)
+    private val isConnectedToHost = MutableStateFlow<Boolean?>(null)
     val state = combine(
         hostManager.isConnectingToHost,
         isConnectedToHost,
@@ -27,7 +27,7 @@ class SelectHostScreenModel(
         SelectHostState(
             isConnecting = isConnecting,
             isConnected = isConnected,
-            currentHost = currentHost ?: ""
+            currentHost = currentHost
         )
     }.stateIn(
         scope = screenModelScope,

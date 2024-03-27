@@ -103,8 +103,8 @@ fun SelectHostDialogContent(
         },
         buttons = {
             SelectHostButtons(
-                selectHost = { testAndSelectHost(hostUrl) },
-                testConnection = { testHost(hostUrl) }
+                selectHost = { testAndSelectHost(hostUrl ?: "") },
+                testConnection = { testHost(hostUrl ?: "") }
             )
         },
         containerColor = Color.Transparent,
@@ -120,7 +120,7 @@ fun SelectHostScreen(
     var hostUrl by rememberSaveable { mutableStateOf(state.currentHost) }
     OutlinedTextField(
         modifier = modifier,
-        value = hostUrl,
+        value = hostUrl ?: "",
         enabled = true,
         onValueChange = {
             hostUrl = it
