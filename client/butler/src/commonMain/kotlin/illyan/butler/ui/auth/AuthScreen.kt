@@ -44,15 +44,17 @@ fun AuthDialogContent(
         navigator.popUntilRoot()
         dismissDialog()
     }
+
     val authSuccessThenClose = suspend {
         navigator.push(AuthSuccessScreen(1000) { close() })
     }
     LaunchedEffect(state) {
+        if (state.isUserSignedIn == true) close()
         if (state.hostSelected == false) {
             navigator.replace(SelectHostScreen {
                 navigator.push(LoginScreen { authSuccessThenClose() })
             })
-        } else if (state.hostSelected == true) {
+        } else if (state.hostSelected == true && state.isUserSignedIn == false) {
             navigator.replace(LoginScreen { authSuccessThenClose() })
         }
     }

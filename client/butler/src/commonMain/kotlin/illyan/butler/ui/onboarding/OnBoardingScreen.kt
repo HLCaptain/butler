@@ -12,6 +12,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import illyan.butler.ui.auth_success.AuthSuccessScreen
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
 import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
@@ -33,9 +34,9 @@ class OnBoardingScreen : Screen {
         // 5. If done, set tutorial done.
 
         val dismissDialog = LocalDialogDismissRequest.current
-
         LaunchedEffect(state.isTutorialDone) {
             if (state.isTutorialDone) {
+                navigator.popUntilRoot()
                 dismissDialog()
             }
         }
@@ -44,8 +45,14 @@ class OnBoardingScreen : Screen {
             if (navigator.lastItem !is WelcomeScreen) {
                 navigator.push(WelcomeScreen {
                     navigator.push(SelectHostTutorialScreen {
-                        navigator.push(UsageTutorialScreen {
-                            screenModel.setTutorialDone()
+                        navigator.push(SignUpTutorialScreen {
+                            navigator.push(
+                                AuthSuccessScreen(1000) {
+                                    navigator.replace(UsageTutorialScreen {
+                                        screenModel.setTutorialDone()
+                                    })
+                                }
+                            )
                         })
                     })
                 })
@@ -54,32 +61,32 @@ class OnBoardingScreen : Screen {
 
         var welcomeScreenShown by rememberSaveable { mutableStateOf(false) }
         var usageTutorialShown by rememberSaveable { mutableStateOf(false) }
-        OnBoardingScreen(
-            state = state,
-            welcomeScreenShown = welcomeScreenShown,
-            usageTutorialShown = usageTutorialShown,
-            showWelcomeScreen = {
-
-            },
-            showHostSelectionTutorial = {
-                if (navigator.lastItem !is SelectHostTutorialScreen) {
-                    navigator.push(SelectHostTutorialScreen {  })
-                }
-            },
-            showSignUpTutorial = {
-                if (navigator.lastItem !is SignUpTutorialScreen) {
-                    navigator.push(SelectHostTutorialScreen {  })
-                }
-            },
-            showUsageTutorial = {
-                if (navigator.lastItem !is UsageTutorialScreen) {
-                    navigator.push(UsageTutorialScreen { usageTutorialShown = true })
-                }
-            },
-            onboardingDone = {
-                screenModel.setTutorialDone()
-            }
-        )
+//        OnBoardingScreen(
+//            state = state,
+//            welcomeScreenShown = welcomeScreenShown,
+//            usageTutorialShown = usageTutorialShown,
+//            showWelcomeScreen = {
+//
+//            },
+//            showHostSelectionTutorial = {
+//                if (navigator.lastItem !is SelectHostTutorialScreen) {
+//                    navigator.push(SelectHostTutorialScreen {  })
+//                }
+//            },
+//            showSignUpTutorial = {
+//                if (navigator.lastItem !is SignUpTutorialScreen) {
+//                    navigator.push(SelectHostTutorialScreen {  })
+//                }
+//            },
+//            showUsageTutorial = {
+//                if (navigator.lastItem !is UsageTutorialScreen) {
+//                    navigator.push(UsageTutorialScreen { usageTutorialShown = true })
+//                }
+//            },
+//            onboardingDone = {
+//                screenModel.setTutorialDone()
+//            }
+//        )
     }
 }
 

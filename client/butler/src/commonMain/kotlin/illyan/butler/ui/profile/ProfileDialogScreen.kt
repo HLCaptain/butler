@@ -50,6 +50,7 @@ import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.profile
+import illyan.butler.generated.resources.reset_tutorial_and_sign_out
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
@@ -102,6 +103,7 @@ fun ProfileDialogScreen(
 //        onShowLoginScreen = { navigator.push(LoginScreen()) },
 //        onShowAboutScreen = { navigator.push(AboutDialogScreen) },
 //        onShowSettingsScreen = { navigator.push(UserSettingsDialogScreen) },
+        resetTutorialAndSignOut = screenModel::resetTutorialAndSignOut
     )
 }
 
@@ -117,7 +119,8 @@ fun ProfileDialogContent(
     onSignOut: () -> Unit = {},
     onShowLoginScreen: () -> Unit = {},
     onShowAboutScreen: () -> Unit = {},
-    onShowSettingsScreen: () -> Unit = {}
+    onShowSettingsScreen: () -> Unit = {},
+    resetTutorialAndSignOut: () -> Unit = {},
 ) {
     var showConfidentialInfo by remember { mutableStateOf(showConfidentialInfoInitially) }
     ButlerDialogContent(
@@ -147,7 +150,8 @@ fun ProfileDialogContent(
                 onLogin = onShowLoginScreen,
                 onSignOut = onSignOut,
                 onShowSettingsScreen = onShowSettingsScreen,
-                onShowAboutScreen = onShowAboutScreen
+                onShowAboutScreen = onShowAboutScreen,
+                resetTutorialAndSignOut = resetTutorialAndSignOut
             )
         },
         containerColor = Color.Transparent,
@@ -158,12 +162,13 @@ fun ProfileDialogContent(
 @Composable
 fun ProfileButtons(
     modifier: Modifier = Modifier,
+    isUserSignedIn: Boolean = false,
+    isUserSigningOut: Boolean = false,
     onShowSettingsScreen: () -> Unit = {},
     onShowAboutScreen: () -> Unit = {},
     onLogin: () -> Unit = {},
     onSignOut: () -> Unit = {},
-    isUserSignedIn: Boolean = false,
-    isUserSigningOut: Boolean = false,
+    resetTutorialAndSignOut: () -> Unit = {},
 ) {
     val onDialogClosed = LocalDialogDismissRequest.current
     FlowRow(
@@ -189,6 +194,11 @@ fun ProfileButtons(
                     onClick = onSignOut,
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
+                }
+                Button(
+                    onClick = resetTutorialAndSignOut
+                ) {
+                    Text(text = stringResource(Res.string.reset_tutorial_and_sign_out))
                 }
             } else {
                 Button(

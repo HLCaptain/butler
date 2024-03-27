@@ -3,6 +3,7 @@ package illyan.butler.ui.profile
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,6 +15,7 @@ import org.koin.core.annotation.Factory
 @Factory
 class ProfileScreenModel(
     private val authManager: AuthManager,
+    private val appManager: AppManager,
     @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
 ): ScreenModel {
     val isUserSignedIn = authManager.isUserSignedIn
@@ -67,6 +69,13 @@ class ProfileScreenModel(
 
     fun signOut() {
         screenModelScope.launch(dispatcherIO) {
+            authManager.signOut()
+        }
+    }
+
+    fun resetTutorialAndSignOut() {
+        screenModelScope.launch(dispatcherIO) {
+            appManager.resetTutorial()
             authManager.signOut()
         }
     }
