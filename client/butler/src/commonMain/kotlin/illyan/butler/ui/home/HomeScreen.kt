@@ -48,7 +48,6 @@ import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
-import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -84,9 +83,7 @@ class HomeScreen : Screen {
                     }
                     var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
                     val isDialogOpen by remember {
-                        derivedStateOf {
-                            isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing
-                        }
+                        derivedStateOf { isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing }
                     }
                     LaunchedEffect(isTutorialDone) {
                         if (!isTutorialDone) isDialogClosedAfterTutorial = false
@@ -104,10 +101,7 @@ class HomeScreen : Screen {
                         }
                     }
                     ButlerDialog(
-                        getStartScreen = {
-                            Napier.d("isDialogOpen: $isDialogOpen\nisTutorialDone: $isTutorialDone\nisDialogClosedAfterTutorial: $isDialogClosedAfterTutorial\nisAuthFlowEnded: $isAuthFlowEnded\nisProfileDialogShowing: $isProfileDialogShowing")
-                            startScreen
-                        },
+                        startScreen = startScreen,
                         isDialogOpen = isDialogOpen,
                         isDialogFullscreen = isUserSignedIn != true || !isTutorialDone,
                         onDismissDialog = {

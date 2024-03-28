@@ -25,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -42,10 +41,9 @@ import kotlinx.coroutines.delay
 
 val LocalDialogDismissRequest = compositionLocalOf { {} }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ButlerDialog(
-    getStartScreen: () -> Screen?,
+    startScreen: Screen?,
     isDialogOpen: Boolean = true,
     isDialogFullscreen: Boolean = false,
     onDismissDialog: () -> Unit = {},
@@ -54,24 +52,15 @@ fun ButlerDialog(
     var isDialogClosing by rememberSaveable { mutableStateOf(false) }
     var isDialogClosingAnimationEnded by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(isDialogOpen) {
-        Napier.d("isDialogOpen: $isDialogOpen")
-//        delay(100) // Small delay to avoid wrong transitions
         isDialogClosing = !isDialogOpen
         if (!isDialogOpen) delay(200)
         isDialogClosingAnimationEnded = !isDialogOpen
         isDialogClosing = false
     }
 
-    // Don't use exit animations because
-    // it looks choppy while Dialog resizes due to content change.v
     lateinit var navigator: Navigator
     val onDismissRequest: () -> Unit = {
-        val currentScreen = navigator.items.last()
-        val firstScreen = navigator.items.first()
-//            Napier.d("currentScreen: $currentScreen, firstScreen: $firstScreen")
-        Napier.d("navigator.items: ${navigator.items}")
-
-        if (currentScreen == firstScreen) {
+        if (navigator.lastItem == navigator.items.first()) {
             onDismissDialog()
         } else {
             navigator.pop()
@@ -119,9 +108,6 @@ fun ButlerDialog(
             CompositionLocalProvider(
                 LocalDialogDismissRequest provides onDismissRequest,
             ) {
-                val startScreen by remember {
-                    derivedStateOf(getStartScreen)
-                }
                 Navigator(
                     screen = startScreen ?: currentLastScreen!!
                 ) { nav ->
@@ -129,7 +115,7 @@ fun ButlerDialog(
                     // https://github.com/adrielcafe/voyager/issues/378
                     LaunchedEffect(startScreen) {
                         Napier.d("${nav.items}")
-                        if (startScreen != null) nav.replaceAll(startScreen!!)
+                        if (startScreen != null) nav.replaceAll(startScreen)
                         navigator = nav
                         currentLastScreen = nav.lastItem
                     }
@@ -144,12 +130,7 @@ fun ButlerDialog(
                             (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime))) togetherWith
                                     (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)))
                         }
-                    ) {
-                        it.Content()
-                        LaunchedEffect(it) {
-                            Napier.d("Navigated to: $it")
-                        }
-                    }
+                    ) { it.Content() }
                 }
             }
         }
