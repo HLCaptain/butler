@@ -21,14 +21,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.ScreenTransition
+import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.components.ButlerDialogContentHolder
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.dialogSize
@@ -61,9 +60,8 @@ fun ButlerDialog(
             }
         }
 //        Box(propagateMinConstraints = true) {}
-        val configuration = LocalWindowInfo.current
-        val density = LocalDensity.current
-        val screenDimensionsDp by remember { derivedStateOf { configuration.containerSize.width.dp / density.density to configuration.containerSize.height.dp / density.density } }
+        val containerSize = getWindowSizeInDp() // first: height, second: width
+        val screenDimensionsDp by remember { derivedStateOf { containerSize.first to containerSize.second }}
         Dialog(
             onDismissRequest = onDismissRequest,
             properties = DialogProperties(
@@ -82,7 +80,7 @@ fun ButlerDialog(
                     val sizeModifier = if (isDialogFullscreen) {
                         Modifier.fillMaxSize()
                     } else {
-                        Modifier.dialogSize(screenDimensionsDp.first, screenDimensionsDp.second)
+                        Modifier.dialogSize(screenDimensionsDp.second, screenDimensionsDp.first)
                     }
                     ButlerDialogSurface(
                         modifier = Modifier.animateContentSize(),
