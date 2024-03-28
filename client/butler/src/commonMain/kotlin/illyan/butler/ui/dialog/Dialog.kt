@@ -59,7 +59,6 @@ fun ButlerDialog(
                 navigator.pop()
             }
         }
-//        Box(propagateMinConstraints = true) {}
         val containerSize = getWindowSizeInDp() // first: height, second: width
         val screenDimensionsDp by remember { derivedStateOf { containerSize.first to containerSize.second }}
         Dialog(
@@ -71,21 +70,22 @@ fun ButlerDialog(
             ),
         ) {
             ButlerDialogContentHolder(
-//                modifier = Modifier.animateContentSize(),
                 surface = {
                     val animatedRoundedCornerShape by animateDpAsState(
                         targetValue = if (isDialogFullscreen) 0.dp else 16.dp,
                         animationSpec = tween(200)
                     )
-                    val sizeModifier = if (isDialogFullscreen) {
-                        Modifier.fillMaxSize()
-                    } else {
-                        Modifier.dialogSize(screenDimensionsDp.second, screenDimensionsDp.first)
-                    }
-                    ButlerDialogSurface(
-                        modifier = Modifier.animateContentSize(),
-                        shape = RoundedCornerShape(animatedRoundedCornerShape)
-                    ) {
+                    ButlerDialogSurface(shape = RoundedCornerShape(animatedRoundedCornerShape)) {
+                        val sizeModifier = if (isDialogFullscreen) {
+                            Modifier.animateContentSize().fillMaxSize()
+                        } else {
+                            Modifier.animateContentSize(tween(0)).dialogSize(
+                                screenDimensionsDp.second,
+                                screenDimensionsDp.first,
+                                minWidth = 0.dp,
+                                minHeight = 0.dp
+                            )
+                        }
                         Box(
                             modifier = sizeModifier,
                             contentAlignment = Alignment.Center,
