@@ -111,7 +111,7 @@ fun ProfileDialogScreen(
 fun ProfileDialogContent(
     modifier: Modifier = Modifier,
     userUUID: String? = null,
-    isUserSignedIn: Boolean = true,
+    isUserSignedIn: Boolean? = null,
     isUserSigningOut: Boolean = false,
     userPhotoUrl: String? = null,
     confidentialInfo: List<Pair<String, String?>> = emptyList(),
@@ -162,7 +162,7 @@ fun ProfileDialogContent(
 @Composable
 fun ProfileButtons(
     modifier: Modifier = Modifier,
-    isUserSignedIn: Boolean = false,
+    isUserSignedIn: Boolean? = null,
     isUserSigningOut: Boolean = false,
     onShowSettingsScreen: () -> Unit = {},
     onShowAboutScreen: () -> Unit = {},
@@ -188,7 +188,7 @@ fun ProfileButtons(
             TextButton(onClick = { onDialogClosed() }) {
                 Text(text = stringResource(Res.string.close))
             }
-            if (isUserSignedIn) {
+            if (isUserSignedIn == true) {
                 TextButton(
                     enabled = !isUserSigningOut,
                     onClick = onSignOut,
@@ -200,7 +200,7 @@ fun ProfileButtons(
                 ) {
                     Text(text = stringResource(Res.string.reset_tutorial_and_sign_out))
                 }
-            } else {
+            } else if (isUserSignedIn == false) {
                 Button(
                     onClick = onLogin
                 ) {
@@ -268,7 +268,7 @@ private fun PreviewProfileDialogScreen(
 fun ProfileTitleScreen(
     modifier: Modifier = Modifier,
     userUUID: String? = null,
-    isUserSignedIn: Boolean = true,
+    isUserSignedIn: Boolean? = null,
     showConfidentialInfo: Boolean = false,
     userPhotoUrl: String? = null,
 ) {

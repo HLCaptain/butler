@@ -45,14 +45,17 @@ val LocalDialogDismissRequest = compositionLocalOf { {} }
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ButlerDialog(
-    getStartScreen: () -> Screen,
+    getStartScreen: () -> Screen?,
     isDialogOpen: Boolean = true,
     isDialogFullscreen: Boolean = false,
+    onDismissDialog: () -> Unit = {},
     onDialogClosed: () -> Unit = {}
 ) {
     var isDialogClosing by rememberSaveable { mutableStateOf(false) }
-    var isDialogClosingAnimationEnded by rememberSaveable { mutableStateOf(false) }
+    var isDialogClosingAnimationEnded by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(isDialogOpen) {
+        Napier.d("isDialogOpen: $isDialogOpen")
+//        delay(100) // Small delay to avoid wrong transitions
         isDialogClosing = !isDialogOpen
         if (!isDialogOpen) delay(200)
         isDialogClosingAnimationEnded = !isDialogOpen
@@ -69,11 +72,12 @@ fun ButlerDialog(
         Napier.d("navigator.items: ${navigator.items}")
 
         if (currentScreen == firstScreen) {
-            onDialogClosed()
+            onDismissDialog()
         } else {
             navigator.pop()
         }
     }
+    var currentLastScreen by remember { mutableStateOf<Screen?>(null) }
     val dialogContent = @Composable {
         val containerSize = getWindowSizeInDp() // first: height, second: width
         val screenDimensionsDp by remember { derivedStateOf { containerSize.first to containerSize.second } }
@@ -84,22 +88,22 @@ fun ButlerDialog(
                     animationSpec = tween(200)
                 )
                 var isDialogVisible by rememberSaveable { mutableStateOf(false) }
+                val sizeModifier = if (isDialogFullscreen) {
+                    Modifier.animateContentSize().fillMaxSize()
+                } else {
+                    Modifier.animateContentSize(tween(0)).dialogSize(
+                        screenDimensionsDp.second,
+                        screenDimensionsDp.first,
+                        minWidth = 0.dp,
+                        minHeight = 0.dp
+                    )
+                }
                 AnimatedVisibility(
                     visible = isDialogVisible,
                     enter = fadeIn(tween(200)) + scaleIn(tween(200), 0.8f),
-                    exit = fadeOut(tween(100)) + scaleOut(tween(100), 0.8f),
+                    exit = fadeOut(tween(200)) + scaleOut(tween(200), 0.8f),
                 ) {
                     ButlerDialogSurface(shape = RoundedCornerShape(animatedRoundedCornerShape)) {
-                        val sizeModifier = if (isDialogFullscreen) {
-                            Modifier.animateContentSize().fillMaxSize()
-                        } else {
-                            Modifier.animateContentSize(tween(0)).dialogSize(
-                                screenDimensionsDp.second,
-                                screenDimensionsDp.first,
-                                minWidth = 0.dp,
-                                minHeight = 0.dp
-                            )
-                        }
                         Box(
                             modifier = sizeModifier,
                             contentAlignment = Alignment.Center,
@@ -119,25 +123,22 @@ fun ButlerDialog(
                     derivedStateOf(getStartScreen)
                 }
                 Navigator(
-                    screen = startScreen
+                    screen = startScreen ?: currentLastScreen!!
                 ) { nav ->
                     // This hack is needed to avoid navigation issues with Voyager
                     // https://github.com/adrielcafe/voyager/issues/378
                     LaunchedEffect(startScreen) {
                         Napier.d("${nav.items}")
-                        nav.replaceAll(startScreen)
+                        if (startScreen != null) nav.replaceAll(startScreen!!)
+                        navigator = nav
+                        currentLastScreen = nav.lastItem
                     }
                     val animationTime = 200
-                    navigator = nav
                     ScreenTransition(
                         navigator = nav,
                         enterTransition = {
                             (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime))) togetherWith
-                                    (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
-                                        tween(
-                                            animationTime
-                                        )
-                                    ))
+                                    (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)))
                         },
                         exitTransition = {
                             (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime))) togetherWith
@@ -164,5 +165,7 @@ fun ButlerDialog(
         ) {
             dialogContent()
         }
+    } else {
+        onDialogClosed()
     }
 }

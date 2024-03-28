@@ -52,7 +52,7 @@ class LoginScreen(
         val state by screenModel.state.collectAsState()
 
         LaunchedEffect(state.isSignedIn) {
-            if (state.isSignedIn) onSignIn()
+            if (state.isSignedIn == true) onSignIn()
         }
         val navigator = LocalNavigator.currentOrThrow
         // TODO: implement oath authentication

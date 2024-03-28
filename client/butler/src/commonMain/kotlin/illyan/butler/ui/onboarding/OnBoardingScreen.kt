@@ -32,8 +32,8 @@ class OnBoardingScreen : Screen {
         val dismissDialog = LocalDialogDismissRequest.current
         LaunchedEffect(state.isTutorialDone) {
             if (state.isTutorialDone) {
-                navigator.popUntilRoot()
-                dismissDialog()
+//                navigator.popUntilRoot()
+//                dismissDialog()
             }
         }
 

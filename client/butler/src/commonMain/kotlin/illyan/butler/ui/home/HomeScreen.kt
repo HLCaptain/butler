@@ -19,8 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,6 +48,7 @@ import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -76,24 +79,45 @@ class HomeScreen : Screen {
                     var isAuthFlowEnded by rememberSaveable { mutableStateOf(isUserSignedIn) }
                     var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                     LaunchedEffect(isUserSignedIn) {
-                        if (!isUserSignedIn) {
-                            isAuthFlowEnded = false
+                        if (isUserSignedIn != true) isAuthFlowEnded = false
+                        isProfileDialogShowing = false
+                    }
+                    var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
+                    val isDialogOpen by remember {
+                        derivedStateOf {
+                            isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing
+                        }
+                    }
+                    LaunchedEffect(isTutorialDone) {
+                        if (!isTutorialDone) isDialogClosedAfterTutorial = false
+                        if (isUserSignedIn == true) isAuthFlowEnded = true
+                    }
+                    val startScreen by remember {
+                        derivedStateOf {
+                            if (!isDialogOpen) {
+                                null
+                            } else {
+                                if (isTutorialDone && isDialogClosedAfterTutorial) {
+                                    if (isAuthFlowEnded == true && isProfileDialogShowing) ProfileDialogScreen() else AuthScreen()
+                                } else OnBoardingScreen()
+                            }
                         }
                     }
                     ButlerDialog(
                         getStartScreen = {
-                            if (isTutorialDone) {
-                                if (isAuthFlowEnded && isProfileDialogShowing) ProfileDialogScreen() else AuthScreen()
-                            } else OnBoardingScreen()
+                            Napier.d("isDialogOpen: $isDialogOpen\nisTutorialDone: $isTutorialDone\nisDialogClosedAfterTutorial: $isDialogClosedAfterTutorial\nisAuthFlowEnded: $isAuthFlowEnded\nisProfileDialogShowing: $isProfileDialogShowing")
+                            startScreen
                         },
-                        isDialogOpen = !isAuthFlowEnded || !isTutorialDone || isProfileDialogShowing,
-                        isDialogFullscreen = !isUserSignedIn || !isTutorialDone,
+                        isDialogOpen = isDialogOpen,
+                        isDialogFullscreen = isUserSignedIn != true || !isTutorialDone,
+                        onDismissDialog = {
+                            if (isUserSignedIn == true) {
+                                isAuthFlowEnded = true
+                            }
+                        },
                         onDialogClosed = {
                             if (isTutorialDone) {
-                                isProfileDialogShowing = false
-                            }
-                            if (isUserSignedIn) {
-                                isAuthFlowEnded = true
+                                isDialogClosedAfterTutorial = true
                             }
                         }
                     )

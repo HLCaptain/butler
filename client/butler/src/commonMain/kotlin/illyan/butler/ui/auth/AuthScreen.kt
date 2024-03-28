@@ -41,7 +41,6 @@ fun AuthDialogContent(
 ) {
     val dismissDialog = LocalDialogDismissRequest.current
     val close = {
-        navigator.popUntilRoot()
         dismissDialog()
     }
 
