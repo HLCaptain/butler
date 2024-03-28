@@ -114,6 +114,7 @@ class HomeScreen : Screen {
                             if (isUserSignedIn == true) {
                                 isAuthFlowEnded = true
                             }
+                            isProfileDialogShowing = false
                         },
                         onDialogClosed = {
                             if (isTutorialDone) {
