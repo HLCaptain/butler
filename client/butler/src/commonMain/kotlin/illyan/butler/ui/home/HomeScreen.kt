@@ -83,7 +83,7 @@ class HomeScreen : Screen {
                     ButlerDialog(
                         getStartScreen = {
                             if (isTutorialDone) {
-                                if (isAuthFlowEnded) ProfileDialogScreen() else AuthScreen()
+                                if (isAuthFlowEnded && isProfileDialogShowing) ProfileDialogScreen() else AuthScreen()
                             } else OnBoardingScreen()
                         },
                         isDialogOpen = !isAuthFlowEnded || !isTutorialDone || isProfileDialogShowing,

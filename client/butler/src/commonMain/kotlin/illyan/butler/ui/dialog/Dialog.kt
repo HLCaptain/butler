@@ -1,10 +1,13 @@
 package illyan.butler.ui.dialog
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -17,7 +20,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -32,6 +38,7 @@ import illyan.butler.ui.components.ButlerDialogContentHolder
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.dialogSize
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.delay
 
 val LocalDialogDismissRequest = compositionLocalOf { {} }
 
@@ -43,38 +50,45 @@ fun ButlerDialog(
     isDialogFullscreen: Boolean = false,
     onDialogClosed: () -> Unit = {}
 ) {
-    if (isDialogOpen) {
-        // Don't use exit animations because
-        // it looks choppy while Dialog resizes due to content change.v
-        lateinit var navigator: Navigator
-        val onDismissRequest: () -> Unit = {
-            val currentScreen = navigator.items.last()
-            val firstScreen = navigator.items.first()
-//            Napier.d("currentScreen: $currentScreen, firstScreen: $firstScreen")
-            Napier.d("navigator.items: ${navigator.items}")
+    var isDialogClosing by rememberSaveable { mutableStateOf(false) }
+    var isDialogClosingAnimationEnded by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(isDialogOpen) {
+        isDialogClosing = !isDialogOpen
+        if (!isDialogOpen) delay(200)
+        isDialogClosingAnimationEnded = !isDialogOpen
+        isDialogClosing = false
+    }
 
-            if (currentScreen == firstScreen) {
-                onDialogClosed()
-            } else {
-                navigator.pop()
-            }
+    // Don't use exit animations because
+    // it looks choppy while Dialog resizes due to content change.v
+    lateinit var navigator: Navigator
+    val onDismissRequest: () -> Unit = {
+        val currentScreen = navigator.items.last()
+        val firstScreen = navigator.items.first()
+//            Napier.d("currentScreen: $currentScreen, firstScreen: $firstScreen")
+        Napier.d("navigator.items: ${navigator.items}")
+
+        if (currentScreen == firstScreen) {
+            onDialogClosed()
+        } else {
+            navigator.pop()
         }
+    }
+    val dialogContent = @Composable {
         val containerSize = getWindowSizeInDp() // first: height, second: width
-        val screenDimensionsDp by remember { derivedStateOf { containerSize.first to containerSize.second }}
-        Dialog(
-            onDismissRequest = onDismissRequest,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnBackPress = true,
-                dismissOnClickOutside = true
-            ),
-        ) {
-            ButlerDialogContentHolder(
-                surface = {
-                    val animatedRoundedCornerShape by animateDpAsState(
-                        targetValue = if (isDialogFullscreen) 0.dp else 16.dp,
-                        animationSpec = tween(200)
-                    )
+        val screenDimensionsDp by remember { derivedStateOf { containerSize.first to containerSize.second } }
+        ButlerDialogContentHolder(
+            surface = {
+                val animatedRoundedCornerShape by animateDpAsState(
+                    targetValue = if (isDialogFullscreen) 0.dp else 16.dp,
+                    animationSpec = tween(200)
+                )
+                var isDialogVisible by rememberSaveable { mutableStateOf(false) }
+                AnimatedVisibility(
+                    visible = isDialogVisible,
+                    enter = fadeIn(tween(200)) + scaleIn(tween(200), 0.8f),
+                    exit = fadeOut(tween(100)) + scaleOut(tween(100), 0.8f),
+                ) {
                     ButlerDialogSurface(shape = RoundedCornerShape(animatedRoundedCornerShape)) {
                         val sizeModifier = if (isDialogFullscreen) {
                             Modifier.animateContentSize().fillMaxSize()
@@ -93,43 +107,62 @@ fun ButlerDialog(
                         )
                     }
                 }
+                LaunchedEffect(isDialogClosing) {
+                    isDialogVisible = !isDialogClosing
+                }
+            }
+        ) {
+            CompositionLocalProvider(
+                LocalDialogDismissRequest provides onDismissRequest,
             ) {
-                CompositionLocalProvider(
-                    LocalDialogDismissRequest provides onDismissRequest,
-                ) {
-                    val startScreen by remember {
-                        derivedStateOf(getStartScreen)
+                val startScreen by remember {
+                    derivedStateOf(getStartScreen)
+                }
+                Navigator(
+                    screen = startScreen
+                ) { nav ->
+                    // This hack is needed to avoid navigation issues with Voyager
+                    // https://github.com/adrielcafe/voyager/issues/378
+                    LaunchedEffect(startScreen) {
+                        Napier.d("${nav.items}")
+                        nav.replaceAll(startScreen)
                     }
-                    Navigator(
-                        screen = startScreen
-                    ) { nav ->
-                        // This hack is needed to avoid navigation issues with Voyager
-                        // https://github.com/adrielcafe/voyager/issues/378
-                        LaunchedEffect(startScreen) {
-                            Napier.d("${nav.items}")
-                            nav.replaceAll(startScreen)
+                    val animationTime = 200
+                    navigator = nav
+                    ScreenTransition(
+                        navigator = nav,
+                        enterTransition = {
+                            (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime))) togetherWith
+                                    (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
+                                        tween(
+                                            animationTime
+                                        )
+                                    ))
+                        },
+                        exitTransition = {
+                            (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime))) togetherWith
+                                    (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)))
                         }
-                        val animationTime = 200
-                        navigator = nav
-                        ScreenTransition(
-                            navigator = nav,
-                            enterTransition = {
-                                (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime))) togetherWith
-                                        (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)))
-                            },
-                            exitTransition = {
-                                (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime))) togetherWith
-                                        (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)))
-                            }
-                        ) {
-                            it.Content()
-                            LaunchedEffect(it) {
-                                Napier.d("Navigated to: $it")
-                            }
+                    ) {
+                        it.Content()
+                        LaunchedEffect(it) {
+                            Napier.d("Navigated to: $it")
                         }
                     }
                 }
             }
+        }
+    }
+    if (!isDialogClosingAnimationEnded) {
+        Dialog(
+            onDismissRequest = onDismissRequest,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true
+            ),
+        ) {
+            dialogContent()
         }
     }
 }
