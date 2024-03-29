@@ -61,7 +61,6 @@ fun ButlerDialog(
 
     var navigator by remember { mutableStateOf<Navigator?>(null) }
     val onDismissRequest: () -> Unit = {
-        Napier.d("onDismissRequest navigator items: ${navigator?.items}")
         if (navigator?.lastItem == navigator?.items?.first()) {
             onDismissDialog()
         } else {

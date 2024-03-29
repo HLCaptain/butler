@@ -54,7 +54,6 @@ import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
-import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -121,8 +120,6 @@ class HomeScreen : Screen {
                                 isAuthFlowEnded = true
                             }
                             isProfileDialogShowing = false
-                            // Log isDialogOpen variables
-                            Napier.d("isDialogOpen: $isDialogOpen\nisAuthFlowEnded: $isAuthFlowEnded\nisTutorialDone: $isTutorialDone\nisProfileDialogShowing: $isProfileDialogShowing\nisDialogClosedAfterTutorial: $isDialogClosedAfterTutorial\nisUserSignedIn: $isUserSignedIn\n")
                         },
                         onDialogClosed = {
                             if (isTutorialDone) {
