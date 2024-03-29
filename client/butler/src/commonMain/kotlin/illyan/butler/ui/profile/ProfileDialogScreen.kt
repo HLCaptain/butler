@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
@@ -51,6 +50,7 @@ import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.profile
+import illyan.butler.generated.resources.reset_tutorial_and_sign_out
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
@@ -58,21 +58,18 @@ import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
-import illyan.butler.ui.components.dialogWidth
+import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
-import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.util.log.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-
 class ProfileDialogScreen : Screen {
     @Composable
     override fun Content() {
         ProfileDialogScreen(
-            screenModel = getScreenModel<ProfileScreenModel>(),
-            navigator = LocalNavigator.currentOrThrow
+            screenModel = getScreenModel<ProfileScreenModel>()
         )
     }
 }
@@ -80,8 +77,7 @@ class ProfileDialogScreen : Screen {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileDialogScreen(
-    screenModel: ProfileScreenModel,
-    navigator: Navigator,
+    screenModel: ProfileScreenModel
 ) {
     val userUUID by screenModel.userUUID.collectAsState()
     val isUserSignedIn by screenModel.isUserSignedIn.collectAsState()
@@ -95,6 +91,7 @@ fun ProfileDialogScreen(
         stringResource(Res.string.email) to email,
         stringResource(Res.string.phone) to phone
     )
+    val navigator = LocalNavigator.currentOrThrow
     ProfileDialogContent(
         userUUID = userUUID,
         isUserSignedIn = isUserSignedIn,
@@ -103,9 +100,10 @@ fun ProfileDialogScreen(
         confidentialInfo = confidentialInfo,
         showConfidentialInfoInitially = false,
         onSignOut = screenModel::signOut,
-        onShowLoginScreen = { navigator.push(LoginScreen()) },
+//        onShowLoginScreen = { navigator.push(LoginScreen()) },
 //        onShowAboutScreen = { navigator.push(AboutDialogScreen) },
 //        onShowSettingsScreen = { navigator.push(UserSettingsDialogScreen) },
+        resetTutorialAndSignOut = screenModel::resetTutorialAndSignOut
     )
 }
 
@@ -113,7 +111,7 @@ fun ProfileDialogScreen(
 fun ProfileDialogContent(
     modifier: Modifier = Modifier,
     userUUID: String? = null,
-    isUserSignedIn: Boolean = true,
+    isUserSignedIn: Boolean? = null,
     isUserSigningOut: Boolean = false,
     userPhotoUrl: String? = null,
     confidentialInfo: List<Pair<String, String?>> = emptyList(),
@@ -121,11 +119,12 @@ fun ProfileDialogContent(
     onSignOut: () -> Unit = {},
     onShowLoginScreen: () -> Unit = {},
     onShowAboutScreen: () -> Unit = {},
-    onShowSettingsScreen: () -> Unit = {}
+    onShowSettingsScreen: () -> Unit = {},
+    resetTutorialAndSignOut: () -> Unit = {},
 ) {
     var showConfidentialInfo by remember { mutableStateOf(showConfidentialInfoInitially) }
     ButlerDialogContent(
-        modifier = modifier,
+        modifier = modifier.smallDialogWidth().fillMaxWidth(),
         title = {
             ProfileTitleScreen(
                 userUUID = userUUID,
@@ -145,12 +144,14 @@ fun ProfileDialogContent(
         },
         buttons = {
             ProfileButtons(
+//                modifier = Modifier.align(Alignment.End),
                 isUserSignedIn = isUserSignedIn,
                 isUserSigningOut = isUserSigningOut,
                 onLogin = onShowLoginScreen,
                 onSignOut = onSignOut,
                 onShowSettingsScreen = onShowSettingsScreen,
-                onShowAboutScreen = onShowAboutScreen
+                onShowAboutScreen = onShowAboutScreen,
+                resetTutorialAndSignOut = resetTutorialAndSignOut
             )
         },
         containerColor = Color.Transparent,
@@ -160,16 +161,18 @@ fun ProfileDialogContent(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalResourceApi::class)
 @Composable
 fun ProfileButtons(
+    modifier: Modifier = Modifier,
+    isUserSignedIn: Boolean? = null,
+    isUserSigningOut: Boolean = false,
     onShowSettingsScreen: () -> Unit = {},
     onShowAboutScreen: () -> Unit = {},
     onLogin: () -> Unit = {},
     onSignOut: () -> Unit = {},
-    isUserSignedIn: Boolean = false,
-    isUserSigningOut: Boolean = false,
+    resetTutorialAndSignOut: () -> Unit = {},
 ) {
     val onDialogClosed = LocalDialogDismissRequest.current
     FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         ProfileMenu(
@@ -178,22 +181,26 @@ fun ProfileButtons(
         )
         Row(
             modifier = Modifier
-                .weight(1f)
+//                .weight(1f)
                 .align(Alignment.Bottom),
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = { onDialogClosed() }) {
                 Text(text = stringResource(Res.string.close))
             }
-            // FIXME: find out why Crossfade does not work here
-            if (isUserSignedIn) {
+            if (isUserSignedIn == true) {
                 TextButton(
                     enabled = !isUserSigningOut,
                     onClick = onSignOut,
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
                 }
-            } else {
+                Button(
+                    onClick = resetTutorialAndSignOut
+                ) {
+                    Text(text = stringResource(Res.string.reset_tutorial_and_sign_out))
+                }
+            } else if (isUserSignedIn == false) {
                 Button(
                     onClick = onLogin
                 ) {
@@ -239,7 +246,7 @@ private fun PreviewProfileDialogScreen(
         Column {
             ButlerDialogSurface {
                 ProfileDialogContent(
-                    modifier = Modifier.dialogWidth(),
+                    modifier = Modifier,
                     userUUID = randomUUID(),
                     userPhotoUrl = null,
                     confidentialInfo = listOf(
@@ -261,14 +268,12 @@ private fun PreviewProfileDialogScreen(
 fun ProfileTitleScreen(
     modifier: Modifier = Modifier,
     userUUID: String? = null,
-    isUserSignedIn: Boolean = true,
+    isUserSignedIn: Boolean? = null,
     showConfidentialInfo: Boolean = false,
     userPhotoUrl: String? = null,
 ) {
     val clipboard = LocalClipboardManager.current
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    FlowRow {
         Column {
             Text(text = stringResource(Res.string.profile))
             AnimatedVisibility(visible = userUUID != null) {
@@ -325,7 +330,7 @@ fun ProfileDetailsScreen(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+//            modifier = Modifier.fillMaxWidth(),
         ) {
             ConfidentialInfoToggleButton(
                 showConfidentialInfo = showConfidentialInfo,
@@ -353,7 +358,7 @@ fun UserInfoList(
     ) {
         item {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+//                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(confidentialInfo) {

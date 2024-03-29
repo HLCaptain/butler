@@ -32,8 +32,14 @@ import org.koin.core.annotation.Single
 
 @Single
 class IdentityService(private val client: HttpClient) {
-    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<UserDto> {
-        post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }
+    suspend fun createUser(
+        newUser: UserRegistrationDto,
+        tokenConfiguration: TokenConfiguration
+    ): UserLoginResponseDto {
+        val user = client.tryToExecute<UserDto> {
+            post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }
+        }
+        return UserLoginResponseDto(user, generateUserTokens(user.id, tokenConfiguration))
     }
 
     suspend fun loginUser(

@@ -3,7 +3,7 @@ package illyan.butler.repository
 import illyan.butler.data.store.ChatMutableStoreBuilder
 import illyan.butler.data.store.UserChatKey
 import illyan.butler.data.store.UserChatMutableStoreBuilder
-import illyan.butler.di.NamedCoroutineScopeIO
+import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
@@ -21,7 +22,7 @@ import org.mobilenativefoundation.store.store5.StoreWriteRequest
 class ChatRepository(
     chatMutableStoreBuilder: ChatMutableStoreBuilder,
     userChatMutableStoreBuilder: UserChatMutableStoreBuilder,
-    @NamedCoroutineScopeIO private val coroutineScopeIO: CoroutineScope,
+    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
 ) {
     @OptIn(ExperimentalStoreApi::class)
     val chatMutableStore = chatMutableStoreBuilder.store

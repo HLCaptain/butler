@@ -8,5 +8,5 @@ import org.koin.core.annotation.Single
  * No IO dispatcher on JS, so we use the default dispatcher
  */
 @Single
-@NamedCoroutineDispatcherIO
+@Named(KoinNames.DispatcherIO)
 actual fun provideDispatcherIO(): CoroutineDispatcher = Dispatchers.Default

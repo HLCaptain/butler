@@ -1,4 +1,4 @@
-package illyan.butler.ui.chat
+package illyan.butler.ui.chat_detail
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
@@ -42,11 +42,11 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 
-class ChatScreen(private val chatUUID: String) : Screen {
+class ChatDetailScreen(private val chatUUID: String) : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<ChatScreenModel> { parametersOf(chatUUID) }
+        val screenModel = getScreenModel<ChatDetailScreenModel> { parametersOf(chatUUID) }
         val chat by screenModel.chat.collectAsState()
         val messages by screenModel.messages.collectAsState()
         LaunchedEffect(Unit) { Napier.d("ChatScreen: $chat") }

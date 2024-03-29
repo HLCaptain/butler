@@ -2,7 +2,7 @@ package illyan.butler.data.sqldelight
 
 import app.cash.sqldelight.Query
 import illyan.butler.db.Database
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import illyan.butler.di.flatMapLatestAsList
 import illyan.butler.di.flatMapLatestAsOne
 import illyan.butler.di.flatMapLatestAsOneOrNull
@@ -14,13 +14,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 // Modified from: https://github.com/cashapp/sqldelight/blob/master/sample-web/src/jsMain/kotlin/com/example/sqldelight/hockey/data/DbHelper.kt
 @Single
 class DatabaseHelper(
     private val databaseFlow: StateFlow<Database?>,
-    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher,
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
 ) {
     private val mutex = Mutex()
 

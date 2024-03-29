@@ -1,9 +1,9 @@
 [versions]
 butler = "2.0.0-alpha"
-kotlin = "1.9.22"
-ksp = "1.9.22-1.0.18"
-agp = "8.3.0"
-compose = "1.6.0"
+kotlin = "1.9.23"
+ksp = "1.9.23-1.0.19"
+agp = "8.3.1"
+compose = "1.6.1"
 compose-android = "1.6.3"
 ktor = "2.3.9"
 koin = "3.6.0-wasm-alpha2"

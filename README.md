@@ -70,6 +70,24 @@ psql -U postgres
 # Enter the new password
 ```
 
+### Frontend
+
+To build and run the Compose Multiplatform app, you should have a `local.properties` file in the `client` directory with the following content:
+
+```properties
+RELEASE_KEYSTORE_PASSWORD=your_release_keystore_password
+RELEASE_KEY_PASSWORD=your_release_key_password
+RELEASE_KEY_ALIAS=your_release_key_alias
+RELEASE_KEY_PATH=path/to/release.keystore
+
+DEBUG_KEYSTORE_PASSWORD=your_debug_keystore_password
+DEBUG_KEY_PASSWORD=your_debug_key_password
+DEBUG_KEY_ALIAS=your_debug_key_alias
+DEBUG_KEY_PATH=path/to/debug.keystore
+
+API_GATEWAY_URL=http://127.0.0.1:12345
+```
+
 ## Usage
 
 ## Contributing

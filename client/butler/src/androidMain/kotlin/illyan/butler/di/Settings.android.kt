@@ -11,6 +11,7 @@ import com.russhwolf.settings.coroutines.FlowSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.koin.core.context.GlobalContext
 
@@ -36,8 +37,8 @@ fun provideEncryptedSettings(context: Context): ObservableSettings {
 @OptIn(ExperimentalSettingsApi::class)
 @Single
 actual fun provideFlowSettings(
-    @NamedCoroutineDispatcherIO scope: CoroutineScope,
-    @NamedCoroutineScopeIO dispatcher: CoroutineDispatcher
+    @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
+    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings {
     return provideEncryptedSettings(GlobalContext.get().get()).toFlowSettings(dispatcher)
 }

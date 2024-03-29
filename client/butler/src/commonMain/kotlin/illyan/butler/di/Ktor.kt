@@ -6,10 +6,14 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.isDebugBuild
+import illyan.butler.manager.ErrorManager
+import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.auth.Auth
@@ -29,14 +33,35 @@ import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Single
-fun provideHttpClient(settings: FlowSettings) = HttpClient {
+fun provideHttpClient(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+) = HttpClient {
+    expectSuccess = true
+    HttpResponseValidator {
+        handleResponseExceptionWithRequest { throwable, _ ->
+            Napier.e(throwable) { "Error in response" }
+            val exception = throwable as? ServerResponseException
+            if (exception != null) {
+                errorManager.reportError(exception.response)
+            } else {
+                errorManager.reportError(throwable)
+            }
+        }
+    }
+
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
             listOf(
@@ -51,7 +76,7 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
         onRequest { request, content ->
-            Napier.v("ContentTypeFallback plugin called onRequest, request: $request, content: $content")
+            Napier.v("ContentTypeFallback plugin called onRequest, request: ${request.url}, content: $content")
             // Default body is EmptyContent
             // Don't set content type if content itself is not set
             if (request.contentType() == null && content !is EmptyContent) {
@@ -120,8 +145,16 @@ fun provideHttpClient(settings: FlowSettings) = HttpClient {
 
     install(ContentEncoding)
 
+    var currentApiUrl: String? = null
+    coroutineScopeIO.launch {
+        settings.getStringOrNullFlow(HostRepository.KEY_API_URL).collectLatest {
+            Napier.d { "API URL changed to $it" }
+            currentApiUrl = it
+        }
+    }
     defaultRequest {
-        url(BuildConfig.API_GATEWAY_URL)
+        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl")
+        url(urlString = currentApiUrl ?: "")
     }
 }
 

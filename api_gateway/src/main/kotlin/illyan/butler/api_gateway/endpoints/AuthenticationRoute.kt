@@ -23,7 +23,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
 
     post("/signup") {
         val newUser = call.receive<UserRegistrationDto>()
-        val result = identityService.createUser(newUser)
+        val result = identityService.createUser(newUser, tokenConfiguration)
         call.respond(HttpStatusCode.Created, result)
     }
 

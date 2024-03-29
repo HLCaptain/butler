@@ -14,17 +14,23 @@ class AuthManager(
     val signedInUserPhotoURL = userRepository.signedInUserPhotoURL
     val signedInUserName = userRepository.signedInUserName
 
+    val isUserSigningIn = userRepository.isUserSigningIn
+
     suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
     ) = userRepository.loginWithEmailAndPassword(email, password)
 
-    suspend fun createUserWithEmailAndPassword(
+    suspend fun signUpAndLogin(
         email: String,
-        userName: String,
-        password: String
-    ) = userRepository.createUserWithEmailAndPassword(email, userName, password)
+        password: String,
+        userName: String
+    ) = userRepository.signUpAndLogin(email, userName, password)
 
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)
     suspend fun signOut() = userRepository.signOut()
+
+    suspend fun deleteAccount() {
+        // TODO: Implement delete account by calling repositories and signing out user
+    }
 }
