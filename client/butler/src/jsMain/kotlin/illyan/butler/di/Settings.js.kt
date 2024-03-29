@@ -19,8 +19,8 @@ actual fun provideSettings(): Settings {
 @OptIn(ExperimentalSettingsApi::class)
 @Single
 actual fun provideFlowSettings(
-    @NamedCoroutineDispatcherIO scope: CoroutineScope,
-    @NamedCoroutineScopeIO dispatcher: CoroutineDispatcher
+    @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
+    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings {
     return ObservableStorageSettings(provideSettings()).toFlowSettings(dispatcher)
 }

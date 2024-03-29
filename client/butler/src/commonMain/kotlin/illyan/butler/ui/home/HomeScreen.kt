@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -41,8 +42,10 @@ import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.hello_x
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
+import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_list.ChatListScreen
+import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
@@ -62,6 +65,7 @@ class HomeScreen : Screen {
     @Composable
     internal fun HomeScreen() {
         val screenModel = getScreenModel<HomeScreenModel>()
+        val state by screenModel.state.collectAsState()
         Surface {
             Column {
                 Row(
@@ -73,8 +77,8 @@ class HomeScreen : Screen {
                         style = MaterialTheme.typography.headlineLarge
                     )
 
-                    val isUserSignedIn by screenModel.isUserSignedIn.collectAsState()
-                    val isTutorialDone by screenModel.isTutorialDone.collectAsState()
+                    val isUserSignedIn = state.isUserSignedIn
+                    val isTutorialDone = state.isTutorialDone
                     var isAuthFlowEnded by rememberSaveable { mutableStateOf(isUserSignedIn) }
                     var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                     LaunchedEffect(isUserSignedIn) {
@@ -100,8 +104,9 @@ class HomeScreen : Screen {
                             }
                         }
                     }
+
                     ButlerDialog(
-                        startScreen = startScreen,
+                        startScreens = listOfNotNull(startScreen),
                         isDialogOpen = isDialogOpen,
                         isDialogFullscreen = isUserSignedIn != true || !isTutorialDone,
                         onDismissDialog = {
@@ -120,6 +125,49 @@ class HomeScreen : Screen {
                     Button(onClick = { isProfileDialogShowing = true }) {
                         Text(stringResource(Res.string.profile))
                     }
+
+                    // TODO: navigate to error dialogs when needed
+                    // For each error:
+                    //  - show dialog and navigate to error screen
+                    //  - take error off of the list
+                    //  - repeat until no errors left
+                    val errorScreens by remember {
+                        derivedStateOf {
+                            val errorScreensAndTimestamps = state.serverErrors.map { (id, error) ->
+                                Triple(
+                                    id,
+                                    ArbitraryScreen {
+                                        ButlerErrorDialogContent(
+                                            errorResponse = error,
+                                            onClose = { screenModel.clearError(id) }
+                                        )
+                                    },
+                                    error.timestamp
+                                )
+                            } + state.appErrors.map { error ->
+                                Triple(
+                                    error.id,
+                                    ArbitraryScreen {
+                                        ButlerErrorDialogContent(
+                                            errorEvent = error,
+                                            onClose = { screenModel.clearError(error.id) }
+                                        )
+                                    },
+                                    error.timestamp
+                                )
+                            }
+                            errorScreensAndTimestamps.sortedBy { it.third }
+                        }
+                    }
+                    ButlerDialog(
+                        modifier = Modifier.zIndex(1f),
+                        startScreens = errorScreens.map { it.second },
+                        isDialogOpen = errorScreens.isNotEmpty(),
+                        isDialogFullscreen = false,
+                        onDismissDialog = {
+                            errorScreens.lastOrNull()?.first?.let { screenModel.clearError(it) }
+                        }
+                    )
                 }
 
                 LazyColumn(
@@ -139,7 +187,7 @@ class HomeScreen : Screen {
                     }
 
                     item {
-                        val signedInUserUUID by screenModel.signedInUserUUID.collectAsState()
+                        val signedInUserUUID = state.signedInUserUUID
                         val navigator = LocalNavigator.currentOrThrow
                         AnimatedVisibility(
                             visible = signedInUserUUID != null

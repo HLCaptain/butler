@@ -5,26 +5,17 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-@Named("CoroutineDispatcherIO")
-annotation class NamedCoroutineDispatcherIO
-
-@Named("CoroutineDispatcherMain")
-annotation class NamedCoroutineDispatcherMain
-
-@Named("CoroutineDispatcherDefault")
-annotation class NamedCoroutineDispatcherDefault
-
 /**
  * No IO dispatcher in Kotlin Coroutines Core, provide platform specific implementation
  */
 @Single
-@NamedCoroutineDispatcherIO
+@Named(KoinNames.DispatcherIO)
 expect fun provideDispatcherIO(): CoroutineDispatcher
 
 @Single
-@NamedCoroutineDispatcherMain
+@Named(KoinNames.DispatcherMain)
 fun provideDispatcherMain() = Dispatchers.Main
 
 @Single
-@NamedCoroutineDispatcherDefault
+@Named(KoinNames.DispatcherDefault)
 fun provideDispatcherDefault() = Dispatchers.Default

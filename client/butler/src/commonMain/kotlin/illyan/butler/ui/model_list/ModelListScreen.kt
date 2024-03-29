@@ -24,7 +24,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select
-import illyan.butler.ui.chat.ChatScreen
+import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.components.MenuButton
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
@@ -39,7 +39,7 @@ class ModelListScreen : Screen {
         LaunchedEffect(newChatUUID) {
             if (newChatUUID != null) {
                 navigator.pop()
-                navigator.push(ChatScreen(newChatUUID!!))
+                navigator.push(ChatDetailScreen(newChatUUID!!))
                 screenModel.onNavigateToChat()
             }
         }

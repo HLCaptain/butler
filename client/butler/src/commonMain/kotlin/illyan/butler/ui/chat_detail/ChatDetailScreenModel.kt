@@ -1,8 +1,8 @@
-package illyan.butler.ui.chat
+package illyan.butler.ui.chat_detail
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import illyan.butler.manager.ChatManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,12 +11,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
 import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.Named
 
 @Factory
-class ChatScreenModel(
+class ChatDetailScreenModel(
     @InjectedParam private val chatUUID: String,
     private val chatManager: ChatManager,
-    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     val chat = chatManager.getChatFlow(chatUUID)
         .stateIn(

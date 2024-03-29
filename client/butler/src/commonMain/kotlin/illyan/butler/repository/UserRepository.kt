@@ -8,7 +8,7 @@ import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
-import illyan.butler.di.NamedCoroutineScopeIO
+import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +21,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromHexString
 import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -28,7 +29,7 @@ import org.koin.core.annotation.Single
 class UserRepository(
     private val authNetworkDataSource: AuthNetworkDataSource,
     private val settings: FlowSettings,
-    @NamedCoroutineScopeIO private val coroutineScope: CoroutineScope
+    @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
 ) {
     companion object {
         const val KEY_USER_ID = "user_id"
@@ -60,18 +61,20 @@ class UserRepository(
     val isUserSigningIn = _isUserSigningIn.asStateFlow()
 
     suspend fun loginWithEmailAndPassword(email: String, password: String) {
-        _isUserSigningIn.update { true }
-        val response = authNetworkDataSource.login(UserLoginDto(email, password))
-        setLoggedInUser(response)
-        _isUserSigningIn.update { false }
+        try {
+            _isUserSigningIn.update { true }
+            val response = authNetworkDataSource.login(UserLoginDto(email, password))
+            setLoggedInUser(response)
+        } finally { _isUserSigningIn.update { false } }
     }
 
     suspend fun signUpAndLogin(email: String, password: String, userName: String) {
-        _isUserSigningIn.update { true }
-        authNetworkDataSource.signup(UserRegistrationDto(email, password, userName)).also {
-            setLoggedInUser(it)
-        }
-        _isUserSigningIn.update { false }
+        try {
+            _isUserSigningIn.update { true }
+            authNetworkDataSource.signup(UserRegistrationDto(email, password, userName)).also {
+                setLoggedInUser(it)
+            }
+        } finally { _isUserSigningIn.update { false } }
     }
 
     @OptIn(ExperimentalSerializationApi::class)

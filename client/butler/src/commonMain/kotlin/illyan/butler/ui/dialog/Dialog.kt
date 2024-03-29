@@ -43,7 +43,8 @@ val LocalDialogDismissRequest = compositionLocalOf { {} }
 
 @Composable
 fun ButlerDialog(
-    startScreen: Screen?,
+    modifier: Modifier = Modifier,
+    startScreens: List<Screen>,
     isDialogOpen: Boolean = true,
     isDialogFullscreen: Boolean = false,
     onDismissDialog: () -> Unit = {},
@@ -58,12 +59,12 @@ fun ButlerDialog(
         isDialogClosing = false
     }
 
-    lateinit var navigator: Navigator
+    var navigator by remember { mutableStateOf<Navigator?>(null) }
     val onDismissRequest: () -> Unit = {
-        if (navigator.lastItem == navigator.items.first()) {
+        if (navigator?.lastItem == navigator?.items?.first()) {
             onDismissDialog()
         } else {
-            navigator.pop()
+            navigator?.pop()
         }
     }
     var currentLastScreen by remember { mutableStateOf<Screen?>(null) }
@@ -71,6 +72,7 @@ fun ButlerDialog(
         val containerSize = getWindowSizeInDp() // first: height, second: width
         val screenDimensionsDp by remember { derivedStateOf { containerSize.first to containerSize.second } }
         ButlerDialogContentHolder(
+            modifier = modifier,
             surface = {
                 val animatedRoundedCornerShape by animateDpAsState(
                     targetValue = if (isDialogFullscreen) 0.dp else 16.dp,
@@ -109,13 +111,13 @@ fun ButlerDialog(
                 LocalDialogDismissRequest provides onDismissRequest,
             ) {
                 Navigator(
-                    screen = startScreen ?: currentLastScreen!!
+                    screens = startScreens.ifEmpty { listOf(currentLastScreen!!) },
                 ) { nav ->
                     // This hack is needed to avoid navigation issues with Voyager
                     // https://github.com/adrielcafe/voyager/issues/378
-                    LaunchedEffect(startScreen) {
+                    LaunchedEffect(startScreens) {
                         Napier.d("${nav.items}")
-                        if (startScreen != null) nav.replaceAll(startScreen)
+                        if (startScreens.isNotEmpty()) nav.replaceAll(startScreens)
                         navigator = nav
                         currentLastScreen = nav.lastItem
                     }

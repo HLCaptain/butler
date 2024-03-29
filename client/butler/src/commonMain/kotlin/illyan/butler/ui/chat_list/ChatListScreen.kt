@@ -27,7 +27,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
-import illyan.butler.ui.chat.ChatScreen
+import illyan.butler.ui.chat_detail.ChatDetailScreen
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -39,7 +39,7 @@ class ChatListScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         ChatList(
             chats = chats,
-            openChat = { navigator.push(ChatScreen(it)) }
+            openChat = { navigator.push(ChatDetailScreen(it)) }
         )
     }
 

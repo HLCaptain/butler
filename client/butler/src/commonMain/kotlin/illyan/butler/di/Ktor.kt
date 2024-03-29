@@ -6,11 +6,14 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.isDebugBuild
+import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.auth.Auth
@@ -36,14 +39,27 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 @Single
 fun provideHttpClient(
     settings: FlowSettings,
-    @NamedCoroutineScopeIO coroutineScopeIO: CoroutineScope
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
 ) = HttpClient {
+    HttpResponseValidator {
+        handleResponseExceptionWithRequest { throwable, _ ->
+            val exception = throwable as? ClientRequestException
+            if (exception != null) {
+                errorManager.reportError(exception, exception.response)
+            } else {
+                errorManager.reportError(throwable)
+            }
+        }
+    }
+
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
             listOf(

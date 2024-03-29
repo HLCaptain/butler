@@ -2,7 +2,7 @@ package illyan.butler.ui.onboarding
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.HostManager
@@ -12,13 +12,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Named
 
 @Factory
 class OnBoardingScreenModel(
     private val appManager: AppManager,
     authManager: AuthManager,
     hostManager: HostManager,
-    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     val state = combine(
         hostManager.currentHost,

@@ -3,13 +3,16 @@ package illyan.butler.repository
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.data.network.datasource.HostNetworkDataSource
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -17,7 +20,7 @@ import org.koin.core.annotation.Single
 class HostRepository(
     private val hostNetworkDataSource: HostNetworkDataSource,
     private val settings: FlowSettings,
-    @NamedCoroutineDispatcherIO private val coroutineScope: CoroutineScope
+    @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
 ) {
     companion object {
         const val KEY_API_URL: String = "api_url"
@@ -40,8 +43,14 @@ class HostRepository(
 
     suspend fun testHost(url: String): Boolean {
         _isConnectingToHost.update { true }
-        return hostNetworkDataSource.tryToConnect(url).also { _ ->
-            _isConnectingToHost.update { false }
-        }
+        return try {
+            coroutineScope.launch {
+                delay(5000)
+                throw Exception("Connection timeout")
+            }
+            hostNetworkDataSource.tryToConnect(url)
+        } catch (e: Exception) {
+            false
+        }.also { _isConnectingToHost.update { false } }
     }
 }

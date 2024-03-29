@@ -2,7 +2,7 @@ package illyan.butler.ui.select_host
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import illyan.butler.manager.HostManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,11 +12,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Named
 
 @Factory
 class SelectHostScreenModel(
     private val hostManager: HostManager,
-    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val isConnectedToHost = MutableStateFlow<Boolean?>(null)
     val state = combine(

@@ -20,7 +20,7 @@ package illyan.butler.ui.login
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import illyan.butler.manager.AuthManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,11 +28,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Named
 
 @Factory
 class LoginScreenModel(
     private val authManager: AuthManager,
-    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher,
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
 ): ScreenModel {
     val state = combine(
         authManager.isUserSigningIn,

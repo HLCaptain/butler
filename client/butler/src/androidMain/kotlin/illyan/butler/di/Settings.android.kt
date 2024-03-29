@@ -36,8 +36,8 @@ fun provideEncryptedSettings(context: Context): ObservableSettings {
 @OptIn(ExperimentalSettingsApi::class)
 @Single
 actual fun provideFlowSettings(
-    @NamedCoroutineDispatcherIO scope: CoroutineScope,
-    @NamedCoroutineScopeIO dispatcher: CoroutineDispatcher
+    @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
+    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings {
     return provideEncryptedSettings(GlobalContext.get().get()).toFlowSettings(dispatcher)
 }
