@@ -11,6 +11,7 @@ import com.russhwolf.settings.coroutines.FlowSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.koin.core.context.GlobalContext
 

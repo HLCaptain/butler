@@ -5,6 +5,7 @@ import kotlin.collections.Map;
 CREATE TABLE ErrorEvent (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
     platform TEXT NOT NULL,
+    exception TEXT NOT NULL,
     message TEXT NOT NULL,
     stackTrace TEXT NOT NULL,
     os TEXT NOT NULL,

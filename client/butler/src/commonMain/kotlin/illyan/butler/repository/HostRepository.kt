@@ -44,11 +44,12 @@ class HostRepository(
     suspend fun testHost(url: String): Boolean {
         _isConnectingToHost.update { true }
         return try {
+            var testingEnded = false
             coroutineScope.launch {
                 delay(5000)
-                throw Exception("Connection timeout")
+                if (!testingEnded) throw Exception("Connection timeout")
             }
-            hostNetworkDataSource.tryToConnect(url)
+            hostNetworkDataSource.tryToConnect(url).also { testingEnded = true}
         } catch (e: Exception) {
             false
         }.also { _isConnectingToHost.update { false } }

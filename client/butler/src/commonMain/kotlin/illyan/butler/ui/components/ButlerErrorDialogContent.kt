@@ -133,7 +133,7 @@ fun ButlerErrorDialogContent(
         )
     },
     title: (@Composable ColumnScope.() -> Unit)? = {
-        Text("An error occurred")
+        Text(errorEvent.exception)
     },
     text: (@Composable ColumnScope.() -> Unit)? = {
         Text(errorEvent.message)

@@ -1,6 +1,9 @@
 package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,6 +54,7 @@ import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.model_list.ModelListScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -77,8 +81,8 @@ class HomeScreen : Screen {
                         style = MaterialTheme.typography.headlineLarge
                     )
 
-                    val isUserSignedIn = state.isUserSignedIn
-                    val isTutorialDone = state.isTutorialDone
+                    val isUserSignedIn by rememberSaveable { derivedStateOf { state.isUserSignedIn } }
+                    val isTutorialDone by rememberSaveable { derivedStateOf { state.isTutorialDone } }
                     var isAuthFlowEnded by rememberSaveable { mutableStateOf(isUserSignedIn) }
                     var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                     LaunchedEffect(isUserSignedIn) {
@@ -86,7 +90,7 @@ class HomeScreen : Screen {
                         isProfileDialogShowing = false
                     }
                     var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
-                    val isDialogOpen by remember {
+                    val isDialogOpen by rememberSaveable {
                         derivedStateOf { isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing }
                     }
                     LaunchedEffect(isTutorialDone) {
@@ -94,13 +98,16 @@ class HomeScreen : Screen {
                         if (isUserSignedIn == true) isAuthFlowEnded = true
                     }
                     val startScreen by remember {
+                        val onBoardingScreen by lazy { OnBoardingScreen() }
+                        val profileDialogScreen by lazy { ProfileDialogScreen() }
+                        val authScreen by lazy { AuthScreen() }
                         derivedStateOf {
                             if (!isDialogOpen) {
                                 null
                             } else {
                                 if (isTutorialDone && isDialogClosedAfterTutorial) {
-                                    if (isAuthFlowEnded == true && isProfileDialogShowing) ProfileDialogScreen() else AuthScreen()
-                                } else OnBoardingScreen()
+                                    if (isAuthFlowEnded == true && isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
+                                } else onBoardingScreen
                             }
                         }
                     }
@@ -114,6 +121,8 @@ class HomeScreen : Screen {
                                 isAuthFlowEnded = true
                             }
                             isProfileDialogShowing = false
+                            // Log isDialogOpen variables
+                            Napier.d("isDialogOpen: $isDialogOpen\nisAuthFlowEnded: $isAuthFlowEnded\nisTutorialDone: $isTutorialDone\nisProfileDialogShowing: $isProfileDialogShowing\nisDialogClosedAfterTutorial: $isDialogClosedAfterTutorial\nisUserSignedIn: $isUserSignedIn\n")
                         },
                         onDialogClosed = {
                             if (isTutorialDone) {
@@ -126,47 +135,51 @@ class HomeScreen : Screen {
                         Text(stringResource(Res.string.profile))
                     }
 
-                    // TODO: navigate to error dialogs when needed
-                    // For each error:
-                    //  - show dialog and navigate to error screen
-                    //  - take error off of the list
-                    //  - repeat until no errors left
-                    val errorScreens by remember {
-                        derivedStateOf {
-                            val errorScreensAndTimestamps = state.serverErrors.map { (id, error) ->
-                                Triple(
-                                    id,
-                                    ArbitraryScreen {
-                                        ButlerErrorDialogContent(
-                                            errorResponse = error,
-                                            onClose = { screenModel.clearError(id) }
-                                        )
-                                    },
-                                    error.timestamp
-                                )
-                            } + state.appErrors.map { error ->
-                                Triple(
-                                    error.id,
-                                    ArbitraryScreen {
-                                        ButlerErrorDialogContent(
-                                            errorEvent = error,
-                                            onClose = { screenModel.clearError(error.id) }
-                                        )
-                                    },
-                                    error.timestamp
-                                )
+                    val numberOfErrors by rememberSaveable { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
+                    val errorScreen by remember { derivedStateOf {
+                        ArbitraryScreen {
+                            val serverErrorContent = @Composable {
+                                state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
+                                    ButlerErrorDialogContent(
+                                        errorResponse = it.second,
+                                        onClose = { screenModel.clearError(it.first) }
+                                    )
+                                }
                             }
-                            errorScreensAndTimestamps.sortedBy { it.third }
+                            val appErrorContent = @Composable {
+                                state.appErrors.maxByOrNull { it.timestamp }?.let {
+                                    ButlerErrorDialogContent(
+                                        errorEvent = it,
+                                        onClose = { screenModel.clearError(it.id) }
+                                    )
+                                }
+                            }
+                            Crossfade(
+                                modifier = Modifier.animateContentSize(spring()),
+                                targetState = state.appErrors + state.serverErrors
+                            ) { _ ->
+                                val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
+                                val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
+                                if (latestAppError != null && latestServerError != null) {
+                                    if (latestAppError.timestamp > latestServerError.second.timestamp) {
+                                        appErrorContent()
+                                    } else {
+                                        serverErrorContent()
+                                    }
+                                } else if (latestAppError != null) {
+                                    appErrorContent()
+                                } else if (latestServerError != null) {
+                                    serverErrorContent()
+                                }
+                            }
                         }
-                    }
+                    } }
                     ButlerDialog(
                         modifier = Modifier.zIndex(1f),
-                        startScreens = errorScreens.map { it.second },
-                        isDialogOpen = errorScreens.isNotEmpty(),
+                        startScreens = listOf(errorScreen),
+                        isDialogOpen = numberOfErrors > 0,
                         isDialogFullscreen = false,
-                        onDismissDialog = {
-                            errorScreens.lastOrNull()?.first?.let { screenModel.clearError(it) }
-                        }
+                        onDismissDialog = screenModel::removeLastError
                     )
                 }
 

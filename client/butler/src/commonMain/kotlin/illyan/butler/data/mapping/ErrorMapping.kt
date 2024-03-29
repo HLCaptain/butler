@@ -6,6 +6,7 @@ import illyan.butler.domain.model.DomainErrorEvent
 fun ErrorEvent.toDomainModel() = DomainErrorEvent(
     id = id,
     platform = platform,
+    exception = exception,
     message = message,
     stackTrace = stackTrace,
     metadata = metadata,
@@ -17,6 +18,7 @@ fun ErrorEvent.toDomainModel() = DomainErrorEvent(
 fun DomainErrorEvent.toLocalModel() = ErrorEvent(
     id = id,
     platform = platform,
+    exception = exception,
     message = message,
     stackTrace = stackTrace,
     metadata = metadata,

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -74,6 +75,24 @@ class HomeScreenModel(
         }
         _appErrors.update { errors ->
             errors.filter { it.id != id }
+        }
+    }
+
+    fun removeLastError() {
+        screenModelScope.launch(dispatcherIO) {
+            val latestServerErrorId = _serverErrors.first().maxByOrNull { it.second.timestamp }?.first
+            val latestAppErrorId = _appErrors.first().maxByOrNull { it.timestamp }?.id
+            if (latestServerErrorId != null && latestAppErrorId != null) {
+                if (latestServerErrorId > latestAppErrorId) {
+                    clearError(latestServerErrorId)
+                } else {
+                    clearError(latestAppErrorId)
+                }
+            } else if (latestServerErrorId != null) {
+                clearError(latestServerErrorId)
+            } else if (latestAppErrorId != null) {
+                clearError(latestAppErrorId)
+            }
         }
     }
 }

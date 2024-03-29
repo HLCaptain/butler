@@ -12,8 +12,8 @@ import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.auth.Auth
@@ -49,11 +49,13 @@ fun provideHttpClient(
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) = HttpClient {
+    expectSuccess = true
     HttpResponseValidator {
         handleResponseExceptionWithRequest { throwable, _ ->
-            val exception = throwable as? ClientRequestException
+            Napier.e(throwable) { "Error in response" }
+            val exception = throwable as? ServerResponseException
             if (exception != null) {
-                errorManager.reportError(exception, exception.response)
+                errorManager.reportError(exception.response)
             } else {
                 errorManager.reportError(throwable)
             }

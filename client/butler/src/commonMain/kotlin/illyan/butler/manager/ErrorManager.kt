@@ -13,8 +13,8 @@ class ErrorManager(
     suspend fun reportError(throwable: Throwable) {
         errorRepository.reportError(throwable)
     }
-    suspend fun reportError(throwable: Throwable, response: HttpResponse) {
-        errorRepository.reportError(throwable, response)
+    suspend fun reportError(response: HttpResponse) {
+        errorRepository.reportError(response)
     }
     fun reportError(throwable: Throwable, coroutineScope: CoroutineScope) {
         coroutineScope.launch {
