@@ -85,7 +85,7 @@ class HomeScreen : Screen {
                     var isAuthFlowEnded by rememberSaveable { mutableStateOf(isUserSignedIn) }
                     var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                     LaunchedEffect(isUserSignedIn) {
-                        if (isUserSignedIn != true) isAuthFlowEnded = false
+                        if (isUserSignedIn == false) isAuthFlowEnded = false
                         isProfileDialogShowing = false
                     }
                     var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
