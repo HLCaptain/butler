@@ -41,6 +41,14 @@ fun Route.chatRoute() {
             call.respond(chatService.createChat(userId, chat))
         }
 
+        webSocket {
+            val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
+            val chats = chatService.getChangedChatsAffectingUser(userId)
+            webSocketServerHandler.sessions.getOrPut(userId) { this }?.let {
+                webSocketServerHandler.tryToCollect(chats, it)
+            }
+        }
+
         route("/{chatId}") {
             get {
                 val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
@@ -49,11 +57,9 @@ fun Route.chatRoute() {
             }
 
             webSocket {
-                val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
                 val chatId = call.parameters["chatId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
                 val messages = chatService.getChangedMessagesByChat(chatId)
-                webSocketServerHandler.sessions[userId] = this
-                webSocketServerHandler.sessions[userId]?.let {
+                webSocketServerHandler.sessions.getOrPut(chatId) { this }?.let {
                     webSocketServerHandler.tryToCollect(messages, it)
                 }
             }
