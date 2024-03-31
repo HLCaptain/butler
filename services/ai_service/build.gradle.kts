@@ -11,17 +11,17 @@ version = "0.0.1"
 val apiVersion = 1
 
 application {
-    mainClass = "illyan.butler.services.identity.ApplicationKt"
+    mainClass = "illyan.butler.services.ai.ApplicationKt"
 }
 
 ktor {
     fatJar {
-        archiveFileName = "butler_identity_service.jar"
+        archiveFileName = "butler_ai_service.jar"
     }
 }
 
 buildConfig {
-    packageName = "illyan.butler.services.identity"
+    packageName = "illyan.butler.services.ai"
     buildConfigField("String", "API_VERSION", "\"$apiVersion\"")
     buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
     buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")
@@ -57,6 +57,19 @@ dependencies {
     implementation(libs.spring.security.crypto)
     implementation(libs.bouncycastle)
     implementation(libs.napier)
+
+    // Ktor Client
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.encoding)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.ktor.client.websockets)
+
+    // OpenAI Client
+    implementation(libs.openai.client)
+    implementation(libs.ktor.client.okhttp)
 
     // Database
     implementation(libs.postgresql)

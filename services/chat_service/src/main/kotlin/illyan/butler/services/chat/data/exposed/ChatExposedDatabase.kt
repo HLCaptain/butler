@@ -2,6 +2,7 @@ package illyan.butler.services.chat.data.exposed
 
 import illyan.butler.services.chat.data.db.ChatDatabase
 import illyan.butler.services.chat.data.model.chat.ChatDto
+import illyan.butler.services.chat.data.model.chat.MessageDto
 import illyan.butler.services.chat.data.schema.ChatMembers
 import illyan.butler.services.chat.data.schema.Chats
 import illyan.butler.services.chat.data.schema.Messages
@@ -117,6 +118,22 @@ class ChatExposedDatabase(
         }
     }
 
+    override suspend fun getChats(userId: String): List<ChatDto> {
+        return newSuspendedTransaction(dispatcher, database) {
+            val userChats = ChatMembers.userId eq userId
+            val chats = Chats.innerJoin(ChatMembers)
+                .selectAll()
+                .where { userChats }
+                .sortedBy { Messages.time }
+            val chatMessages = Messages
+                .selectAll()
+                .where { Messages.chatId inList chats.map { it[Chats.id] } }
+            chats.map { chat ->
+                chat.toChatDto(chatMessages.filter { it[Messages.chatId] == chat[Chats.id] }.map { it.toMessageDto() })
+            }
+        }
+    }
+
     override suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
             val userChats = ChatMembers.userId eq userId
@@ -145,9 +162,10 @@ class ChatExposedDatabase(
 
 
 
-    private fun ResultRow.toChatDto() = ChatDto(
+    private fun ResultRow.toChatDto(messages: List<MessageDto> = emptyList()) = ChatDto(
         id = this[Chats.id].value,
         name = this[Chats.name],
-        members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.userId] }
+        members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.userId] },
+        lastFewMessages = messages
     )
 }

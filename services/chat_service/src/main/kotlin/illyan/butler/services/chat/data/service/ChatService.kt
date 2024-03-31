@@ -50,6 +50,10 @@ class ChatService(
         }
     }
 
+    override suspend fun getChats(userId: String): List<ChatDto> {
+        return chatDatabase.getChats(userId).onEach { chatCache.setChat(it) }
+    }
+
     override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
         return chatDatabase.getChats(userId, limit, offset).onEach { chatCache.setChat(it) }
     }

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: butler-identity-service-service
+  name: butler-ai-service-service
 spec:
   selector:
-    app: butler-identity-service
+    app: butler-ai-service
   ports:
     - protocol: TCP
       port: 8080

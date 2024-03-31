@@ -141,15 +141,15 @@ class MessageExposedDatabase(
             }
         }
     }
-
-    private fun ResultRow.toMessageDto() = MessageDto(
-        id = this[Messages.id].value,
-        senderId = this[Messages.senderId],
-        message = this[Messages.message],
-        time = this[Messages.time],
-        contentUrls = MessageContentUrls
-            .selectAll()
-            .where(MessageContentUrls.messageId eq this[Messages.id])
-            .map { it[MessageContentUrls.urlId].value }
-    )
 }
+
+fun ResultRow.toMessageDto() = MessageDto(
+    id = this[Messages.id].value,
+    senderId = this[Messages.senderId],
+    message = this[Messages.message],
+    time = this[Messages.time],
+    contentUrls = MessageContentUrls
+        .selectAll()
+        .where(MessageContentUrls.messageId eq this[Messages.id])
+        .map { it[MessageContentUrls.urlId].value }
+)
