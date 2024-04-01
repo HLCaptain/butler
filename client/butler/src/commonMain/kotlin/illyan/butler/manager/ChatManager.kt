@@ -4,7 +4,6 @@ import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.repository.ChatRepository
 import illyan.butler.repository.MessageRepository
-import illyan.butler.util.log.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNot
@@ -40,16 +39,13 @@ class ChatManager(
     ) = messageRepository.getChatFlow(uuid, limit, timestamp).map { it.first }
 
     suspend fun startNewChat(modelUUID: String): String {
-        val chatUUID = randomUUID()
-        authManager.signedInUserUUID.first()?.let { userUUID ->
+        return authManager.signedInUserUUID.first()?.let { userUUID ->
             chatRepository.upsert(
                 DomainChat(
-                    id = chatUUID,
                     members = listOf(userUUID, modelUUID)
                 )
             )
-        }
-        return chatUUID
+        } ?: throw IllegalArgumentException("User not signed in")
     }
 
     suspend fun nameChat(chatUUID: String, name: String) {
@@ -62,7 +58,6 @@ class ChatManager(
         authManager.signedInUserUUID.first()?.let { userUUID ->
             messageRepository.upsert(
                 DomainMessage(
-                    id = randomUUID(),
                     chatId = chatUUID,
                     role = DomainMessage.USER_ROLE,
                     message = message,

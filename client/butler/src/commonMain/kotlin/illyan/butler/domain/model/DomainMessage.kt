@@ -1,7 +1,7 @@
 package illyan.butler.domain.model
 
 data class DomainMessage(
-    val id: String,
+    val id: String? = null,
     val senderUUID: String,
     val role: String,
     val message: String,

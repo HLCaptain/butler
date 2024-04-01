@@ -1,5 +1,8 @@
 package illyan.butler.repository
 
+import illyan.butler.data.mapping.toDomainModel
+import illyan.butler.data.mapping.toNetworkModel
+import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.store.ChatMutableStoreBuilder
 import illyan.butler.data.store.UserChatKey
 import illyan.butler.data.store.UserChatMutableStoreBuilder
@@ -22,6 +25,7 @@ import org.mobilenativefoundation.store.store5.StoreWriteRequest
 class ChatRepository(
     chatMutableStoreBuilder: ChatMutableStoreBuilder,
     userChatMutableStoreBuilder: UserChatMutableStoreBuilder,
+    private val chatNetworkDataSource: ChatNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
 ) {
     @OptIn(ExperimentalStoreApi::class)
@@ -70,12 +74,16 @@ class ChatRepository(
     }
 
     @OptIn(ExperimentalStoreApi::class)
-    suspend fun upsert(chat: DomainChat) {
+    suspend fun upsert(chat: DomainChat): String {
+        val newChat = if (chat.id == null) {
+            chatNetworkDataSource.upsert(chat.toNetworkModel()).toDomainModel()
+        } else chat
         chatMutableStore.write(
             StoreWriteRequest.of(
-                key = chat.id,
-                value = chat,
+                key = newChat.id!!,
+                value = newChat,
             )
         )
+        return newChat.id
     }
 }

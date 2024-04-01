@@ -3,7 +3,6 @@ package illyan.butler.data.mapping
 import illyan.butler.data.network.model.chat.ChatDto
 import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
-import illyan.butler.util.log.randomUUID
 
 fun Chat.toDomainModel() = DomainChat(
     id = id,
@@ -18,7 +17,7 @@ fun DomainChat.toNetworkModel() = ChatDto(
 )
 
 fun ChatDto.toLocalModel() = Chat(
-    id = id ?: randomUUID(),
+    id = id!!,
     name = name,
     members = members
 )

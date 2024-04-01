@@ -69,6 +69,12 @@ fun Route.chatRoute() {
                     call.respond(chatService.getChat(userId, chatId))
                 }
 
+                put {
+                    val userId = call.parameters["userId"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val chat = call.receive<ChatDto>()
+                    call.respond(chatService.editChat(userId, chat))
+                }
+
                 webSocket {
                     val chatId = call.parameters["chatId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
                     val messages = chatService.getChangedMessagesByChat(chatId)

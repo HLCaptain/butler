@@ -77,7 +77,7 @@ class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
                             items(chats) { chat ->
                                 ChatCard(
                                     chat = chat,
-                                    openChat = { openChat(chat.id) }
+                                    openChat = { openChat(chat.id!!) }
                                 )
                             }
                         }
@@ -109,7 +109,7 @@ class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = chat.id.take(16),
+                        text = chat.id!!.take(16),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
