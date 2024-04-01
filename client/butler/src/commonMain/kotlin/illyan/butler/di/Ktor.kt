@@ -5,6 +5,7 @@ import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.config.BuildConfig
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.TokenInfo
+import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.isDebugBuild
 import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.HostRepository
@@ -24,6 +25,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -58,6 +60,29 @@ fun provideHttpClient(
                 errorManager.reportError(exception.response)
             } else {
                 errorManager.reportError(throwable)
+            }
+        }
+    }
+
+    install(Auth) {
+        bearer {
+            loadTokens {
+                val accessToken = settings.getString(UserRepository.KEY_ACCESS_TOKEN, "")
+                val refreshToken = settings.getString(UserRepository.KEY_REFRESH_TOKEN, "")
+                if (accessToken.isEmpty() || refreshToken.isEmpty()) {
+                    Napier.d { "No access or refresh token found in settings" }
+                    return@loadTokens null
+                }
+                BearerTokens(accessToken, refreshToken)
+            }
+            refreshTokens {
+                val refreshTokenInfo = client.post("/refresh-access-token").body<UserTokensResponse>()
+                val newToken = BearerTokens(refreshTokenInfo.accessToken, refreshTokenInfo.refreshToken)
+                settings.putString(UserRepository.KEY_ACCESS_TOKEN, refreshTokenInfo.accessToken)
+                settings.putString(UserRepository.KEY_REFRESH_TOKEN, refreshTokenInfo.refreshToken)
+                settings.putLong(UserRepository.KEY_ACCESS_TOKEN_EXPIRATION, refreshTokenInfo.accessTokenExpirationMillis)
+                settings.putLong(UserRepository.KEY_REFRESH_TOKEN_EXPIRATION, refreshTokenInfo.refreshTokenExpirationMillis)
+                newToken
             }
         }
     }
@@ -117,30 +142,6 @@ fun provideHttpClient(
     install(ContentNegotiation) {
         json()
         protobuf()
-    }
-
-    install(Auth) {
-        bearer {
-            loadTokens {
-                val accessToken = settings.getStringOrNull(UserRepository.KEY_ACCESS_TOKEN) ?: ""
-                val refreshToken = settings.getStringOrNull(UserRepository.KEY_REFRESH_TOKEN) ?: ""
-                BearerTokens(accessToken, refreshToken)
-            }
-            refreshTokens {
-                val refreshTokenInfo: TokenInfo = client.submitForm(
-                    url = "https://accounts.google.com/o/oauth2/token",
-                    formParameters = parameters {
-                        append("grant_type", "refresh_token")
-                        append("client_id", BuildConfig.GOOGLE_CLIENT_ID)
-                        append("refresh_token", oldTokens?.refreshToken ?: "")
-                    }
-                ) { markAsRefreshTokenRequest() }.body()
-                val newToken = BearerTokens(refreshTokenInfo.accessToken, oldTokens?.refreshToken!!)
-                settings.putString(UserRepository.KEY_ACCESS_TOKEN, refreshTokenInfo.accessToken)
-                settings.putString(UserRepository.KEY_REFRESH_TOKEN, oldTokens?.refreshToken!!)
-                newToken
-            }
-        }
     }
 
     install(ContentEncoding)

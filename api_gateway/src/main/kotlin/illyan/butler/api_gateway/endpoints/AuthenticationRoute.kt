@@ -8,6 +8,7 @@ import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
 import illyan.butler.api_gateway.utils.Claim
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
@@ -32,20 +33,22 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         call.respond(HttpStatusCode.Accepted, identityService.loginUser(email, password, tokenConfiguration))
     }
 
-    webSocket("/me") {
-        val tokenClaim = call.principal<JWTPrincipal>()
-        val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
-        val user = identityService.getUserChangesById(id)
-        webSocketServerHandler.sessions[id] = this
-        webSocketServerHandler.sessions[id]?.let {
-            webSocketServerHandler.tryToCollect(user, it)
+    authenticate("auth-jwt") {
+        webSocket("/me") {
+            val tokenClaim = call.principal<JWTPrincipal>()
+            val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
+            val user = identityService.getUserChangesById(id)
+            webSocketServerHandler.sessions[id] = this
+            webSocketServerHandler.sessions[id]?.let {
+                webSocketServerHandler.tryToCollect(user, it)
+            }
         }
-    }
 
-    post("/refresh-access-token") {
-        val payload = call.principal<JWTPrincipal>()?.payload
-        val userId = payload?.getClaim(Claim.USER_ID).toString()
-        val token = identityService.generateUserTokens(userId, tokenConfiguration)
-        call.respond(HttpStatusCode.Created, token)
+        post("/refresh-access-token") {
+            val payload = call.principal<JWTPrincipal>()?.payload
+            val userId = payload?.getClaim(Claim.USER_ID).toString()
+            val token = identityService.generateUserTokens(userId, tokenConfiguration)
+            call.respond(HttpStatusCode.Created, token)
+        }
     }
 }
