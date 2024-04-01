@@ -2,6 +2,11 @@ package illyan.butler.ui.new_chat
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import illyan.butler.di.KoinNames
+import illyan.butler.domain.model.DomainModel
+import illyan.butler.manager.ChatManager
+import illyan.butler.manager.ModelManager
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -9,35 +14,46 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Named
 
 @Factory
 class NewChatScreenModel(
-    // Inject your dependencies
+    private val modelManager: ModelManager,
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
+    private val chatManager: ChatManager
 ) : ScreenModel {
-    private val dataFlow1 = MutableStateFlow(false)
-    private val dataFlow2 = MutableStateFlow(true)
+    private val availableModels = MutableStateFlow(emptyList<DomainModel>())
+    private val creatingNewChat = MutableStateFlow(false)
+    private val newChatId = MutableStateFlow<String?>(null)
+
+    init {
+        screenModelScope.launch(dispatcherIO) {
+            availableModels.update { modelManager.getAvailableModels() }
+        }
+    }
 
     val state = combine(
-        dataFlow1,
-        dataFlow2
-    ) { flow1, flow2 ->
+        availableModels,
+        creatingNewChat,
+        newChatId
+    ) { models, creating, id ->
         NewChatState(
-            dataFlow1 = flow1,
-            dataFlow2 = flow2
+            availableModels = models,
+            creatingChat = creating,
+            newChatId = id
         )
     }.stateIn(
         scope = screenModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = NewChatState(
-            dataFlow1 = dataFlow1.value,
-            dataFlow2 = dataFlow2.value
-        )
+        initialValue = NewChatState()
     )
 
-    fun setDataFlow1(state: Boolean) {
-        // Use IO dispatcher if Voyager crashes unexpectedly
-        screenModelScope.launch {
-            dataFlow1.update { state }
+    fun createChatWithModel(modelId: String) {
+        screenModelScope.launch(dispatcherIO) {
+            creatingNewChat.update { true }
+            val id = chatManager.startNewChat(modelId)
+            creatingNewChat.update { false }
+            newChatId.update { id }
         }
     }
 }

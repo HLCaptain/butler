@@ -1,6 +1,6 @@
 package illyan.butler.data.network.datasource
 
-import illyan.butler.data.network.model.ChatDto
+import illyan.butler.data.network.model.chat.ChatDto
 import kotlinx.coroutines.flow.Flow
 
 interface ChatNetworkDataSource {

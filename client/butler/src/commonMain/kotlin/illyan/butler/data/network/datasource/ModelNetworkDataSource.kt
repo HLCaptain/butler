@@ -1,9 +1,9 @@
 package illyan.butler.data.network.datasource
 
-import illyan.butler.data.network.model.ModelDto
+import illyan.butler.data.network.model.ai.ModelDto
 
 interface ModelNetworkDataSource {
-    suspend fun fetch(uuid: String): ModelDto
+    suspend fun fetch(modelId: String): ModelDto
 
     /**
      * Fetches all available models.

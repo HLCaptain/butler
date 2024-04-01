@@ -237,8 +237,8 @@ class HomeScreen : Screen {
 @Composable
 fun NavBar(
     navigator: Navigator,
-    getNewChatScreen: () -> Screen = { NewChatScreen() },
     getChatScreen: () -> Screen = { ChatScreen() },
+    getNewChatScreen: () -> Screen = { NewChatScreen { navigator.replaceAll(getChatScreen()) } },
     navigatorEnd: @Composable () -> Unit = {}
 ) {
     Row(

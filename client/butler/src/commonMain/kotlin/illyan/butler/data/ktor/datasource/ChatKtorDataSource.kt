@@ -1,7 +1,7 @@
 package illyan.butler.data.ktor.datasource
 
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
-import illyan.butler.data.network.model.ChatDto
+import illyan.butler.data.network.model.chat.ChatDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

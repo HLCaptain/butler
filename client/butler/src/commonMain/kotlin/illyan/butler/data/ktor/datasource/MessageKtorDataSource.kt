@@ -1,7 +1,7 @@
 package illyan.butler.data.ktor.datasource
 
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
-import illyan.butler.data.network.model.MessageDto
+import illyan.butler.data.network.model.chat.MessageDto
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single

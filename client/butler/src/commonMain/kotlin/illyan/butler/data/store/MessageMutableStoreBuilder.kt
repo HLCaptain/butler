@@ -4,7 +4,7 @@ import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
-import illyan.butler.data.network.model.MessageDto
+import illyan.butler.data.network.model.chat.MessageDto
 import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainChat

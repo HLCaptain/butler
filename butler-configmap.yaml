@@ -5,6 +5,7 @@ metadata:
 data:
   IDENTITY_API_URL: "http://butler-identity-service-service:8080"
   CHAT_API_URL: "http://butler-chat-service-service:8080"
+  AI_API_URL: "http://butler-ai-service-service:8080"
   LOCAL_AI_API_URL: "http://local-ai:8080"
   REDIS_URL: "redis://redis:6379"
   REDIS_USER: "redis"

@@ -1,4 +1,4 @@
-package illyan.butler.data.network.model
+package illyan.butler.data.network.model.chat
 
 import kotlinx.serialization.Serializable
 

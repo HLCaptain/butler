@@ -2,6 +2,7 @@ package illyan.butler.services.ai.plugins
 
 import illyan.butler.services.ai.BuildConfig
 import illyan.butler.services.ai.endpoints.chatRoute
+import illyan.butler.services.ai.endpoints.modelRoute
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -20,6 +21,7 @@ fun Application.configureRouting() {
     }
     routing {
         chatRoute()
+        modelRoute()
         get {
             call.respond("Hello" to "World!")
         }

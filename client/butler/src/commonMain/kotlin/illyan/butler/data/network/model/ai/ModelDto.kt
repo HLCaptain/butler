@@ -1,6 +1,9 @@
-package illyan.butler.domain.model
+package illyan.butler.data.network.model.ai
 
-data class DomainModel(
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class ModelDto(
     val name: String?,
     val id: String,
     val description: String?,

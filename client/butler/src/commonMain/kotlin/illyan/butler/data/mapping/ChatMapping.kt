@@ -1,6 +1,6 @@
 package illyan.butler.data.mapping
 
-import illyan.butler.data.network.model.ChatDto
+import illyan.butler.data.network.model.chat.ChatDto
 import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.util.log.randomUUID
