@@ -28,14 +28,14 @@ fun Application.configureMonitoring() {
         filter { call -> call.request.path().startsWith("/") }
         callIdMdc("call-id")
     }
-    install(DropwizardMetrics) {
-        Slf4jReporter.forRegistry(registry)
-            .outputTo(this@configureMonitoring.log)
-            .convertRatesTo(TimeUnit.SECONDS)
-            .convertDurationsTo(TimeUnit.MILLISECONDS)
-            .build()
-            .start(10, TimeUnit.SECONDS)
-    }
+//    install(DropwizardMetrics) {
+//        Slf4jReporter.forRegistry(registry)
+//            .outputTo(this@configureMonitoring.log)
+//            .convertRatesTo(TimeUnit.SECONDS)
+//            .convertDurationsTo(TimeUnit.MILLISECONDS)
+//            .build()
+//            .start(10, TimeUnit.SECONDS)
+//    }
     install(CallId) {
         header(HttpHeaders.XRequestId)
         verify { callId: String ->
@@ -44,10 +44,10 @@ fun Application.configureMonitoring() {
     }
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
-    install(MicrometerMetrics) {
-        registry = appMicrometerRegistry
-        // ...
-    }
+//    install(MicrometerMetrics) {
+//        registry = appMicrometerRegistry
+//        // ...
+//    }
     routing {
         get("/metrics-micrometer") {
             call.respond(appMicrometerRegistry.scrape())

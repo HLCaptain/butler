@@ -7,6 +7,6 @@ RUN gradle buildFatJar --no-daemon
 FROM eclipse-temurin:21
 
 RUN mkdir /app
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/butler_identity_service.jar
+COPY --from=build /home/gradle/src/build/libs/*.jar /app/butler_ai_service.jar
 
 ENTRYPOINT ["java", "-jar", "/app/butler_ai_service.jar"]

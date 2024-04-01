@@ -2,7 +2,6 @@ package illyan.butler.services.ai.data.service
 
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.client.OpenAI
-import illyan.butler.services.ai.AppConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +14,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class ModelHealthService(
-    private val openAI: OpenAI,
+    private val openAIClients: List<OpenAI>,
     coroutineScope: CoroutineScope
 ) {
     private val _models = MutableStateFlow<List<Model>?>(null)
@@ -24,11 +23,11 @@ class ModelHealthService(
     init {
         coroutineScope.launch {
             combine(
-                AppConfig.Api.OPEN_AI_API_URLS.map {
+                openAIClients.map { client ->
                     // TODO: open websocket to each URL and get model ids and health status
                     flow<List<Model>> {
                         while (true) {
-                            emit(openAI.models())
+                            emit(client.models())
                             kotlinx.coroutines.delay(1000L)
                         }
                     }

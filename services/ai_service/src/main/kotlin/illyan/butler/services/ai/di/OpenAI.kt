@@ -22,3 +22,17 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
         )
     )
 }
+
+@Single
+fun provideOpenAIClients(client: HttpClient): List<OpenAI> {
+    return AppConfig.Api.OPEN_AI_API_URLS.map {
+        OpenAI(
+            config = OpenAIConfig(
+                token = AppConfig.Api.OPEN_AI_API_KEY,
+                logging = LoggingConfig(LogLevel.All, Logger.Default),
+                engine = client.engine,
+                host = OpenAIHost(baseUrl = it)
+            )
+        )
+    }
+}

@@ -19,7 +19,7 @@ class LlmService(
     private val modelHealthService: ModelHealthService,
     private val chatService: ChatService,
     private val client: HttpClient,
-    private val openAI: OpenAI,
+    private val openAI: OpenAI, // Only the Local AI OpenAI client is used
     private val coroutineScope: CoroutineScope
 ) {
     // All messages per model
