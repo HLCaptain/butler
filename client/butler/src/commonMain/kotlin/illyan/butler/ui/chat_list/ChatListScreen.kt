@@ -20,26 +20,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
-import illyan.butler.ui.chat_detail.ChatDetailScreen
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class ChatListScreen : Screen {
+class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
     @Composable
     override fun Content() {
         val screenModel = getScreenModel<ChatListScreenModel>()
         val chats by screenModel.userChats.collectAsState()
-        val navigator = LocalNavigator.currentOrThrow
         ChatList(
             chats = chats,
-            openChat = { navigator.push(ChatDetailScreen(it)) }
+            openChat = { selectChat(it) }
         )
     }
 

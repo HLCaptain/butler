@@ -4,11 +4,11 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +28,7 @@ import illyan.butler.generated.resources.sign_up
 import illyan.butler.generated.resources.username
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
+import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
@@ -48,6 +49,9 @@ class SignUpScreen(
         // TODO: implement email/password authentication
         // Go back when user is authenticated
         // Login button should navigate to LoginScreen. Go back if it is already on the stack.
+        LaunchedEffect(state.isSignedIn) {
+            if (state.isSignedIn == true) signedUp()
+        }
 
         SignUpDialogContent(
             state = state,
@@ -74,6 +78,7 @@ fun SignUpDialogContent(
     ) { userSignedIn ->
         if (userSignedIn) {
             ButlerDialogContent(
+                modifier = Modifier.smallDialogWidth(),
                 text = { LoadingIndicator() },
                 textPaddingValues = PaddingValues()
             )
@@ -82,6 +87,7 @@ fun SignUpDialogContent(
             var email by rememberSaveable { mutableStateOf(initialEmail) }
             var password by rememberSaveable { mutableStateOf(initialPassword) }
             ButlerDialogContent(
+                modifier = Modifier.smallDialogWidth(),
                 title = {
                     Text(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -96,7 +102,7 @@ fun SignUpDialogContent(
                     )
                 },
                 buttons = {
-                    SignUpButtons(signUp = { signUp(username, email, password) })
+                    SignUpButtons(signUp = { signUp(email, password, username) })
                 },
                 containerColor = Color.Transparent,
             )
@@ -115,7 +121,6 @@ fun SignUpScreen(
     Column(modifier = modifier) {
         var username by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
             value = username,
             enabled = true,
             onValueChange = {
@@ -126,7 +131,6 @@ fun SignUpScreen(
         )
         var email by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
             value = email,
             enabled = true,
             onValueChange = {
@@ -137,7 +141,6 @@ fun SignUpScreen(
         )
         var password by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
             value = password,
             enabled = true,
             onValueChange = {
@@ -156,7 +159,7 @@ fun SignUpButtons(
     signUp: (() -> Unit)
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
