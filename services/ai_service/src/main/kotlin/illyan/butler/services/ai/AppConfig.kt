@@ -34,7 +34,7 @@ data object AppConfig {
         val SERIALIZATION_FORMAT = SERIALIZATION_FORMATS.first()
     }
     data object Api {
-        val LOCAL_AI_OPEN_AI_API_URL = System.getenv("OPEN_AI_API_URL") ?: "http://localai:8080"
+        val LOCAL_AI_OPEN_AI_API_URL = System.getenv("LOCAL_AI_API_URL") ?: "http://localai:8080"
         // val OTHER_AI_PROVIDER_OPEN_AI_API_URL...
         val OPEN_AI_API_KEY = System.getenv("OPEN_AI_API_KEY") ?: "sk-1234567890abcdef1234567890abcdef"
         val CHAT_API_URL = System.getenv("CHAT_API_URL") ?: "http://localhost:8084"

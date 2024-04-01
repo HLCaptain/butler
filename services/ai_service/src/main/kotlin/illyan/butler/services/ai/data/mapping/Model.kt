@@ -1,11 +1,11 @@
 package illyan.butler.services.ai.data.mapping
 
-import com.aallam.openai.api.model.Model
 import illyan.butler.services.ai.data.model.ai.ModelDto
+import illyan.butler.services.ai.data.model.openai.Model
 
 fun Model.toModelDto() = ModelDto(
-    name = id.id,
-    id = id.id,
+    name = null,
+    id = id,
     description = null,
     greetingMessage = null,
     author = ownedBy,

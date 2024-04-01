@@ -33,11 +33,11 @@ class LlmService(
 
                 // If model is not in chatsByModels, add it and get all chats for the model and get all messages for each chat and receive messages for model
                 models.forEach { model ->
-                    if (!chatsByModels.containsKey(model.id.id)) {
-                        val chats = chatService.getChats(model.id.id)
-                        chatsByModels[model.id.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
+                    if (!chatsByModels.containsKey(model.id)) {
+                        val chats = chatService.getChats(model.id)
+                        chatsByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
                         coroutineScope.launch {
-                            chatService.receiveMessages(model.id.id).collectLatest { messages ->
+                            chatService.receiveMessages(model.id).collectLatest { messages ->
                                 val messagesPerChat = messages.filter { it.chatId != null }.groupBy { it.chatId }
                                 messagesPerChat.forEach { (chatId, chatMessages) ->
                                     chatsByModels[chatId!!] = chatsByModels[chatId]!! + chatMessages

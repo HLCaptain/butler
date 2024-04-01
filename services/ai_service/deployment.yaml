@@ -25,3 +25,14 @@ spec:
             limits:
               cpu: "1"
               memory: "500Mi"
+          env:
+            - name: LOCAL_AI_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: LOCAL_AI_API_URL
+            - name: CHAT_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: CHAT_API_URL

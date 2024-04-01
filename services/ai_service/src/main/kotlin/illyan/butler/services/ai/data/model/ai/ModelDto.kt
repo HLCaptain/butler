@@ -8,5 +8,5 @@ data class ModelDto(
     val id: String,
     val description: String?,
     val greetingMessage: String?,
-    val author: String
+    val author: String?
 )

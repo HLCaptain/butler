@@ -1,5 +1,7 @@
 package illyan.butler.services.ai.plugins
 
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -53,4 +55,5 @@ fun Application.configureMonitoring() {
         swaggerUI(path = "openapi")
         openAPI(path = "openapi")
     }
+    Napier.base(DebugAntilog())
 }
