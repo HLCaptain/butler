@@ -22,7 +22,7 @@ import org.redisson.api.RedissonClient
 class MessageRedissonCache(
     private val client: RedissonClient,
     private val dispatcher: CoroutineDispatcher
-): MessageCache {
+) : MessageCache {
     override suspend fun getMessage(messageId: String): MessageDto? {
         return withContext(dispatcher) {
             client.getBucket<MessageDto?>("message:$messageId").async.get()

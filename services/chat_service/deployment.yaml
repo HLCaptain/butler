@@ -26,16 +26,6 @@ spec:
               cpu: "1"
               memory: "500Mi"
           env:
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: butler-secret
-                  key: JWT_SECRET
-            - name: IDENTITY_API_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: butler-configmap
-                  key: IDENTITY_API_URL
             - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:

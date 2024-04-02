@@ -5,8 +5,10 @@ import illyan.butler.services.chat.data.cache.MessageCache
 import illyan.butler.services.chat.data.datasource.ChatDataSource
 import illyan.butler.services.chat.data.datasource.MessageDataSource
 import illyan.butler.services.chat.data.db.ChatDatabase
+import illyan.butler.services.chat.data.db.MessageDatabase
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single
 
@@ -25,8 +27,8 @@ class ChatService(
     private val chatCache: ChatCache,
     private val chatDatabase: ChatDatabase,
     private val messageCache: MessageCache,
-    private val messageDatabase: MessageDataSource
-): ChatDataSource, MessageDataSource {
+    private val messageDatabase: MessageDatabase
+) : ChatDataSource, MessageDataSource {
     override suspend fun getChat(userId: String, chatId: String): ChatDto {
         return chatCache.getChat(chatId) ?: chatDatabase.getChat(userId, chatId).also {
             chatCache.setChat(it)
@@ -34,6 +36,7 @@ class ChatService(
     }
 
     override suspend fun createChat(userId: String, chat: ChatDto): ChatDto {
+        Napier.d("User $userId creating chat $chat")
         return chatDatabase.createChat(userId, chat).also {
             chatCache.setChat(it)
         }

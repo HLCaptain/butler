@@ -6,18 +6,21 @@ import illyan.butler.domain.model.DomainChat
 
 fun Chat.toDomainModel() = DomainChat(
     id = id,
+    created = created,
     name = name,
     members = members
 )
 
 fun DomainChat.toNetworkModel() = ChatDto(
     id = id,
+    created = created,
     name = name,
     members = members
 )
 
 fun ChatDto.toLocalModel() = Chat(
     id = id!!,
+    created = created!!,
     name = name,
     members = members
 )

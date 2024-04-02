@@ -36,7 +36,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
     authenticate("auth-jwt") {
         webSocket("/me") {
             val tokenClaim = call.principal<JWTPrincipal>()
-            val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString()
+            val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
             val user = identityService.getUserChangesById(id)
             webSocketServerHandler.sessions[id] = this
             webSocketServerHandler.sessions[id]?.let {
@@ -46,7 +46,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
 
         post("/refresh-access-token") {
             val payload = call.principal<JWTPrincipal>()?.payload
-            val userId = payload?.getClaim(Claim.USER_ID).toString()
+            val userId = payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
             val token = identityService.generateUserTokens(userId, tokenConfiguration)
             call.respond(HttpStatusCode.Created, token)
         }

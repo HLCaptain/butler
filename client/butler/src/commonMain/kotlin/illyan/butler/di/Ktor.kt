@@ -67,6 +67,7 @@ fun provideHttpClient(
     install(Auth) {
         bearer {
             loadTokens {
+                // FIXME: react to logouts and new sign ins
                 val accessToken = settings.getString(UserRepository.KEY_ACCESS_TOKEN, "")
                 val refreshToken = settings.getString(UserRepository.KEY_REFRESH_TOKEN, "")
                 if (accessToken.isEmpty() || refreshToken.isEmpty()) {

@@ -2,6 +2,7 @@ package illyan.butler.services.chat.data.redisson
 
 import illyan.butler.services.chat.data.cache.ChatCache
 import illyan.butler.services.chat.data.model.chat.ChatDto
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -85,6 +86,7 @@ class ChatRedissonCache(
     }.flowOn(dispatcher)
 
     override suspend fun setChat(chat: ChatDto): ChatDto {
+        Napier.v { "Setting chat in cache: $chat" }
         return withContext(dispatcher) {
             client.createBatch().let { batch ->
                 val oldChat = batch.getBucket<ChatDto>("chat:${chat.id}").async.get()

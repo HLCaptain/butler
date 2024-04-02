@@ -31,7 +31,7 @@ fun Route.chatRoute() {
     authenticate("auth-jwt") {
         route("/chats") {
             get {
-                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                 val limit = call.parameters["limit"]?.toInt() ?: 10
                 val timestamp = call.parameters["timestamp"]?.toLong() ?: System.currentTimeMillis()
                 val result = chatService.getPreviousChats(userId, limit, timestamp)
@@ -39,14 +39,14 @@ fun Route.chatRoute() {
             }
 
             post {
-                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                 val chat = call.receive<ChatDto>()
                 val result = chatService.createChat(userId, chat)
                 call.respond(HttpStatusCode.Created, result)
             }
 
             webSocket {
-                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                 val chats = chatService.receiveChats(userId)
                 webSocketServerHandler.sessions[userId] = this
                 webSocketServerHandler.sessions[userId]?.let {
@@ -56,14 +56,14 @@ fun Route.chatRoute() {
 
             route("/{chatId}") {
                 get {
-                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val result = chatService.getChat(userId, chatId)
                     call.respond(HttpStatusCode.OK, result)
                 }
 
                 put {
-                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val chat = call.receive<ChatDto>()
                     val result = chatService.editChat(userId, chatId, chat)
@@ -71,14 +71,14 @@ fun Route.chatRoute() {
                 }
 
                 delete {
-                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val result = chatService.deleteChat(userId, chatId)
                     call.respond(HttpStatusCode.OK, result)
                 }
 
                 webSocket {
-                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val chatMessages = chatService.receiveMessages(userId, chatId)
                     webSocketServerHandler.sessions[chatId] = this
@@ -89,7 +89,7 @@ fun Route.chatRoute() {
 
                 route("/messages") {
                     get {
-                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                         val chatId = call.parameters["chatId"]?.trim().orEmpty()
                         val limit = call.parameters["limit"]?.toInt() ?: 10
                         val timestamp = call.parameters["timestamp"]?.toLong() ?: System.currentTimeMillis()
@@ -98,7 +98,7 @@ fun Route.chatRoute() {
                     }
 
                     post {
-                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                         val message = call.receive<MessageDto>()
                         val result = chatService.sendMessage(userId, message)
                         call.respond(HttpStatusCode.Created, result)
@@ -106,7 +106,7 @@ fun Route.chatRoute() {
 
                     route("/{messageId}") {
                         put {
-                            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                             val message = call.receive<MessageDto>()
                             val messageId = call.parameters["messageId"]?.trim().orEmpty()
                             val result = chatService.editMessage(userId, messageId, message)
@@ -114,7 +114,7 @@ fun Route.chatRoute() {
                         }
 
                         delete {
-                            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString()
+                            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                             val chatId = call.parameters["chatId"]?.trim().orEmpty()
                             val messageId = call.parameters["messageId"]?.trim().orEmpty()
                             val result = chatService.deleteMessage(userId, chatId, messageId)

@@ -9,6 +9,7 @@ import illyan.butler.api_gateway.data.utils.getLastWeekDate
 import illyan.butler.api_gateway.data.utils.tryToExecuteWebSocket
 import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
@@ -26,10 +27,10 @@ class ChatService(private val client: HttpClient) {
     suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages/$messageId").bodyOrThrow<Boolean>()
 
     fun receiveChats(userId: String) = client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/$userId/chats")
-    suspend fun getChat(userId: String, chatId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").bodyOrThrow<ChatDto>()
-    suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats") { setBody(chat) }.bodyOrThrow<ChatDto>()
-    suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") { setBody(chat) }.bodyOrThrow<ChatDto>()
-    suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").bodyOrThrow<Boolean>()
+    suspend fun getChat(userId: String, chatId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").body<ChatDto>()
+    suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats") { setBody(chat) }.body<ChatDto>()
+    suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") { setBody(chat) }.body<ChatDto>()
+    suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").body<Boolean>()
 
     /**
      * @param fromDate epoch milli

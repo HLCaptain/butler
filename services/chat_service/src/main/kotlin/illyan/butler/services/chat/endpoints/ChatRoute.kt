@@ -4,6 +4,7 @@ import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
 import illyan.butler.services.chat.data.service.ChatService
 import illyan.butler.services.chat.endpoints.utils.WebSocketServerHandler
+import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
@@ -15,9 +16,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.websocket.webSocket
-import kotlinx.datetime.Clock
 import org.koin.ktor.ext.inject
-import kotlin.time.Duration.Companion.days
 
 fun Route.chatRoute() {
     val chatService: ChatService by inject()
@@ -51,7 +50,8 @@ fun Route.chatRoute() {
             post {
                 val userId = call.parameters["userId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
                 val chat = call.receive<ChatDto>()
-                call.respond(chatService.createChat(userId, chat))
+                Napier.v { "Received by user $userId a new chat instance $chat" }
+                call.respond(HttpStatusCode.OK, chatService.createChat(userId, chat))
             }
 
             webSocket {
