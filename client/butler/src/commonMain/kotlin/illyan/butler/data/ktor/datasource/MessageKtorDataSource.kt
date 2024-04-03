@@ -23,7 +23,7 @@ import org.koin.core.annotation.Single
 class MessageKtorDataSource(
     private val client: HttpClient
 ) : MessageNetworkDataSource {
-    override fun fetchNewMessages(): Flow<MessageDto> {
+    override fun fetchNewMessages(): Flow<List<MessageDto>> {
         return flow {
             client.webSocket("/messages") { // UserID is sent with JWT
                 incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }

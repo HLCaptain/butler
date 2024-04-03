@@ -4,7 +4,7 @@ import illyan.butler.data.network.model.chat.MessageDto
 import kotlinx.coroutines.flow.Flow
 
 interface MessageNetworkDataSource {
-    fun fetchNewMessages(): Flow<MessageDto>
+    fun fetchNewMessages(): Flow<List<MessageDto>>
 
     /**
      * Fetch messages from a chat.

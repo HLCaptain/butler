@@ -20,7 +20,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class ChatService(private val client: HttpClient) {
-    fun receiveMessages(userId: String, chatId: String) = client.tryToExecuteWebSocket<MessageDto>("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId")
+    fun receiveMessages(userId: String, chatId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId")
     suspend fun sendMessage(userId: String, message: MessageDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>()
     suspend fun editMessage(userId: String, messageId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages/$messageId") { setBody(message) }.body<MessageDto>()
     suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages/$messageId").body<Boolean>()

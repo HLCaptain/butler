@@ -6,6 +6,7 @@ import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import illyan.butler.services.ai.data.model.chat.MessageDto
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -25,7 +26,8 @@ class LlmService(
     // All messages per model
     // Messages can be grouped and sorted by chatId
     private val chatsByModels = hashMapOf<String, List<MessageDto>>()
-    init {
+
+    fun loadModels() {
         coroutineScope.launch {
             modelHealthService.healthyModels.filterNotNull().collectLatest { models ->
                 // Chat service api endpoint: get message flow for user
@@ -33,14 +35,19 @@ class LlmService(
 
                 // If model is not in chatsByModels, add it and get all chats for the model and get all messages for each chat and receive messages for model
                 models.forEach { model ->
+                    Napier.v("Processing model with id: ${model.id}")
                     if (!chatsByModels.containsKey(model.id)) {
+                        Napier.v("Model with id: ${model.id} not found in chatsByModels. Fetching chats.")
                         val chats = chatService.getChats(model.id)
                         chatsByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
+                        Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
                         coroutineScope.launch {
                             chatService.receiveMessages(model.id).collectLatest { messages ->
+                                Napier.v("Received ${messages.size} messages for model with id: ${model.id}")
                                 val messagesPerChat = messages.filter { it.chatId != null }.groupBy { it.chatId }
                                 messagesPerChat.forEach { (chatId, chatMessages) ->
                                     chatsByModels[chatId!!] = chatsByModels[chatId]!! + chatMessages
+                                    Napier.v("Added ${chatMessages.size} messages to chat with id: $chatId")
                                     // FIXME: take updated messages into account (update message with same ID with the updated version)
                                 }
                                 updateChatsIfNeeded(messagesPerChat.keys.filterNotNull().toSet())

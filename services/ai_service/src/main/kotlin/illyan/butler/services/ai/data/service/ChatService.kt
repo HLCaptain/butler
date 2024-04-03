@@ -112,7 +112,7 @@ class ChatService(private val client: HttpClient) {
         chatId: String,
         limit: Int,
         timestamp: Long
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") {
+    ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages") {
         parameter("limit", limit)
         parameter("timestamp", timestamp)
     }.body<List<MessageDto>>()
@@ -122,7 +122,7 @@ class ChatService(private val client: HttpClient) {
         chatId: String,
         limit: Int,
         offset: Int
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") {
+    ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages") {
         parameter("offset", offset)
         parameter("limit", limit)
     }.body<List<MessageDto>>()

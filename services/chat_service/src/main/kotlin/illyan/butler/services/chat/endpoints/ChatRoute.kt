@@ -108,12 +108,6 @@ fun Route.chatRoute() {
                         call.respond(chatService.sendMessage(userId, message))
                     }
 
-                    put {
-                        val userId = call.parameters["userId"] ?: return@put call.respond(HttpStatusCode.BadRequest)
-                        val message = call.receive<MessageDto>()
-                        call.respond(chatService.editMessage(userId, message))
-                    }
-
                     route("/{messageId}") {
                         put {
                             val userId = call.parameters["userId"] ?: return@put call.respond(HttpStatusCode.BadRequest)
