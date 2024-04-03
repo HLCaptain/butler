@@ -4,7 +4,6 @@ import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.store.ChatMutableStoreBuilder
-import illyan.butler.data.store.UserChatKey
 import illyan.butler.data.store.UserChatMutableStoreBuilder
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
@@ -55,10 +54,10 @@ class ChatRepository(
 
     private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getUserChatsFlow(userUUID: String, limit: Int, timestamp: Long): StateFlow<Pair<List<DomainChat>?, Boolean>> {
+    fun getUserChatsFlow(userUUID: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStateFlows.getOrPut(userUUID) {
             userChatMutableStore.stream<StoreReadResponse<List<DomainChat>>>(
-                StoreReadRequest.fresh(UserChatKey(userUUID, limit, timestamp))
+                StoreReadRequest.fresh(userUUID)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: $it")

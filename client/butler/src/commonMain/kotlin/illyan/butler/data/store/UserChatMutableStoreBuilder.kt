@@ -10,6 +10,7 @@ import illyan.butler.db.Chat
 import illyan.butler.db.ChatMember
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -30,29 +31,32 @@ class UserChatMutableStoreBuilder(
     val store = provideUserChatMutableStore(databaseHelper, chatNetworkDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class)
+@OptIn(ExperimentalStoreApi::class, ExperimentalCoroutinesApi::class)
 fun provideUserChatMutableStore(
     databaseHelper: DatabaseHelper,
     chatNetworkDataSource: ChatNetworkDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.of { key ->
         Napier.d("Fetching chats for user $key")
-        chatNetworkDataSource.fetchByUser(key.userId, key.limit, key.timestamp)
+        chatNetworkDataSource.fetch()
     },
     sourceOfTruth = SourceOfTruth.of(
-        reader = { key: UserChatKey ->
+        reader = { key: String ->
             databaseHelper.queryAsListFlow {
                 Napier.d("Reading chats for user $key")
-                it.chatQueries.selectByUser(key.userId, key.limit.toLong(), key.timestamp)
+                it.chatQueries.selectAll()
             }.map { chats ->
-                chats.map { it.toDomainModel() }
+                Napier.v { "Chats: $chats" }
+                chats // FIXME: all chat is exposed this way, think about security when we have more users on a single device, accessing each other's chats
+                    .filter { it.members.contains(key) }
+                    .map { it.toDomainModel() }
             }
         },
         writer = { key, local ->
             databaseHelper.withDatabase { db ->
                 local.forEach { chat ->
                     Napier.d("Writing chat for user $key with $local")
-                    val currentMembers = chat.members.map { ChatMember("${key.userId};${chat.id}", it, chat.id) }
+                    val currentMembers = chat.members.map { ChatMember("${key};${chat.id}", it, chat.id) }
                     db.chatMemberQueries.deleteAllChatMembers(chat.id)
                     currentMembers.forEach { db.chatMemberQueries.upsert(it) }
                     db.chatQueries.upsert(chat)
@@ -62,7 +66,7 @@ fun provideUserChatMutableStore(
         delete = { key ->
             databaseHelper.withDatabase {
                 Napier.d("Deleting chat for user $key")
-                it.chatMemberQueries.selectAllUserChats(key.userId).executeAsList().forEach { chat ->
+                it.chatMemberQueries.selectAllUserChats(key).executeAsList().forEach { chat ->
                     it.chatMemberQueries.deleteAllChatMembers(chat.id)
                     it.chatQueries.delete(chat.id)
                 }

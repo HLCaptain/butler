@@ -43,7 +43,7 @@ fun Route.chatRoute() {
                     else if (timestamp != null)
                         call.respond(chatService.getPreviousChats(userId, limit, timestamp))
                 } else {
-                    call.respond(chatService.getChats(userId))
+                    call.respond(HttpStatusCode.OK, chatService.getChats(userId))
                 }
             }
 

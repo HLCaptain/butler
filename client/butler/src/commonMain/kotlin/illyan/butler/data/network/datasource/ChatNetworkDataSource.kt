@@ -4,13 +4,17 @@ import illyan.butler.data.network.model.chat.ChatDto
 import kotlinx.coroutines.flow.Flow
 
 interface ChatNetworkDataSource {
-    fun fetch(uuid: String): Flow<ChatDto>
+    fun fetchNewChats(): Flow<ChatDto>
 
     /**
      * Fetch chats the user is a member of.
-     * TODO: make this paginated.
      */
-    suspend fun fetchByUser(userUUID: String, limit: Int, timestamp: Long): List<ChatDto>
+    suspend fun fetchPaginated(limit: Int, timestamp: Long): List<ChatDto>
+
+    /**
+     * Fetch all chats the user is a member of.
+     */
+    suspend fun fetch(): List<ChatDto>
 
     /**
      * Fetch chats the user is a member of with a specific chatbot.

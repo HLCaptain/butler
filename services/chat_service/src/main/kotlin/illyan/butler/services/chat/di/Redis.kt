@@ -4,6 +4,7 @@ import illyan.butler.services.chat.AppConfig
 import io.github.aakira.napier.Napier
 import org.koin.core.annotation.Single
 import org.redisson.Redisson
+import org.redisson.api.BatchOptions
 import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 

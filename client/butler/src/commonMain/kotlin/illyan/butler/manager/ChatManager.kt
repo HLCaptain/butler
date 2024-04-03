@@ -22,21 +22,14 @@ class ChatManager(
     private val _userChats = MutableStateFlow<List<DomainChat>>(emptyList())
     val userChats = _userChats.asStateFlow()
 
-    suspend fun loadMoreChat(
-        limit: Int = 20,
-        timestamp: Long = Clock.System.now().toEpochMilliseconds()
-    ) {
+    suspend fun loadChat() {
         val userUUID = authManager.signedInUserUUID.first()
-        val newChats = chatRepository.getUserChatsFlow(userUUID!!, limit, timestamp).filterNot { it.second }.map { it.first }.first()
+        val newChats = chatRepository.getUserChatsFlow(userUUID!!).filterNot { it.second }.map { it.first }.first()
         _userChats.update { (it + newChats.orEmpty()).distinct() }
     }
 
     fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
-    fun getMessagesByChatFlow(
-        uuid: String,
-        limit: Int = 20,
-        timestamp: Long = Clock.System.now().toEpochMilliseconds()
-    ) = messageRepository.getChatFlow(uuid, limit, timestamp).map { it.first }
+    fun getMessagesByChatFlow(uuid: String) = messageRepository.getChatFlow(uuid).map { it.first }
 
     suspend fun startNewChat(modelUUID: String): String {
         return authManager.signedInUserUUID.first()?.let { userUUID ->

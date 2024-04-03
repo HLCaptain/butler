@@ -5,7 +5,6 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.KoinNames
 import illyan.butler.manager.ChatManager
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -18,7 +17,7 @@ class ChatListScreenModel(
     @Named(KoinNames.DispatcherIO) dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     init {
-        screenModelScope.launch(dispatcherIO) { chatManager.loadMoreChat() }
+        screenModelScope.launch(dispatcherIO) { chatManager.loadChat() }
     }
     val userChats = chatManager.userChats
         .stateIn(

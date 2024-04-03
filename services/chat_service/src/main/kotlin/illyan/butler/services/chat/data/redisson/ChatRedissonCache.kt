@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 import org.redisson.api.RedissonClient
+import org.redisson.api.TransactionOptions
+import org.redisson.transaction.TransactionException
 
 @Single
 class ChatRedissonCache(
@@ -88,24 +90,50 @@ class ChatRedissonCache(
     override suspend fun setChat(chat: ChatDto): ChatDto {
         Napier.v { "Setting chat in cache: $chat" }
         return withContext(dispatcher) {
-            client.createBatch().let { batch ->
-                val oldChat = batch.getBucket<ChatDto>("chat:${chat.id}").async.get()
-                batch.getBucket<ChatDto>("chat:${chat.id}").setAsync(chat)
-                // Update users' member status
-                val addedUsers = chat.members.filter { !oldChat.members.contains(it) }
-                val removedUsers = oldChat.members.filter { !chat.members.contains(it) }
-                addedUsers.forEach { member ->
-                    batch.getList<String>("user:$member:chats").addAsync(chat.id)
-                    val currentChats = batch.getList<String>("user:$member:chats").readAllAsync().get()
-                    batch.getTopic("user:$member:chats").publishAsync((currentChats + chat.id).distinct())
+            Napier.v { "Inside withContext block" }
+            val transaction = client.createTransaction(TransactionOptions.defaults()).also { transaction ->
+                Napier.v { "Created transaction" }
+                if (client.buckets.get<ChatDto>("chat:${chat.id}").isNotEmpty()) {
+                    Napier.v { "Chat already exists in cache" }
+                    val oldChat = transaction.getBucket<ChatDto>("chat:${chat.id}").get()
+                    Napier.v { "Fetched old chat: $oldChat" }
+                    transaction.getBucket<ChatDto>("chat:${chat.id}").set(chat)
+                    // Update users' member status
+                    val addedUsers = chat.members.filter { !oldChat.members.contains(it) }
+                    val removedUsers = oldChat.members.filter { !chat.members.contains(it) }
+                    Napier.v { "Added users: $addedUsers, Removed users: $removedUsers" }
+                    addedUsers.forEach { member ->
+                        Napier.v { "Processing added user: $member" }
+                        transaction.getSet<String>("user:$member:chats").add(chat.id)
+                        val currentChats = transaction.getSet<String>("user:$member:chats").readAll()
+                        Napier.v { "Current chats for added user: $currentChats" }
+                        client.getTopic("user:$member:chats").publish((currentChats + chat.id).distinct())
+                    }
+                    removedUsers.forEach { member ->
+                        Napier.v { "Processing removed user: $member" }
+                        transaction.getSet<String>("user:$member:chats").remove(chat.id)
+                        val currentChats = transaction.getSet<String>("user:$member:chats").readAll()
+                        Napier.v { "Current chats for removed user: $currentChats" }
+                        client.getTopic("user:$member:chats").publish(currentChats - chat.id)
+                    }
+                } else {
+                    Napier.v { "Chat does not exist in cache" }
+                    transaction.getBucket<ChatDto>("chat:${chat.id}").set(chat)
+                    chat.members.forEach { member ->
+                        transaction.getSet<String>("user:$member:chats").add(chat.id)
+                        val currentChats = transaction.getSet<String>("user:$member:chats").readAll()
+                        Napier.v { "Current chats for removed user: $currentChats" }
+                        client.getTopic("user:$member:chats").publish(currentChats + chat.id)
+                    }
                 }
-                removedUsers.forEach { member ->
-                    batch.getList<String>("user:$member:chats").removeAsync(chat.id)
-                    val currentChats = batch.getList<String>("user:$member:chats").readAllAsync().get()
-                    batch.getTopic("user:$member:chats").publishAsync(currentChats - chat.id)
-                }
-                batch.getTopic("chat:${chat.id}").publishAsync(chat).get()
-                batch.executeAsync().get()
+                client.getTopic("chat:${chat.id}").publish(chat)
+                Napier.v { "Published chat to topic" }
+            }
+            try {
+                transaction.commit()
+            } catch (e: TransactionException) {
+                Napier.e("Error setting chat in cache, rollback transaction", e)
+                transaction.rollback()
             }
             chat
         }

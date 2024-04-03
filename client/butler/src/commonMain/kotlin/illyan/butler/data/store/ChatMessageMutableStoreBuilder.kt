@@ -34,15 +34,15 @@ fun provideChatMessageMutableStore(
     databaseHelper: DatabaseHelper,
     messageNetworkDataSource: MessageNetworkDataSource
 ) = MutableStoreBuilder.from(
-    fetcher = Fetcher.of { key ->
+    fetcher = Fetcher.of { key: String ->
         Napier.d("Fetching messages $key")
-        messageNetworkDataSource.fetchByChat(key.chatId, key.limit, key.timestamp)
+        messageNetworkDataSource.fetchByChat(key)
     },
     sourceOfTruth = SourceOfTruth.of(
-        reader = { key: ChatMessageKey ->
+        reader = { key: String ->
             databaseHelper.queryAsListFlow {
                 Napier.d("Reading messages at $key")
-                it.messageQueries.selectByChat(key.chatId, key.timestamp, key.limit.toLong())
+                it.messageQueries.selectByChat(key)
             }.map { messages ->
                 messages.map { it.toDomainModel() }
             }
@@ -58,7 +58,7 @@ fun provideChatMessageMutableStore(
         delete = { key ->
             databaseHelper.withDatabase {
                 Napier.d("Deleting messages at $key")
-                it.messageQueries.deleteAllChatMessagesForChat(key.chatId)
+                it.messageQueries.deleteAllChatMessagesForChat(key)
             }
         },
         deleteAll = {
@@ -90,5 +90,5 @@ fun provideChatMessageMutableStore(
     bookkeeper = provideBookkeeper(
         databaseHelper,
         DomainMessage::class.simpleName.toString()
-    ) { it.toString() }
+    ) { it }
 )

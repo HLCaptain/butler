@@ -37,7 +37,7 @@ fun provideMessageMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chat $key")
-        messageNetworkDataSource.fetch(key)
+        messageNetworkDataSource.fetchNewMessages()
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->

@@ -32,10 +32,13 @@ fun Route.chatRoute() {
         route("/chats") {
             get {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-                val limit = call.parameters["limit"]?.toInt() ?: 10
-                val timestamp = call.parameters["timestamp"]?.toLong() ?: System.currentTimeMillis()
-                val result = chatService.getPreviousChats(userId, limit, timestamp)
-                call.respond(HttpStatusCode.OK, result)
+                val limit = call.parameters["limit"]?.toInt()
+                val timestamp = call.parameters["timestamp"]?.toLong()
+                call.respond(HttpStatusCode.OK, if (limit == null || timestamp == null) {
+                    chatService.getChats(userId)
+                } else {
+                    chatService.getPreviousChats(userId, limit, timestamp)
+                })
             }
 
             post {

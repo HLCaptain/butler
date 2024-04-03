@@ -11,7 +11,7 @@ select:
 SELECT * FROM Message WHERE id = ?;
 
 selectByChat:
-SELECT * FROM Message WHERE chatId = ? AND timestamp > ? ORDER BY timestamp ASC LIMIT ?;
+SELECT * FROM Message WHERE chatId = ?;
 
 upsert:
 INSERT OR REPLACE INTO Message
