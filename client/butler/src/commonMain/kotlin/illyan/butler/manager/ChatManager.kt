@@ -52,10 +52,8 @@ class ChatManager(
             messageRepository.upsert(
                 DomainMessage(
                     chatId = chatUUID,
-                    role = DomainMessage.USER_ROLE,
-                    message = message,
-                    timestamp = Clock.System.now().toEpochMilliseconds(),
-                    senderUUID = userUUID
+                    senderId = userUUID,
+                    message = message
                 )
             )
         }

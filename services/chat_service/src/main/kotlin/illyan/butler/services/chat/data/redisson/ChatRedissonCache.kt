@@ -33,12 +33,9 @@ class ChatRedissonCache(
 
     override suspend fun getChatsByUser(userId: String): List<ChatDto> {
         return withContext(dispatcher) {
-            client.createBatch().let { batch ->
-                val chatIds = batch.getList<String>("user:$userId:chats").readAllAsync().get()
-                val chats = chatIds.mapNotNull { batch.getBucket<ChatDto?>("chat:$it").async.get() }
-                batch.executeAsync().get()
-                chats
-            }
+            val chatIds = client.getSet<String>("user:$userId:chats").readAll()
+            val chats = chatIds.mapNotNull { client.getBucket<ChatDto?>("chat:$it").get() }
+            chats
         }
     }
 
@@ -141,18 +138,24 @@ class ChatRedissonCache(
 
     override suspend fun deleteChat(chatId: String): Boolean {
         return withContext(Dispatchers.IO) {
-            client.createBatch().let { batch ->
-                val chatMembers = batch.getList<String>("chat:$chatId:members").readAllAsync().get()
-                val isDeleted = batch.getBucket<ChatDto>("chat:$chatId").deleteAsync().get()
+            val isDeleted: Boolean
+            val transaction = client.createTransaction(TransactionOptions.defaults()).also { transaction ->
+                val chatMembers = transaction.getSet<String>("chat:$chatId:members").readAll()
+                isDeleted = transaction.getBucket<ChatDto>("chat:$chatId").delete()
                 chatMembers.forEach { member ->
-                    batch.getList<String>("user:$member:chats").removeAsync(chatId)
-                    val currentChats = batch.getList<String>("user:$member:chats").readAllAsync().get()
-                    batch.getTopic("user:$member:chats").publishAsync(currentChats - chatId)
+                    transaction.getSet<String>("user:$member:chats").removeAsync(chatId)
+                    val currentChats = transaction.getSet<String>("user:$member:chats").readAll()
+                    client.getTopic("user:$member:chats").publishAsync(currentChats - chatId)
                 }
-                batch.getTopic("chat:$chatId").publishAsync(null).get()
-                batch.executeAsync().get()
-                isDeleted
+                client.getTopic("chat:$chatId").publish(null)
             }
+            try {
+                transaction.commit()
+            } catch (e: TransactionException) {
+                Napier.e("Error deleting chat from cache, rollback transaction", e)
+                transaction.rollback()
+            }
+            isDeleted
         }
     }
 }

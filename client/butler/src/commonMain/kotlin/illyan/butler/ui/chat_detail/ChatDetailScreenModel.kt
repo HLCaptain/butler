@@ -3,6 +3,7 @@ package illyan.butler.ui.chat_detail
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.KoinNames
+import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +18,7 @@ import org.koin.core.annotation.Named
 class ChatDetailScreenModel(
     @InjectedParam private val chatUUID: String,
     private val chatManager: ChatManager,
+    private val authManager: AuthManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     val chat = chatManager.getChatFlow(chatUUID)
@@ -27,13 +29,14 @@ class ChatDetailScreenModel(
         )
 
     val messages = chatManager.getMessagesByChatFlow(chatUUID)
-        .map { messages -> messages?.sortedBy { it.timestamp }?.reversed() }
+        .map { messages -> messages?.sortedBy { it.time }?.reversed() }
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,
             null
         )
 
+    val userId = authManager.signedInUserUUID
 
     fun sendMessage(message: String) {
         screenModelScope.launch(dispatcherIO) {

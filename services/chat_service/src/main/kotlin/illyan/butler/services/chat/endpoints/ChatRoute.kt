@@ -90,10 +90,28 @@ fun Route.chatRoute() {
                 }
 
                 route("/messages") {
+                    get {
+                        val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                        val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                        val limit = call.parameters["limit"]?.toInt()
+                        val timestamp = call.parameters["timestamp"]?.toLong()
+                        call.respond(HttpStatusCode.OK, if (timestamp == null || limit == null) {
+                            call.respond(chatService.getMessages(userId, chatId))
+                        } else {
+                            call.respond(chatService.getPreviousMessages(userId, chatId, limit, timestamp))
+                        })
+                    }
+
                     post {
                         val userId = call.parameters["userId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
                         val message = call.receive<MessageDto>()
                         call.respond(chatService.sendMessage(userId, message))
+                    }
+
+                    put {
+                        val userId = call.parameters["userId"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                        val message = call.receive<MessageDto>()
+                        call.respond(chatService.editMessage(userId, message))
                     }
 
                     route("/{messageId}") {

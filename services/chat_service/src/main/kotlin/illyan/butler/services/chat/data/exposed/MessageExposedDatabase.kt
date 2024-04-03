@@ -14,7 +14,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.insertIgnore
 import org.jetbrains.exposed.sql.insertIgnoreAndGetId
 import org.jetbrains.exposed.sql.selectAll
@@ -33,13 +33,14 @@ class MessageExposedDatabase(
             SchemaUtils.create(Messages, ChatMembers, ContentUrls, MessageContentUrls)
         }
     }
-    override suspend fun sendMessage(userId: String, message: MessageDto) {
+    override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
+            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
-            if (isUserInChat) {
-                Messages.insert {
-                    it[time] = Clock.System.now().toEpochMilliseconds()
+            val nowMillis = Clock.System.now().toEpochMilliseconds()
+            val newMessageId = if (isUserInChat) {
+                Messages.insertAndGetId {
+                    it[time] = nowMillis
                     it[senderId] = userId
                     it[chatId] = message.chatId
                     it[this.message] = message.message
@@ -57,14 +58,15 @@ class MessageExposedDatabase(
                     newUrlId = ContentUrls.selectAll().where(ContentUrls.url eq url).first()[ContentUrls.id]
                 }
                 MessageContentUrls.insertIgnore {
-                    it[messageId] = message.id!!
+                    it[messageId] = newMessageId
                     it[urlId] = newUrlId
                 }
             }
+            message.copy(id = newMessageId.value, time = nowMillis)
         }
     }
 
-    override suspend fun editMessage(userId: String, message: MessageDto) {
+    override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
             val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
@@ -94,6 +96,7 @@ class MessageExposedDatabase(
                     it[urlId] = contentUrl
                 }
             }
+            message
         }
     }
 
@@ -141,6 +144,21 @@ class MessageExposedDatabase(
             }
         }
     }
+
+    override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
+        return newSuspendedTransaction(dispatcher, database) {
+            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
+            if (isUserInChat) {
+                Messages
+                    .selectAll()
+                    .where(Messages.chatId eq chatId)
+                    .map { it.toMessageDto() }
+            } else {
+                throw Exception("User is not in chat")
+            }
+        }
+    }
 }
 
 fun ResultRow.toMessageDto() = MessageDto(
@@ -148,8 +166,9 @@ fun ResultRow.toMessageDto() = MessageDto(
     senderId = this[Messages.senderId],
     message = this[Messages.message],
     time = this[Messages.time],
-    contentUrls = MessageContentUrls
-        .selectAll()
-        .where(MessageContentUrls.messageId eq this[Messages.id])
-        .map { it[MessageContentUrls.urlId].value }
+    chatId = this[Messages.chatId].value,
+//    contentUrls = MessageContentUrls
+//        .selectAll()
+//        .where(MessageContentUrls.messageId eq this[Messages.id])
+//        .map { it[MessageContentUrls.urlId].value } // TODO: join this with ContentUrls later
 )

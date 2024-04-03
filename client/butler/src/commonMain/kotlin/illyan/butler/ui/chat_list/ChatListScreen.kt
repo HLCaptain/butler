@@ -46,9 +46,7 @@ class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
         openChat: (uuid: String) -> Unit,
     ) {
         Crossfade(
-            modifier = Modifier
-                .padding(8.dp)
-                .animateContentSize(),
+            modifier = Modifier.padding(8.dp),
             targetState = chats.isEmpty()
         ) {
             if (it) {

@@ -39,7 +39,9 @@ class ChatScreen : Screen {
             },
             detail = {
                 AnimatedVisibility(visible = selectedChat != null) {
-                    selectedChat?.let { ChatDetailScreen(it) }
+                    selectedChat?.let {
+                        Navigator(ChatDetailScreen(selectedChat ?: ""))
+                    }
                 }
             }
         )

@@ -94,10 +94,18 @@ fun Route.chatRoute() {
                     get {
                         val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                         val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                        val limit = call.parameters["limit"]?.toInt() ?: 10
-                        val timestamp = call.parameters["timestamp"]?.toLong() ?: System.currentTimeMillis()
-                        val result = chatService.getPreviousMessages(userId, chatId, limit, timestamp)
-                        call.respond(HttpStatusCode.OK, result)
+                        val limit = call.parameters["limit"]?.toInt()
+                        val timestamp = call.parameters["timestamp"]?.toLong()
+                        val offset = call.parameters["offset"]?.toInt()
+                        call.respond(HttpStatusCode.OK, if (limit != null) {
+                            if (offset != null) {
+                                chatService.getMessages(userId, chatId, limit, offset)
+                            } else if (timestamp != null) {
+                                chatService.getPreviousMessages(userId, chatId, limit, timestamp)
+                            } else {
+                                chatService.getMessages(userId, chatId)
+                            }
+                        } else chatService.getMessages(userId, chatId))
                     }
 
                     post {

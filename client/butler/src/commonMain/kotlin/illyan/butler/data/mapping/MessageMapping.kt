@@ -6,28 +6,25 @@ import illyan.butler.domain.model.DomainMessage
 
 fun Message.toDomainModel() = DomainMessage(
     id = id,
-    senderUUID = senderId,
-    role = role,
+    senderId = senderId,
     message = message,
-    timestamp = timestamp,
+    time = time,
     chatId = chatId
 )
 
 fun DomainMessage.toNetworkModel() = MessageDto(
     id = id,
-    senderId = senderUUID,
-    role = role,
+    senderId = senderId,
     message = message,
-    timestamp = timestamp,
+    time = time,
     chatId = chatId
 )
 
 fun MessageDto.toLocalModel() = Message(
     id = id!!,
     senderId = senderId,
-    role = role,
     message = message,
-    timestamp = timestamp,
+    time = time,
     chatId = chatId
 )
 

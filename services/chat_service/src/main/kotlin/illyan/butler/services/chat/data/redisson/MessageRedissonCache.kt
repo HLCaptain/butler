@@ -3,6 +3,7 @@ package illyan.butler.services.chat.data.redisson
 import illyan.butler.services.chat.data.cache.MessageCache
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 import org.redisson.api.RedissonClient
+import org.redisson.api.TransactionOptions
+import org.redisson.transaction.TransactionException
 
 @Single
 class MessageRedissonCache(
@@ -80,14 +83,23 @@ class MessageRedissonCache(
         }.flowOn(dispatcher)
     }
 
-    override suspend fun setMessage(message: MessageDto): MessageDto {
+    override suspend fun setMessages(messages: List<MessageDto>): List<MessageDto> {
         return withContext(dispatcher) {
-            client.createBatch().let { batch ->
-                batch.getBucket<MessageDto>("message:${message.id}").setAsync(message).get()
-                batch.getTopic("chat:${message.chatId}:messages").publishAsync(message).get()
-                batch.executeAsync().get()
+            val transaction = client.createTransaction(TransactionOptions.defaults()).also { transaction ->
+                messages.groupBy { it.chatId }.forEach { (chatId, messages) ->
+                    messages.forEach { message ->
+                        transaction.getBucket<MessageDto>("message:${message.id}").set(message)
+                    }
+                    client.getTopic("chat:$chatId:messages").publish(messages)
+                }
             }
-            message
+            try {
+                transaction.commit()
+            } catch (e: TransactionException) {
+                Napier.e("Error setting messages in cache, rollback transaction", e)
+                transaction.rollback()
+            }
+            messages
         }
     }
 

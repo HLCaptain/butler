@@ -44,13 +44,13 @@ class MessageKtorDataSource(
 
     override suspend fun upsert(message: MessageDto): MessageDto {
         return if (message.id == null) {
-            client.post("/messages") { setBody(message) }
+            client.post("/chats/${message.chatId}/messages") { setBody(message) }
         } else {
-            client.put("/messages/${message.id}") { setBody(message) }
+            client.put("/chats/${message.chatId}/messages/${message.id}") { setBody(message) }
         }.body()
     }
 
-    override suspend fun delete(uuid: String): Boolean {
-        return client.delete("/messages/$uuid").status.isSuccess()
+    override suspend fun delete(id: String, chatId: String): Boolean {
+        return client.delete("/chats/$chatId/messages/$id").status.isSuccess()
     }
 }

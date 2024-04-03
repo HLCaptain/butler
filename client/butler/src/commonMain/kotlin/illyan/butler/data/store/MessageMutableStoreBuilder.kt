@@ -53,11 +53,13 @@ fun provideMessageMutableStore(
             }
         },
         delete = { key ->
+            var chatId = ""
             databaseHelper.withDatabase {
                 Napier.d("Deleting chat at $key")
+                chatId = it.messageQueries.select(key).executeAsOne().chatId
                 it.messageQueries.delete(key)
             }
-            messageNetworkDataSource.delete(key)
+            messageNetworkDataSource.delete(key, chatId)
         },
         deleteAll = {
             databaseHelper.withDatabase {

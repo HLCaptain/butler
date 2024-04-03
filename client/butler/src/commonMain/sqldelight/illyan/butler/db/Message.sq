@@ -1,9 +1,8 @@
 CREATE TABLE Message (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
     senderId TEXT NOT NULL,
-    role TEXT NOT NULL,
-    message TEXT NOT NULL,
-    timestamp INTEGER NOT NULL,
+    message TEXT,
+    time INTEGER,
     chatId TEXT NOT NULL
 );
 

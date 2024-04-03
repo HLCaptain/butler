@@ -81,14 +81,12 @@ class ChatService(
         return chatCache.getChangesFromChat(chatId)
     }
 
-    override suspend fun sendMessage(userId: String, message: MessageDto) {
-        messageDatabase.sendMessage(userId, message)
-        messageCache.setMessage(message)
+    override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
+        return messageDatabase.sendMessage(userId, message).also { messageCache.setMessage(message) }
     }
 
-    override suspend fun editMessage(userId: String, message: MessageDto) {
-        messageDatabase.editMessage(userId, message)
-        messageCache.setMessage(message)
+    override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
+        return messageDatabase.editMessage(userId, message).also { messageCache.setMessage(message) }
     }
 
     override suspend fun deleteMessage(userId: String, chatId: String, messageId: String): Boolean {
@@ -108,6 +106,10 @@ class ChatService(
 
     override suspend fun getMessages(userId: String, chatId: String, limit: Int, offset: Int): List<MessageDto> {
         return messageDatabase.getMessages(userId, chatId, limit, offset)
+    }
+
+    override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
+        return messageDatabase.getMessages(userId, chatId).also { messageCache.setMessages(it) }
     }
 
     override fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>> {

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MessageDto(
     val id: String? = null,
-    val senderId: String? = null,
+    val senderId: String,
     /**
      * For a message there always can be text based content.
      */
@@ -15,5 +15,5 @@ data class MessageDto(
      */
     val contentUrls: List<String> = emptyList(),
     val time: Long? = null, // Unix timestamp
-    val chatId: String? = null
+    val chatId: String
 )

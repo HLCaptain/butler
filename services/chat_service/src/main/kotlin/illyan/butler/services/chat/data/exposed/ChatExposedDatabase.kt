@@ -151,14 +151,13 @@ class ChatExposedDatabase(
             val userChatIds = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
                 .map { it[ChatMembers.chatId].value }
 
-            val relevantChatIds = Messages
-                .select(Messages.time.max())
-                .groupBy(Messages.chatId)
+            val relevantMessages = Messages
+                .selectAll()
                 .where { (Messages.chatId inList userChatIds) }
                 .map { it.toMessageDto() }.distinct()
 
             val chats = Chats.selectAll().where { Chats.id inList userChatIds }.map { chatRow ->
-                chatRow.toChatDto(relevantChatIds.filter { it.chatId == chatRow[Chats.id].value })
+                chatRow.toChatDto(relevantMessages.filter { it.chatId == chatRow[Chats.id].value })
             }
             chats
         }
