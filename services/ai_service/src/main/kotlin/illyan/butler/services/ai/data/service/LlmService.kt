@@ -25,7 +25,7 @@ class LlmService(
 ) {
     // All messages per model
     // Messages can be grouped and sorted by chatId
-    private val chatsByModels = hashMapOf<String, List<MessageDto>>()
+    private val messagesByModels = hashMapOf<String, List<MessageDto>>()
 
     fun loadModels() {
         coroutineScope.launch {
@@ -36,21 +36,17 @@ class LlmService(
                 // If model is not in chatsByModels, add it and get all chats for the model and get all messages for each chat and receive messages for model
                 models.forEach { model ->
                     Napier.v("Processing model with id: ${model.id}")
-                    if (!chatsByModels.containsKey(model.id)) {
+                    if (!messagesByModels.containsKey(model.id)) {
                         Napier.v("Model with id: ${model.id} not found in chatsByModels. Fetching chats.")
                         val chats = chatService.getChats(model.id)
-                        chatsByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
+                        messagesByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
                         Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
+                        updateChatsIfNeeded(messagesByModels[model.id]!!.map { it.chatId }.toSet())
                         coroutineScope.launch {
                             chatService.receiveMessages(model.id).collectLatest { messages ->
                                 Napier.v("Received ${messages.size} messages for model with id: ${model.id}")
-                                val messagesPerChat = messages.filter { it.chatId != null }.groupBy { it.chatId }
-                                messagesPerChat.forEach { (chatId, chatMessages) ->
-                                    chatsByModels[chatId!!] = chatsByModels[chatId]!! + chatMessages
-                                    Napier.v("Added ${chatMessages.size} messages to chat with id: $chatId")
-                                    // FIXME: take updated messages into account (update message with same ID with the updated version)
-                                }
-                                updateChatsIfNeeded(messagesPerChat.keys.filterNotNull().toSet())
+                                messagesByModels[model.id] = (messagesByModels[model.id]!! + messages).distinctBy { it.id }
+                                updateChatsIfNeeded(messages.map { it.chatId }.toSet())
                             }
                         }
                     }
@@ -59,22 +55,17 @@ class LlmService(
         }
     }
 
-    private suspend fun updateChatsIfNeeded(keys: Set<String>) = keys.forEach { updateChatIfNeeded(it) }
+    private suspend fun updateChatsIfNeeded(chatIds: Set<String>) = chatIds.forEach { updateChatIfNeeded(it) }
 
     private suspend fun updateChatIfNeeded(chatId: String) {
-        val modelId = chatsByModels.keys.find { modelId -> chatsByModels[modelId]?.any { it.chatId == chatId } == true }
-        val messages = chatsByModels[modelId]?.filter { it.chatId == chatId }?.sortedBy { it.time } ?: return
+        val modelId = messagesByModels.keys.find { modelId -> messagesByModels[modelId]?.any { it.chatId == chatId } == true }
+        val messages = messagesByModels[modelId]?.filter { it.chatId == chatId }?.sortedBy { it.time } ?: return
         if (messages.isEmpty() || messages.last().senderId == modelId) return
         // Then last message is by a user, so run inference on it
-        val chatMessages = messages.map {
-            ChatMessage(
-                role = if (it.senderId == modelId) ChatRole.Assistant else ChatRole.User,
-                content = it.message
-            )
-        }
+        val chatMessages = messages.toConversation(listOf(modelId!!))
         val chatCompletion = openAI.chatCompletion(
             request = ChatCompletionRequest(
-                model = ModelId(modelId!!),
+                model = ModelId(modelId),
                 messages = chatMessages
             )
         )
@@ -100,17 +91,12 @@ class LlmService(
         // TODO: Generate new message for chatId
         if (messageId != null) {
             // Edit message with messageId
-            val modelId = chatsByModels.keys.find { modelId -> chatsByModels[modelId]?.any { it.chatId == chatId } == true }
-            val messages = chatsByModels[modelId]?.filter { it.chatId == chatId }?.sortedBy { it.time }?.takeWhile { it.id != messageId } ?: return
-            val chatMessages = messages.map {
-                ChatMessage(
-                    role = if (it.senderId == modelId) ChatRole.Assistant else ChatRole.User,
-                    content = it.message
-                )
-            }
+            val modelId = messagesByModels.keys.find { modelId -> messagesByModels[modelId]?.any { it.chatId == chatId } == true }
+            val messages = messagesByModels[modelId]?.filter { it.chatId == chatId }?.sortedBy { it.time }?.takeWhile { it.id != messageId } ?: return
+            val chatMessages = messages.toConversation(listOf(modelId!!))
             val updatedMessage = openAI.chatCompletion(
                 request = ChatCompletionRequest(
-                    model = ModelId(modelId!!),
+                    model = ModelId(modelId),
                     messages = chatMessages
                 )
             ).choices.first().message.content!!
@@ -131,3 +117,21 @@ class LlmService(
         }
     }
 }
+
+fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> = foldRight(mutableListOf()) { message, acc ->
+    val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && modelIds.contains(message.senderId)
+    val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && !modelIds.contains(message.senderId)
+    if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
+        val previousMessageContent = acc.last().content
+        acc.removeLast()
+        acc.add(message.toChatMessage(modelIds, previousMessageContent))
+        return@foldRight acc
+    }
+    acc.add(message.toChatMessage(modelIds))
+    acc
+}
+
+fun MessageDto.toChatMessage(modelIds: List<String>, previousMessageContent: String? = null) = ChatMessage(
+    role = if (modelIds.contains(senderId)) ChatRole.Assistant else ChatRole.User,
+    content = if (previousMessageContent != null) "$previousMessageContent\n$message" else message
+)

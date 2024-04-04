@@ -25,12 +25,12 @@ import org.koin.core.annotation.Single
 @Single
 class ChatService(private val client: HttpClient) {
     fun receiveMessages(userId: String, chatId: String) = flow {
-        client.webSocket("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") {
+        client.webSocket("${AppConfig.Api.CHAT_API_URL.replaceFirst("http", "ws")}/$userId/chats/$chatId") {
             incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized<List<MessageDto>>()) }
         }
     }
     fun receiveMessages(userId: String) = flow {
-        client.webSocket("${AppConfig.Api.CHAT_API_URL}/$userId/messages") {
+        client.webSocket("${AppConfig.Api.CHAT_API_URL.replaceFirst("http", "ws")}/$userId/messages") {
             incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized<List<MessageDto>>()) }
         }
     }

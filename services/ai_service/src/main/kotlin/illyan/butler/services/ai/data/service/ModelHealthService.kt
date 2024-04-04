@@ -34,7 +34,7 @@ class ModelHealthService(
                     flow<List<Model>> {
                         while (true) {
                             emit(client.get("$url/models").body<ModelsResponse>().data)
-                            delay(1000L)
+                            delay(10000L)
                         }
                     }
                 }
