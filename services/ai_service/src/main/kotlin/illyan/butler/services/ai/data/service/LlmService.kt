@@ -9,8 +9,10 @@ import illyan.butler.services.ai.data.model.chat.MessageDto
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
@@ -29,7 +31,7 @@ class LlmService(
 
     fun loadModels() {
         coroutineScope.launch {
-            modelHealthService.healthyModels.filterNotNull().collectLatest { models ->
+            modelHealthService.healthyModels.filterNotNull().first().let { models ->
                 // Chat service api endpoint: get message flow for user
                 // Chat service api endpoint: get chat with all messages
 
@@ -38,17 +40,22 @@ class LlmService(
                     Napier.v("Processing model with id: ${model.id}")
                     if (!messagesByModels.containsKey(model.id)) {
                         Napier.v("Model with id: ${model.id} not found in chatsByModels. Fetching chats.")
-                        val chats = chatService.getChats(model.id)
-                        messagesByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
-                        Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
-                        updateChatsIfNeeded(messagesByModels[model.id]!!.map { it.chatId }.toSet())
-                        coroutineScope.launch {
-                            chatService.receiveMessages(model.id).collectLatest { messages ->
-                                Napier.v("Received ${messages.size} messages for model with id: ${model.id}")
-                                messagesByModels[model.id] = (messagesByModels[model.id]!! + messages).distinctBy { it.id }
-                                updateChatsIfNeeded(messages.map { it.chatId }.toSet())
+                        coroutineScope.launch { // FIXME: fix websocket then remove pulling
+                            while (true) {
+                                val chats = chatService.getChats(model.id)
+                                messagesByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
+                                Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
+                                updateChatsIfNeeded(messagesByModels[model.id]!!.map { it.chatId }.toSet())
+                                delay(1000L)
                             }
                         }
+//                        coroutineScope.launch {
+//                            chatService.receiveMessages(model.id).collectLatest { messages ->
+//                                Napier.v("Received ${messages.size} messages for model with id: ${model.id}")
+//                                messagesByModels[model.id] = (messagesByModels[model.id]!! + messages).distinctBy { it.id }
+//                                updateChatsIfNeeded(messages.map { it.chatId }.toSet())
+//                            }
+//                        }
                     }
                 }
             }
