@@ -20,7 +20,12 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
             token = AppConfig.Api.OPEN_AI_API_KEY,
             logging = LoggingConfig(LogLevel.All, Logger.Default),
             engine = client.engine,
-            host = OpenAIHost(baseUrl = AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL)
+            host = OpenAIHost(baseUrl = AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL),
+            timeout = Timeout(
+                request = 2.minutes,
+                connect = 2.minutes,
+                socket = 2.minutes
+            )
         )
     )
 }
@@ -34,7 +39,11 @@ fun provideOpenAIClients(client: HttpClient): List<OpenAI> {
                 logging = LoggingConfig(LogLevel.All, Logger.Default),
                 engine = client.engine,
                 host = OpenAIHost(baseUrl = it),
-                timeout = Timeout(request = 2.minutes)
+                timeout = Timeout(
+                    request = 2.minutes,
+                    connect = 2.minutes,
+                    socket = 2.minutes
+                )
             )
         )
     }

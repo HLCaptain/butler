@@ -5,6 +5,7 @@ import illyan.butler.services.ai.data.utils.WebsocketContentConverterWithFallbac
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -36,6 +37,13 @@ fun provideHttpClientAttribute(): Attributes {
 @OptIn(ExperimentalSerializationApi::class)
 @Single
 fun provideHttpClient() = HttpClient(CIO) {
+    expectSuccess = true
+    HttpResponseValidator {
+        handleResponseExceptionWithRequest { throwable, _ ->
+            Napier.e(throwable) { "Error in response" }
+        }
+    }
+
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL

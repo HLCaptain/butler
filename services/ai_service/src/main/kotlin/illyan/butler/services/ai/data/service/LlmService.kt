@@ -10,7 +10,6 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -29,6 +28,8 @@ class LlmService(
     // Messages can be grouped and sorted by chatId
     private val messagesByModels = hashMapOf<String, List<MessageDto>>()
 
+    private val awaitingChatReplies = hashMapOf<String, List<String>>()
+
     fun loadModels() {
         coroutineScope.launch {
             modelHealthService.healthyModels.filterNotNull().first().let { models ->
@@ -42,7 +43,12 @@ class LlmService(
                         Napier.v("Model with id: ${model.id} not found in chatsByModels. Fetching chats.")
                         coroutineScope.launch { // FIXME: fix websocket then remove pulling
                             while (true) {
-                                val chats = chatService.getChats(model.id)
+                                val chats = try {
+                                    chatService.getChats(model.id)
+                                } catch (e: Exception) {
+                                    Napier.e("Error fetching chats for model with id: ${model.id}", e)
+                                    emptyList()
+                                }
                                 messagesByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
                                 Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
                                 updateChatsIfNeeded(messagesByModels[model.id]!!.map { it.chatId }.toSet())
@@ -62,9 +68,9 @@ class LlmService(
         }
     }
 
-    private suspend fun updateChatsIfNeeded(chatIds: Set<String>) = chatIds.forEach { updateChatIfNeeded(it) }
+    private suspend fun updateChatsIfNeeded(chatIds: Set<String>) = chatIds.forEach { sendMessageIfNeeded(it) }
 
-    private suspend fun updateChatIfNeeded(chatId: String) {
+    private suspend fun sendMessageIfNeeded(chatId: String) {
         val modelId = messagesByModels.keys.find { modelId -> messagesByModels[modelId]?.any { it.chatId == chatId } == true }
         val messages = messagesByModels[modelId]?.filter { it.chatId == chatId }?.sortedBy { it.time } ?: return
         if (messages.isEmpty() || messages.last().senderId == modelId) return
@@ -76,15 +82,24 @@ class LlmService(
                 messages = chatMessages
             )
         )
-        chatService.sendMessage(
-            modelId,
-            MessageDto(
-                senderId = modelId,
-                chatId = chatId,
-                message = chatCompletion.choices.first().message.content!!,
-                time = Clock.System.now().toEpochMilliseconds()
-            )
-        )
+        if (awaitingChatReplies[modelId]?.contains(chatId) != true) {
+            awaitingChatReplies[modelId] = ((awaitingChatReplies[modelId] ?: emptyList()) + chatId).distinct()
+            try {
+                chatService.sendMessage(
+                    modelId,
+                    MessageDto(
+                        senderId = modelId,
+                        chatId = chatId,
+                        message = chatCompletion.choices.first().message.content!!,
+                        time = Clock.System.now().toEpochMilliseconds()
+                    )
+                )
+            } catch (e: Exception) {
+                Napier.e("Error sending message for model with id: $modelId and chat with id: $chatId", e)
+            } finally {
+                awaitingChatReplies[modelId] = awaitingChatReplies[modelId]!!.filter { it != chatId }
+            }
+        }
     }
 
     /**
@@ -107,20 +122,29 @@ class LlmService(
                     messages = chatMessages
                 )
             ).choices.first().message.content!!
-            chatService.editMessage(
-                modelId,
-                messageId,
-                MessageDto(
-                    id = messageId,
-                    senderId = modelId,
-                    chatId = chatId,
-                    message = updatedMessage,
-                    time = Clock.System.now().toEpochMilliseconds()
-                )
-            )
+            if (awaitingChatReplies[modelId]?.contains(chatId) != true) {
+                awaitingChatReplies[modelId] = ((awaitingChatReplies[modelId] ?: emptyList()) + chatId).distinct()
+                try {
+                    chatService.editMessage(
+                        modelId,
+                        messageId,
+                        MessageDto(
+                            id = messageId,
+                            senderId = modelId,
+                            chatId = chatId,
+                            message = updatedMessage,
+                            time = Clock.System.now().toEpochMilliseconds()
+                        )
+                    )
+                } catch (e: Exception) {
+                    Napier.e("Error sending message for model with id: $modelId and chat with id: $chatId", e)
+                } finally {
+                    awaitingChatReplies[modelId] = awaitingChatReplies[modelId]!!.filter { it != chatId }
+                }
+            }
         } else {
             // Add new message
-            updateChatIfNeeded(chatId)
+            sendMessageIfNeeded(chatId)
         }
     }
 }
