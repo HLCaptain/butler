@@ -152,14 +152,14 @@ class LlmService(
 
 fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> {
     val currentMessages = this
-    return foldRight<MessageDto, MutableList<ChatMessage>>(mutableListOf()) { message, acc ->
+    return fold<MessageDto, MutableList<ChatMessage>>(mutableListOf()) { acc, message ->
         val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && modelIds.contains(message.senderId)
         val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && !modelIds.contains(message.senderId)
         if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
             val previousMessageContent = acc.last().content
             acc.removeLast()
             acc.add(message.toChatMessage(modelIds, previousMessageContent))
-            return@foldRight acc
+            return@fold acc
         }
         acc.add(message.toChatMessage(modelIds))
         acc
