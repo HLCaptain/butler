@@ -210,8 +210,10 @@ buildConfig {
         val (key, value) = it.split("=", limit = 2)
         key to value
     }
-    buildConfigField("String?", "GOOGLE_CLIENT_ID", "\"${properties["GOOGLE_CLIENT_ID"]}\"")
-    buildConfigField("String?", "API_GATEWAY_URL", "\"${properties["API_GATEWAY_URL"]}\"")
+    val googleClientId = if (properties["GOOGLE_CLIENT_ID"] == null) null else "\"${properties["GOOGLE_CLIENT_ID"]}\""
+    buildConfigField("String?", "GOOGLE_CLIENT_ID", "$googleClientId")
+    val apiGatewayUrl = if (properties["API_GATEWAY_URL"] == null) null else "\"${properties["API_GATEWAY_URL"]}\""
+    buildConfigField("String?", "API_GATEWAY_URL", "$apiGatewayUrl")
 }
 
 android {
