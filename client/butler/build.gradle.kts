@@ -210,8 +210,8 @@ buildConfig {
         val (key, value) = it.split("=", limit = 2)
         key to value
     }
-    buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${properties["GOOGLE_CLIENT_ID"]}\"")
-    buildConfigField("String", "API_GATEWAY_URL", "\"${properties["API_GATEWAY_URL"]}\"")
+    buildConfigField("String?", "GOOGLE_CLIENT_ID", "\"${properties["GOOGLE_CLIENT_ID"]}\"")
+    buildConfigField("String?", "API_GATEWAY_URL", "\"${properties["API_GATEWAY_URL"]}\"")
 }
 
 android {
