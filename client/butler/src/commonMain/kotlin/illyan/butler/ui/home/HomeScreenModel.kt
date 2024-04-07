@@ -33,7 +33,7 @@ class HomeScreenModel(
 
     val state = combine(
         authManager.isUserSignedIn,
-        authManager.signedInUserUUID,
+        authManager.signedInUserId,
         appManager.isTutorialDone,
         _serverErrors,
         _appErrors

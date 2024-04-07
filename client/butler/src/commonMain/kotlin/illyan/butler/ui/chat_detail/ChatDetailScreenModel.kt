@@ -36,7 +36,7 @@ class ChatDetailScreenModel(
             null
         )
 
-    val userId = authManager.signedInUserUUID
+    val userId = authManager.signedInUserId
 
     fun sendMessage(message: String) {
         screenModelScope.launch(dispatcherIO) {

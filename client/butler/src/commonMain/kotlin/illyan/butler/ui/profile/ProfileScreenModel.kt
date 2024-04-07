@@ -40,7 +40,7 @@ class ProfileScreenModel(
             null
         )
 
-    val userUUID = authManager.signedInUserUUID
+    val userUUID = authManager.signedInUserId
         .stateIn(
             screenModelScope,
             SharingStarted.Eagerly,

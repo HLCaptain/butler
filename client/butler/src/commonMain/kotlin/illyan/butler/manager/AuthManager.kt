@@ -8,7 +8,7 @@ class AuthManager(
     private val userRepository: UserRepository
 ) {
     val isUserSignedIn = userRepository.isUserSignedIn
-    val signedInUserUUID = userRepository.signedInUserUUID
+    val signedInUserId = userRepository.signedInUserUUID
     val signedInUserEmail = userRepository.signedInUserEmail
     val signedInUserPhoneNumber = userRepository.signedInUserPhoneNumber
     val signedInUserPhotoURL = userRepository.signedInUserPhotoURL

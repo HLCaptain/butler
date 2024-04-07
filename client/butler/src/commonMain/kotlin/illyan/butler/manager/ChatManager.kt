@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
@@ -22,9 +21,17 @@ class ChatManager(
     private val _userChats = MutableStateFlow<List<DomainChat>>(emptyList())
     val userChats = _userChats.asStateFlow()
 
+    init {
+        authManager.signedInUserId.map { loadChat() }
+    }
+
     suspend fun loadChat() {
-        val userUUID = authManager.signedInUserUUID.first()
-        val newChats = chatRepository.getUserChatsFlow(userUUID!!).filterNot { it.second }.map { it.first }.first()
+        val userId = authManager.signedInUserId.first()
+        if (userId == null) {
+            _userChats.update { emptyList() }
+            return
+        }
+        val newChats = chatRepository.getUserChatsFlow(userId).filterNot { it.second }.map { it.first }.first()
         _userChats.update { (it + newChats.orEmpty()).distinct() }
     }
 
@@ -32,7 +39,7 @@ class ChatManager(
     fun getMessagesByChatFlow(uuid: String) = messageRepository.getChatFlow(uuid).map { it.first }
 
     suspend fun startNewChat(modelUUID: String): String {
-        return authManager.signedInUserUUID.first()?.let { userUUID ->
+        return authManager.signedInUserId.first()?.let { userUUID ->
             chatRepository.upsert(
                 DomainChat(
                     members = listOf(userUUID, modelUUID)
@@ -48,7 +55,7 @@ class ChatManager(
     }
 
     suspend fun sendMessage(chatUUID: String, message: String) {
-        authManager.signedInUserUUID.first()?.let { userUUID ->
+        authManager.signedInUserId.first()?.let { userUUID ->
             messageRepository.upsert(
                 DomainMessage(
                     chatId = chatUUID,

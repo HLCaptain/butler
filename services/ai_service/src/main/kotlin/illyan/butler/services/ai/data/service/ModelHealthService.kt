@@ -33,7 +33,11 @@ class ModelHealthService(
                     // TODO: open websocket to each URL and get model ids and health status
                     flow<List<Model>> {
                         while (true) {
-                            emit(client.get("$url/models").body<ModelsResponse>().data)
+                            try {
+                                emit(client.get("$url/models").body<ModelsResponse>().data)
+                            } catch (e: Exception) {
+                                Napier.e(e) { "Error fetching models from $url" }
+                            }
                             delay(10000L)
                         }
                     }
