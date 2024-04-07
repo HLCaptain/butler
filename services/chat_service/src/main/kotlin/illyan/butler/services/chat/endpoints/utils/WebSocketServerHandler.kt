@@ -1,5 +1,6 @@
 package illyan.butler.services.chat.endpoints.utils
 
+import io.github.aakira.napier.Napier
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.CloseReason
@@ -17,7 +18,10 @@ class WebSocketServerHandler {
 
     suspend inline fun <reified T> tryToCollect(values: Flow<T>, session: DefaultWebSocketServerSession) {
         try {
-            values.flowOn(Dispatchers.IO).collect { value -> session.sendSerialized(value) }
+            values.flowOn(Dispatchers.IO).collect { value ->
+                Napier.v("Sending value $value to session $session")
+                session.sendSerialized(value)
+            }
         } catch (e: Exception) {
             session.close(CloseReason(CloseReason.Codes.NORMAL, e.message.toString()))
         }

@@ -10,6 +10,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -52,13 +53,13 @@ class LlmService(
                                 messagesByModels[model.id] = chats.fold(emptyList()) { acc, chatDto -> acc + chatDto.lastFewMessages }
                                 Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
                                 updateChatsIfNeeded(messagesByModels[model.id]!!.map { it.chatId }.toSet())
-                                delay(1000L)
+                                delay(10000L)
                             }
                         }
 //                        coroutineScope.launch {
 //                            chatService.receiveMessages(model.id).collectLatest { messages ->
 //                                Napier.v("Received ${messages.size} messages for model with id: ${model.id}")
-//                                messagesByModels[model.id] = (messagesByModels[model.id]!! + messages).distinctBy { it.id }
+//                                messagesByModels[model.id] = ((messagesByModels[model.id] ?: emptyList()) + messages).distinctBy { it.id }
 //                                updateChatsIfNeeded(messages.map { it.chatId }.toSet())
 //                            }
 //                        }
@@ -149,17 +150,22 @@ class LlmService(
     }
 }
 
-fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> = foldRight(mutableListOf()) { message, acc ->
-    val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && modelIds.contains(message.senderId)
-    val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && !modelIds.contains(message.senderId)
-    if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
-        val previousMessageContent = acc.last().content
-        acc.removeLast()
-        acc.add(message.toChatMessage(modelIds, previousMessageContent))
-        return@foldRight acc
+fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> {
+    val currentMessages = this
+    return foldRight<MessageDto, MutableList<ChatMessage>>(mutableListOf()) { message, acc ->
+        val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && modelIds.contains(message.senderId)
+        val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && !modelIds.contains(message.senderId)
+        if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
+            val previousMessageContent = acc.last().content
+            acc.removeLast()
+            acc.add(message.toChatMessage(modelIds, previousMessageContent))
+            return@foldRight acc
+        }
+        acc.add(message.toChatMessage(modelIds))
+        acc
+    }.also {
+        Napier.v { "Converted messages $currentMessages to conversation: $it" }
     }
-    acc.add(message.toChatMessage(modelIds))
-    acc
 }
 
 fun MessageDto.toChatMessage(modelIds: List<String>, previousMessageContent: String? = null) = ChatMessage(

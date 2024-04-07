@@ -4,6 +4,7 @@ import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -18,10 +19,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.util.Attributes
+import io.ktor.util.network.UnresolvedAddressException
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -39,6 +42,19 @@ fun provideHttpClient() = HttpClient(CIO) {
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
+    }
+
+    install(HttpRequestRetry) {
+        maxRetries = 3
+        retryIf { _, response ->
+            !response.status.isSuccess()
+        }
+        retryOnExceptionIf { _, throwable ->
+            throwable is UnresolvedAddressException
+        }
+        delayMillis { retry ->
+            retry * 3.seconds.inWholeMilliseconds
+        }
     }
 
     developmentMode = AppConfig.Ktor.DEVELOPMENT

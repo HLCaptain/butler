@@ -68,10 +68,10 @@ class MessageExposedDatabase(
 
     override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
+            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
-                Messages.update { it[this.message] = message.message }
+                Messages.update({Messages.id eq message.id}) { it[this.message] = message.message }
             } else {
                 throw Exception("User is not in chat")
             }
