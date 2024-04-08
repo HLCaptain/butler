@@ -22,9 +22,9 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
             engine = client.engine,
             host = OpenAIHost(baseUrl = AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL),
             timeout = Timeout(
-                request = 2.minutes,
-                connect = 2.minutes,
-                socket = 2.minutes
+                request = 10.minutes,
+                connect = 10.minutes,
+                socket = 10.minutes
             )
         )
     )
@@ -40,9 +40,9 @@ fun provideOpenAIClients(client: HttpClient): List<OpenAI> {
                 engine = client.engine,
                 host = OpenAIHost(baseUrl = it),
                 timeout = Timeout(
-                    request = 2.minutes,
-                    connect = 2.minutes,
-                    socket = 2.minutes
+                    request = 10.minutes,
+                    connect = 10.minutes,
+                    socket = 10.minutes
                 )
             )
         )

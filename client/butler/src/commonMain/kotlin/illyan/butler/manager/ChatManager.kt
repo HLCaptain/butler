@@ -7,18 +7,22 @@ import illyan.butler.repository.ChatRepository
 import illyan.butler.repository.MessageRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Single
 class ChatManager(
     private val authManager: AuthManager,
@@ -31,20 +35,22 @@ class ChatManager(
 
     init {
         coroutineScopeIO.launch {
-            authManager.signedInUserId.collectLatest { loadChat() }
+            authManager.signedInUserId.flatMapLatest {
+                loadChats()
+            }.collectLatest { newChats ->
+                _userChats.update { (it + newChats).distinct() }
+            }
         }
     }
 
-    suspend fun loadChat() {
+    private fun loadChats(): Flow<List<DomainChat>> {
         val userId = authManager.signedInUserId.value
         if (userId == null) {
             Napier.v { "User not signed in, reseting chats" }
-            _userChats.update { emptyList() }
-            return
+            return flowOf(emptyList())
         }
         Napier.v { "Loading chats for user $userId" }
-        val newChats = chatRepository.getUserChatsFlow(userId).filterNot { it.second }.map { it.first }.first()
-        _userChats.update { (it + newChats.orEmpty()).distinct() }
+        return chatRepository.getUserChatsFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
     }
 
     fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
