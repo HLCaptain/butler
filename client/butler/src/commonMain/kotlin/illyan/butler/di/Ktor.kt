@@ -2,9 +2,7 @@ package illyan.butler.di
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
-import illyan.butler.config.BuildConfig
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
-import illyan.butler.data.network.model.auth.TokenInfo
 import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.isDebugBuild
 import illyan.butler.manager.ErrorManager
@@ -24,14 +22,12 @@ import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
-import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
@@ -66,11 +62,12 @@ fun provideHttpClient(
 
     install(Auth) {
         bearer {
+            // DON'T USE HTTP REQUESTS IN `loadTokens`. Only use local storage.
+            // loadTokens run every time a request is made.
             loadTokens {
-                // FIXME: react to logouts and new sign ins
                 val accessToken = settings.getString(UserRepository.KEY_ACCESS_TOKEN, "")
                 val refreshToken = settings.getString(UserRepository.KEY_REFRESH_TOKEN, "")
-                if (accessToken.isEmpty() || refreshToken.isEmpty()) {
+                if (accessToken.isBlank() || refreshToken.isBlank()) {
                     Napier.d { "No access or refresh token found in settings" }
                     return@loadTokens null
                 }
