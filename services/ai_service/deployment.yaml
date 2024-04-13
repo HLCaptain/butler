@@ -36,3 +36,8 @@ spec:
                 configMapKeyRef:
                   name: butler-configmap
                   key: CHAT_API_URL
+            - name: DEVELOPMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: DEVELOPMENT

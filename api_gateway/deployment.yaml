@@ -46,3 +46,8 @@ spec:
                 configMapKeyRef:
                   name: butler-configmap
                   key: AI_API_URL
+            - name: DEVELOPMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: DEVELOPMENT

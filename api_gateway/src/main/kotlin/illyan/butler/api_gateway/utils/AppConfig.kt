@@ -14,7 +14,7 @@ data object AppConfig {
      */
     val DEPLOYMENT_ENVIRONMENT = System.getenv("DEPLOYMENT_ENVIRONMENT") ?: "development"
     data object Ktor {
-        val DEVELOPMENT = System.getenv("KTOR_DEVELOPMENT").toBoolean()
+        val DEVELOPMENT = System.getenv("DEVELOPMENT").toBoolean()
         val PORT = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8080
         val DEBUG_CONTENT_TYPE = ContentType.Application.Json
         val BINARY_CONTENT_TYPE = ContentType.Application.ProtoBuf

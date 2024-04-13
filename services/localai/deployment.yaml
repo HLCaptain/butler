@@ -32,25 +32,38 @@ spec:
       name: local-ai
     spec:
       containers:
-        - args:
-          - phi-2
+        - args: []
           env:
           - name: DEBUG
             value: "true"
           - name: GALLERIES
             value: '[{"name":"model-gallery", "url":"github:go-skynet/model-gallery/index.yaml"}, {"url": "github:go-skynet/model-gallery/huggingface.yaml","name":"huggingface"}]'
-          - name: PRELOAD_MODELS
-            value: '[{ "id": "huggingface@thebloke__open-llama-13b-open-instruct-ggml__open-llama-13b-open-instruct.ggmlv3.q3_k_m.bin", "name": "gpt-3.5-turbo", "overrides": { "f16": true, "mmap": true }}]'
+          - name: THREADS
+            value: "16"
           name: local-ai
-          image: quay.io/go-skynet/local-ai:latest-aio-gpu-nvidia-cuda-12
+          image: localai/localai:latest-aio-cpu #localai/localai:latest-aio-gpu-nvidia-cuda-12 for GPU
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: models-volume
               mountPath: /build/models
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1600m"
+            limits:
+              memory: "32Gi"
+              cpu: "1600m"
       volumes:
         - name: models-volume
           persistentVolumeClaim:
             claimName: models-pvc
+      # deploy:
+      #   resources:
+      #     reservations:
+      #       devices:
+      #         - driver: nvidia
+      #           count: 1
+      #           capabilities: [gpu]
 ---
 apiVersion: v1
 kind: Service

@@ -3,7 +3,6 @@ package illyan.butler.api_gateway.di
 import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
@@ -38,7 +37,7 @@ fun provideHttpClientAttribute(): Attributes {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Single
-fun provideHttpClient() = HttpClient(CIO) {
+fun provideHttpClient() = HttpClient {
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL

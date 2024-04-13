@@ -40,7 +40,7 @@ inline fun <reified T> HttpClient.tryToExecuteWebSocket(
 ): StateFlow<T?> {
     val stateFlow = MutableStateFlow<T?>(null)
     launch(Dispatchers.IO) {
-        webSocket(urlString = "ws://${path.replaceFirst("http", "ws")}") {
+        webSocket(urlString = path.replaceFirst("http", "ws")) {
             while (true) {
                 try {
                     stateFlow.update { receiveDeserialized<T>() }
@@ -57,7 +57,7 @@ suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
     data: T,
     path: String
 ) {
-    webSocket(urlString = "ws://${path.replaceFirst("http", "ws")}") {
+    webSocket(urlString = path.replaceFirst("http", "ws")) {
         try {
             sendSerialized(data)
         } catch (e: Exception) {
@@ -70,7 +70,7 @@ suspend inline fun <reified T> HttpClient.tryToSendAndReceiveWebSocketData(
     data: T,
     path: String
 ) = flow {
-    webSocket(urlString = "ws://${path.replaceFirst("http", "ws")}") {
+    webSocket(urlString = path.replaceFirst("http", "ws")) {
         sendSerialized(data)
         emit(receiveDeserialized<T>())
     }

@@ -34,15 +34,15 @@ class MessageRepository(
 
     private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getChatFlow(uuid: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
-        return chatStateFlows.getOrPut(uuid) {
+    fun getChatFlow(id: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+        return chatStateFlows.getOrPut(id) {
             chatMessageMutableStore.stream<StoreReadResponse<DomainMessage>>(
-                StoreReadRequest.fresh(uuid)
+                StoreReadRequest.fresh(id)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: $it")
                 val data = it.dataOrNull()
-                Napier.d("Chat is $data")
+                Napier.d("Messages are $data")
                 data to (it is StoreReadResponse.Loading)
             }.stateIn(
                 coroutineScopeIO,

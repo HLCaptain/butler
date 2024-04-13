@@ -2,7 +2,6 @@ package illyan.butler.ui.chat_detail
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,38 +22,43 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.you
-import illyan.butler.generated.resources.assistant
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import org.koin.core.parameter.parametersOf
 
-class ChatDetailScreen(private val chatUUID: String) : Screen {
+class ChatDetailScreen(private val getSelectedChatId: () -> String?) : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<ChatDetailScreenModel> { parametersOf(chatUUID) }
+        val screenModel = getScreenModel<ChatDetailScreenModel>()
         val chat by screenModel.chat.collectAsState()
         val messages by screenModel.messages.collectAsState()
         val userId by screenModel.userId.collectAsState()
-        LaunchedEffect(Unit) { Napier.d("ChatScreen: $chat") }
+        LaunchedEffect(chat) { Napier.d("ChatScreen: $chat") }
+        val selectedChatId by remember { derivedStateOf(getSelectedChatId) }
+        LaunchedEffect(selectedChatId) {
+            Napier.d("SelectedChatId: $selectedChatId")
+            selectedChatId?.let { screenModel.loadChat(it) }
+        }
         Column(
             modifier = Modifier
                 .systemBarsPadding()
