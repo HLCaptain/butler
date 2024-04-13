@@ -36,7 +36,7 @@ class MessageRepository(
     @OptIn(ExperimentalStoreApi::class)
     fun getChatFlow(id: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatStateFlows.getOrPut(id) {
-            chatMessageMutableStore.stream<StoreReadResponse<DomainMessage>>(
+            chatMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
                 StoreReadRequest.fresh(id)
             ).map {
                 it.throwIfError()

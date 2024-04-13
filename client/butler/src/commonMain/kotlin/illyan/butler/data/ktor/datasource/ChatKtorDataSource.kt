@@ -2,6 +2,7 @@ package illyan.butler.data.ktor.datasource
 
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.chat.ChatDto
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
@@ -23,10 +24,14 @@ import org.koin.core.annotation.Single
 class ChatKtorDataSource(
     private val client: HttpClient
 ) : ChatNetworkDataSource {
-    override fun fetchNewChats(): Flow<ChatDto> {
+    override fun fetchNewChats(): Flow<List<ChatDto>> {
         return flow {
             client.webSocket("/chats") { // UserID is sent with JWT
-                incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }
+                incoming.receiveAsFlow().collectLatest {
+                    val chat = receiveDeserialized<List<ChatDto>>()
+                    Napier.v { "Received new chat: $chat" }
+                    emit(chat)
+                }
             }
         }
     }

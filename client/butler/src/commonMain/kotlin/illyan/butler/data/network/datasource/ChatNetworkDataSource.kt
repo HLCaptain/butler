@@ -4,7 +4,7 @@ import illyan.butler.data.network.model.chat.ChatDto
 import kotlinx.coroutines.flow.Flow
 
 interface ChatNetworkDataSource {
-    fun fetchNewChats(): Flow<ChatDto>
+    fun fetchNewChats(): Flow<List<ChatDto>>
 
     /**
      * Fetch chats the user is a member of.

@@ -73,7 +73,7 @@ class ChatService(
         return chatDatabase.getPreviousChats(userId, limit, offset).onEach { chatCache.setChat(it) }
     }
 
-    override fun getChangedChatsAffectingUser(userId: String): Flow<ChatDto> {
+    override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
         return chatCache.getChangedChatsAffectingUser(userId)
     }
 

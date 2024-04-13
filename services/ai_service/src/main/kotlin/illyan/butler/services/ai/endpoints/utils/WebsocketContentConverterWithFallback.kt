@@ -1,4 +1,4 @@
-package illyan.butler.services.ai.data.utils
+package illyan.butler.services.ai.endpoints.utils
 
 import io.ktor.serialization.ContentConvertException
 import io.ktor.serialization.WebsocketContentConverter

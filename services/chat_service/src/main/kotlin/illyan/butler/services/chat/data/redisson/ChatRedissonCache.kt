@@ -7,9 +7,11 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.merge
@@ -40,7 +42,7 @@ class ChatRedissonCache(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getChangedChatsAffectingUser(userId: String) = callbackFlow {
+    override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> = callbackFlow {
         // Subscribe to each Chat the user is member of
         val topic = client.getTopic("user:$userId:chats")
         val userChatIds = MutableStateFlow(emptyList<String>())
@@ -54,11 +56,11 @@ class ChatRedissonCache(
         }.get()
 
         userChatIds.flatMapLatest { chatIds ->
-            chatIds.map { chatId -> getChangesFromChat(chatId) }.merge()
-        }.collectLatest { chat ->
+            combine(chatIds.map { chatId -> getChangesFromChat(chatId) }) { it.toList() }
+        }.collectLatest { chats ->
             try {
                 // Send the chat to the flow
-                this.trySend(chat).isSuccess
+                this.trySend(chats).isSuccess
             } catch (e: Exception) {
                 // Handle exception, possibly closing the flow if needed
                 close(e)

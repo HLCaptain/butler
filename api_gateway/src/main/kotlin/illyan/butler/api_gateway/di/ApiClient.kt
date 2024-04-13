@@ -1,5 +1,6 @@
 package illyan.butler.api_gateway.di
 
+import illyan.butler.api_gateway.endpoints.utils.WebsocketContentConverterWithFallback
 import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -59,7 +60,9 @@ fun provideHttpClient() = HttpClient {
     developmentMode = AppConfig.Ktor.DEVELOPMENT
 
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(AppConfig.Ktor.SERIALIZATION_FORMAT)
+        contentConverter = WebsocketContentConverterWithFallback(
+            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
+        )
         pingInterval = 5.seconds.inWholeMilliseconds
     }
 

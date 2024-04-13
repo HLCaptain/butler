@@ -1,5 +1,8 @@
 package illyan.butler.services.ai.plugins
 
+import illyan.butler.services.ai.AppConfig
+import illyan.butler.services.ai.endpoints.utils.WebsocketContentConverterWithFallback
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.routing.routing
@@ -19,6 +22,9 @@ fun Application.configureWebSockets() {
         timeout = Duration.ofSeconds(15)
         maxFrameSize = Long.MAX_VALUE
         masking = false
+        contentConverter = WebsocketContentConverterWithFallback(
+            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
+        )
     }
     routing {
         webSocket("/ws") { // websocketSession

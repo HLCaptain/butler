@@ -2,6 +2,7 @@ package illyan.butler.data.ktor.datasource
 
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
@@ -26,7 +27,11 @@ class MessageKtorDataSource(
     override fun fetchNewMessages(): Flow<List<MessageDto>> {
         return flow {
             client.webSocket("/messages") { // UserID is sent with JWT
-                incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }
+                incoming.receiveAsFlow().collectLatest {
+                    val messages = receiveDeserialized<List<MessageDto>>()
+                    Napier.d("Received new messages $messages")
+                    emit(messages)
+                }
             }
         }
     }

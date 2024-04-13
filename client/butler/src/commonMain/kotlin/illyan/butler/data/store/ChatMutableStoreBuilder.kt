@@ -9,6 +9,9 @@ import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -36,7 +39,14 @@ fun provideChatMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chat $key")
-        chatNetworkDataSource.fetchNewChats()
+        combine(
+            flow { emit(chatNetworkDataSource.fetch()) },
+            flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) }
+        ) {
+            userChats, newChats ->
+            Napier.d("Fetched chat ${(userChats + newChats).distinct()}")
+            (userChats + newChats).distinctBy { it.id }.first { it.id == key }
+        }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->

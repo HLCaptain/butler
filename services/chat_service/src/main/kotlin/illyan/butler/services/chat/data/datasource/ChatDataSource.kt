@@ -24,6 +24,6 @@ interface ChatDataSource {
     suspend fun getChats(userId: String, fromDate: Long, toDate: Long = Clock.System.now().toEpochMilliseconds()): List<ChatDto>
     suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto>
     suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto>
-    fun getChangedChatsAffectingUser(userId: String): Flow<ChatDto>
+    fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>>
     fun getChangesFromChat(chatId: String): Flow<ChatDto>
 }

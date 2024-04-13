@@ -1,7 +1,7 @@
 package illyan.butler.services.ai.di
 
 import illyan.butler.services.ai.AppConfig
-import illyan.butler.services.ai.data.utils.WebsocketContentConverterWithFallback
+import illyan.butler.services.ai.endpoints.utils.WebsocketContentConverterWithFallback
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -25,8 +25,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.util.Attributes
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Single
 
 @Single
@@ -53,10 +51,7 @@ fun provideHttpClient() = HttpClient(CIO) {
 
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
-            listOf(
-                KotlinxWebsocketSerializationConverter(ProtoBuf),
-                KotlinxWebsocketSerializationConverter(Json)
-            )
+            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
         )
     }
 
