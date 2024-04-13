@@ -108,4 +108,6 @@ class ChatService(private val client: HttpClient) {
         userId: String,
         chatId: String
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages").body<List<MessageDto>>()
+
+    fun getChangedMessagesByUser(userId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/$userId/messages")
 }

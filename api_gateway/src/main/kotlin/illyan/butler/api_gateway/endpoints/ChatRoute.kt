@@ -29,6 +29,14 @@ fun Route.chatRoute() {
     val chatSocketHandler: ChatSocketHandler by inject()
 
     authenticate("auth-jwt") {
+        webSocket("/messages") {
+            val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
+            val chats = chatService.getChangedMessagesByUser(userId)
+            webSocketServerHandler.sessions.getOrPut("messages:$userId") { this }?.let {
+                webSocketServerHandler.tryToCollect(chats, it)
+            }
+        }
+
         route("/chats") {
             get {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
@@ -51,8 +59,7 @@ fun Route.chatRoute() {
             webSocket {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                 val chats = chatService.receiveChats(userId)
-                webSocketServerHandler.sessions[userId] = this
-                webSocketServerHandler.sessions[userId]?.let {
+                webSocketServerHandler.sessions.getOrPut("chats:$userId") { this }?.let {
                     webSocketServerHandler.tryToCollect(chats, it)
                 }
             }
@@ -83,10 +90,9 @@ fun Route.chatRoute() {
                 webSocket {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                    val chatMessages = chatService.receiveMessages(userId, chatId)
-                    webSocketServerHandler.sessions[chatId] = this
-                    webSocketServerHandler.sessions[chatId]?.let {
-                        webSocketServerHandler.tryToCollect(chatMessages, it)
+                    val messages = chatService.receiveMessages(userId, chatId)
+                    webSocketServerHandler.sessions.getOrPut(chatId) { this }?.let {
+                        webSocketServerHandler.tryToCollect(messages, it)
                     }
                 }
 
