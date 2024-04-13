@@ -4,6 +4,7 @@ import illyan.butler.api_gateway.endpoints.utils.WebsocketContentConverterWithFa
 import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
@@ -27,7 +28,9 @@ import io.ktor.util.Attributes
 import io.ktor.util.network.UnresolvedAddressException
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.ExperimentalSerializationApi
+import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.seconds
 
@@ -38,7 +41,12 @@ fun provideHttpClientAttribute(): Attributes {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Single
-fun provideHttpClient() = HttpClient {
+fun provideHttpClient() = HttpClient(OkHttp) {
+    engine {
+        preconfigured = OkHttpClient.Builder()
+            .pingInterval(15, TimeUnit.SECONDS)
+            .build()
+    }
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
@@ -73,7 +81,7 @@ fun provideHttpClient() = HttpClient {
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
         onRequest { request, content ->
-            Napier.v("ContentTypeFallback plugin called onRequest, request: $request, content: $content")
+            Napier.v("ContentTypeFallback plugin called onRequest, request: ${request.url}, content: $content")
             // Default body is EmptyContent
             // Don't set content type if content itself is not set
             if (request.contentType() == null && content !is EmptyContent) {

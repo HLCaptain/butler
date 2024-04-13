@@ -15,8 +15,9 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.koin.core.annotation.Single
 
@@ -26,12 +27,13 @@ class ChatKtorDataSource(
 ) : ChatNetworkDataSource {
     override fun fetchNewChats(): Flow<List<ChatDto>> {
         return flow {
+            Napier.v { "Receiving new chats" }
             client.webSocket("/chats") { // UserID is sent with JWT
-                incoming.receiveAsFlow().collectLatest {
+                emitAll(incoming.receiveAsFlow().map { _ ->
                     val chat = receiveDeserialized<List<ChatDto>>()
                     Napier.v { "Received new chat: $chat" }
-                    emit(chat)
-                }
+                    chat
+                })
             }
         }
     }

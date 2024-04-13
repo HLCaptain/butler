@@ -30,21 +30,11 @@ class ChatDetailScreenModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getChatFlow(chatId) } ?: flowOf(null) }
-        .stateIn(
-            screenModelScope,
-            SharingStarted.Eagerly,
-            null
-        )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(null) }
         .map { messages -> messages?.sortedBy { it.time }?.reversed() }
-        .stateIn(
-            screenModelScope,
-            SharingStarted.Eagerly,
-            null
-        )
 
     val state = combine(
         chat,

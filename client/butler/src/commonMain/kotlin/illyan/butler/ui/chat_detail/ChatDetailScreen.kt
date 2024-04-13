@@ -50,10 +50,8 @@ class ChatDetailScreen(private val getSelectedChatId: () -> String?) : Screen {
     @Composable
     override fun Content() {
         val screenModel = getScreenModel<ChatDetailScreenModel>()
-        val chat by screenModel.chat.collectAsState()
-        val messages by screenModel.messages.collectAsState()
-        val userId by screenModel.userId.collectAsState()
-        LaunchedEffect(chat) { Napier.d("ChatScreen: $chat") }
+        val state by screenModel.state.collectAsState()
+        LaunchedEffect(state.chat) { Napier.d("ChatScreen: ${state.chat}") }
         val selectedChatId by remember { derivedStateOf(getSelectedChatId) }
         LaunchedEffect(selectedChatId) {
             Napier.d("SelectedChatId: $selectedChatId")
@@ -67,14 +65,14 @@ class ChatDetailScreen(private val getSelectedChatId: () -> String?) : Screen {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = chat?.name ?: stringResource(Res.string.new_chat),
+                text = state.chat?.name ?: stringResource(Res.string.new_chat),
                 style = MaterialTheme.typography.headlineLarge
             )
             MessageList(
                 modifier = Modifier.weight(1f, fill = true),
-                chat = chat,
-                messages = messages ?: emptyList(),
-                userId = userId ?: ""
+                chat = state.chat,
+                messages = state.messages ?: emptyList(),
+                userId = state.userId ?: ""
             )
             MessageField(sendMessage = screenModel::sendMessage)
         }

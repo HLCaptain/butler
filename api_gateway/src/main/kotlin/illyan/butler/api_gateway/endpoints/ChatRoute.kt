@@ -20,6 +20,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.flow.filterNotNull
 import org.koin.ktor.ext.inject
 
 fun Route.chatRoute() {
@@ -31,7 +32,7 @@ fun Route.chatRoute() {
     authenticate("auth-jwt") {
         webSocket("/messages") {
             val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-            val chats = chatService.getChangedMessagesByUser(userId)
+            val chats = chatService.getChangedMessagesByUser(userId).filterNotNull()
             webSocketServerHandler.sessions.getOrPut("messages:$userId") { this }?.let {
                 webSocketServerHandler.tryToCollect(chats, it)
             }
@@ -58,7 +59,7 @@ fun Route.chatRoute() {
 
             webSocket {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-                val chats = chatService.receiveChats(userId)
+                val chats = chatService.receiveChats(userId).filterNotNull()
                 webSocketServerHandler.sessions.getOrPut("chats:$userId") { this }?.let {
                     webSocketServerHandler.tryToCollect(chats, it)
                 }
@@ -90,7 +91,7 @@ fun Route.chatRoute() {
                 webSocket {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                    val messages = chatService.receiveMessages(userId, chatId)
+                    val messages = chatService.receiveMessages(userId, chatId).filterNotNull()
                     webSocketServerHandler.sessions.getOrPut(chatId) { this }?.let {
                         webSocketServerHandler.tryToCollect(messages, it)
                     }
