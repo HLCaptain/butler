@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: butler-api-gateway
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: butler-api-gateway

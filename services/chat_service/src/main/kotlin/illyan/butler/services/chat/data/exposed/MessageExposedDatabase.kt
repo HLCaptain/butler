@@ -170,20 +170,20 @@ class MessageExposedDatabase(
                 val messages = getMessages(userId).toSet()
                 val changedMessages = previousMessages?.let {
                     messages.filter { message -> message !in it }
-                } ?: emptySet()
-                emit(changedMessages.toList())
+                } ?: messages
+                if (changedMessages.isNotEmpty()) emit(changedMessages.toList())
                 previousMessages = messages
-                delay(1000)
+                delay(10000)
             }
         }
     }
 
     override suspend fun getMessages(userId: String): List<MessageDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            Messages
-                .selectAll()
-                .where(Messages.senderId eq userId)
-                .map { it.toMessageDto() }
+            // Get all messages related to the user (including messages from chats the user is a member of)
+            val userChats = ChatMembers.selectAll().where(ChatMembers.userId eq userId)
+            val messages = Messages.selectAll().where { Messages.chatId inList userChats.map { it[ChatMembers.chatId] } }
+            messages.map { it.toMessageDto() }
         }
     }
 
@@ -195,7 +195,7 @@ class MessageExposedDatabase(
                 val changedMessages = previousMessages?.let {
                     messages.filter { message -> message !in it }
                 } ?: emptySet()
-                emit(changedMessages.toList())
+                if (changedMessages.isNotEmpty()) emit(changedMessages.toList())
                 previousMessages = messages
                 delay(1000)
             }

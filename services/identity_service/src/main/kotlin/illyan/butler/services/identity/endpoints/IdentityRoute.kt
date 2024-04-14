@@ -4,6 +4,7 @@ import illyan.butler.services.identity.data.model.identity.UserDto
 import illyan.butler.services.identity.data.model.identity.UserRegistrationDto
 import illyan.butler.services.identity.data.service.IdentityService
 import illyan.butler.services.identity.endpoints.utils.WebSocketServerHandler
+import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
@@ -51,11 +52,10 @@ fun Route.identityRoute() {
 
             webSocket {
                 val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-                val userFlow = identityService.getUserChanges(userId)
-                webSocketServerHandler.sessions[userId] = this
-                webSocketServerHandler.sessions[userId]?.let {
-                    webSocketServerHandler.tryToCollect(userFlow, it)
+                webSocketServerHandler.addFlowSessionListener(userId, this) {
+                    identityService.getUserChanges(userId)
                 }
+                Napier.d { "Added user listener for $userId" }
             }
         }
     }

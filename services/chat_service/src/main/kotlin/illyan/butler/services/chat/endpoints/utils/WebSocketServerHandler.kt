@@ -19,17 +19,15 @@ class WebSocketServerHandler {
     private val flows: ConcurrentHashMap<String, Flow<*>> = ConcurrentHashMap()
 
     private suspend inline fun <reified T> tryToCollect(values: Flow<T>, session: DefaultWebSocketServerSession, crossinline onCloseConnection: () -> Unit = {}) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                values.flowOn(Dispatchers.IO).collect { value ->
-                    Napier.v { "Sending value: $value" }
-                    session.sendSerialized(value)
-                }
-            } catch (e: Exception) {
-                Napier.v { "Error in sending value: ${e.stackTrace}" }
-                session.close(CloseReason(CloseReason.Codes.NORMAL, e.message.toString()))
-                onCloseConnection()
+        try {
+            values.flowOn(Dispatchers.IO).collect { value ->
+                Napier.v { "Sending value: $value" }
+                session.sendSerialized(value)
             }
+        } catch (e: Exception) {
+            Napier.e("Error in sending value", e)
+            session.close(CloseReason(CloseReason.Codes.NORMAL, e.message.toString()))
+            onCloseConnection()
         }
     }
 

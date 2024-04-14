@@ -15,27 +15,40 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
 @Single
 class ChatKtorDataSource(
     private val client: HttpClient
 ) : ChatNetworkDataSource {
-    override fun fetchNewChats(): Flow<List<ChatDto>> {
-        return flow {
-            Napier.v { "Receiving new chats" }
-            client.webSocket("/chats") { // UserID is sent with JWT
-                emitAll(incoming.receiveAsFlow().map { _ ->
-                    val chat = receiveDeserialized<List<ChatDto>>()
-                    Napier.v { "Received new chat: $chat" }
-                    chat
-                })
+    private var newChatsStateFlow = MutableStateFlow<List<ChatDto>?>(null)
+    private var isLoadingNewChatsWebSocketSession = false
+    private suspend fun createNewChatsFlow() {
+        Napier.v { "Receiving new chats" }
+        client.webSocket("/chats") { // UserID is sent with JWT
+            incoming.receiveAsFlow().collect { _ ->
+                Napier.v { "Received new chat" }
+                newChatsStateFlow.update { receiveDeserialized<List<ChatDto>>() }
             }
         }
+    }
+
+    override fun fetchNewChats(): Flow<List<ChatDto>> {
+        return if (newChatsStateFlow.value == null && !isLoadingNewChatsWebSocketSession) {
+            isLoadingNewChatsWebSocketSession = true
+            flow {
+                createNewChatsFlow()
+                emitAll(newChatsStateFlow)
+            }
+        } else {
+            newChatsStateFlow
+        }.map { it ?: emptyList() }
     }
 
     override suspend fun fetchPaginated(limit: Int, timestamp: Long): List<ChatDto> {

@@ -216,10 +216,10 @@ class ChatExposedDatabase(
                 val chats = getChats(userId).toSet()
                 val changedChats = previousChats?.let {
                     chats.filter { chat -> chat !in it }
-                } ?: emptySet()
-                emit(changedChats.toList())
+                } ?: chats
+                if (changedChats.isNotEmpty()) emit(changedChats.toList())
                 previousChats = chats
-                delay(1000)
+                delay(10000)
             }
         }
     }
@@ -231,7 +231,7 @@ class ChatExposedDatabase(
                 val chat = getChat(userId, chatId)
                 if (chat != previousChat) emit(chat)
                 previousChat = chat
-                delay(1000)
+                delay(10000)
             }
         }
     }

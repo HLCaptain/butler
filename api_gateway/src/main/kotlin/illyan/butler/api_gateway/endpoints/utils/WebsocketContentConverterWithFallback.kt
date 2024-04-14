@@ -4,6 +4,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.serialization.ContentConvertException
 import io.ktor.serialization.WebsocketContentConverter
 import io.ktor.serialization.WebsocketConverterNotFoundException
+import io.ktor.serialization.WebsocketDeserializeException
 import io.ktor.util.reflect.TypeInfo
 import io.ktor.utils.io.charsets.Charset
 import io.ktor.websocket.Frame
@@ -27,6 +28,9 @@ class WebsocketContentConverterWithFallback(
                 // TODO: Maybe not throw every other exception?
                 Napier.e(e) { "Error in content conversion" }
                 null
+            } catch (e: WebsocketDeserializeException) {
+                Napier.e(e) { "Error in deserializing data" }
+                null
             }
         }
         if (deserializedWithConverter != null) {
@@ -39,5 +43,24 @@ class WebsocketContentConverterWithFallback(
 
     override fun isApplicable(frame: Frame): Boolean {
         return contentConverters.any { it.isApplicable(frame) }
+    }
+
+    override suspend fun serializeNullable(charset: Charset, typeInfo: TypeInfo, value: Any?): Frame {
+        val serializedWithConverter = contentConverters.firstNotNullOfOrNull {
+            try {
+                val frame = it.serializeNullable(charset, typeInfo, value)
+                Napier.v { "Serialized data: $value with converter $it" }
+                frame to it
+            } catch (e: ContentConvertException) {
+                // This converter is not applicable, find another one.
+                Napier.e(e) { "Error in content conversion" }
+                null
+            }
+        }
+        if (serializedWithConverter != null) {
+            return serializedWithConverter.first
+        } else {
+            throw WebsocketConverterNotFoundException("Could not fallback to proper content converter.")
+        }
     }
 }

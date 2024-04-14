@@ -5,7 +5,6 @@ import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -20,19 +19,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.ktor.util.Attributes
-import io.ktor.util.network.UnresolvedAddressException
-import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.ExperimentalSerializationApi
-import okhttp3.OkHttpClient
 import org.koin.core.annotation.Single
-import kotlin.time.Duration.Companion.seconds
 
 @Single
 fun provideHttpClientAttribute(): Attributes {
@@ -42,28 +34,23 @@ fun provideHttpClientAttribute(): Attributes {
 @OptIn(ExperimentalSerializationApi::class)
 @Single
 fun provideHttpClient() = HttpClient(OkHttp) {
-    engine {
-        preconfigured = OkHttpClient.Builder()
-            .pingInterval(15, TimeUnit.SECONDS)
-            .build()
-    }
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
     }
 
-    install(HttpRequestRetry) {
-        maxRetries = 3
-        retryIf { _, response ->
-            !response.status.isSuccess()
-        }
-        retryOnExceptionIf { _, throwable ->
-            throwable is UnresolvedAddressException
-        }
-        delayMillis { retry ->
-            retry * 3.seconds.inWholeMilliseconds
-        }
-    }
+//    install(HttpRequestRetry) {
+//        maxRetries = 3
+//        retryIf { _, response ->
+//            !response.status.isSuccess()
+//        }
+//        retryOnExceptionIf { _, throwable ->
+//            throwable is UnresolvedAddressException
+//        }
+//        delayMillis { retry ->
+//            retry * 3.seconds.inWholeMilliseconds
+//        }
+//    }
 
     developmentMode = AppConfig.Ktor.DEVELOPMENT
 
@@ -71,12 +58,12 @@ fun provideHttpClient() = HttpClient(OkHttp) {
         contentConverter = WebsocketContentConverterWithFallback(
             AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
         )
-        pingInterval = 5.seconds.inWholeMilliseconds
+//        pingInterval = 5.seconds.inWholeMilliseconds
     }
 
-    install(KtorClientTracing) {
-        setOpenTelemetry(GlobalOpenTelemetry.get())
-    }
+//    install(KtorClientTracing) {
+//        setOpenTelemetry(GlobalOpenTelemetry.get())
+//    }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes

@@ -4,7 +4,6 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.UserTokensResponse
-import illyan.butler.isDebugBuild
 import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
@@ -21,6 +20,9 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
@@ -61,6 +63,15 @@ fun provideHttpClient(
         }
     }
 
+    install(Logging) {
+        logger = object: Logger {
+            override fun log(message: String) {
+                Napier.v("HTTP Client", null, message)
+            }
+        }
+        level = LogLevel.HEADERS
+    }
+
     install(Auth) {
         bearer {
             // DON'T USE HTTP REQUESTS IN `loadTokens`. Only use local storage.
@@ -95,7 +106,8 @@ fun provideHttpClient(
         )
     }
 
-    developmentMode = isDebugBuild()
+//    developmentMode = isDebugBuild()
+    developmentMode = true
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
