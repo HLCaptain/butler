@@ -15,28 +15,41 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
 @Single
 class MessageKtorDataSource(
     private val client: HttpClient
 ) : MessageNetworkDataSource {
-    private val newMessagesFlow by lazy {
-        flow {
-            Napier.v { "Receiving new messages" }
-            client.webSocket("/messages") { // UserID is sent with JWT
-                incoming.receiveAsFlow().collect { _ ->
-                    Napier.d("Received new messages")
-                    emit(receiveDeserialized<List<MessageDto>>())
-                }
+    private val newMessagesStateFlow = MutableStateFlow<List<MessageDto>?>(null)
+    private var isLoadingNewMessagesWebSocketSession = false
+
+    private suspend fun createNewMessagesFlow() {
+        Napier.v { "Receiving new messages" }
+        client.webSocket("/messages") { // UserID is sent with JWT
+            incoming.receiveAsFlow().collect { _ ->
+                Napier.d("Received new messages")
+                newMessagesStateFlow.update { receiveDeserialized<List<MessageDto>>() }
             }
         }
     }
 
     override fun fetchNewMessages(): Flow<List<MessageDto>> {
-        return newMessagesFlow
+        return if (newMessagesStateFlow.value == null && !isLoadingNewMessagesWebSocketSession) {
+            isLoadingNewMessagesWebSocketSession = true
+            flow {
+                createNewMessagesFlow()
+                emitAll(newMessagesStateFlow)
+            }
+        } else {
+            newMessagesStateFlow
+        }.map { it ?: emptyList() }
     }
 
     override suspend fun fetchByChat(chatUUID: String, limit: Int, timestamp: Long): List<MessageDto> {
@@ -60,5 +73,9 @@ class MessageKtorDataSource(
 
     override suspend fun delete(id: String, chatId: String): Boolean {
         return client.delete("/chats/$chatId/messages/$id").status.isSuccess()
+    }
+
+    override suspend fun fetch(key: String): MessageDto? {
+        return client.get("/messages/$key").body()
     }
 }

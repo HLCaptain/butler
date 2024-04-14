@@ -25,4 +25,5 @@ interface MessageNetworkDataSource {
      * @return true if the message is deleted.
      */
     suspend fun delete(id: String, chatId: String): Boolean
+    suspend fun fetch(key: String): MessageDto?
 }

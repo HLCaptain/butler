@@ -10,8 +10,10 @@ import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
@@ -38,7 +40,10 @@ fun provideMessageMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chat $key")
-        messageNetworkDataSource.fetchNewMessages().mapNotNull { flow -> flow.firstOrNull { it.id == key } }
+        listOf(
+            flow { emit(messageNetworkDataSource.fetch(key)) },
+            messageNetworkDataSource.fetchNewMessages().map { flow -> flow.firstOrNull { it.id == key } }
+        ).merge().filterNotNull()
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->

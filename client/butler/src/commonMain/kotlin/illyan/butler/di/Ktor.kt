@@ -40,11 +40,11 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Named
-import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-@Single
+@Factory
 fun provideHttpClient(
     settings: FlowSettings,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,

@@ -43,7 +43,7 @@ fun provideChatMessageMutableStore(
             flow { emit(messageNetworkDataSource.fetchByChat(key)) }, // initial chat messages fetch
             flow { emit(emptyList<MessageDto>()); emitAll(messageNetworkDataSource.fetchNewMessages()) } // new messages fetch
         ) { messages, newMessages ->
-            Napier.d("Fetched messages ${messages + newMessages}")
+            Napier.d("Fetched ${(messages + newMessages).distinctBy { it.id }.size} messages")
             (messages + newMessages)
                 .distinctBy { it.id }
                 .filter { it.chatId == key }
@@ -60,10 +60,8 @@ fun provideChatMessageMutableStore(
         },
         writer = { key, local ->
             databaseHelper.withDatabase { db ->
-                local.forEach {
-                    Napier.d("Writing messages for user $key with $local")
-                    db.messageQueries.upsert(it)
-                }
+                Napier.d("Writing messages for user $key with ${local.size} messages")
+                local.forEach { db.messageQueries.upsert(it) }
             }
         },
         delete = { key ->
