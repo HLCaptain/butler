@@ -25,5 +25,5 @@ interface ChatDataSource {
     suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto>
     suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto>
     fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>>
-    fun getChangesFromChat(chatId: String): Flow<ChatDto>
+    fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto>
 }

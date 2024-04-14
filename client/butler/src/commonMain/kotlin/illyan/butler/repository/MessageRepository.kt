@@ -42,7 +42,7 @@ class MessageRepository(
                 it.throwIfError()
                 Napier.d("Read Response: $it")
                 val data = it.dataOrNull()
-                Napier.d("Messages are $data")
+                Napier.d("Last 5 messages: ${data?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
             }.stateIn(
                 coroutineScopeIO,

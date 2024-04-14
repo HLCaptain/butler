@@ -14,4 +14,5 @@ interface MessageCache {
     suspend fun setMessage(message: MessageDto): MessageDto = setMessages(listOf(message)).first()
     suspend fun setMessages(messages: List<MessageDto>): List<MessageDto>
     suspend fun deleteMessage(messageId: String): Boolean
+    suspend fun getMessagesByChat(chatId: String): List<MessageDto>
 }

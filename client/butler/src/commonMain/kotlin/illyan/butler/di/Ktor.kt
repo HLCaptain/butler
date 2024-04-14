@@ -26,6 +26,7 @@ import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLProtocol
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
@@ -153,7 +154,11 @@ fun provideHttpClient(
     }
     defaultRequest {
         Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl")
-        url(urlString = currentApiUrl ?: "")
+        if (url.protocol == URLProtocol.WS) {
+            url(urlString = currentApiUrl?.replaceFirst("http", "ws") ?: "ws://localhost:8080")
+        } else {
+            url(urlString = currentApiUrl ?: "http://localhost:8080")
+        }
     }
 }
 

@@ -36,15 +36,15 @@ class ChatManager(
     init {
         coroutineScopeIO.launch {
             authManager.signedInUserId.flatMapLatest {
-                loadChats()
+                _userChats.update { emptyList() }
+                loadChats(it)
             }.collectLatest { newChats ->
                 _userChats.update { (it + newChats).distinct() }
             }
         }
     }
 
-    private fun loadChats(): Flow<List<DomainChat>> {
-        val userId = authManager.signedInUserId.value
+    private fun loadChats(userId: String? = authManager.signedInUserId.value): Flow<List<DomainChat>> {
         if (userId == null) {
             Napier.v { "User not signed in, reseting chats" }
             return flowOf(emptyList())

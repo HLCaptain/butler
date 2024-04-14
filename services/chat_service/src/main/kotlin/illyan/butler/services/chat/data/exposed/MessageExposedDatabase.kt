@@ -7,6 +7,9 @@ import illyan.butler.services.chat.data.schema.ContentUrls
 import illyan.butler.services.chat.data.schema.MessageContentUrls
 import illyan.butler.services.chat.data.schema.Messages
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -156,6 +159,45 @@ class MessageExposedDatabase(
                     .map { it.toMessageDto() }
             } else {
                 throw Exception("User is not in chat")
+            }
+        }
+    }
+
+    override fun getChangedMessagesAffectingUser(userId: String): Flow<List<MessageDto>> {
+        return flow {
+            var previousMessages: Set<MessageDto>? = null
+            while (true) {
+                val messages = getMessages(userId).toSet()
+                val changedMessages = previousMessages?.let {
+                    messages.filter { message -> message !in it }
+                } ?: emptySet()
+                emit(changedMessages.toList())
+                previousMessages = messages
+                delay(1000)
+            }
+        }
+    }
+
+    override suspend fun getMessages(userId: String): List<MessageDto> {
+        return newSuspendedTransaction(dispatcher, database) {
+            Messages
+                .selectAll()
+                .where(Messages.senderId eq userId)
+                .map { it.toMessageDto() }
+        }
+    }
+
+    override fun getChangedMessagesAffectingChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+        return flow {
+            var previousMessages: Set<MessageDto>? = null
+            while (true) {
+                val messages = getMessages(userId, chatId).toSet()
+                val changedMessages = previousMessages?.let {
+                    messages.filter { message -> message !in it }
+                } ?: emptySet()
+                emit(changedMessages.toList())
+                previousMessages = messages
+                delay(1000)
             }
         }
     }

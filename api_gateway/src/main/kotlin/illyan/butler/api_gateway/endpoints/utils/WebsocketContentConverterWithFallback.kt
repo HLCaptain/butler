@@ -1,5 +1,6 @@
 package illyan.butler.api_gateway.endpoints.utils
 
+import io.github.aakira.napier.Napier
 import io.ktor.serialization.ContentConvertException
 import io.ktor.serialization.WebsocketContentConverter
 import io.ktor.serialization.WebsocketConverterNotFoundException
@@ -12,21 +13,24 @@ class WebsocketContentConverterWithFallback(
 ) : WebsocketContentConverter {
     private val associatedFrames = mutableMapOf<String, WebsocketContentConverter>()
     override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: Frame): Any? {
-        val key = "something"
-        if (associatedFrames.contains(key)) {
-            return associatedFrames[key]!!.deserialize(charset, typeInfo, content)
-        }
+//        val key = "something"
+//        if (associatedFrames.contains(key)) {
+//            return associatedFrames[key]!!.deserialize(charset, typeInfo, content)
+//        }
         val deserializedWithConverter = contentConverters.firstNotNullOfOrNull {
             try {
-                it.deserialize(charset, typeInfo, content) to it
+                val data = it.deserialize(charset, typeInfo, content)
+                Napier.v { "Deserialized data: $data with converter $it" }
+                data to it
             } catch (e: ContentConvertException) {
                 // This converter is not applicable, find another one.
                 // TODO: Maybe not throw every other exception?
+                Napier.e(e) { "Error in content conversion" }
                 null
             }
         }
         if (deserializedWithConverter != null) {
-            associatedFrames[key] = deserializedWithConverter.second
+//            associatedFrames[key] = deserializedWithConverter.second
             return deserializedWithConverter.first
         } else {
             throw WebsocketConverterNotFoundException("Could not fallback to proper content converter.")

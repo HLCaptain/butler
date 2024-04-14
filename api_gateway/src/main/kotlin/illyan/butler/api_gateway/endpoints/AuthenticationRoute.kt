@@ -6,6 +6,7 @@ import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
 import illyan.butler.api_gateway.data.service.IdentityService
 import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
 import illyan.butler.api_gateway.utils.Claim
+import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -37,11 +38,10 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
         webSocket("/me") {
             val tokenClaim = call.principal<JWTPrincipal>()
             val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-            val user = identityService.getUserChangesById(id)
-            webSocketServerHandler.sessions[id] = this
-            webSocketServerHandler.sessions[id]?.let {
-                webSocketServerHandler.tryToCollect(user, it)
+            webSocketServerHandler.addFlowSessionListener("me:$id", this) {
+                identityService.getUserChangesById(id)
             }
+            Napier.d("Added user listener for $id")
         }
 
         post("/refresh-access-token") {

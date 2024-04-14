@@ -6,6 +6,7 @@ import illyan.butler.services.ai.data.model.chat.MessageDto
 import illyan.butler.services.ai.data.model.response.PaginationResponse
 import illyan.butler.services.ai.data.utils.getLastMonthDate
 import illyan.butler.services.ai.data.utils.getLastWeekDate
+import illyan.butler.services.ai.data.utils.tryToExecuteWebSocket
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
@@ -24,35 +25,19 @@ import org.koin.core.annotation.Single
 
 @Single
 class ChatService(private val client: HttpClient) {
-    fun receiveMessages(userId: String, chatId: String) = flow {
-        client.webSocket("${AppConfig.Api.CHAT_API_URL.replaceFirst("http", "ws")}/$userId/chats/$chatId") {
-            incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized<List<MessageDto>>()) }
-        }
-    }
-    fun receiveMessages(userId: String) = flow {
-        client.webSocket("${AppConfig.Api.CHAT_API_URL.replaceFirst("http", "ws")}/$userId/messages") {
-            incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized<List<MessageDto>>()) }
-        }
-    }
+    fun receiveMessages(userId: String, chatId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId")
+    fun receiveMessages(userId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/$userId/messages")
     suspend fun sendMessage(userId: String, message: MessageDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>()
     suspend fun editMessage(userId: String, messageId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/${message.chatId}/messages/$messageId") { setBody(message) }.body<MessageDto>()
     suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId/messages/$messageId").body<Boolean>()
 
-    suspend fun getChatMessages(userId: String) = flow {
-        client.webSocket("${AppConfig.Api.CHAT_API_URL}/$userId/chats") {
-            incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized<List<MessageDto>>()) }
-        }
-    }
+    fun getChatMessages(userId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/$userId/chats")
     suspend fun getChat(userId: String, chatId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").body<ChatDto>()
     suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/$userId/chats") { setBody(chat) }.body<ChatDto>()
     suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId") { setBody(chat) }.body<ChatDto>()
     suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/$userId/chats/$chatId").body<Boolean>()
 
-    fun getChangedChatsAffectingUser(userId: String) = flow {
-        client.webSocket("${AppConfig.Api.CHAT_API_URL}/$userId/chats") {
-            incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized<List<ChatDto>>()) }
-        }
-    }
+    fun getChangedChatsAffectingUser(userId: String) = client.tryToExecuteWebSocket<List<ChatDto>>("${AppConfig.Api.CHAT_API_URL}/$userId/chats")
 
     /**
      * @param fromDate epoch milli

@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -26,18 +28,14 @@ fun Instant.toIsoString() = toLocalDateTime(TimeZone.UTC).toString()
 
 fun Instant.startOfDay() = toLocalDateTime(TimeZone.UTC).date.atStartOfDayIn(TimeZone.UTC)
 
-inline fun <reified T> HttpClient.tryToExecuteWebSocket(path: String): StateFlow<T?> {
-    val stateFlow = MutableStateFlow<T?>(null)
-    launch(Dispatchers.IO) {
-        webSocket(urlString = "ws://$path") {
-            while (true) {
-                try {
-                    stateFlow.update { receiveDeserialized<T>() }
-                } catch (e: Exception) {
-                    throw Exception(e.message.toString())
-                }
-            }
-        }
+inline fun <reified T> HttpClient.tryToExecuteWebSocket(
+    path: String,
+) = flow {
+    webSocket(
+        host = path.substringAfter("://").takeWhile { it != ':' },
+        port = path.takeLastWhile { it != ':' }.takeWhile { it != '/' }.toInt(),
+        path = path.takeLastWhile { it != ':' }.substringAfter("/")
+    ) {
+        incoming.receiveAsFlow().collect { emit(receiveDeserialized<T>()) }
     }
-    return stateFlow.asStateFlow()
 }

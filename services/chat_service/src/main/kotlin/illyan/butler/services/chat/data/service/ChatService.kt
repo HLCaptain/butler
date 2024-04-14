@@ -55,6 +55,9 @@ class ChatService(
 
     override suspend fun getChats(userId: String): List<ChatDto> {
         return chatDatabase.getChats(userId).onEach { chatCache.setChat(it) }
+//        return chatCache.getChatsByUser(userId).also {
+//            chatDatabase.getChats(userId).onEach { chatCache.setChat(it) }
+//        }
     }
 
     override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
@@ -74,11 +77,13 @@ class ChatService(
     }
 
     override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
-        return chatCache.getChangedChatsAffectingUser(userId)
+//        return chatCache.getChangedChatsAffectingUser(userId)
+        return chatDatabase.getChangedChatsAffectingUser(userId)
     }
 
-    override fun getChangesFromChat(chatId: String): Flow<ChatDto> {
-        return chatCache.getChangesFromChat(chatId)
+    override fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto> {
+//        return chatCache.getChangesFromChat(chatId)
+        return chatDatabase.getChangesFromChat(userId, chatId)
     }
 
     override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
@@ -110,13 +115,18 @@ class ChatService(
 
     override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
         return messageDatabase.getMessages(userId, chatId).also { messageCache.setMessages(it) }
+//        return messageCache.getMessagesByChat(chatId).also {
+//            messageCache.setMessages(messageDatabase.getMessages(userId, chatId))
+//        }
     }
 
     override fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>> {
-        return messageCache.getChangedMessagesByUser(userId)
+//        return messageCache.getChangedMessagesByUser(userId)
+        return messageDatabase.getChangedMessagesAffectingUser(userId)
     }
 
-    override fun getChangedMessagesByChat(chatId: String): Flow<List<MessageDto>> {
-        return messageCache.getChangedMessagesByChat(chatId)
+    override fun getChangedMessagesByChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+//        return messageCache.getChangedMessagesByChat(chatId)
+        return messageDatabase.getChangedMessagesAffectingChat(userId, chatId)
     }
 }

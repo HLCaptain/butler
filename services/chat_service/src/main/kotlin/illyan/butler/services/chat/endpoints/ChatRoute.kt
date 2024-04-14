@@ -25,10 +25,10 @@ fun Route.chatRoute() {
     route("/{userId}") {
         webSocket("/messages") {
             val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-            val chats = chatService.getChangedMessagesByUser(userId)
-            webSocketServerHandler.sessions.getOrPut("messages:$userId") { this }?.let {
-                webSocketServerHandler.tryToCollect(chats, it)
+            webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
+                chatService.getChangedMessagesByUser(userId)
             }
+            Napier.d("User $userId received new messages")
         }
 
         route("/chats") {
@@ -51,15 +51,15 @@ fun Route.chatRoute() {
                 val userId = call.parameters["userId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
                 val chat = call.receive<ChatDto>()
                 Napier.v { "Received by user $userId a new chat instance $chat" }
-                call.respond(HttpStatusCode.OK, chatService.createChat(userId, chat))
+                call.respond(HttpStatusCode.Created, chatService.createChat(userId, chat))
             }
 
             webSocket {
                 val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-                val chats = chatService.getChangedChatsAffectingUser(userId)
-                webSocketServerHandler.sessions.getOrPut("chats:$userId") { this }?.let {
-                    webSocketServerHandler.tryToCollect(chats, it)
+                webSocketServerHandler.addFlowSessionListener("chats:$userId", this) {
+                    chatService.getChangedChatsAffectingUser(userId)
                 }
+                Napier.v { "Added new chat listener for user $userId" }
             }
 
             route("/{chatId}") {
@@ -76,11 +76,12 @@ fun Route.chatRoute() {
                 }
 
                 webSocket {
+                    val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
                     val chatId = call.parameters["chatId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-                    val messages = chatService.getChangedMessagesByChat(chatId)
-                    webSocketServerHandler.sessions.getOrPut(chatId) { this }?.let {
-                        webSocketServerHandler.tryToCollect(messages, it)
+                    webSocketServerHandler.addFlowSessionListener(chatId, this) {
+                        chatService.getChangedMessagesByChat(userId, chatId)
                     }
+                    Napier.v { "Added new chat message listener for chat $chatId" }
                 }
 
                 delete {

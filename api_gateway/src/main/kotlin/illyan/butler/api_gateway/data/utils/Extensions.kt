@@ -3,17 +3,11 @@ package illyan.butler.api_gateway.data.utils
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
-import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -37,42 +31,13 @@ suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
 
 inline fun <reified T> HttpClient.tryToExecuteWebSocket(
     path: String,
-): StateFlow<T?> {
-    val stateFlow = MutableStateFlow<T?>(null)
-    launch(Dispatchers.IO) {
-        webSocket(urlString = path.replaceFirst("http", "ws")) {
-            while (true) {
-                try {
-                    stateFlow.update { receiveDeserialized<T>() }
-                } catch (e: Exception) {
-                    throw Exception(e.message.toString())
-                }
-            }
-        }
-    }
-    return stateFlow.asStateFlow()
-}
-
-suspend inline fun <reified T> HttpClient.tryToSendWebSocketData(
-    data: T,
-    path: String
-) {
-    webSocket(urlString = path.replaceFirst("http", "ws")) {
-        try {
-            sendSerialized(data)
-        } catch (e: Exception) {
-            throw Exception(e.message.toString())
-        }
-    }
-}
-
-suspend inline fun <reified T> HttpClient.tryToSendAndReceiveWebSocketData(
-    data: T,
-    path: String
 ) = flow {
-    webSocket(urlString = path.replaceFirst("http", "ws")) {
-        sendSerialized(data)
-        emit(receiveDeserialized<T>())
+    webSocket(
+        host = path.substringAfter("://").takeWhile { it != ':' },
+        port = path.takeLastWhile { it != ':' }.takeWhile { it != '/' }.toInt(),
+        path = path.takeLastWhile { it != ':' }.substringAfter("/")
+    ) {
+        incoming.receiveAsFlow().collect { emit(receiveDeserialized<T>()) }
     }
 }
 

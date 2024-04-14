@@ -6,6 +6,7 @@ import illyan.butler.api_gateway.data.service.ChatService
 import illyan.butler.api_gateway.endpoints.utils.ChatSocketHandler
 import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
 import illyan.butler.api_gateway.utils.Claim
+import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -32,10 +33,10 @@ fun Route.chatRoute() {
     authenticate("auth-jwt") {
         webSocket("/messages") {
             val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-            val chats = chatService.getChangedMessagesByUser(userId).filterNotNull()
-            webSocketServerHandler.sessions.getOrPut("messages:$userId") { this }?.let {
-                webSocketServerHandler.tryToCollect(chats, it)
+            webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
+                chatService.getChangedMessagesByUser(userId).filterNotNull()
             }
+            Napier.d { "Added message listener for $userId" }
         }
 
         route("/chats") {
@@ -59,10 +60,10 @@ fun Route.chatRoute() {
 
             webSocket {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-                val chats = chatService.receiveChats(userId).filterNotNull()
-                webSocketServerHandler.sessions.getOrPut("chats:$userId") { this }?.let {
-                    webSocketServerHandler.tryToCollect(chats, it)
+                webSocketServerHandler.addFlowSessionListener("chats:$userId", this) {
+                    chatService.receiveChats(userId).filterNotNull()
                 }
+                Napier.d { "Added new chat listener for user $userId" }
             }
 
             route("/{chatId}") {
@@ -91,10 +92,10 @@ fun Route.chatRoute() {
                 webSocket {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                    val messages = chatService.receiveMessages(userId, chatId).filterNotNull()
-                    webSocketServerHandler.sessions.getOrPut(chatId) { this }?.let {
-                        webSocketServerHandler.tryToCollect(messages, it)
+                    webSocketServerHandler.addFlowSessionListener(chatId, this) {
+                        chatService.receiveMessages(userId, chatId).filterNotNull()
                     }
+                    Napier.v { "Added new chat message listener for chat $chatId" }
                 }
 
                 route("/messages") {

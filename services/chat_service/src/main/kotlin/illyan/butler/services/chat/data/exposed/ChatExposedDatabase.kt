@@ -8,6 +8,9 @@ import illyan.butler.services.chat.data.schema.Chats
 import illyan.butler.services.chat.data.schema.Messages
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -203,6 +206,33 @@ class ChatExposedDatabase(
                 .drop(offset)
                 .take(limit)
             chats
+        }
+    }
+
+    override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
+        return flow {
+            var previousChats: Set<ChatDto>? = null
+            while (true) {
+                val chats = getChats(userId).toSet()
+                val changedChats = previousChats?.let {
+                    chats.filter { chat -> chat !in it }
+                } ?: emptySet()
+                emit(changedChats.toList())
+                previousChats = chats
+                delay(1000)
+            }
+        }
+    }
+
+    override fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto> {
+        return flow {
+            var previousChat: ChatDto? = null
+            while (true) {
+                val chat = getChat(userId, chatId)
+                if (chat != previousChat) emit(chat)
+                previousChat = chat
+                delay(1000)
+            }
         }
     }
 
