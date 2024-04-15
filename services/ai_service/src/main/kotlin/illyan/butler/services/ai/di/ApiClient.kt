@@ -4,13 +4,12 @@ import illyan.butler.services.ai.AppConfig
 import illyan.butler.services.ai.endpoints.utils.WebsocketContentConverterWithFallback
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -19,43 +18,20 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.URLProtocol
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
-import io.ktor.util.Attributes
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 
-@Single
-fun provideHttpClientAttribute(): Attributes {
-    return Attributes(true)
-}
-
-@OptIn(ExperimentalSerializationApi::class)
-@Single
-fun provideHttpClient() = HttpClient(CIO) {
-    expectSuccess = true
-    HttpResponseValidator {
-        handleResponseExceptionWithRequest { throwable, _ ->
-            Napier.e(throwable) { "Error in response" }
-        }
-    }
-
+fun HttpClientConfig<*>.setupClient() {
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
     }
-
     developmentMode = AppConfig.Ktor.DEVELOPMENT
-
-    install(WebSockets) {
-        contentConverter = WebsocketContentConverterWithFallback(
-            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
-        )
-    }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
@@ -89,25 +65,34 @@ fun provideHttpClient() = HttpClient(CIO) {
     }
 
     install(fallbackPlugin) {
-        val fallbackContentType = ContentType.Application.Json
-        val defaultContentType = ContentType.Application.ProtoBuf
-        supportedContentTypes = if (developmentMode) {
-            listOf(fallbackContentType)
-        } else {
-            listOf(defaultContentType, fallbackContentType)
-        }
+        supportedContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES
     }
+
+    install(ContentEncoding)
+}
+
+@Single
+fun provideWebSocketClientProvider(): () -> HttpClient = { provideWebSocketClient() }
+
+@Single
+fun provideWebSocketClient() = HttpClient(OkHttp) {
+    setupClient()
+    install(WebSockets) {
+        contentConverter = WebsocketContentConverterWithFallback(
+            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
+        )
+    }
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Single
+fun provideHttpClient() = HttpClient(OkHttp) {
+    setupClient()
 
     install(ContentNegotiation) {
         json()
         protobuf()
     }
-
-    defaultRequest {
-        url { protocol = URLProtocol.HTTP }
-    }
-
-    install(ContentEncoding)
 }
 
 class ContentTypeFallbackConfig {
@@ -116,5 +101,3 @@ class ContentTypeFallbackConfig {
      */
     var supportedContentTypes: List<ContentType> = emptyList()
 }
-
-// TODO: add fallback to WebSocket serialization

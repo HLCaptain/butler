@@ -8,7 +8,7 @@ import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.ServerResponseException
@@ -42,14 +42,64 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Named
+import org.koin.core.annotation.Single
+
+@OptIn(ExperimentalSettingsApi::class)
+@Single
+fun provideWebSocketClientProvider(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+): () -> HttpClient = { provideWebSocketClient(settings, coroutineScopeIO, errorManager) }
+
+@OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
+@Named(KoinNames.WebSocketClient)
+@Factory
+fun provideWebSocketClient(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+) = HttpClient {
+    setupClient(
+        settings = settings,
+        coroutineScopeIO = coroutineScopeIO,
+        errorManager = errorManager
+    )
+    install(WebSockets) {
+        contentConverter = WebsocketContentConverterWithFallback(
+            listOf(
+                KotlinxWebsocketSerializationConverter(ProtoBuf),
+                KotlinxWebsocketSerializationConverter(Json)
+            )
+        )
+    }
+}
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-@Factory
+@Single
 fun provideHttpClient(
     settings: FlowSettings,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) = HttpClient {
+    setupClient(
+        settings = settings,
+        coroutineScopeIO = coroutineScopeIO,
+        errorManager = errorManager
+    )
+
+    install(ContentNegotiation) {
+        json()
+        protobuf()
+    }
+}
+
+@OptIn(ExperimentalSettingsApi::class)
+fun HttpClientConfig<*>.setupClient(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+) {
     expectSuccess = true
     HttpResponseValidator {
         handleResponseExceptionWithRequest { throwable, _ ->
@@ -97,16 +147,7 @@ fun provideHttpClient(
         }
     }
 
-    install(WebSockets) {
-        contentConverter = WebsocketContentConverterWithFallback(
-            listOf(
-                KotlinxWebsocketSerializationConverter(ProtoBuf),
-                KotlinxWebsocketSerializationConverter(Json)
-            )
-        )
-    }
-
-//    developmentMode = isDebugBuild()
+    //    developmentMode = isDebugBuild()
     developmentMode = true
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
@@ -148,11 +189,6 @@ fun provideHttpClient(
         } else {
             listOf(defaultContentType, fallbackContentType)
         }
-    }
-
-    install(ContentNegotiation) {
-        json()
-        protobuf()
     }
 
     install(ContentEncoding)

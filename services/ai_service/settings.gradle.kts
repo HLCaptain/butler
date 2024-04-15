@@ -1,1 +1,1 @@
-rootProject.name = "Butler AI Service"
+rootProject.name = "Butler_AI_Service"

@@ -1,5 +1,6 @@
 package illyan.butler.data.ktor.datasource
 
+import illyan.butler.data.ktor.utils.WebSocketSessionManager
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
 import io.github.aakira.napier.Napier
@@ -25,26 +26,29 @@ import org.koin.core.annotation.Single
 
 @Single
 class MessageKtorDataSource(
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val webSocketSessionManager: WebSocketSessionManager
 ) : MessageNetworkDataSource {
     private val newMessagesStateFlow = MutableStateFlow<List<MessageDto>?>(null)
     private var isLoadingNewMessagesWebSocketSession = false
+    private var isLoadedMeWebSocketSession = false
 
     private suspend fun createNewMessagesFlow() {
         Napier.v { "Receiving new messages" }
-        client.webSocket("/messages") { // UserID is sent with JWT
-            incoming.receiveAsFlow().collect { _ ->
-                Napier.d("Received new messages")
-                newMessagesStateFlow.update { receiveDeserialized<List<MessageDto>>() }
-            }
+        val session = webSocketSessionManager.createSession("/messages")
+        session.incoming.receiveAsFlow().collect { _ ->
+            Napier.v { "Received new messages" }
+            newMessagesStateFlow.update { session.receiveDeserialized() }
         }
     }
 
     override fun fetchNewMessages(): Flow<List<MessageDto>> {
-        return if (newMessagesStateFlow.value == null && !isLoadingNewMessagesWebSocketSession) {
+        return if (newMessagesStateFlow.value == null && !isLoadingNewMessagesWebSocketSession && !isLoadedMeWebSocketSession) {
             isLoadingNewMessagesWebSocketSession = true
             flow {
                 createNewMessagesFlow()
+                isLoadedMeWebSocketSession = true
+                isLoadingNewMessagesWebSocketSession = false
                 emitAll(newMessagesStateFlow)
             }
         } else {
