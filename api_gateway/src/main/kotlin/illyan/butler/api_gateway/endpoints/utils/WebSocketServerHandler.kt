@@ -17,9 +17,20 @@ class WebSocketServerHandler {
     private suspend inline fun beginFlowCollection(sessionsKey: String) {
         try {
             Napier.v { "Beginning flow collection for $sessionsKey" }
+            val closed = mutableSetOf<DefaultWebSocketServerSession>()
             flows[sessionsKey]?.collect { value ->
                 Napier.v { "Sending value: $value" }
-                sessions[sessionsKey]?.forEach { it.sendSerialized(value) }
+                sessions[sessionsKey]?.forEach {
+                    try {
+                        it.sendSerialized(value)
+                    } catch (e: Exception) {
+                        Napier.e("Error in sending value", e)
+                        closed += it
+                        it.close(CloseReason(CloseReason.Codes.NORMAL, "Error in sending value"))
+                    }
+                }
+                sessions[sessionsKey] = sessions[sessionsKey]?.filterNot { it in closed }?.toSet() ?: emptySet()
+                closed.clear()
             }
         } catch (e: Exception) {
             Napier.e("Error in sending value", e)
