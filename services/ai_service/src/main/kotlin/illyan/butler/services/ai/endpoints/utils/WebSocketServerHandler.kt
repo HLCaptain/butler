@@ -16,28 +16,32 @@ class WebSocketServerHandler {
     private val sessions: ConcurrentHashMap<String, Set<DefaultWebSocketServerSession>> = ConcurrentHashMap()
     private val flows: ConcurrentHashMap<String, Flow<*>> = ConcurrentHashMap()
 
-    private suspend inline fun <reified T> tryToCollect(values: Flow<T>, session: DefaultWebSocketServerSession, crossinline onCloseConnection: () -> Unit = {}) {
+    private suspend inline fun beginFlowCollection(sessionsKey: String) {
         try {
-            values.flowOn(Dispatchers.IO).collect { value ->
+            flows[sessionsKey]?.flowOn(Dispatchers.IO)?.collect { value ->
                 Napier.v { "Sending value: $value" }
-                session.sendSerialized(value)
+                sessions[sessionsKey]?.forEach { it.sendSerialized(value) }
             }
         } catch (e: Exception) {
             Napier.e("Error in sending value", e)
-            session.close(CloseReason(CloseReason.Codes.NORMAL, e.message.toString()))
-            onCloseConnection()
+        } finally {
+            sessions[sessionsKey]?.forEach {
+                it.close(CloseReason(CloseReason.Codes.NORMAL, "Closed by user"))
+                remove(sessionsKey, it)
+            }
         }
     }
 
     private fun remove(key: String, session: DefaultWebSocketServerSession) {
         sessions[key] = sessions[key]?.minus(session) ?: emptySet()
+        if (sessions[key].isNullOrEmpty()) flows.remove(key)
     }
 
     suspend fun addFlowSessionListener(key: String, session: DefaultWebSocketServerSession, defaultFlow: () -> Flow<*>) {
         sessions[key] = sessions[key]?.plus(session) ?: setOf(session)
-        flows[key] = defaultFlow()
-        tryToCollect(flows[key]!!, session) {
-            remove(key, session)
+        if (!flows.containsKey(key)) {
+            flows[key] = defaultFlow()
+            beginFlowCollection(key)
         }
     }
 }

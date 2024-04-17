@@ -15,11 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 @SuppressLint("NewApi")
@@ -68,9 +65,4 @@ actual fun dynamicDarkColorScheme(): ColorScheme {
 @Composable
 actual fun dynamicLightColorScheme(): ColorScheme {
     return dynamicLightColorScheme(LocalContext.current)
-}
-
-@Composable
-actual fun getWindowSize(): Pair<Dp, Dp> {
-    return LocalConfiguration.current.run { Pair(screenWidthDp.dp, screenHeightDp.dp) }
 }

@@ -5,7 +5,8 @@ import illyan.butler.api_gateway.data.model.chat.MessageDto
 import illyan.butler.api_gateway.data.model.response.PaginationResponse
 import illyan.butler.api_gateway.data.utils.getLastMonthDate
 import illyan.butler.api_gateway.data.utils.getLastWeekDate
-import illyan.butler.api_gateway.data.utils.tryToExecuteWebSocket
+import illyan.butler.api_gateway.data.utils.getOrPutWebSocketFlow
+import illyan.butler.api_gateway.endpoints.utils.WebSocketSessionManager
 import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -16,17 +17,35 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.encodeURLPath
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
-class ChatService(private val client: HttpClient) {
-    fun receiveMessages(userId: String, chatId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId")
+class ChatService(
+    private val client: HttpClient,
+    private val webSocketSessionManager: WebSocketSessionManager
+) {
+    private val messagesFlows = mutableMapOf<String, StateFlow<List<MessageDto>>>()
+    fun receiveMessages(userId: String, chatId: String) = flow {
+        val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId"
+        messagesFlows.getOrPutWebSocketFlow(url) {
+            webSocketSessionManager.createSession(url)
+        }.let { emitAll(it) }
+    }
     suspend fun sendMessage(userId: String, message: MessageDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>()
     suspend fun editMessage(userId: String, messageId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/${message.chatId}/messages/$messageId") { setBody(message) }.body<MessageDto>()
     suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages/$messageId").body<Boolean>()
 
-    fun receiveChats(userId: String) = client.tryToExecuteWebSocket<List<ChatDto>>("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats")
+    private val userChatFlows = mutableMapOf<String, StateFlow<List<ChatDto>>>()
+    fun receiveChats(userId: String) = flow {
+        val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats"
+        userChatFlows.getOrPutWebSocketFlow(url) {
+            webSocketSessionManager.createSession(url)
+        }.let { emitAll(it) }
+    }
     suspend fun getChat(userId: String, chatId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId").body<ChatDto>()
     suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") { setBody(chat) }.body<ChatDto>()
     suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId") { setBody(chat) }.body<ChatDto>()
@@ -110,5 +129,10 @@ class ChatService(private val client: HttpClient) {
         chatId: String
     ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages").body<List<MessageDto>>()
 
-    fun getChangedMessagesByUser(userId: String) = client.tryToExecuteWebSocket<List<MessageDto>>("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/messages")
+    fun getChangedMessagesByUser(userId: String) = flow {
+        val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/messages"
+        messagesFlows.getOrPutWebSocketFlow(url) {
+            webSocketSessionManager.createSession(url)
+        }.let { emitAll(it) }
+    }
 }

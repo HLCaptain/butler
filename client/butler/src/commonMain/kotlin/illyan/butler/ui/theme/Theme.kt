@@ -31,7 +31,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import illyan.butler.domain.model.Theme
 
 val LightColors = lightColorScheme(
@@ -182,5 +181,3 @@ fun animateColorScheme(
 }
 
 val LocalTheme = compositionLocalOf<Theme?> { null }
-
-val LocalWindowSizeProvider = compositionLocalOf { 100.dp to 100.dp }

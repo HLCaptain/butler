@@ -8,7 +8,8 @@ import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.ServerResponseException
@@ -103,8 +104,8 @@ fun HttpClientConfig<*>.setupClient(
     expectSuccess = true
     HttpResponseValidator {
         handleResponseExceptionWithRequest { throwable, _ ->
-            Napier.e(throwable) { "Error in response" }
             val exception = throwable as? ServerResponseException
+            Napier.e(exception ?: throwable) { "Error in response" }
             if (exception != null) {
                 errorManager.reportError(exception.response)
             } else {
@@ -201,9 +202,12 @@ fun HttpClientConfig<*>.setupClient(
         }
     }
     defaultRequest {
-        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl")
+        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl, protocol: ${url.protocol}")
         if (url.protocol == URLProtocol.WS) {
-            url(urlString = currentApiUrl?.replaceFirst("http", "ws") ?: "ws://localhost:8080")
+            url(
+                host = currentApiUrl?.substringAfter("://")?.takeWhile { it != ':' } ?: "localhost",
+                port = currentApiUrl?.takeLastWhile { it != ':' }?.takeWhile { it != '/' }?.toInt() ?: 8080
+            )
         } else {
             url(urlString = currentApiUrl ?: "http://localhost:8080")
         }

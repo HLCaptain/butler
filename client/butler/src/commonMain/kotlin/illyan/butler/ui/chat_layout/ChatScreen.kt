@@ -20,13 +20,13 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
+import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.ButlerListDetail
 import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
 import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
-import illyan.butler.ui.theme.LocalWindowSizeProvider
 import io.github.aakira.napier.Napier
 
 class ChatScreen : Screen {
@@ -36,9 +36,7 @@ class ChatScreen : Screen {
         val screenModel = koinScreenModel<ChatScreenModel>()
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
-        val windowSizeProvider = LocalWindowSizeProvider.current
-        val containerSize by remember { derivedStateOf { windowSizeProvider } }
-        val (width, height) = containerSize
+        val (height, width) = getWindowSizeInDp()
         var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
@@ -59,19 +57,39 @@ class ChatScreen : Screen {
         val compactPaneStrategy = FractionHorizontalTwoPaneStrategy(1f)
         val mediumPaneStrategy = FractionHorizontalTwoPaneStrategy(0.4f)
         val largePaneStrategy = FixedOffsetHorizontalTwoPaneStrategy(320.dp, true)
-        val currentPaneStrategy by rememberSaveable {
-            derivedStateOf {
-                when (width) {
-                    in 0.dp..420.dp -> compactPaneStrategy
-                    in 420.dp..720.dp -> mediumPaneStrategy
-                    else -> largePaneStrategy
-                }
+        LaunchedEffect(width) {
+            Napier.v("Window size (dp): $width x $height")
+        }
+        val currentPaneStrategy = if (width.value < 600) compactPaneStrategy
+        else if (width.value < 1200) mediumPaneStrategy
+        else largePaneStrategy
+        LaunchedEffect(currentPaneStrategy) {
+            val strategy = when (currentPaneStrategy) {
+                compactPaneStrategy -> "Compact"
+                mediumPaneStrategy -> "Medium"
+                else -> "Large"
             }
+            Napier.v("Current pane strategy: $strategy")
         }
         val isListOnly by rememberSaveable { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
         var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         val chatDetailScreen by remember { derivedStateOf { ChatDetailScreen { selectedChat } } }
+        ButlerListDetail(
+            strategy = currentPaneStrategy,
+            list = {
+                Navigator(ChatListScreen { selectedChat = it; Napier.v { "Selected chat ID: $it" } }) {
+                    LaunchedEffect(Unit) { listNavigator = it }
+                    CurrentScreen()
+                }
+            },
+            detail = {
+                Navigator(ArbitraryScreen { EmptyChatScreen() }) {
+                    LaunchedEffect(Unit) { detailNavigator = it }
+                    CurrentScreen()
+                }
+            }
+        )
         LaunchedEffect(isListOnly) {
             if (isListOnly) {
                 Napier.v("Transitioning from ListDetail to ListOnly")
@@ -119,21 +137,6 @@ class ChatScreen : Screen {
                 Napier.v("Popped screens from listNavigator until ChatListScreen is found")
             }
         }
-        ButlerListDetail(
-            strategy = currentPaneStrategy,
-            list = {
-                Navigator(ChatListScreen { selectedChat = it; Napier.v { "Selected chat ID: $it" } }) {
-                    LaunchedEffect(Unit) { listNavigator = it }
-                    CurrentScreen()
-                }
-            },
-            detail = {
-                Navigator(ArbitraryScreen { EmptyChatScreen() }) {
-                    LaunchedEffect(Unit) { detailNavigator = it }
-                    CurrentScreen()
-                }
-            }
-        )
     }
 }
 

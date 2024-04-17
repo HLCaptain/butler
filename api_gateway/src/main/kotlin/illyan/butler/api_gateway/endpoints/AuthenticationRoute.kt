@@ -36,17 +36,15 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
 
     authenticate("auth-jwt") {
         webSocket("/me") {
-            val tokenClaim = call.principal<JWTPrincipal>()
-            val id = tokenClaim?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-            webSocketServerHandler.addFlowSessionListener("me:$id", this) {
+            val id = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+            webSocketServerHandler.addFlowSessionListener("/me", this) {
                 identityService.getUserChangesById(id)
             }
             Napier.d("Added user listener for $id")
         }
 
         post("/refresh-access-token") {
-            val payload = call.principal<JWTPrincipal>()?.payload
-            val userId = payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
             val token = identityService.generateUserTokens(userId, tokenConfiguration)
             call.respond(HttpStatusCode.Created, token)
         }

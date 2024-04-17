@@ -8,12 +8,12 @@ import illyan.butler.api_gateway.data.model.authenticate.UserLoginResponseDto
 import illyan.butler.api_gateway.data.model.identity.UserDto
 import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
 import illyan.butler.api_gateway.data.model.response.UserTokensResponse
+import illyan.butler.api_gateway.data.utils.getOrPutWebSocketFlow
 import illyan.butler.api_gateway.data.utils.tryToExecute
+import illyan.butler.api_gateway.endpoints.utils.WebSocketSessionManager
 import illyan.butler.api_gateway.utils.AppConfig
 import illyan.butler.api_gateway.utils.Claim
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.receiveDeserialized
-import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
@@ -22,16 +22,18 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import org.koin.core.annotation.Single
 
 @Single
-class IdentityService(private val client: HttpClient) {
+class IdentityService(
+    private val client: HttpClient,
+    private val webSocketSessionManager: WebSocketSessionManager
+) {
     suspend fun createUser(
         newUser: UserRegistrationDto,
         tokenConfiguration: TokenConfiguration
@@ -62,12 +64,12 @@ class IdentityService(private val client: HttpClient) {
         get("${AppConfig.Api.IDENTITY_API_URL}/users/$id")
     }
 
-    fun getUserChangesById(id: String): Flow<UserDto> {
-        return flow {
-            client.webSocket("/users/$id") {
-                incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }
-            }
-        }
+    private val userDataFlows = mutableMapOf<String, StateFlow<UserDto?>>()
+    fun getUserChangesById(id: String) = flow {
+        val url = "${AppConfig.Api.IDENTITY_API_URL}/users/$id/changes"
+        userDataFlows.getOrPutWebSocketFlow(url) {
+            webSocketSessionManager.createSession(url)
+        }.let { emitAll(it) }
     }
 
     suspend fun updateUserProfile(user: UserDto) = client.tryToExecute<UserDto> {

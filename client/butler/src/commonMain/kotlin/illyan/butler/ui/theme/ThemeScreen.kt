@@ -91,10 +91,7 @@ fun ButlerTheme(
     ThemeSystemWindow(isDark ?: isSystemInDarkTheme, dynamicColorEnabled && canUseDynamicColors())
 
     val colorScheme by animateColorScheme(targetColorScheme, spring(stiffness = Spring.StiffnessLow))
-    CompositionLocalProvider(
-        LocalTheme provides theme,
-        LocalWindowSizeProvider provides getWindowSize(),
-    ) {
+    CompositionLocalProvider(LocalTheme provides theme) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = MaterialTheme.typography,

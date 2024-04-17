@@ -32,7 +32,7 @@ fun Route.chatRoute() {
 
     authenticate("auth-jwt") {
         webSocket("/messages") {
-            val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
+            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
             webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
                 chatService.getChangedMessagesByUser(userId).filterNotNull()
             }
