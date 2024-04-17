@@ -37,7 +37,7 @@ fun Route.authenticationRoutes(tokenConfiguration: TokenConfiguration) {
     authenticate("auth-jwt") {
         webSocket("/me") {
             val id = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-            webSocketServerHandler.addFlowSessionListener("/me", this) {
+            webSocketServerHandler.addFlowSessionListener("me:$id", this) {
                 identityService.getUserChangesById(id)
             }
             Napier.d("Added user listener for $id")

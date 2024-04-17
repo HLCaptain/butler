@@ -7,27 +7,30 @@ import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
+import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.receiveDeserialized
-import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
 class AuthKtorDataSource(
     private val client: HttpClient,
-    private val webSocketSessionManager: WebSocketSessionManager
+    private val webSocketSessionManager: WebSocketSessionManager,
+    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) : AuthNetworkDataSource {
     private val newMeStateFlow = MutableStateFlow<UserDto?>(null)
     private var isLoadingMeWebSocketSession = false
@@ -36,9 +39,11 @@ class AuthKtorDataSource(
     private suspend fun createNewMeFlow() {
         Napier.v { "Receiving new me" }
         val session = webSocketSessionManager.createSession("/me")
-        session.incoming.receiveAsFlow().collectLatest {
-            Napier.v { "Received new me" }
-            newMeStateFlow.update { session.receiveDeserialized() }
+        coroutineScopeIO.launch {
+            session.incoming.receiveAsFlow().collect {
+                Napier.v { "Received new me" }
+                newMeStateFlow.update { session.receiveDeserialized() }
+            }
         }
     }
 

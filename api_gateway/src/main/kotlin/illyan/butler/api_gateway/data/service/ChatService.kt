@@ -17,6 +17,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.encodeURLPath
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -26,12 +27,13 @@ import org.koin.core.annotation.Single
 @Single
 class ChatService(
     private val client: HttpClient,
-    private val webSocketSessionManager: WebSocketSessionManager
+    private val webSocketSessionManager: WebSocketSessionManager,
+    private val coroutineScopeIO: CoroutineScope
 ) {
-    private val messagesFlows = mutableMapOf<String, StateFlow<List<MessageDto>>>()
+    private val messagesFlows = mutableMapOf<String, StateFlow<List<MessageDto>?>>()
     fun receiveMessages(userId: String, chatId: String) = flow {
         val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId"
-        messagesFlows.getOrPutWebSocketFlow(url) {
+        messagesFlows.getOrPutWebSocketFlow(url, coroutineScopeIO) {
             webSocketSessionManager.createSession(url)
         }.let { emitAll(it) }
     }
@@ -39,10 +41,10 @@ class ChatService(
     suspend fun editMessage(userId: String, messageId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/${message.chatId}/messages/$messageId") { setBody(message) }.body<MessageDto>()
     suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages/$messageId").body<Boolean>()
 
-    private val userChatFlows = mutableMapOf<String, StateFlow<List<ChatDto>>>()
+    private val userChatFlows = mutableMapOf<String, StateFlow<List<ChatDto>?>>()
     fun receiveChats(userId: String) = flow {
         val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats"
-        userChatFlows.getOrPutWebSocketFlow(url) {
+        userChatFlows.getOrPutWebSocketFlow(url, coroutineScopeIO) {
             webSocketSessionManager.createSession(url)
         }.let { emitAll(it) }
     }
@@ -131,7 +133,7 @@ class ChatService(
 
     fun getChangedMessagesByUser(userId: String) = flow {
         val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/messages"
-        messagesFlows.getOrPutWebSocketFlow(url) {
+        messagesFlows.getOrPutWebSocketFlow(url, coroutineScopeIO) {
             webSocketSessionManager.createSession(url)
         }.let { emitAll(it) }
     }

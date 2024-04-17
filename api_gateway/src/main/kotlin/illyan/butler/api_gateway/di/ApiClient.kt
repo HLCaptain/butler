@@ -23,8 +23,6 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
-import io.ktor.util.Attributes
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -77,6 +75,7 @@ fun HttpClientConfig<*>.setupClient() {
 @Single
 fun provideWebSocketClientProvider(): () -> HttpClient = { provideWebSocketClient() }
 
+@Named("WebSocket")
 @Single
 fun provideWebSocketClient() = HttpClient(OkHttp) {
     setupClient()

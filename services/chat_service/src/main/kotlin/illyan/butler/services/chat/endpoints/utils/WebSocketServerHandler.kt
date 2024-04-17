@@ -20,7 +20,7 @@ class WebSocketServerHandler {
 
     private suspend inline fun beginFlowCollection(sessionsKey: String) {
         try {
-            flows[sessionsKey]?.flowOn(Dispatchers.IO)?.collect { value ->
+            flows[sessionsKey]?.collect { value ->
                 Napier.v { "Sending value: $value" }
                 sessions[sessionsKey]?.forEach { it.sendSerialized(value) }
             }

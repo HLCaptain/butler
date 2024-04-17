@@ -20,7 +20,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 
 fun Application.configureWebSockets() {
     install(WebSockets) {
-//        pingPeriod = Duration.ofSeconds(15)
+        pingPeriod = Duration.ofSeconds(15)
 //        timeout = Duration.ofSeconds(15)
 //        maxFrameSize = Long.MAX_VALUE
 //        masking = false

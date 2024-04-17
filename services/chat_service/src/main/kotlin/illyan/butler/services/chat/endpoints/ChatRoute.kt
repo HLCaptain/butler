@@ -28,7 +28,7 @@ fun Route.chatRoute() {
             webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
                 chatService.getChangedMessagesByUser(userId)
             }
-            Napier.d("User $userId received new messages")
+            Napier.d("Added new message listener for user $userId")
         }
 
         route("/chats") {

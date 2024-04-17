@@ -6,9 +6,7 @@ import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
 import org.koin.core.annotation.Single
 
 @Single
@@ -18,7 +16,8 @@ class WebSocketServerHandler {
 
     private suspend inline fun beginFlowCollection(sessionsKey: String) {
         try {
-            flows[sessionsKey]?.flowOn(Dispatchers.IO)?.collect { value ->
+            Napier.v { "Beginning flow collection for $sessionsKey" }
+            flows[sessionsKey]?.collect { value ->
                 Napier.v { "Sending value: $value" }
                 sessions[sessionsKey]?.forEach { it.sendSerialized(value) }
             }
@@ -38,6 +37,7 @@ class WebSocketServerHandler {
     }
 
     suspend fun addFlowSessionListener(key: String, session: DefaultWebSocketServerSession, defaultFlow: () -> Flow<*>) {
+        Napier.v { "Adding flow session listener for $key" }
         sessions[key] = sessions[key]?.plus(session) ?: setOf(session)
         if (!flows.containsKey(key)) {
             flows[key] = defaultFlow()
