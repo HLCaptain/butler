@@ -3,7 +3,7 @@ package illyan.butler.ui.onboarding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.ui.auth_success.AuthSuccessScreen
@@ -15,7 +15,7 @@ import illyan.butler.ui.welcome.WelcomeScreen
 class OnBoardingScreen : Screen {
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<OnBoardingScreenModel>()
+        val screenModel = koinScreenModel<OnBoardingScreenModel>()
         val navigator = LocalNavigator.currentOrThrow
 
         // (language selection may be in a corner?)

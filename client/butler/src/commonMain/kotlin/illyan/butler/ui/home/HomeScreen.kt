@@ -24,7 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import illyan.butler.generated.resources.Res
@@ -52,7 +52,7 @@ class HomeScreen : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     internal fun HomeScreen() {
-        val screenModel = getScreenModel<HomeScreenModel>()
+        val screenModel = koinScreenModel<HomeScreenModel>()
         val state by screenModel.state.collectAsState()
         Surface {
             Column {

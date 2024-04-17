@@ -15,10 +15,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import illyan.butler.ui.arbitrary.ArbitraryScreen
@@ -27,17 +26,19 @@ import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.ButlerListDetail
 import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
 import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
+import illyan.butler.ui.theme.LocalWindowSizeProvider
 import io.github.aakira.napier.Napier
 
 class ChatScreen : Screen {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<ChatScreenModel>()
+        val screenModel = koinScreenModel<ChatScreenModel>()
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
-        val localWindowInfo = LocalWindowInfo.current
-        val containerSize by remember { derivedStateOf { localWindowInfo.containerSize } }
+        val windowSizeProvider = LocalWindowSizeProvider.current
+        val containerSize by remember { derivedStateOf { windowSizeProvider } }
+        val (width, height) = containerSize
         var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
@@ -60,9 +61,9 @@ class ChatScreen : Screen {
         val largePaneStrategy = FixedOffsetHorizontalTwoPaneStrategy(320.dp, true)
         val currentPaneStrategy by rememberSaveable {
             derivedStateOf {
-                when (containerSize.width) {
-                    in 0..599 -> compactPaneStrategy
-                    in 600..1199 -> mediumPaneStrategy
+                when (width) {
+                    in 0.dp..420.dp -> compactPaneStrategy
+                    in 420.dp..720.dp -> mediumPaneStrategy
                     else -> largePaneStrategy
                 }
             }

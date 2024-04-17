@@ -1,8 +1,11 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -29,13 +32,21 @@ kotlin {
 //        binaries.executable()
 //    }
 
-    androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "1.8"
-            }
-        }
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+//        apiVersion = KotlinVersion.KOTLIN_2_0
+//        languageVersion = KotlinVersion.KOTLIN_2_0
     }
+
+//    androidTarget {
+//        compilations.all {
+//            kotlinOptions {
+//                jvmTarget = "1.8"
+//            }
+//        }
+//    }
+
+    androidTarget()
 
     jvm()
 
@@ -111,6 +122,7 @@ kotlin {
             implementation(libs.koin.logger.slf4j)
             implementation(libs.sqldelight.android)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
             implementation(libs.settings.datastore)
             implementation(libs.androidx.datastore.core)
@@ -149,16 +161,20 @@ kotlin {
     }
 }
 
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_1_8
+//        languageVersion = KotlinVersion.KOTLIN_2_0
+    }
+}
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn("kspCommonMainKotlinMetadata")
+}
+
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp)
 }
 
-// WORKAROUND: ADD this dependsOn("kspCommonMainKotlinMetadata") instead of above dependencies
-tasks.withType<KotlinCompile<*>>().configureEach {
-    if (name != "kspCommonMainKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
-    }
-}
 afterEvaluate {
     tasks.filter {
         it.name.contains("SourcesJar", true)

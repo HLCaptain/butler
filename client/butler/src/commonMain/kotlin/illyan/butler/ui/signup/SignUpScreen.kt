@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
@@ -40,7 +40,7 @@ class SignUpScreen(
 ) : Screen {
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<SignUpScreenModel>()
+        val screenModel = koinScreenModel<SignUpScreenModel>()
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
         val onDialogClosed = LocalDialogDismissRequest.current

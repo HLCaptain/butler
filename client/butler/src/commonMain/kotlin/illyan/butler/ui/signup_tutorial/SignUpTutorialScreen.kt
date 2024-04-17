@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.ui.login.LoginScreen
@@ -15,7 +15,7 @@ import illyan.butler.ui.login.LoginScreen
 class SignUpTutorialScreen(private val onSignUp: () -> Unit) : Screen {
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<SignUpTutorialScreenModel>()
+        val screenModel = koinScreenModel<SignUpTutorialScreenModel>()
         val state by screenModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         // Make your Compose Multiplatform UI

@@ -38,7 +38,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.generated.resources.Res
@@ -60,7 +60,7 @@ import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
-import illyan.butler.ui.theme.ButlerTheme
+import illyan.butler.ui.theme.ThemeScreen
 import illyan.butler.util.log.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
@@ -69,7 +69,7 @@ class ProfileDialogScreen : Screen {
     @Composable
     override fun Content() {
         ProfileDialogScreen(
-            screenModel = getScreenModel<ProfileScreenModel>()
+            screenModel = koinScreenModel<ProfileScreenModel>()
         )
     }
 }
@@ -242,7 +242,7 @@ private fun PreviewProfileDialogScreen(
     email: String = "illyan@google.com",
     phone: String = "+123456789",
 ) {
-    ButlerTheme {
+    ThemeScreen {
         Column {
             ButlerDialogSurface {
                 ProfileDialogContent(
@@ -258,7 +258,7 @@ private fun PreviewProfileDialogScreen(
                 )
             }
         }
-    }
+    }.Content()
 }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,

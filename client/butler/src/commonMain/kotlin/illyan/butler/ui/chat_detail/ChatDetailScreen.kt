@@ -32,7 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
@@ -49,7 +49,7 @@ class ChatDetailScreen(private val getSelectedChatId: () -> String?) : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<ChatDetailScreenModel>()
+        val screenModel = koinScreenModel<ChatDetailScreenModel>()
         val state by screenModel.state.collectAsState()
         LaunchedEffect(state.chat) { Napier.d("ChatScreen: ${state.chat}") }
         val selectedChatId by remember { derivedStateOf(getSelectedChatId) }

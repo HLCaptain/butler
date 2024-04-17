@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
@@ -31,7 +31,7 @@ import org.jetbrains.compose.resources.stringResource
 class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<ChatListScreenModel>()
+        val screenModel = koinScreenModel<ChatListScreenModel>()
         val chats by screenModel.userChats.collectAsState()
         ChatList(
             chats = chats,
