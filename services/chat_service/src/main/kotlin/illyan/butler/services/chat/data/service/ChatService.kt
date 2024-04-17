@@ -139,6 +139,12 @@ class ChatService(
 //        }
     }
 
+    override suspend fun getMessages(userId: String): List<MessageDto> {
+        return messageDatabase.getMessages(userId).also {
+//            messageCache.setMessages(it)
+        }
+    }
+
     override fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>> {
 //        return messageCache.getChangedMessagesByUser(userId)
         return messageDatabase.getChangedMessagesAffectingUser(userId)

@@ -5,6 +5,7 @@ import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.store.ChatMessageMutableStoreBuilder
 import illyan.butler.data.store.MessageMutableStoreBuilder
+import illyan.butler.data.store.UserMessageMutableStoreBuilder
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
@@ -24,6 +25,7 @@ import org.mobilenativefoundation.store.store5.StoreWriteRequest
 class MessageRepository(
     messageMutableStoreBuilder: MessageMutableStoreBuilder,
     chatMessageMutableStoreBuilder: ChatMessageMutableStoreBuilder,
+    userMessageMutableStoreBuilder: UserMessageMutableStoreBuilder,
     private val messageNetworkDataSource: MessageNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
 ) {
@@ -31,6 +33,8 @@ class MessageRepository(
     val messageMutableStore = messageMutableStoreBuilder.store
     @OptIn(ExperimentalStoreApi::class)
     val chatMessageMutableStore = chatMessageMutableStoreBuilder.store
+    @OptIn(ExperimentalStoreApi::class)
+    val userMessageMutableStore = userMessageMutableStoreBuilder.store
 
     private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
@@ -64,5 +68,22 @@ class MessageRepository(
             )
         )
         return newMessage.id
+    }
+
+    @OptIn(ExperimentalStoreApi::class)
+    fun getUserMessagesFlow(userId: String?): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+        return userMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
+            StoreReadRequest.fresh(userId!!)
+        ).map {
+            it.throwIfError()
+            Napier.d("Read Response: $it")
+            val data = it.dataOrNull()
+            Napier.d("Last 5 messages: ${data?.takeLast(5)}")
+            data to (it is StoreReadResponse.Loading)
+        }.stateIn(
+            coroutineScopeIO,
+            SharingStarted.Eagerly,
+            null to true
+        )
     }
 }

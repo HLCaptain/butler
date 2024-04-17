@@ -42,8 +42,9 @@ class MessageKtorDataSource(
         val session = webSocketSessionManager.createSession("/messages")
         coroutineScopeIO.launch {
             session.incoming.receiveAsFlow().collect { _ ->
-                Napier.v { "Received new messages" }
-                newMessagesStateFlow.update { session.receiveDeserialized() }
+                val messages = session.receiveDeserialized<List<MessageDto>?>()
+                Napier.v { "Received new messages $messages" }
+                newMessagesStateFlow.update { messages }
             }
         }
     }
@@ -87,5 +88,9 @@ class MessageKtorDataSource(
 
     override suspend fun fetch(key: String): MessageDto? {
         return client.get("/messages/$key").body()
+    }
+
+    override suspend fun fetchByUser(userId: String): List<MessageDto> {
+        return client.get("/messages").body()
     }
 }

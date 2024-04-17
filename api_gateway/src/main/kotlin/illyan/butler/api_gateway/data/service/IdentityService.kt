@@ -22,8 +22,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
@@ -34,7 +33,6 @@ import org.koin.core.annotation.Single
 class IdentityService(
     private val client: HttpClient,
     private val webSocketSessionManager: WebSocketSessionManager,
-    private val coroutineScopeIO: CoroutineScope
 ) {
     suspend fun createUser(
         newUser: UserRegistrationDto,
@@ -66,10 +64,10 @@ class IdentityService(
         get("${AppConfig.Api.IDENTITY_API_URL}/users/$id")
     }
 
-    private val userDataFlows = mutableMapOf<String, StateFlow<UserDto?>>()
+    private val userDataFlows = mutableMapOf<String, Flow<UserDto?>>()
     fun getUserChangesById(id: String) = flow {
         val url = "${AppConfig.Api.IDENTITY_API_URL}/users/$id/changes"
-        userDataFlows.getOrPutWebSocketFlow(url, coroutineScopeIO) {
+        userDataFlows.getOrPutWebSocketFlow(url) {
             webSocketSessionManager.createSession(url)
         }.let { emitAll(it) }
     }

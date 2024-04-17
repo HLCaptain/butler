@@ -10,6 +10,7 @@ interface MessageDataSource {
     suspend fun getPreviousMessages(userId: String, chatId: String, limit: Int, timestamp: Long): List<MessageDto>
     suspend fun getMessages(userId: String, chatId: String, limit: Int, offset: Int): List<MessageDto>
     suspend fun getMessages(userId: String, chatId: String): List<MessageDto>
+    suspend fun getMessages(userId: String): List<MessageDto>
     fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>>
     fun getChangedMessagesByChat(userId: String, chatId: String): Flow<List<MessageDto>>
 }

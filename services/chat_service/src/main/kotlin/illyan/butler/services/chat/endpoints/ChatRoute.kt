@@ -23,12 +23,19 @@ fun Route.chatRoute() {
     val webSocketServerHandler: WebSocketServerHandler by inject()
 
     route("/{userId}") {
-        webSocket("/messages") {
-            val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
-            webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
-                chatService.getChangedMessagesByUser(userId)
+        route("/messages") {
+            get {
+                val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                call.respond(chatService.getMessages(userId))
             }
-            Napier.d("Added new message listener for user $userId")
+
+            webSocket {
+                val userId = call.parameters["userId"] ?: return@webSocket call.respond(HttpStatusCode.BadRequest)
+                webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
+                    chatService.getChangedMessagesByUser(userId)
+                }
+                Napier.d("Added new message listener for user $userId")
+            }
         }
 
         route("/chats") {

@@ -37,6 +37,7 @@ class ChatScreen : Screen {
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
         val (height, width) = getWindowSizeInDp()
+        var windowWidth by rememberSaveable { mutableStateOf(width) }
         var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
@@ -54,15 +55,20 @@ class ChatScreen : Screen {
         // - if Chat is not yet opened:
         //   Selecting a list item will open Chat in list screen.
         //   Clear detail navigator.
-        val compactPaneStrategy = FractionHorizontalTwoPaneStrategy(1f)
-        val mediumPaneStrategy = FractionHorizontalTwoPaneStrategy(0.4f)
-        val largePaneStrategy = FixedOffsetHorizontalTwoPaneStrategy(320.dp, true)
-        LaunchedEffect(width) {
-            Napier.v("Window size (dp): $width x $height")
+        val compactPaneStrategy = rememberSaveable { FractionHorizontalTwoPaneStrategy(1f) }
+        val mediumPaneStrategy = rememberSaveable { FractionHorizontalTwoPaneStrategy(0.4f) }
+        val largePaneStrategy = rememberSaveable { FixedOffsetHorizontalTwoPaneStrategy(320.dp, true) }
+        val currentPaneStrategy by rememberSaveable {
+            derivedStateOf {
+                if (windowWidth < 600.dp) compactPaneStrategy
+                else if (windowWidth < 1200.dp) mediumPaneStrategy
+                else largePaneStrategy
+            }
         }
-        val currentPaneStrategy = if (width.value < 600) compactPaneStrategy
-        else if (width.value < 1200) mediumPaneStrategy
-        else largePaneStrategy
+        LaunchedEffect(width, height) {
+            windowWidth = width
+            Napier.v("Window size: $width x $height")
+        }
         LaunchedEffect(currentPaneStrategy) {
             val strategy = when (currentPaneStrategy) {
                 compactPaneStrategy -> "Compact"
@@ -75,21 +81,6 @@ class ChatScreen : Screen {
         var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         val chatDetailScreen by remember { derivedStateOf { ChatDetailScreen { selectedChat } } }
-        ButlerListDetail(
-            strategy = currentPaneStrategy,
-            list = {
-                Navigator(ChatListScreen { selectedChat = it; Napier.v { "Selected chat ID: $it" } }) {
-                    LaunchedEffect(Unit) { listNavigator = it }
-                    CurrentScreen()
-                }
-            },
-            detail = {
-                Navigator(ArbitraryScreen { EmptyChatScreen() }) {
-                    LaunchedEffect(Unit) { detailNavigator = it }
-                    CurrentScreen()
-                }
-            }
-        )
         LaunchedEffect(isListOnly) {
             if (isListOnly) {
                 Napier.v("Transitioning from ListDetail to ListOnly")
@@ -137,6 +128,21 @@ class ChatScreen : Screen {
                 Napier.v("Popped screens from listNavigator until ChatListScreen is found")
             }
         }
+        ButlerListDetail(
+            strategy = currentPaneStrategy,
+            list = {
+                Navigator(ChatListScreen { selectedChat = it; Napier.v { "Selected chat ID: $it" } }) {
+                    LaunchedEffect(Unit) { listNavigator = it }
+                    CurrentScreen()
+                }
+            },
+            detail = {
+                Navigator(ArbitraryScreen { EmptyChatScreen() }) {
+                    LaunchedEffect(Unit) { detailNavigator = it }
+                    CurrentScreen()
+                }
+            }
+        )
     }
 }
 

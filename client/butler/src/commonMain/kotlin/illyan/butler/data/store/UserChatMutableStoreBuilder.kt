@@ -45,7 +45,7 @@ fun provideUserChatMutableStore(
             flow { emit(chatNetworkDataSource.fetch()) },
             flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) }
         ) { userChats, newChats ->
-            Napier.d("Fetched chats ${(userChats + newChats).distinct()}")
+            Napier.d("Fetched ${(userChats + newChats).distinct().size} chats")
             (userChats + newChats)
                 .distinctBy { it.id }
                 .filter { it.members.contains(key) }

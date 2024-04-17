@@ -12,6 +12,9 @@ SELECT * FROM Message WHERE id = ?;
 selectByChat:
 SELECT * FROM Message WHERE chatId = ?;
 
+selectBySender:
+SELECT * FROM Message WHERE senderId = ?;
+
 upsert:
 INSERT OR REPLACE INTO Message
 VALUES ?;
@@ -21,6 +24,9 @@ DELETE FROM Message WHERE id = ?;
 
 deleteAllChatMessagesForChat:
 DELETE FROM Message WHERE chatId = ?;
+
+deleteBySender:
+DELETE FROM Message WHERE senderId = ?;
 
 deleteAll:
 DELETE FROM Message;

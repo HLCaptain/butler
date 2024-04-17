@@ -42,6 +42,13 @@ class ChatManager(
                 _userChats.update { (it + newChats).distinct() }
             }
         }
+        coroutineScopeIO.launch {
+            authManager.signedInUserId.flatMapLatest {
+                messageRepository.getUserMessagesFlow(it)
+            }.collectLatest {
+                Napier.v { "New messages: $it" }
+            }
+        }
     }
 
     private fun loadChats(userId: String? = authManager.signedInUserId.value): Flow<List<DomainChat>> {

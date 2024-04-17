@@ -31,12 +31,18 @@ fun Route.chatRoute() {
     val chatSocketHandler: ChatSocketHandler by inject()
 
     authenticate("auth-jwt") {
-        webSocket("/messages") {
-            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-            webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
-                chatService.getChangedMessagesByUser(userId).filterNotNull()
+        route("/messages") {
+            get {
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                call.respond(chatService.getMessages(userId))
             }
-            Napier.d { "Added message listener for $userId" }
+            webSocket {
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                webSocketServerHandler.addFlowSessionListener("messages:$userId", this) {
+                    chatService.getChangedMessagesByUser(userId).filterNotNull()
+                }
+                Napier.d { "Added message listener for $userId" }
+            }
         }
 
         route("/chats") {
