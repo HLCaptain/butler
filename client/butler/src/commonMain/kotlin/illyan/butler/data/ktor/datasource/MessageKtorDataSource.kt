@@ -16,6 +16,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
@@ -45,6 +46,14 @@ class MessageKtorDataSource(
                 val messages = session.receiveDeserialized<List<MessageDto>?>()
                 Napier.v { "Received new messages $messages" }
                 newMessagesStateFlow.update { messages }
+            }
+        }
+        // TODO: remove when websockets are fixed
+        coroutineScopeIO.launch {
+            while (true) {
+                val allMessages = fetchByUser()
+                newMessagesStateFlow.update { allMessages }
+                delay(5000)
             }
         }
     }
@@ -98,7 +107,7 @@ class MessageKtorDataSource(
         return client.get("/messages/$key").body()
     }
 
-    override suspend fun fetchByUser(userId: String): List<MessageDto> {
+    override suspend fun fetchByUser(): List<MessageDto> {
         return client.get("/messages").body()
     }
 }

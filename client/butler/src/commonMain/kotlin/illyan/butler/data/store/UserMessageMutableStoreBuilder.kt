@@ -39,7 +39,7 @@ fun provideUserMessageMutableStore(
     fetcher = Fetcher.ofFlow { key: String ->
         Napier.d("Fetching messages for user $key")
         combine(
-            flow { emit(messageNetworkDataSource.fetchByUser(key)) },
+            flow { emit(messageNetworkDataSource.fetchByUser()) },
             flow { emit(emptyList<MessageDto>()); emitAll(messageNetworkDataSource.fetchNewMessages()) }
         ) { messages, newMessages ->
             Napier.d("Fetched ${(messages + newMessages).distinct().size} messages")

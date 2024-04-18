@@ -26,5 +26,5 @@ interface MessageNetworkDataSource {
      */
     suspend fun delete(id: String, chatId: String): Boolean
     suspend fun fetch(key: String): MessageDto?
-    suspend fun fetchByUser(userId: String): List<MessageDto>
+    suspend fun fetchByUser(): List<MessageDto>
 }

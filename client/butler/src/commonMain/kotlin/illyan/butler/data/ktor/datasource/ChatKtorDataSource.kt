@@ -16,6 +16,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
@@ -44,6 +45,14 @@ class ChatKtorDataSource(
             session.incoming.receiveAsFlow().collect { _ ->
                 Napier.v { "Received new chat" }
                 newChatsStateFlow.update { session.receiveDeserialized() }
+            }
+        }
+        // TODO: remove when websockets are fixed
+        coroutineScopeIO.launch {
+            while (true) {
+                val allChats = fetch()
+                newChatsStateFlow.update { allChats }
+                delay(5000)
             }
         }
     }
