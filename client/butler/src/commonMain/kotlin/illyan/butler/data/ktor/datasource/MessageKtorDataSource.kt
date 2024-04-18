@@ -19,8 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -56,11 +56,12 @@ class MessageKtorDataSource(
                 createNewMessagesFlow()
                 isLoadedMeWebSocketSession = true
                 isLoadingNewMessagesWebSocketSession = false
+                Napier.v { "Created new message flow, emitting messages" }
                 emitAll(newMessagesStateFlow)
             }
         } else {
             newMessagesStateFlow
-        }.map { it ?: emptyList() }
+        }.filterNotNull()
     }
 
     override suspend fun fetchByChat(chatUUID: String, limit: Int, timestamp: Long): List<MessageDto> {
@@ -74,12 +75,19 @@ class MessageKtorDataSource(
         return client.get("/chats/$chatUUID/messages").body()
     }
 
+    // To avoid needless updates to messages right after they are created
+    private val dontUpdateMessage = mutableSetOf<MessageDto>()
     override suspend fun upsert(message: MessageDto): MessageDto {
         return if (message.id == null) {
-            client.post("/chats/${message.chatId}/messages") { setBody(message) }
+            val newMessage = client.post("/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>()
+            dontUpdateMessage.add(newMessage)
+            newMessage
+        } else if (message !in dontUpdateMessage) {
+            client.put("/chats/${message.chatId}/messages/${message.id}") { setBody(message) }.body()
         } else {
-            client.put("/chats/${message.chatId}/messages/${message.id}") { setBody(message) }
-        }.body()
+            dontUpdateMessage.removeIf { it.id == message.id }
+            message
+        }.also { newMessagesStateFlow.update { _ -> listOf(it) } }
     }
 
     override suspend fun delete(id: String, chatId: String): Boolean {

@@ -12,7 +12,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
@@ -44,19 +43,46 @@ fun provideUserMessageMutableStore(
             flow { emit(emptyList<MessageDto>()); emitAll(messageNetworkDataSource.fetchNewMessages()) }
         ) { messages, newMessages ->
             Napier.d("Fetched ${(messages + newMessages).distinct().size} messages")
-            (messages + newMessages)
-                .distinctBy { it.id }
-                .filter { it.senderId == key }
+            (messages + newMessages).distinctBy { it.id }
         }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
-            databaseHelper.queryAsListFlow {
-                Napier.d("Reading chat at $key")
-                it.messageQueries.selectBySender(key)
-            }.map { messages ->
-                Napier.v { "Messages read: ${messages.size}" }
-                messages.map { it.toDomainModel() }
+//            flow {
+//                var previousMessages = listOf<DomainMessage>()
+//                while (true) {
+//                    val newMessages = databaseHelper.withDatabase { database ->
+//                        Napier.d("Reading chat at $key")
+//                        // TODO: could use ChatMembership table to get all chats for user, but this is simpler and probably faster
+//                        val chats = database.chatQueries.selectAll().executeAsList()
+//                        val userChats = chats.filter { it.members.contains(key) }
+//                        Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
+//                        val messages = userChats.map { chat ->
+//                            database.messageQueries.selectByChat(chat.id).executeAsList()
+//                        }.flatten()
+//                        messages
+//                    }.map { it.toDomainModel() }
+//                    if (newMessages.size != previousMessages.size || !newMessages.containsAll(previousMessages)) {
+//                        Napier.v { "Messages read: ${newMessages.size}" }
+//                        emit(newMessages)
+//                        previousMessages = newMessages
+//                    }
+//                    delay(1000)
+//                }
+//            }
+            flow {
+                val newMessages = databaseHelper.withDatabase { database ->
+                    Napier.d("Reading chat at $key")
+                    // TODO: could use ChatMembership table to get all chats for user, but this is simpler and probably faster
+                    val chats = database.chatQueries.selectAll().executeAsList()
+                    val userChats = chats.filter { it.members.contains(key) }
+                    Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
+                    val messages = userChats.map { chat ->
+                        database.messageQueries.selectByChat(chat.id).executeAsList()
+                    }.flatten()
+                    messages
+                }.map { it.toDomainModel() }
+                emit(newMessages)
             }
         },
         writer = { key, local ->

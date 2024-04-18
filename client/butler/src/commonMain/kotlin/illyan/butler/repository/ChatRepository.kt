@@ -29,15 +29,16 @@ class ChatRepository(
 ) {
     @OptIn(ExperimentalStoreApi::class)
     val chatMutableStore = chatMutableStoreBuilder.store
+
     @OptIn(ExperimentalStoreApi::class)
     val userChatMutableStore = userChatMutableStoreBuilder.store
 
     private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<DomainChat?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getChatFlow(uuid: String): StateFlow<Pair<DomainChat?, Boolean>> {
-        return chatStateFlows.getOrPut(uuid) {
+    fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>> {
+        return chatStateFlows.getOrPut(chatId) {
             chatMutableStore.stream<StoreReadResponse<DomainChat>>(
-                StoreReadRequest.fresh(key = uuid)
+                StoreReadRequest.cached(chatId, true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: $it")
@@ -54,10 +55,10 @@ class ChatRepository(
 
     private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getUserChatsFlow(userUUID: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
-        return userChatStateFlows.getOrPut(userUUID) {
+    fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
+        return userChatStateFlows.getOrPut(userId) {
             userChatMutableStore.stream<StoreReadResponse<List<DomainChat>>>(
-                StoreReadRequest.fresh(userUUID)
+                StoreReadRequest.cached(userId, true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: $it")

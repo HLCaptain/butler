@@ -41,7 +41,7 @@ class MessageRepository(
     fun getChatFlow(id: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatStateFlows.getOrPut(id) {
             chatMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
-                StoreReadRequest.fresh(id)
+                StoreReadRequest.cached(id, true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: $it")
@@ -70,20 +70,23 @@ class MessageRepository(
         return newMessage.id
     }
 
+    private val userMessageStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getUserMessagesFlow(userId: String?): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
-        return userMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
-            StoreReadRequest.fresh(userId!!)
-        ).map {
-            it.throwIfError()
-            Napier.d("Read Response: $it")
-            val data = it.dataOrNull()
-            Napier.d("Last 5 messages: ${data?.takeLast(5)}")
-            data to (it is StoreReadResponse.Loading)
-        }.stateIn(
-            coroutineScopeIO,
-            SharingStarted.Eagerly,
-            null to true
-        )
+    fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+        return userMessageStateFlows.getOrPut(userId) {
+            userMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
+                StoreReadRequest.cached(userId, true)
+            ).map {
+                it.throwIfError()
+                Napier.d("Read Response: $it")
+                val data = it.dataOrNull()
+                Napier.d("Last 5 messages: ${data?.takeLast(5)}")
+                data to (it is StoreReadResponse.Loading)
+            }.stateIn(
+                coroutineScopeIO,
+                SharingStarted.Eagerly,
+                null to true
+            )
+        }
     }
 }

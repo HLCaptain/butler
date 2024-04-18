@@ -20,21 +20,25 @@ class WebSocketServerHandler {
             val closed = mutableSetOf<DefaultWebSocketServerSession>()
             flows[sessionsKey]?.collect { value ->
                 Napier.v { "Sending value: $value" }
-                sessions[sessionsKey]?.forEach {
+                sessions[sessionsKey]?.forEach { session ->
                     try {
-                        it.sendSerialized(value)
+                        session.sendSerialized(value)
                     } catch (e: Exception) {
-                        Napier.e("Error in sending value", e)
-                        closed += it
-                        it.close(CloseReason(CloseReason.Codes.NORMAL, "Error in sending value"))
+                        closed += session
+                        Napier.e("Error in sending value for session, ${sessions[sessionsKey]?.filter { it !in closed }?.size} remained in $sessionsKey", e)
+                        session.close(CloseReason(CloseReason.Codes.NORMAL, "Error in sending value"))
                     }
                 }
-                sessions[sessionsKey] = sessions[sessionsKey]?.filterNot { it in closed }?.toSet() ?: emptySet()
-                closed.clear()
+                sessions[sessionsKey] = sessions[sessionsKey]?.filter { it !in closed }?.toSet() ?: emptySet()
+                if (closed.isNotEmpty()) {
+                    Napier.v { "Closed sessions: $closed" }
+                    closed.clear()
+                }
             }
         } catch (e: Exception) {
             Napier.e("Error in sending value", e)
         } finally {
+            Napier.v { "Flow collection ended for $sessionsKey, closing all sessions" }
             sessions[sessionsKey]?.forEach {
                 it.close(CloseReason(CloseReason.Codes.NORMAL, "Closed by user"))
                 remove(sessionsKey, it)

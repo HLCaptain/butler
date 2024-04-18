@@ -7,13 +7,13 @@ import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
 import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Message
-import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
@@ -39,29 +39,31 @@ fun provideMessageMutableStore(
     messageNetworkDataSource: MessageNetworkDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
-        Napier.d("Fetching chat $key")
-        listOf(
-            flow { emit(messageNetworkDataSource.fetch(key)) },
-            messageNetworkDataSource.fetchNewMessages().map { flow -> flow.firstOrNull { it.id == key } }
-        ).merge().filterNotNull()
+        Napier.d("Fetching message $key")
+        combine(
+            flow { emit(listOf(messageNetworkDataSource.fetch(key))) },
+            flow { emit(emptyList<MessageDto>()); emitAll(messageNetworkDataSource.fetchNewMessages()) }
+        ) { message, newMessages ->
+            (newMessages + message).distinctBy { it?.id }.firstOrNull { it?.id == key }
+        }.filterNotNull()
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
             databaseHelper.queryAsOneOrNullFlow {
-                Napier.d("Reading chat at $key")
+                Napier.d("Reading message at $key")
                 it.messageQueries.select(key)
             }.map { it?.toDomainModel() }
         },
         writer = { key, local ->
             databaseHelper.withDatabase { db ->
-                Napier.d("Writing chat at $key with $local")
+                Napier.d("Writing message at $key with $local")
                 db.messageQueries.upsert(local)
             }
         },
         delete = { key ->
             var chatId = ""
             databaseHelper.withDatabase {
-                Napier.d("Deleting chat at $key")
+                Napier.d("Deleting message at $key")
                 chatId = it.messageQueries.select(key).executeAsOne().chatId
                 it.messageQueries.delete(key)
             }
@@ -69,7 +71,7 @@ fun provideMessageMutableStore(
         },
         deleteAll = {
             databaseHelper.withDatabase {
-                Napier.d("Deleting all chats")
+                Napier.d("Deleting all messages")
                 it.messageQueries.deleteAll()
             }
         }
@@ -86,16 +88,15 @@ fun provideMessageMutableStore(
         },
         onCompletion = OnUpdaterCompletion(
             onSuccess = { success ->
-                Napier.d("Successfully updated chat")
-
+                Napier.d("Successfully updated message")
             },
             onFailure = { _ ->
-                Napier.d("Failed to update chat")
+                Napier.d("Failed to update message")
             }
         )
     ),
     bookkeeper = provideBookkeeper(
         databaseHelper,
-        DomainChat::class.simpleName.toString()
+        Message::class.simpleName.toString()
     ) { it }
 )

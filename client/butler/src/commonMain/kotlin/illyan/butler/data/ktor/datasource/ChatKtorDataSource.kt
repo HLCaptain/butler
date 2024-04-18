@@ -19,8 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -55,11 +55,12 @@ class ChatKtorDataSource(
                 createNewChatsFlow()
                 isLoadedNewChatsWebSocketSession = true
                 isLoadingNewChatsWebSocketSession = false
+                Napier.v { "Created new chat flow, emitting chats" }
                 emitAll(newChatsStateFlow)
             }
         } else {
             newChatsStateFlow
-        }.map { it ?: emptyList() }
+        }.filterNotNull()
     }
 
     override suspend fun fetchPaginated(limit: Int, timestamp: Long): List<ChatDto> {
@@ -77,12 +78,19 @@ class ChatKtorDataSource(
         TODO("Not yet implemented")
     }
 
+    // To avoid needless updates to chats right after they are created
+    private val dontUpdateChat = mutableSetOf<ChatDto>()
     override suspend fun upsert(chat: ChatDto): ChatDto {
         return if (chat.id == null) {
-            client.post("/chats") { setBody(chat) }
+            val newChat = client.post("/chats") { setBody(chat) }.body<ChatDto>()
+            dontUpdateChat.add(newChat)
+            newChat
+        } else if (chat !in dontUpdateChat) {
+            client.put("/chats/${chat.id}") { setBody(chat) }.body()
         } else {
-            client.put("/chats/${chat.id}") { setBody(chat) }
-        }.body()
+            dontUpdateChat.removeIf { it.id == chat.id }
+            chat
+        }. also { newChatsStateFlow.update { _ -> listOf(it) } }
     }
 
     override suspend fun delete(uuid: String): Boolean {

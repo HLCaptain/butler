@@ -11,6 +11,7 @@ import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
@@ -42,11 +43,10 @@ fun provideChatMutableStore(
         combine(
             flow { emit(chatNetworkDataSource.fetch()) },
             flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) }
-        ) {
-            userChats, newChats ->
+        ) { userChats, newChats ->
             Napier.d("Fetched chat ${(userChats + newChats).distinct()}")
-            (userChats + newChats).distinctBy { it.id }.first { it.id == key }
-        }
+            (userChats + newChats).distinctBy { it.id }.firstOrNull { it.id == key }
+        }.filterNotNull()
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->

@@ -18,6 +18,7 @@ class WebSocketSessionManager(
     private val sessions = mutableMapOf<String, DefaultClientWebSocketSession>()
 
     suspend fun createSession(path: String): DefaultClientWebSocketSession {
+        sessions[path]?.close(CloseReason(CloseReason.Codes.NORMAL, "Reconnecting"))
         val client = webSocketClientProvider()
         val currentApiUrl = hostRepository.currentHost.first()
         val realPath = currentApiUrl + path
@@ -28,7 +29,6 @@ class WebSocketSessionManager(
             path = realPath.takeLastWhile { it != ':' }.substringAfter("/")
         )
         Napier.v { "Created websocket session for ${session.call.request.url}" }
-        sessions[path]?.close(CloseReason(CloseReason.Codes.NORMAL, "Reconnecting"))
         sessions[path] = session
         return session
     }

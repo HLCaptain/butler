@@ -20,9 +20,21 @@ class WebSocketServerHandler {
 
     private suspend inline fun beginFlowCollection(sessionsKey: String) {
         try {
+            Napier.v { "Beginning flow collection for $sessionsKey" }
+            val closed = mutableSetOf<DefaultWebSocketServerSession>()
             flows[sessionsKey]?.collect { value ->
                 Napier.v { "Sending value: $value" }
-                sessions[sessionsKey]?.forEach { it.sendSerialized(value) }
+                sessions[sessionsKey]?.forEach { session ->
+                    try {
+                        session.sendSerialized(value)
+                    } catch (e: Exception) {
+                        Napier.e("Error in sending value for session, ${sessions[sessionsKey]?.filter { session != it }?.size} remained in $sessionsKey", e)
+                        closed += session
+                        session.close(CloseReason(CloseReason.Codes.NORMAL, "Error in sending value"))
+                    }
+                }
+                sessions[sessionsKey] = sessions[sessionsKey]?.filter { it !in closed }?.toSet() ?: emptySet()
+                closed.clear()
             }
         } catch (e: Exception) {
             Napier.e("Error in sending value", e)
@@ -40,6 +52,7 @@ class WebSocketServerHandler {
     }
 
     suspend fun addFlowSessionListener(key: String, session: DefaultWebSocketServerSession, defaultFlow: () -> Flow<*>) {
+        Napier.v { "Adding flow session listener for $key" }
         sessions[key] = sessions[key]?.plus(session) ?: setOf(session)
         if (!flows.containsKey(key)) {
             flows[key] = defaultFlow()

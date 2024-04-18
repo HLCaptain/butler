@@ -33,20 +33,24 @@ class ChatManager(
     private val _userChats = MutableStateFlow<List<DomainChat>>(emptyList())
     val userChats = _userChats.asStateFlow()
 
+    private val _userMessages = MutableStateFlow<List<DomainMessage>>(emptyList())
+    private val userMessages = _userMessages.asStateFlow()
+
     init {
         coroutineScopeIO.launch {
             authManager.signedInUserId.flatMapLatest {
                 _userChats.update { emptyList() }
                 loadChats(it)
             }.collectLatest { newChats ->
-                _userChats.update { (it + newChats).distinct() }
+                _userChats.update { chats -> (chats + newChats).distinctBy { it.id } }
             }
         }
         coroutineScopeIO.launch {
             authManager.signedInUserId.flatMapLatest {
-                messageRepository.getUserMessagesFlow(it)
-            }.collectLatest {
-                Napier.v { "New messages: $it" }
+                _userMessages.update { emptyList() }
+                loadMessages(it)
+            }.collectLatest { newMessages ->
+                _userMessages.update { messages -> (messages + newMessages).distinctBy { it.id } }
             }
         }
     }
@@ -60,16 +64,21 @@ class ChatManager(
         return chatRepository.getUserChatsFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
     }
 
-    fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
-    fun getMessagesByChatFlow(uuid: String) = messageRepository.getChatFlow(uuid).map { it.first }
+    private fun loadMessages(userId: String? = authManager.signedInUserId.value): Flow<List<DomainMessage>> {
+        if (userId == null) {
+            Napier.v { "User not signed in, reseting messages" }
+            return flowOf(emptyList())
+        }
+        Napier.v { "Loading messages for user $userId" }
+        return messageRepository.getUserMessagesFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
+    }
+
+    fun getChatFlow(chatId: String) = userChats.map { chats -> chats.firstOrNull { it.id == chatId } }
+    fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
 
     suspend fun startNewChat(modelUUID: String): String {
         return authManager.signedInUserId.first()?.let { userUUID ->
-            chatRepository.upsert(
-                DomainChat(
-                    members = listOf(userUUID, modelUUID)
-                )
-            )
+            chatRepository.upsert(DomainChat(members = listOf(userUUID, modelUUID)))
         } ?: throw IllegalArgumentException("User not signed in")
     }
 
