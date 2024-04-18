@@ -24,7 +24,7 @@ import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_list.ChatListScreen
-import illyan.butler.ui.components.ButlerListDetail
+import illyan.butler.ui.components.ButlerTwoPane
 import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
 import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
 import io.github.aakira.napier.Napier
@@ -128,15 +128,15 @@ class ChatScreen : Screen {
                 Napier.v("Popped screens from listNavigator until ChatListScreen is found")
             }
         }
-        ButlerListDetail(
+        ButlerTwoPane(
             strategy = currentPaneStrategy,
-            list = {
+            first = {
                 Navigator(ChatListScreen { selectedChat = it; Napier.v { "Selected chat ID: $it" } }) {
                     LaunchedEffect(Unit) { listNavigator = it }
                     CurrentScreen()
                 }
             },
-            detail = {
+            second = {
                 Navigator(ArbitraryScreen { EmptyChatScreen() }) {
                     LaunchedEffect(Unit) { detailNavigator = it }
                     CurrentScreen()

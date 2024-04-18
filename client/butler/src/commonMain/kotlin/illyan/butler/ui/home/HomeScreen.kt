@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
@@ -31,6 +35,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
+import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_layout.ChatScreen
@@ -40,6 +45,7 @@ import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -61,11 +67,6 @@ class HomeScreen : Screen {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-//                    Text(
-//                        text = stringResource(Res.string.app_name),
-//                        style = MaterialTheme.typography.headlineLarge
-//                    )
-
                     val isUserSignedIn by rememberSaveable { derivedStateOf { state.isUserSignedIn } }
                     val isTutorialDone by rememberSaveable { derivedStateOf { state.isTutorialDone } }
                     var isAuthFlowEnded by rememberSaveable { mutableStateOf(isUserSignedIn) }
@@ -161,8 +162,36 @@ class HomeScreen : Screen {
                     )
                 }
 
-                Column {
-                    var navigator by remember { mutableStateOf<Navigator?>(null) }
+                var navigator by remember { mutableStateOf<Navigator?>(null) }
+                val (height, width) = getWindowSizeInDp()
+                var windowWidth by rememberSaveable { mutableStateOf(width) }
+                val navBarOnSide by rememberSaveable {
+                    derivedStateOf {
+                        if (windowWidth < 600.dp) false
+                        else if (windowWidth < 1200.dp) true
+                        else true
+                    }
+                }
+                val columnContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Column { content() } }
+                val rowContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Row { content() } }
+                val layoutComposable by remember { derivedStateOf { if (navBarOnSide) rowContent else columnContent } }
+                LaunchedEffect(width, height) {
+                    windowWidth = width
+                    Napier.v("Window size: $width x $height, navBarOnSide: $navBarOnSide, layoutComposable: $layoutComposable")
+                }
+                layoutComposable {
+                    AnimatedVisibility(navigator != null && navBarOnSide) {
+                        navigator?.let {
+                            VerticalNavBar(
+                                navigator = it,
+                                navigatorEnd = {
+                                    Button(onClick = { isProfileDialogShowing = true }) {
+                                        Text(stringResource(Res.string.profile))
+                                    }
+                                }
+                            )
+                        }
+                    }
                     Box(
                         modifier = Modifier.weight(1f, fill = true)
                     ) {
@@ -173,9 +202,9 @@ class HomeScreen : Screen {
                             CurrentScreen()
                         }
                     }
-                    AnimatedVisibility(navigator != null) {
+                    AnimatedVisibility(navigator != null && !navBarOnSide) {
                         navigator?.let {
-                            NavBar(
+                            HorizontalNavBar(
                                 navigator = it,
                                 navigatorEnd = {
                                     Button(onClick = { isProfileDialogShowing = true }) {
@@ -186,48 +215,6 @@ class HomeScreen : Screen {
                         }
                     }
                 }
-
-//                LazyColumn(
-//                    modifier = Modifier.fillMaxSize(),
-//                    contentPadding = PaddingValues(8.dp),
-//                ) {
-//                    item {
-//                        Image(
-//                            painter = painterResource(Res.drawable.butler_logo),
-//                            contentDescription = "Butler logo",
-//                            modifier = Modifier
-//                                .widthIn(max = 480.dp)
-//                                .padding(8.dp)
-//                                .align(Alignment.CenterHorizontally)
-//                                .clip(RoundedCornerShape(8.dp))
-//                        )
-//                    }
-//
-//                    item {
-//                        val signedInUserUUID = state.signedInUserUUID
-//                        val navigator = LocalNavigator.currentOrThrow
-//                        AnimatedVisibility(
-//                            visible = signedInUserUUID != null
-//                        ) {
-//                            Column(
-//                                verticalArrangement = Arrangement.spacedBy(8.dp)
-//                            ) {
-//                                Text(
-//                                    text = stringResource(Res.string.hello_x, signedInUserUUID?.take(8) ?: Res.string.anonymous_user),
-//                                    style = MaterialTheme.typography.headlineMedium
-//                                )
-//                                MenuButton(
-//                                    text = stringResource(Res.string.chats),
-//                                    onClick = { navigator.push(ChatListScreen()) }
-//                                )
-//                                MenuButton(
-//                                    text = stringResource(Res.string.new_chat),
-//                                    onClick = { navigator.push(ModelListScreen()) }
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
             }
         }
     }
@@ -235,24 +222,58 @@ class HomeScreen : Screen {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun NavBar(
+fun HorizontalNavBar(
     navigator: Navigator,
     getChatScreen: () -> Screen = { ChatScreen() },
     getNewChatScreen: () -> Screen = { NewChatScreen { navigator.replaceAll(getChatScreen()) } },
     navigatorEnd: @Composable () -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
     ) {
-        MenuButton(
-            text = stringResource(Res.string.chats),
-            onClick = { navigator.replaceAll(getChatScreen()) }
-        )
-        MenuButton(
-            text = stringResource(Res.string.new_chat),
-            onClick = { navigator.replaceAll(getNewChatScreen()) }
-        )
-        navigatorEnd()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            MenuButton(
+                text = stringResource(Res.string.chats),
+                onClick = { navigator.replaceAll(getChatScreen()) }
+            )
+            MenuButton(
+                text = stringResource(Res.string.new_chat),
+                onClick = { navigator.replaceAll(getNewChatScreen()) }
+            )
+            navigatorEnd()
+        }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun VerticalNavBar(
+    navigator: Navigator,
+    getChatScreen: () -> Screen = { ChatScreen() },
+    getNewChatScreen: () -> Screen = { NewChatScreen { navigator.replaceAll(getChatScreen()) } },
+    navigatorEnd: @Composable () -> Unit = {}
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                MenuButton(
+                    text = stringResource(Res.string.chats),
+                    onClick = { navigator.replaceAll(getChatScreen()) }
+                )
+                MenuButton(
+                    text = stringResource(Res.string.new_chat),
+                    onClick = { navigator.replaceAll(getNewChatScreen()) }
+                )
+            }
+            navigatorEnd()
+        }
     }
 }

@@ -20,21 +20,21 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 @Composable
-fun ButlerListDetail(
+fun ButlerTwoPane(
     modifier: Modifier = Modifier,
     strategy: TwoPaneStrategy,
-    list: @Composable () -> Unit,
-    detail: @Composable () -> Unit
+    first: @Composable () -> Unit,
+    second: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
     Layout(
         modifier = modifier.wrapContentSize(),
         content = {
             Box(Modifier.layoutId("list")) {
-                list()
+                first()
             }
             Box(Modifier.layoutId("detail")) {
-                detail()
+                second()
             }
         }
     ) { measurable, constraints ->
@@ -137,26 +137,47 @@ data class SplitResult(
  *
  * This strategy is _not_ fold aware.
  */
-internal fun FractionHorizontalTwoPaneStrategy(
+fun FractionHorizontalTwoPaneStrategy(
     splitFraction: Float,
     gapWidth: Dp = 0.dp,
 ): TwoPaneStrategy = TwoPaneStrategy { density, layoutDirection, layoutCoordinates ->
-        val splitX = layoutCoordinates.size.width * when (layoutDirection) {
-            LayoutDirection.Ltr -> splitFraction
-            LayoutDirection.Rtl -> 1 - splitFraction
-        }
-        val splitWidthPixel = with(density) { gapWidth.toPx() }
-
-        SplitResult(
-            gapOrientation = Orientation.Vertical,
-            gapBounds = Rect(
-                left = splitX - splitWidthPixel / 2f,
-                top = 0f,
-                right = splitX + splitWidthPixel / 2f,
-                bottom = layoutCoordinates.size.height.toFloat(),
-            )
-        )
+    val splitX = layoutCoordinates.size.width * when (layoutDirection) {
+        LayoutDirection.Ltr -> splitFraction
+        LayoutDirection.Rtl -> 1 - splitFraction
     }
+    val splitWidthPixel = with(density) { gapWidth.toPx() }
+
+    SplitResult(
+        gapOrientation = Orientation.Vertical,
+        gapBounds = Rect(
+            left = splitX - splitWidthPixel / 2f,
+            top = 0f,
+            right = splitX + splitWidthPixel / 2f,
+            bottom = layoutCoordinates.size.height.toFloat(),
+        )
+    )
+}
+
+fun FractionReversedHorizontalTwoPaneStrategy(
+    splitFraction: Float,
+    gapWidth: Dp = 0.dp,
+): TwoPaneStrategy = TwoPaneStrategy { density, layoutDirection, layoutCoordinates ->
+    val splitX = layoutCoordinates.size.width * when (layoutDirection) {
+        LayoutDirection.Ltr -> 1 - splitFraction
+        LayoutDirection.Rtl -> splitFraction
+    }
+    val splitWidthPixel = with(density) { gapWidth.toPx() }
+
+    SplitResult(
+        gapOrientation = Orientation.Vertical,
+        gapBounds = Rect(
+            left = splitX - splitWidthPixel / 2f,
+            top = 0f,
+            right = splitX + splitWidthPixel / 2f,
+            bottom = layoutCoordinates.size.height.toFloat(),
+        )
+    )
+}
 
 /**
  * Returns a [TwoPaneStrategy] that will place the slots horizontally.
@@ -166,7 +187,7 @@ internal fun FractionHorizontalTwoPaneStrategy(
  *
  * This strategy is _not_ fold aware.
  */
-internal fun FixedOffsetHorizontalTwoPaneStrategy(
+fun FixedOffsetHorizontalTwoPaneStrategy(
     splitOffset: Dp,
     offsetFromStart: Boolean,
     gapWidth: Dp = 0.dp,
@@ -207,11 +228,29 @@ internal fun FixedOffsetHorizontalTwoPaneStrategy(
  *
  * This strategy is _not_ fold aware.
  */
-internal fun FractionVerticalTwoPaneStrategy(
+fun FractionVerticalTwoPaneStrategy(
     splitFraction: Float,
     gapHeight: Dp = 0.dp,
 ): TwoPaneStrategy = TwoPaneStrategy { density, _, layoutCoordinates ->
     val splitY = layoutCoordinates.size.height * splitFraction
+    val splitHeightPixel = with(density) { gapHeight.toPx() }
+
+    SplitResult(
+        gapOrientation = Orientation.Horizontal,
+        gapBounds = Rect(
+            left = 0f,
+            top = splitY - splitHeightPixel / 2f,
+            right = layoutCoordinates.size.width.toFloat(),
+            bottom = splitY + splitHeightPixel / 2f,
+        )
+    )
+}
+
+fun FractionReversedVerticalTwoPaneStrategy(
+    splitFraction: Float,
+    gapHeight: Dp = 0.dp,
+): TwoPaneStrategy = TwoPaneStrategy { density, _, layoutCoordinates ->
+    val splitY = layoutCoordinates.size.height * (1 - splitFraction)
     val splitHeightPixel = with(density) { gapHeight.toPx() }
 
     SplitResult(
@@ -233,7 +272,7 @@ internal fun FractionVerticalTwoPaneStrategy(
  *
  * This strategy is _not_ fold aware.
  */
-internal fun FixedOffsetVerticalTwoPaneStrategy(
+fun FixedOffsetVerticalTwoPaneStrategy(
     splitOffset: Dp,
     offsetFromTop: Boolean,
     gapHeight: Dp = 0.dp,
@@ -244,6 +283,31 @@ internal fun FixedOffsetVerticalTwoPaneStrategy(
             splitOffsetPixel
         } else {
             layoutCoordinates.size.height - splitOffsetPixel
+        }
+    val splitHeightPixel = with(density) { gapHeight.toPx() }
+
+    SplitResult(
+        gapOrientation = Orientation.Horizontal,
+        gapBounds = Rect(
+            left = 0f,
+            top = splitY - splitHeightPixel / 2f,
+            right = layoutCoordinates.size.width.toFloat(),
+            bottom = splitY + splitHeightPixel / 2f,
+        )
+    )
+}
+
+fun FixedOffsetReversedVerticalTwoPaneStrategy(
+    splitOffset: Dp,
+    offsetFromTop: Boolean,
+    gapHeight: Dp = 0.dp,
+): TwoPaneStrategy = TwoPaneStrategy { density, _, layoutCoordinates ->
+    val splitOffsetPixel = with(density) { splitOffset.toPx() }
+    val splitY =
+        if (offsetFromTop) {
+            layoutCoordinates.size.height - splitOffsetPixel
+        } else {
+            splitOffsetPixel
         }
     val splitHeightPixel = with(density) { gapHeight.toPx() }
 
