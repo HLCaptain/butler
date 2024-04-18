@@ -13,12 +13,12 @@ import org.koin.compose.KoinContext
 @Composable
 fun App() {
     KoinContext {
-        Navigator(ThemeScreen {
+        ThemeScreen {
             Surface(modifier = Modifier.fillMaxSize()) {
                 Navigator(HomeScreen()) { navigator ->
                     SlideTransition(navigator)
                 }
             }
-        })
+        }.Content()
     }
 }

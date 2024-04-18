@@ -22,9 +22,13 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.manager.SettingsManager
 import illyan.butler.util.log.calculateSunriseSunsetTimes
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -40,6 +44,17 @@ class ThemeScreenModel(
     val dynamicColorEnabled = settingsManager.userPreferences
         .map { it?.dynamicColorEnabled == true }
         .stateIn(screenModelScope, SharingStarted.Eagerly, false)
+
+    val isNight = MutableStateFlow(isNight())
+
+    init {
+        screenModelScope.launch {
+            while (true) {
+                isNight.update { isNight() }
+                delay(1000)
+            }
+        }
+    }
 
     fun isNight(): Boolean {
         val systemTimeZone = TimeZone.currentSystemDefault()

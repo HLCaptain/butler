@@ -25,7 +25,7 @@ class ThemeScreen(private val content: @Composable () -> Unit) : Screen {
         ButlerTheme(
             themeState = screenModel.theme.collectAsState(),
             dynamicColorEnabledState = screenModel.dynamicColorEnabled.collectAsState(),
-            getIsNight = screenModel::isNight,
+            isNightState = screenModel.isNight.collectAsState(),
             content = content
         )
     }
@@ -35,12 +35,12 @@ class ThemeScreen(private val content: @Composable () -> Unit) : Screen {
 fun ButlerTheme(
     themeState: State<Theme?> = mutableStateOf(Theme.System),
     dynamicColorEnabledState: State<Boolean> = mutableStateOf(true),
-    getIsNight: () -> Boolean = { true },
+    isNightState: State<Boolean> = mutableStateOf(false),
     content: @Composable () -> Unit,
 ) {
     val theme by themeState
     val dynamicColorEnabled by dynamicColorEnabledState
-    val isNight by remember { derivedStateOf(getIsNight) }
+    val isNight by isNightState
     val isSystemInDarkTheme: Boolean = isSystemInDarkTheme()
     val isDark by remember {
         derivedStateOf {
