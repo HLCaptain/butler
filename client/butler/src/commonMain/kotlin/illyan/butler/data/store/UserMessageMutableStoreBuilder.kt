@@ -9,6 +9,7 @@ import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -42,7 +43,7 @@ fun provideUserMessageMutableStore(
             flow { emit(messageNetworkDataSource.fetchByUser()) },
             flow { emit(emptyList<MessageDto>()); emitAll(messageNetworkDataSource.fetchNewMessages()) }
         ) { messages, newMessages ->
-            Napier.d("Fetched ${(messages + newMessages).distinct().size} messages")
+            Napier.d("Fetched ${(messages + newMessages).distinctBy { it.id }.size} messages")
             (messages + newMessages).distinctBy { it.id }
         }
     },
@@ -71,18 +72,21 @@ fun provideUserMessageMutableStore(
 //                }
 //            }
             flow {
-                val newMessages = databaseHelper.withDatabase { database ->
-                    Napier.d("Reading chat at $key")
-                    // TODO: could use ChatMembership table to get all chats for user, but this is simpler and probably faster
-                    val chats = database.chatQueries.selectAll().executeAsList()
-                    val userChats = chats.filter { it.members.contains(key) }
-                    Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
-                    val messages = userChats.map { chat ->
-                        database.messageQueries.selectByChat(chat.id).executeAsList()
-                    }.flatten()
-                    messages
-                }.map { it.toDomainModel() }
-                emit(newMessages)
+                while (true) {
+                    val newMessages = databaseHelper.withDatabase { database ->
+                        Napier.d("Reading chat at $key")
+                        // TODO: could use ChatMembership table to get all chats for user, but this is simpler and probably faster
+                        val chats = database.chatQueries.selectAll().executeAsList()
+                        val userChats = chats.filter { it.members.contains(key) }
+                        Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
+                        val messages = userChats.map { chat ->
+                            database.messageQueries.selectByChat(chat.id).executeAsList()
+                        }.flatten()
+                        messages
+                    }.map { it.toDomainModel() }
+                    emit(newMessages)
+                    delay(1000)
+                }
             }
         },
         writer = { key, local ->

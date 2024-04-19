@@ -8,12 +8,14 @@ import illyan.butler.data.store.MessageMutableStoreBuilder
 import illyan.butler.data.store.UserMessageMutableStoreBuilder
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainMessage
+import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -28,6 +30,7 @@ class MessageRepository(
     userMessageMutableStoreBuilder: UserMessageMutableStoreBuilder,
     private val messageNetworkDataSource: MessageNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
+    private val hostManager: HostManager
 ) {
     @OptIn(ExperimentalStoreApi::class)
     val messageMutableStore = messageMutableStoreBuilder.store
@@ -36,15 +39,25 @@ class MessageRepository(
     @OptIn(ExperimentalStoreApi::class)
     val userMessageMutableStore = userMessageMutableStoreBuilder.store
 
-    private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
+    init {
+        coroutineScopeIO.launch {
+            hostManager.currentHost.collect {
+                Napier.d("Host changed, clearing message state flows")
+                chatMessagesStateFlows.clear()
+                userMessageStateFlows.clear()
+            }
+        }
+    }
+
+    private val chatMessagesStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    fun getChatFlow(id: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
-        return chatStateFlows.getOrPut(id) {
+    fun getChatMesssagesFlow(id: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+        return chatMessagesStateFlows.getOrPut(id) {
             chatMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
                 StoreReadRequest.cached(id, true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: $it")
+                Napier.d("Read Response: ${it::class.simpleName}")
                 val data = it.dataOrNull()
                 Napier.d("Last 5 messages: ${data?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
@@ -78,7 +91,7 @@ class MessageRepository(
                 StoreReadRequest.cached(userId, true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: $it")
+                Napier.d("Read Response: ${it::class.simpleName}")
                 val data = it.dataOrNull()
                 Napier.d("Last 5 messages: ${data?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)

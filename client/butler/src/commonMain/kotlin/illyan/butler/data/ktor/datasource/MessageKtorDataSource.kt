@@ -44,7 +44,7 @@ class MessageKtorDataSource(
         coroutineScopeIO.launch {
             session.incoming.receiveAsFlow().collect { _ ->
                 val messages = session.receiveDeserialized<List<MessageDto>?>()
-                Napier.v { "Received new messages $messages" }
+                Napier.v { "Received new ${messages?.size} messages " }
                 newMessagesStateFlow.update { messages }
             }
         }
@@ -53,7 +53,7 @@ class MessageKtorDataSource(
             while (true) {
                 val allMessages = fetchByUser()
                 newMessagesStateFlow.update { allMessages }
-                delay(5000)
+                delay(10000)
             }
         }
     }

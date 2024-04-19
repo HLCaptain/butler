@@ -9,9 +9,7 @@ import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.Chat
 import illyan.butler.db.ChatMember
 import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -20,11 +18,9 @@ import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
 import org.mobilenativefoundation.store.store5.Fetcher
-import org.mobilenativefoundation.store.store5.MutableStore
 import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.OnUpdaterCompletion
 import org.mobilenativefoundation.store.store5.SourceOfTruth
-import org.mobilenativefoundation.store.store5.StoreWriteRequest
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
 
@@ -32,17 +28,15 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 class UserChatMutableStoreBuilder(
     databaseHelper: DatabaseHelper,
     chatNetworkDataSource: ChatNetworkDataSource,
-    userMessageMutableStoreBuilder: UserMessageMutableStoreBuilder
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideUserChatMutableStore(databaseHelper, chatNetworkDataSource, userMessageMutableStoreBuilder.store)
+    val store = provideUserChatMutableStore(databaseHelper, chatNetworkDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalStoreApi::class)
 fun provideUserChatMutableStore(
     databaseHelper: DatabaseHelper,
     chatNetworkDataSource: ChatNetworkDataSource,
-    userMessageMutableStore: MutableStore<String, List<DomainMessage>>
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chats for user $key")
@@ -51,17 +45,18 @@ fun provideUserChatMutableStore(
             flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) }
         ) { userChats, newChats ->
             Napier.d("Fetched ${(userChats + newChats).distinct().size} chats")
-            userMessageMutableStore.write(
-                StoreWriteRequest.of(
-                    key = key,
-                    value = newChats
-                        .filter { it.members.contains(key) }
-                        .flatMap { chat -> chat.lastFewMessages.map { it.toDomainModel() } }
-                )
-            )
+
             (userChats + newChats)
                 .filter { it.members.contains(key) }
                 .distinctBy { it.id }
+                .also { chats ->
+                    databaseHelper.withDatabase { db ->
+                        chats
+                            .filter { it.members.contains(key) }
+                            .flatMap { chat -> chat.lastFewMessages.map { it.toLocalModel() } }
+                            .forEach { db.messageQueries.upsert(it) }
+                    }
+                }
         }
     },
     sourceOfTruth = SourceOfTruth.of(
@@ -70,7 +65,7 @@ fun provideUserChatMutableStore(
                 Napier.d("Reading chats for user $key")
                 it.chatQueries.selectAll()
             }.map { chats ->
-                Napier.v { "Chats: $chats" }
+                Napier.v { "Chats: ${chats.map { it.id }}" }
                 chats // FIXME: all chat is exposed this way, think about security when we have more users on a single device, accessing each other's chats
                     .filter { it.members.contains(key) }
                     .map { it.toDomainModel() }

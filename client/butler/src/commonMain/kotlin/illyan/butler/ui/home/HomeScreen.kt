@@ -60,7 +60,9 @@ class HomeScreen : Screen {
     internal fun HomeScreen() {
         val screenModel = koinScreenModel<HomeScreenModel>()
         val state by screenModel.state.collectAsState()
-        Surface {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(0.dp)
+        ) {
             Column {
                 var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                 Row(
