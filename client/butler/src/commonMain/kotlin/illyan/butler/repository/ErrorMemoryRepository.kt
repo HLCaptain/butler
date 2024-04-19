@@ -16,7 +16,9 @@ import io.ktor.http.contentLength
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import org.koin.core.annotation.Single
 
+@Single
 class ErrorMemoryRepository : ErrorRepository {
     private val _appErrorEventFlow = MutableSharedFlow<DomainErrorEvent>()
     override val appErrorEventFlow: SharedFlow<DomainErrorEvent> = _appErrorEventFlow.asSharedFlow()
