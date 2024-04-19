@@ -31,21 +31,11 @@ class UserSettingsRepository(
     private val settings: FlowSettings,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
 ) : UserRepository {
-    companion object {
-        const val KEY_USER_ID = "user_id"
-        const val KEY_AUTH_PROVIDER = "auth_provider"
-        const val KEY_ACCESS_TOKEN = "access_token"
-        const val KEY_REFRESH_TOKEN = "refresh_token"
-        const val KEY_ACCESS_TOKEN_EXPIRATION = "access_token_expiration"
-        const val KEY_REFRESH_TOKEN_EXPIRATION = "refresh_token_expiration"
-        const val FIRST_SIGN_IN_HAPPENED_YET = "FIRST_SIGN_IN_HAPPENED_YET"
-    }
-
     /**
      * User data and auth state listed by property
      */
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override val userData = settings.getStringOrNullFlow(KEY_USER_ID).map { encodedUser ->
+    override val userData = settings.getStringOrNullFlow(UserRepository.KEY_USER_ID).map { encodedUser ->
         encodedUser?.let {
             ProtoBuf.decodeFromHexString<UserDto>(encodedUser).also { Napier.d("User data: $it") }
         }
@@ -81,13 +71,13 @@ class UserSettingsRepository(
     private suspend fun setLoggedInUser(response: UserLoginResponseDto) {
         Napier.d("Setting logged in user: $response")
         val tokens = response.tokensResponse
-        settings.putString(KEY_AUTH_PROVIDER, "butler_api")
-        settings.putString(KEY_ACCESS_TOKEN, tokens.accessToken)
-        settings.putString(KEY_REFRESH_TOKEN, tokens.refreshToken)
-        settings.putLong(KEY_ACCESS_TOKEN_EXPIRATION, tokens.accessTokenExpirationMillis)
-        settings.putLong(KEY_REFRESH_TOKEN_EXPIRATION, tokens.refreshTokenExpirationMillis)
-        settings.putBoolean(FIRST_SIGN_IN_HAPPENED_YET, true)
-        settings.putString(KEY_USER_ID, ProtoBuf.encodeToHexString(response.user))
+        settings.putString(UserRepository.KEY_AUTH_PROVIDER, "butler_api")
+        settings.putString(UserRepository.KEY_ACCESS_TOKEN, tokens.accessToken)
+        settings.putString(UserRepository.KEY_REFRESH_TOKEN, tokens.refreshToken)
+        settings.putLong(UserRepository.KEY_ACCESS_TOKEN_EXPIRATION, tokens.accessTokenExpirationMillis)
+        settings.putLong(UserRepository.KEY_REFRESH_TOKEN_EXPIRATION, tokens.refreshTokenExpirationMillis)
+        settings.putBoolean(UserRepository.FIRST_SIGN_IN_HAPPENED_YET, true)
+        settings.putString(UserRepository.KEY_USER_ID, ProtoBuf.encodeToHexString(response.user))
 //        val me = authNetworkDataSource.getMe().first() // TODO: listen to this and update the user data dynamically
     }
 
@@ -97,16 +87,16 @@ class UserSettingsRepository(
 
     @OptIn(ExperimentalSettingsApi::class)
     override suspend fun signOut() {
-        settings.remove(KEY_AUTH_PROVIDER)
-        settings.remove(KEY_USER_ID)
-        settings.remove(KEY_ACCESS_TOKEN)
-        settings.remove(KEY_REFRESH_TOKEN)
-        settings.remove(KEY_ACCESS_TOKEN_EXPIRATION)
-        settings.remove(KEY_REFRESH_TOKEN_EXPIRATION)
+        settings.remove(UserRepository.KEY_AUTH_PROVIDER)
+        settings.remove(UserRepository.KEY_USER_ID)
+        settings.remove(UserRepository.KEY_ACCESS_TOKEN)
+        settings.remove(UserRepository.KEY_REFRESH_TOKEN)
+        settings.remove(UserRepository.KEY_ACCESS_TOKEN_EXPIRATION)
+        settings.remove(UserRepository.KEY_REFRESH_TOKEN_EXPIRATION)
     }
 
     override suspend fun deleteUserData() {
-        settings.remove(FIRST_SIGN_IN_HAPPENED_YET)
+        settings.remove(UserRepository.FIRST_SIGN_IN_HAPPENED_YET)
         signOut()
     }
 }

@@ -49,12 +49,32 @@ class MessageStoreRepository(
         }
     }
 
+    private val messageStateFlows = mutableMapOf<String, StateFlow<Pair<DomainMessage?, Boolean>>>()
+    @OptIn(ExperimentalStoreApi::class)
+    override fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>> {
+        return messageStateFlows.getOrPut(messageId) {
+            messageMutableStore.stream<StoreReadResponse<DomainMessage>>(
+                StoreReadRequest.cached(messageId, true)
+            ).map {
+                it.throwIfError()
+                Napier.d("Read Response: ${it::class.simpleName}")
+                val data = it.dataOrNull()
+                Napier.d("Message: $data")
+                data to (it is StoreReadResponse.Loading)
+            }.stateIn(
+                coroutineScopeIO,
+                SharingStarted.Eagerly,
+                null to true
+            )
+        }
+    }
+
     private val chatMessagesStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
-    override fun getChatMessagesFlow(id: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
-        return chatMessagesStateFlows.getOrPut(id) {
+    override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+        return chatMessagesStateFlows.getOrPut(chatId) {
             chatMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
-                StoreReadRequest.cached(id, true)
+                StoreReadRequest.cached(chatId, true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: ${it::class.simpleName}")

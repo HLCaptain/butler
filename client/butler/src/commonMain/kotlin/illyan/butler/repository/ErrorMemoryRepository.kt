@@ -1,7 +1,6 @@
 package illyan.butler.repository
 
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.db.ErrorEvent
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
@@ -15,18 +14,15 @@ import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.contentLength
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import org.koin.core.annotation.Single
 
-@Single
-class ErrorStoreRepository(
-    private val databaseHelper: DatabaseHelper
-) : ErrorRepository {
-    private val _newErrorEventFlow = MutableSharedFlow<DomainErrorEvent>()
-    override val appErrorEventFlow = _newErrorEventFlow.asSharedFlow()
+class ErrorMemoryRepository : ErrorRepository {
+    private val _appErrorEventFlow = MutableSharedFlow<DomainErrorEvent>()
+    override val appErrorEventFlow: SharedFlow<DomainErrorEvent> = _appErrorEventFlow.asSharedFlow()
 
     private val _serverErrorEventFlow = MutableSharedFlow<DomainErrorResponse>()
-    override val serverErrorEventFlow = _serverErrorEventFlow.asSharedFlow()
+    override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
 
     override suspend fun reportError(throwable: Throwable) {
         Napier.e { "Error reported" }
@@ -42,10 +38,7 @@ class ErrorStoreRepository(
             state = ErrorState.NEW
         )
         val newErrorEvent = localErrorEvent.toDomainModel()
-        _newErrorEventFlow.emit(newErrorEvent)
-        databaseHelper.withDatabase { database ->
-            database.errorEventQueries.upsert(localErrorEvent)
-        }
+        _appErrorEventFlow.emit(newErrorEvent)
     }
 
     override suspend fun reportError(response: HttpResponse) {

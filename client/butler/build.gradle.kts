@@ -218,7 +218,9 @@ buildConfig {
 
         println("Task [$taskName] isProd=$isProd")
 
+        val useMemoryDb = true // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
+        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString()) //
     }
 
     // GOOGLE_CLIENT_ID from local.properties
