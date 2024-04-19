@@ -22,82 +22,8 @@ import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
 
-@OptIn(ExperimentalStoreApi::class)
-@Single
-class ChatRepository(
-    chatMutableStoreBuilder: ChatMutableStoreBuilder,
-    userChatMutableStoreBuilder: UserChatMutableStoreBuilder,
-    private val chatNetworkDataSource: ChatNetworkDataSource,
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
-    private val hostManager: HostManager
-) {
-    @OptIn(ExperimentalStoreApi::class)
-    val chatMutableStore = chatMutableStoreBuilder.store
-
-    @OptIn(ExperimentalStoreApi::class)
-    val userChatMutableStore = userChatMutableStoreBuilder.store
-
-    init {
-        coroutineScopeIO.launch {
-            hostManager.currentHost.collect {
-                Napier.d("Host changed, clearing chat state flows")
-                chatStateFlows.clear()
-                userChatStateFlows.clear()
-            }
-        }
-    }
-
-    private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<DomainChat?, Boolean>>>()
-    @OptIn(ExperimentalStoreApi::class)
-    fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>> {
-        return chatStateFlows.getOrPut(chatId) {
-            chatMutableStore.stream<StoreReadResponse<DomainChat>>(
-                StoreReadRequest.cached(chatId, true)
-            ).map {
-                it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
-                val data = it.dataOrNull()
-                Napier.d("Chat is $data")
-                data to (it is StoreReadResponse.Loading)
-            }.stateIn(
-                coroutineScopeIO,
-                SharingStarted.Eagerly,
-                null to true
-            )
-        }
-    }
-
-    private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
-    @OptIn(ExperimentalStoreApi::class)
-    fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
-        return userChatStateFlows.getOrPut(userId) {
-            userChatMutableStore.stream<StoreReadResponse<List<DomainChat>>>(
-                StoreReadRequest.cached(userId, true)
-            ).map {
-                it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
-                val data = it.dataOrNull()
-                Napier.d("Chats are $data")
-                data to (it is StoreReadResponse.Loading)
-            }.stateIn(
-                coroutineScopeIO,
-                SharingStarted.Eagerly,
-                null to true
-            )
-        }
-    }
-
-    @OptIn(ExperimentalStoreApi::class)
-    suspend fun upsert(chat: DomainChat): String {
-        val newChat = if (chat.id == null) {
-            chatNetworkDataSource.upsert(chat.toNetworkModel()).toDomainModel()
-        } else chat
-        chatMutableStore.write(
-            StoreWriteRequest.of(
-                key = newChat.id!!,
-                value = newChat,
-            )
-        )
-        return newChat.id
-    }
+interface ChatRepository {
+    fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>>
+    fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>>
+    suspend fun upsert(chat: DomainChat): String
 }

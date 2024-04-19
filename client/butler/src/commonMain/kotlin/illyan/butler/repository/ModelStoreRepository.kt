@@ -1,0 +1,12 @@
+package illyan.butler.repository
+
+import illyan.butler.data.network.datasource.ModelNetworkDataSource
+import illyan.butler.data.network.model.ai.ModelDto
+import org.koin.core.annotation.Single
+
+@Single
+class ModelStoreRepository(
+    private val modelNetworkDataSource: ModelNetworkDataSource
+) : ModelRepository {
+    override suspend fun getAvailableModels(): List<ModelDto> = modelNetworkDataSource.fetchAll()
+}

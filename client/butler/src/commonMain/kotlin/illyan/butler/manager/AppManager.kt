@@ -1,20 +1,20 @@
 package illyan.butler.manager
 
-import illyan.butler.repository.AppSettingsRepository
+import illyan.butler.repository.AppRepository
 import org.koin.core.annotation.Single
 
 @Single
 class AppManager(
-    val appSettingsRepository: AppSettingsRepository
+    val appRepository: AppRepository
 ) {
-    val firstSignInHappenedYet = appSettingsRepository.firstSignInHappenedYet
-    val isTutorialDone = appSettingsRepository.isTutorialDone
+    val firstSignInHappenedYet = appRepository.firstSignInHappenedYet
+    val isTutorialDone = appRepository.isTutorialDone
 
     suspend fun setTutorialDone() {
-        appSettingsRepository.setTutorialDone(true)
+        appRepository.setTutorialDone(true)
     }
 
     suspend fun resetTutorial() {
-        appSettingsRepository.setTutorialDone(false)
+        appRepository.setTutorialDone(false)
     }
 }

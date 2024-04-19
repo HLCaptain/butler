@@ -21,9 +21,9 @@ import org.koin.core.annotation.Single
 class AppSettingsRepository(
     val settings: FlowSettings,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
-) {
+) : AppRepository {
     @OptIn(ExperimentalSerializationApi::class)
-    val appSettings = settings.getStringOrNullFlow("APP_SETTINGS").map {
+    override val appSettings = settings.getStringOrNullFlow("APP_SETTINGS").map {
         try {
             if (it == null) {
                 Napier.d { "No app settings found, creating one" }
@@ -44,17 +44,17 @@ class AppSettingsRepository(
         null
     )
 
-    val firstSignInHappenedYet = settings.getBooleanFlow(UserRepository.FIRST_SIGN_IN_HAPPENED_YET, false).stateIn(
+    override val firstSignInHappenedYet = settings.getBooleanFlow(UserRepository.FIRST_SIGN_IN_HAPPENED_YET, false).stateIn(
         coroutineScopeIO,
         SharingStarted.Eagerly,
         false
     )
 
-    val isTutorialDone = settings.getBooleanFlow("IS_TUTORIAL_DONE", false).stateIn(
+    override val isTutorialDone = settings.getBooleanFlow("IS_TUTORIAL_DONE", false).stateIn(
         coroutineScopeIO,
         SharingStarted.Eagerly,
         false
     )
 
-    suspend fun setTutorialDone(isTutorialDone: Boolean) = settings.putBoolean("IS_TUTORIAL_DONE", isTutorialDone)
+    override suspend fun setTutorialDone(isTutorialDone: Boolean) = settings.putBoolean("IS_TUTORIAL_DONE", isTutorialDone)
 }

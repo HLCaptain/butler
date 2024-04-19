@@ -1,12 +1,12 @@
 package illyan.butler.manager
 
-import illyan.butler.repository.AppSettingsRepository
+import illyan.butler.repository.AppRepository
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
 @Single
 class SettingsManager(
-    appSettingsRepository: AppSettingsRepository
+    appRepository: AppRepository
 ) {
-    val userPreferences = appSettingsRepository.appSettings.map { it?.preferences }
+    val userPreferences = appRepository.appSettings.map { it?.preferences }
 }

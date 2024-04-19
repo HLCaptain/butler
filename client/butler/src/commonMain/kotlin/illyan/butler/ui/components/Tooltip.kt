@@ -19,6 +19,7 @@
 package illyan.butler.ui.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BasicTooltipBox
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -176,7 +178,7 @@ fun TooltipButton(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentWithTooltip(
     modifier: Modifier = Modifier,
@@ -201,15 +203,6 @@ fun ContentWithTooltip(
             currentTooltip = if (enabled || disabledTooltip == null) tooltip else disabledTooltip
         }
     }
-//    PlainTooltipBox(
-//        modifier = modifier,
-//        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-//        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-//        tooltip = currentTooltip,
-//        tooltipState = tooltipState,
-//    ) {
-//        content()
-//    }
     TooltipBox(
         modifier = modifier,
         tooltip = { currentTooltip() },
