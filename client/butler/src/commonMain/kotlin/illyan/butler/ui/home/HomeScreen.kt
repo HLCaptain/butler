@@ -4,13 +4,20 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -167,32 +174,48 @@ class HomeScreen : Screen {
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
                 val (height, width) = getWindowSizeInDp()
                 var windowWidth by rememberSaveable { mutableStateOf(width) }
-                val navBarOnSide by rememberSaveable {
+                val navBarOrientation by rememberSaveable {
                     derivedStateOf {
-                        if (windowWidth < 600.dp) false
-                        else if (windowWidth < 1200.dp) true
-                        else true
+                        if (windowWidth < 600.dp) Orientation.Horizontal
+                        else if (windowWidth < 1200.dp) Orientation.Vertical
+                        else Orientation.Vertical
                     }
                 }
+                val isNavBarCompact by rememberSaveable { derivedStateOf { windowWidth < 1200.dp } }
                 val columnContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Column { content() } }
                 val rowContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Row { content() } }
-                val layoutComposable by remember { derivedStateOf { if (navBarOnSide) rowContent else columnContent } }
+                val layoutComposable by remember { derivedStateOf {
+                    if (navBarOrientation == Orientation.Vertical) columnContent else rowContent
+                } }
                 LaunchedEffect(width, height) {
                     windowWidth = width
-                    Napier.v("Window size: $width x $height, navBarOnSide: $navBarOnSide, layoutComposable: $layoutComposable")
+                    Napier.v("Window size: $width x $height, navBarOnSide: $navBarOrientation, layoutComposable: $layoutComposable")
                 }
-                layoutComposable {
-                    AnimatedVisibility(navigator != null && navBarOnSide) {
-                        navigator?.let {
+                val navBar = @Composable {
+                    navigator?.let {
+                        if (navBarOrientation == Orientation.Vertical) {
                             VerticalNavBar(
-                                navigator = it,
-                                navigatorEnd = {
-                                    Button(onClick = { isProfileDialogShowing = true }) {
-                                        Text(stringResource(Res.string.profile))
-                                    }
-                                }
+                                isCompact = isNavBarCompact,
+                                onProfileClick = { isProfileDialogShowing = true },
+                                onNewChatClick = { NewChatScreen { navigator?.replaceAll(ChatScreen()) } },
+                                onChatsClick = { navigator?.replaceAll(ChatScreen()) }
+                            )
+                        } else {
+                            HorizontalNavBar(
+                                isCompact = isNavBarCompact,
+                                onProfileClick = { isProfileDialogShowing = true },
+                                onNewChatClick = { NewChatScreen { navigator?.replaceAll(ChatScreen()) } },
+                                onChatsClick = { navigator?.replaceAll(ChatScreen()) }
                             )
                         }
+                    }
+                }
+                layoutComposable {
+                    AnimatedVisibility(navigator != null && navBarOrientation != Orientation.Vertical) {
+                        navBar()
+                    }
+                    AnimatedVisibility(navigator != null && navBarOrientation == Orientation.Vertical) {
+                        navBar()
                     }
                     Box(
                         modifier = Modifier.weight(1f, fill = true)
@@ -204,18 +227,6 @@ class HomeScreen : Screen {
                             CurrentScreen()
                         }
                     }
-                    AnimatedVisibility(navigator != null && !navBarOnSide) {
-                        navigator?.let {
-                            HorizontalNavBar(
-                                navigator = it,
-                                navigatorEnd = {
-                                    Button(onClick = { isProfileDialogShowing = true }) {
-                                        Text(stringResource(Res.string.profile))
-                                    }
-                                }
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -225,27 +236,58 @@ class HomeScreen : Screen {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun HorizontalNavBar(
-    navigator: Navigator,
-    getChatScreen: () -> Screen = { ChatScreen() },
-    getNewChatScreen: () -> Screen = { NewChatScreen { navigator.replaceAll(getChatScreen()) } },
-    navigatorEnd: @Composable () -> Unit = {}
+    isCompact: Boolean = false,
+    onProfileClick: () -> Unit = {},
+    onNewChatClick: () -> Unit = {},
+    onChatsClick: () -> Unit = {}
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            MenuButton(
-                text = stringResource(Res.string.chats),
-                onClick = { navigator.replaceAll(getChatScreen()) }
-            )
-            MenuButton(
-                text = stringResource(Res.string.new_chat),
-                onClick = { navigator.replaceAll(getNewChatScreen()) }
-            )
-            navigatorEnd()
+        Crossfade(isCompact) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                if (it) {
+                    IconButton(
+                        onClick = onChatsClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Chat,
+                            contentDescription = stringResource(Res.string.chats)
+                        )
+                    }
+                    IconButton(
+                        onClick = onNewChatClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = stringResource(Res.string.new_chat)
+                        )
+                    }
+                    IconButton(
+                        onClick = onProfileClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.People,
+                            contentDescription = stringResource(Res.string.profile)
+                        )
+                    }
+                } else {
+                    MenuButton(
+                        text = stringResource(Res.string.chats),
+                        onClick = onChatsClick
+                    )
+                    MenuButton(
+                        text = stringResource(Res.string.new_chat),
+                        onClick = onNewChatClick
+                    )
+                    Button(onClick = onProfileClick) {
+                        Text(stringResource(Res.string.profile))
+                    }
+                }
+            }
         }
     }
 }
@@ -253,29 +295,64 @@ fun HorizontalNavBar(
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun VerticalNavBar(
-    navigator: Navigator,
-    getChatScreen: () -> Screen = { ChatScreen() },
-    getNewChatScreen: () -> Screen = { NewChatScreen { navigator.replaceAll(getChatScreen()) } },
-    navigatorEnd: @Composable () -> Unit = {}
+    isCompact: Boolean = false,
+    onProfileClick: () -> Unit = {},
+    onNewChatClick: () -> Unit = {},
+    onChatsClick: () -> Unit = {}
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                MenuButton(
-                    text = stringResource(Res.string.chats),
-                    onClick = { navigator.replaceAll(getChatScreen()) }
-                )
-                MenuButton(
-                    text = stringResource(Res.string.new_chat),
-                    onClick = { navigator.replaceAll(getNewChatScreen()) }
-                )
+        Crossfade(isCompact) {
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    if (it) {
+                        IconButton(
+                            onClick = onChatsClick
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Chat,
+                                contentDescription = stringResource(Res.string.chats)
+                            )
+                        }
+                        IconButton(
+                            onClick = onNewChatClick
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = stringResource(Res.string.new_chat)
+                            )
+                        }
+
+                    } else {
+                        MenuButton(
+                            text = stringResource(Res.string.chats),
+                            onClick = onChatsClick
+                        )
+                        MenuButton(
+                            text = stringResource(Res.string.new_chat),
+                            onClick = onNewChatClick
+                        )
+                    }
+                }
+                if (it) {
+                    IconButton(
+                        onClick = onProfileClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.People,
+                            contentDescription = stringResource(Res.string.profile)
+                        )
+                    }
+                } else {
+                    Button(onClick = onProfileClick) {
+                        Text(stringResource(Res.string.profile))
+                    }
+                }
             }
-            navigatorEnd()
         }
     }
 }
