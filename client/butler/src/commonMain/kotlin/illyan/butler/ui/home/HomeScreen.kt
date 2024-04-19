@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -250,45 +250,75 @@ fun HorizontalNavBar(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 if (it) {
-                    IconButton(
-                        onClick = onChatsClick
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = stringResource(Res.string.chats)
-                        )
-                    }
-                    IconButton(
-                        onClick = onNewChatClick
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = stringResource(Res.string.new_chat)
-                        )
-                    }
-                    IconButton(
-                        onClick = onProfileClick
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.People,
-                            contentDescription = stringResource(Res.string.profile)
-                        )
-                    }
+                    CompactChatsButton(onClick = onChatsClick)
+                    CompactNewChatButton(onClick = onNewChatClick)
+                    CompactProfileButton(onClick = onProfileClick)
                 } else {
-                    MenuButton(
-                        text = stringResource(Res.string.chats),
-                        onClick = onChatsClick
-                    )
-                    MenuButton(
-                        text = stringResource(Res.string.new_chat),
-                        onClick = onNewChatClick
-                    )
-                    Button(onClick = onProfileClick) {
-                        Text(stringResource(Res.string.profile))
-                    }
+                    ChatsButton(onClick = onChatsClick)
+                    NewChatButton(onClick = onNewChatClick)
+                    ProfileButton(onClick = onProfileClick)
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun CompactChatsButton(onClick: () -> Unit = {}) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Chat,
+            contentDescription = stringResource(Res.string.chats)
+        )
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun CompactProfileButton(onClick: () -> Unit = {}) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = Icons.Filled.Person,
+            contentDescription = stringResource(Res.string.profile)
+        )
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun CompactNewChatButton(onClick: () -> Unit = {}) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = Icons.Filled.Add,
+            contentDescription = stringResource(Res.string.new_chat)
+        )
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun ChatsButton(onClick: () -> Unit = {}) {
+    MenuButton(
+        text = stringResource(Res.string.chats),
+        onClick = onClick
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun NewChatButton(onClick: () -> Unit = {}) {
+    MenuButton(
+        text = stringResource(Res.string.new_chat),
+        onClick = onClick
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun ProfileButton(onClick: () -> Unit = {}) {
+    Button(onClick = onClick) {
+        Text(stringResource(Res.string.profile))
     }
 }
 
@@ -310,47 +340,18 @@ fun VerticalNavBar(
             ) {
                 Column {
                     if (it) {
-                        IconButton(
-                            onClick = onChatsClick
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Chat,
-                                contentDescription = stringResource(Res.string.chats)
-                            )
-                        }
-                        IconButton(
-                            onClick = onNewChatClick
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = stringResource(Res.string.new_chat)
-                            )
-                        }
-
+                        CompactChatsButton(onClick = onChatsClick)
+                        CompactNewChatButton(onClick = onNewChatClick)
                     } else {
-                        MenuButton(
-                            text = stringResource(Res.string.chats),
-                            onClick = onChatsClick
-                        )
-                        MenuButton(
-                            text = stringResource(Res.string.new_chat),
-                            onClick = onNewChatClick
-                        )
+                        ChatsButton(onClick = onChatsClick)
+                        NewChatButton(onClick = onNewChatClick)
+
                     }
                 }
                 if (it) {
-                    IconButton(
-                        onClick = onProfileClick
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.People,
-                            contentDescription = stringResource(Res.string.profile)
-                        )
-                    }
+                    CompactProfileButton(onClick = onProfileClick)
                 } else {
-                    Button(onClick = onProfileClick) {
-                        Text(stringResource(Res.string.profile))
-                    }
+                    ProfileButton(onClick = onProfileClick)
                 }
             }
         }
