@@ -54,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,10 +138,10 @@ fun TooltipElevatedCard(
     }
 }
 
-enum class GestureType {
-    Click,
-    LongClick,
-    Hover
+sealed class GestureType {
+    data object Click : GestureType()
+    data object LongClick : GestureType()
+    data class Hover(val delay: Duration = Duration.ZERO) : GestureType()
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -154,22 +155,32 @@ fun PlainTooltipWithContent(
     enabled: Boolean = true,
     enabledGestures: List<GestureType> = emptyList(),
     onShowTooltip: () -> Unit = {},
-    showTooltipDelay: Duration = Duration.ZERO,
     onDismissTooltip: () -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable (Modifier) -> Unit
 ) {
     val tooltipState = remember { TooltipState() }
-    val coroutineScope = rememberCoroutineScope()
-    val tryShowTooltip = {
-        coroutineScope.launch {
-            if (enabled || disabledTooltip != null) {
-                Napier.v("Showing tooltip")
-                if (showTooltipDelay > Duration.ZERO) {
-                    Napier.v("Delaying tooltip show")
-                    delay(showTooltipDelay.inWholeMilliseconds)
-                }
-                tooltipState.show()
+    var willShowTooltip by rememberSaveable { mutableStateOf(false) }
+    var gestureType by rememberSaveable { mutableStateOf<GestureType?>(null) }
+    val tryToShowTooltip = { gesture: GestureType ->
+        willShowTooltip = true
+        gestureType = gesture
+    }
+    val tryToDismissTooltip = {
+        willShowTooltip = false
+        gestureType = null
+    }
+    LaunchedEffect(willShowTooltip) {
+        if (willShowTooltip && (enabled || disabledTooltip != null)) {
+            Napier.v("Showing tooltip")
+            if (gestureType is GestureType.Hover && (gestureType as GestureType.Hover).delay > Duration.ZERO) {
+                Napier.v("Delaying tooltip show")
+                delay((gestureType as GestureType.Hover).delay.inWholeMilliseconds)
             }
+            tooltipState.show()
+            willShowTooltip = false
+        } else {
+            Napier.v("Dismissing tooltip")
+            tooltipState.dismiss()
         }
     }
     PlainTooltipWithContent(
@@ -181,36 +192,27 @@ fun PlainTooltipWithContent(
         onShowTooltip = onShowTooltip,
         onDismissTooltip = onDismissTooltip
     ) {
-        Surface(
-            modifier = Modifier
-                .animateContentSize()
-                .then(
-                    if (GestureType.Click in enabledGestures || GestureType.LongClick in enabledGestures) Modifier.combinedClickable(
-                        onClick = {
-                            onClick()
-                            if (GestureType.Click in enabledGestures) tryShowTooltip()
-                        },
-                        onLongClick = {
-                            onLongClick()
-                            if (GestureType.LongClick in enabledGestures) tryShowTooltip()
-                        }
-                    ) else Modifier,
-                )
-                .then(
-                    if (GestureType.Hover in enabledGestures) Modifier.handleGestures(
-                        enabled = true,
-                        state = tooltipState,
-                        onShow = { priority ->
-                            tryShowTooltip()
-//                        coroutineScope.launch {
-//                            delay(showTooltipDelay.inWholeMilliseconds)
-//                            tooltipState.show(priority)
-//                        }
-                        },
-                        onDismiss = { tooltipState.dismiss() }
-                    ) else Modifier
-                ),
-            content = content
+        content(Modifier
+            .then(
+                if (GestureType.Click in enabledGestures || GestureType.LongClick in enabledGestures) Modifier.combinedClickable(
+                    onClick = {
+                        onClick()
+                        if (GestureType.Click in enabledGestures) tryToShowTooltip(GestureType.Click)
+                    },
+                    onLongClick = {
+                        onLongClick()
+                        if (GestureType.LongClick in enabledGestures) tryToShowTooltip(GestureType.LongClick)
+                    }
+                ) else Modifier,
+            )
+            .then(
+                if (enabledGestures.any { it is GestureType.Hover }) Modifier.handleGestures(
+                    enabled = true,
+                    state = tooltipState,
+                    onShow = { priority -> tryToShowTooltip(enabledGestures.first { it is GestureType.Hover }) },
+                    onDismiss = { tryToDismissTooltip() }
+                ) else Modifier
+            )
         )
     }
 }
@@ -271,10 +273,6 @@ fun RichTooltipWithContent(
                     state = tooltipState,
                     onShow = { priority ->
                         tryShowTooltip()
-//                        coroutineScope.launch {
-//                            delay(showTooltipDelay.inWholeMilliseconds)
-//                            tooltipState.show(priority)
-//                        }
                     },
                     onDismiss = { tooltipState.dismiss() }
                 ),
@@ -454,7 +452,9 @@ fun Modifier.handleGestures(
 
                             // consume the children's click handling
                             val changes = awaitPointerEvent(pass = pass).changes
-                            for (element in changes) { element.consume() }
+                            for (element in changes) {
+                                element.consume()
+                            }
                         }
                     }
                 }

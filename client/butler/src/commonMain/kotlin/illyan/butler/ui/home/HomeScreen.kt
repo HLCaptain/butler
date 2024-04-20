@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
@@ -73,6 +75,7 @@ class HomeScreen : Screen {
         val screenModel = koinScreenModel<HomeScreenModel>()
         val state by screenModel.state.collectAsState()
         Surface(
+            modifier = Modifier.safeContentPadding(),
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(0.dp)
         ) {
             Column {
@@ -272,12 +275,14 @@ fun HorizontalNavBar(
 @Composable
 private fun CompactChatsButton(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
-        showTooltipDelay = 1.seconds,
         tooltip = { Text(stringResource(Res.string.chats)) },
-        enabledGestures = listOf(GestureType.Hover, GestureType.LongClick),
-        content = {
-            IconButton(onClick = onClick) {
+        enabledGestures = getNavBarTooltipGestures(),
+        content = { modifier ->
+            IconButton(
+                onClick = onClick
+            ) {
                 Icon(
+                    modifier = modifier,
                     imageVector = Icons.AutoMirrored.Filled.Chat,
                     contentDescription = stringResource(Res.string.chats)
                 )
@@ -290,12 +295,14 @@ private fun CompactChatsButton(onClick: () -> Unit = {}) {
 @Composable
 private fun CompactProfileButton(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
-        showTooltipDelay = 1.seconds,
         tooltip = { Text(stringResource(Res.string.profile)) },
-        enabledGestures = listOf(GestureType.Hover, GestureType.LongClick),
-        content = {
-            IconButton(onClick = onClick) {
+        enabledGestures = getNavBarTooltipGestures(),
+        content = { modifier ->
+            IconButton(
+                onClick = onClick
+            ) {
                 Icon(
+                    modifier = modifier,
                     imageVector = Icons.Filled.Person,
                     contentDescription = stringResource(Res.string.profile)
                 )
@@ -308,12 +315,14 @@ private fun CompactProfileButton(onClick: () -> Unit = {}) {
 @Composable
 private fun CompactNewChatButton(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
-        showTooltipDelay = 1.seconds,
         tooltip = { Text(stringResource(Res.string.new_chat)) },
-        enabledGestures = listOf(GestureType.Hover, GestureType.LongClick),
-        content = {
-            IconButton(onClick = onClick) {
+        enabledGestures = getNavBarTooltipGestures(),
+        content = { modifier ->
+            IconButton(
+                onClick = onClick
+            ) {
                 Icon(
+                    modifier = modifier,
                     imageVector = Icons.Filled.Add,
                     contentDescription = stringResource(Res.string.new_chat)
                 )
@@ -382,3 +391,5 @@ fun VerticalNavBar(
         }
     }
 }
+
+expect fun getNavBarTooltipGestures(): List<GestureType>
