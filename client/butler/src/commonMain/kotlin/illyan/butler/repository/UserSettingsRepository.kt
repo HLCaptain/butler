@@ -41,7 +41,7 @@ class UserSettingsRepository(
         }
     }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     override val isUserSignedIn = userData.map { it != null }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
-    override val signedInUserUUID = userData.map { it?.id }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
+    override val signedInUserId = userData.map { it?.id }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     override val signedInUserEmail = userData.map { it?.email }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     override val signedInUserPhoneNumber = userData.map { it?.phone }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     override val signedInUserPhotoURL = userData.map { it?.photoUrl }.stateIn(coroutineScope, SharingStarted.Eagerly, null)

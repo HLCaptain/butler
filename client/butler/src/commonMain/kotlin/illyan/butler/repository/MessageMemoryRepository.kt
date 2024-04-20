@@ -26,7 +26,9 @@ import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
 
 @Single
-class MessageMemoryRepository : MessageRepository {
+class MessageMemoryRepository(
+    private val userRepository: UserRepository
+) : MessageRepository {
     private val messages = mutableMapOf<String, DomainMessage>()
     private val chatMessages = mutableMapOf<String, List<DomainMessage>>()
     private val userMessages = mutableMapOf<String, List<DomainMessage>>()
@@ -59,6 +61,9 @@ class MessageMemoryRepository : MessageRepository {
 
         messages[newMessage.id!!] = newMessage
         messageStateFlows[newMessage.id]?.update { newMessage to false }
+        val userId = userRepository.signedInUserId.value!!
+        userMessages[userId] = userMessages[userId]?.plus(newMessage) ?: listOf(newMessage)
+        userMessageStateFlows[userId]?.update { userMessages[userId] to false }
 
         return newMessage.id
     }

@@ -1,29 +1,7 @@
 package illyan.butler.repository
 
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.coroutines.FlowSettings
-import illyan.butler.data.network.datasource.AuthNetworkDataSource
-import illyan.butler.data.network.model.auth.PasswordResetRequest
-import illyan.butler.data.network.model.auth.UserLoginDto
-import illyan.butler.data.network.model.auth.UserLoginResponseDto
-import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
-import illyan.butler.di.KoinNames
-import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromHexString
-import kotlinx.serialization.encodeToHexString
-import kotlinx.serialization.protobuf.ProtoBuf
-import org.koin.core.annotation.Named
-import org.koin.core.annotation.Single
 
 interface UserRepository {
     companion object {
@@ -38,7 +16,7 @@ interface UserRepository {
 
     val userData: StateFlow<UserDto?>
     val isUserSignedIn: StateFlow<Boolean?>
-    val signedInUserUUID: StateFlow<String?>
+    val signedInUserId: StateFlow<String?>
     val signedInUserEmail: StateFlow<String?>
     val signedInUserPhoneNumber: StateFlow<String?>
     val signedInUserPhotoURL: StateFlow<String?>

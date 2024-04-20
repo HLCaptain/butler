@@ -76,24 +76,24 @@ class ChatManager(
     fun getChatFlow(chatId: String) = userChats.map { chats -> chats.firstOrNull { it.id == chatId } }
     fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
 
-    suspend fun startNewChat(modelUUID: String): String {
-        return authManager.signedInUserId.first()?.let { userUUID ->
-            chatRepository.upsert(DomainChat(members = listOf(userUUID, modelUUID)))
+    suspend fun startNewChat(modelId: String): String {
+        return authManager.signedInUserId.first()?.let { userId ->
+            chatRepository.upsert(DomainChat(members = listOf(userId, modelId)))
         } ?: throw IllegalArgumentException("User not signed in")
     }
 
-    suspend fun nameChat(chatUUID: String, name: String) {
-        userChats.first().firstOrNull { it.id == chatUUID }?.let { chat ->
+    suspend fun nameChat(chatId: String, name: String) {
+        userChats.first().firstOrNull { it.id == chatId }?.let { chat ->
             chatRepository.upsert(chat.copy(name = name))
         }
     }
 
-    suspend fun sendMessage(chatUUID: String, message: String) {
-        authManager.signedInUserId.first()?.let { userUUID ->
+    suspend fun sendMessage(chatId: String, message: String) {
+        authManager.signedInUserId.first()?.let { userId ->
             messageRepository.upsert(
                 DomainMessage(
-                    chatId = chatUUID,
-                    senderId = userUUID,
+                    chatId = chatId,
+                    senderId = userId,
                     message = message
                 )
             )

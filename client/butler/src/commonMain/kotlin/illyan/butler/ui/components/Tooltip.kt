@@ -171,15 +171,12 @@ fun PlainTooltipWithContent(
     }
     LaunchedEffect(willShowTooltip) {
         if (willShowTooltip && (enabled || disabledTooltip != null)) {
-            Napier.v("Showing tooltip")
             if (gestureType is GestureType.Hover && (gestureType as GestureType.Hover).delay > Duration.ZERO) {
-                Napier.v("Delaying tooltip show")
                 delay((gestureType as GestureType.Hover).delay.inWholeMilliseconds)
             }
             tooltipState.show()
             willShowTooltip = false
         } else {
-            Napier.v("Dismissing tooltip")
             tooltipState.dismiss()
         }
     }

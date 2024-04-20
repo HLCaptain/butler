@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
@@ -28,9 +27,10 @@ import illyan.butler.ui.components.ButlerTwoPane
 import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
 import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class ChatScreen : Screen {
-    @OptIn(ExperimentalComposeUiApi::class)
+class ChatScreen(selectedChat: String? = null) : Screen {
+    val selectedChat = MutableStateFlow(selectedChat)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ChatScreenModel>()
@@ -38,7 +38,11 @@ class ChatScreen : Screen {
         // Make your Compose Multiplatform UI
         val (height, width) = getWindowSizeInDp()
         var windowWidth by remember { mutableStateOf(width) }
-        var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
+        var currentChat by rememberSaveable { mutableStateOf<String?>(null) }
+        val selected by selectedChat.collectAsState()
+        LaunchedEffect(selected) {
+            currentChat = selected
+        }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
         // - if Chat is opened from List:
@@ -80,11 +84,11 @@ class ChatScreen : Screen {
         val isListOnly by remember { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
         var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
-        val chatDetailScreen by remember { derivedStateOf { ChatDetailScreen { selectedChat } } }
+        val chatDetailScreen by remember { derivedStateOf { ChatDetailScreen { currentChat } } }
         LaunchedEffect(isListOnly) {
             if (isListOnly) {
                 Napier.v("Transitioning from ListDetail to ListOnly")
-                if (selectedChat != null) {
+                if (currentChat != null) {
                     listNavigator?.push(chatDetailScreen)
                     Napier.v("Added chat onto list screen.")
                 } else {
@@ -93,7 +97,7 @@ class ChatScreen : Screen {
                 }
             } else {
                 Napier.v("Transitioning from ListOnly to ListDetail")
-                if (selectedChat != null) {
+                if (currentChat != null) {
                     if (listNavigator?.lastItem !is ChatListScreen) {
                         listNavigator?.popUntil { it is ChatListScreen }
                     }
@@ -106,8 +110,8 @@ class ChatScreen : Screen {
                 }
             }
         }
-        LaunchedEffect(selectedChat) {
-            if (selectedChat != null) {
+        LaunchedEffect(currentChat) {
+            if (currentChat != null) {
                 Napier.v("selectedChat is not null")
                 if (isListOnly) {
                     if (listNavigator?.lastItem !is ChatListScreen) {
@@ -131,7 +135,7 @@ class ChatScreen : Screen {
         ButlerTwoPane(
             strategy = currentPaneStrategy,
             first = {
-                Navigator(ChatListScreen { selectedChat = it; Napier.v { "Selected chat ID: $it" } }) {
+                Navigator(ChatListScreen { currentChat = it; Napier.v { "Selected chat ID: $it" } }) {
                     LaunchedEffect(Unit) { listNavigator = it }
                     CurrentScreen()
                 }

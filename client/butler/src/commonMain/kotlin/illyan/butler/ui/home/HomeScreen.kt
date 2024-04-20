@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,20 +46,19 @@ import illyan.butler.generated.resources.profile
 import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.auth.AuthScreen
+import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.GestureType
-import illyan.butler.ui.components.RichTooltipWithContent
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
-import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.update
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Duration.Companion.seconds
 
 class HomeScreen : Screen {
     @Composable
@@ -132,44 +129,46 @@ class HomeScreen : Screen {
                     )
 
                     val numberOfErrors by remember { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
-                    val errorScreen by remember { derivedStateOf {
-                        ArbitraryScreen {
-                            val serverErrorContent = @Composable {
-                                state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
-                                    ButlerErrorDialogContent(
-                                        errorResponse = it.second,
-                                        onClose = { screenModel.clearError(it.first) }
-                                    )
+                    val errorScreen by remember {
+                        derivedStateOf {
+                            ArbitraryScreen {
+                                val serverErrorContent = @Composable {
+                                    state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
+                                        ButlerErrorDialogContent(
+                                            errorResponse = it.second,
+                                            onClose = { screenModel.clearError(it.first) }
+                                        )
+                                    }
                                 }
-                            }
-                            val appErrorContent = @Composable {
-                                state.appErrors.maxByOrNull { it.timestamp }?.let {
-                                    ButlerErrorDialogContent(
-                                        errorEvent = it,
-                                        onClose = { screenModel.clearError(it.id) }
-                                    )
+                                val appErrorContent = @Composable {
+                                    state.appErrors.maxByOrNull { it.timestamp }?.let {
+                                        ButlerErrorDialogContent(
+                                            errorEvent = it,
+                                            onClose = { screenModel.clearError(it.id) }
+                                        )
+                                    }
                                 }
-                            }
-                            Crossfade(
-                                modifier = Modifier.animateContentSize(spring()),
-                                targetState = state.appErrors + state.serverErrors
-                            ) { _ ->
-                                val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
-                                val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
-                                if (latestAppError != null && latestServerError != null) {
-                                    if (latestAppError.timestamp > latestServerError.second.timestamp) {
+                                Crossfade(
+                                    modifier = Modifier.animateContentSize(spring()),
+                                    targetState = state.appErrors + state.serverErrors
+                                ) { _ ->
+                                    val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
+                                    val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
+                                    if (latestAppError != null && latestServerError != null) {
+                                        if (latestAppError.timestamp > latestServerError.second.timestamp) {
+                                            appErrorContent()
+                                        } else {
+                                            serverErrorContent()
+                                        }
+                                    } else if (latestAppError != null) {
                                         appErrorContent()
-                                    } else {
+                                    } else if (latestServerError != null) {
                                         serverErrorContent()
                                     }
-                                } else if (latestAppError != null) {
-                                    appErrorContent()
-                                } else if (latestServerError != null) {
-                                    serverErrorContent()
                                 }
                             }
                         }
-                    } }
+                    }
                     ButlerDialog(
                         modifier = Modifier.zIndex(1f),
                         startScreens = listOf(errorScreen),
@@ -180,6 +179,11 @@ class HomeScreen : Screen {
                 }
 
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
+                val chatScreen by remember { mutableStateOf(ChatScreen()) }
+                val newChatScreen by remember { mutableStateOf(NewChatScreen { newChat ->
+                    navigator?.replaceAll(chatScreen)
+                    chatScreen.selectedChat.update { newChat }
+                }) }
                 val (height, width) = getWindowSizeInDp()
                 var windowWidth by remember { mutableStateOf(width) }
                 val navBarOrientation by remember {
@@ -190,41 +194,28 @@ class HomeScreen : Screen {
                     }
                 }
                 val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
-                val columnContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Column { content() } }
-                val rowContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Row { content() } }
-                val layoutComposable by remember { derivedStateOf {
-                    if (navBarOrientation == Orientation.Vertical) columnContent else rowContent
-                } }
-                LaunchedEffect(width, height) {
-                    windowWidth = width
-                    Napier.v("Window size: $width x $height, navBarOnSide: $navBarOrientation, layoutComposable: $layoutComposable")
-                }
-                val navBar = @Composable {
-                    navigator?.let {
-                        if (navBarOrientation == Orientation.Vertical) {
-                            VerticalNavBar(
-                                isCompact = isNavBarCompact,
-                                onProfileClick = { isProfileDialogShowing = true },
-                                onNewChatClick = { NewChatScreen { navigator?.replaceAll(ChatScreen()) } },
-                                onChatsClick = { navigator?.replaceAll(ChatScreen()) }
-                            )
-                        } else {
-                            HorizontalNavBar(
-                                isCompact = isNavBarCompact,
-                                onProfileClick = { isProfileDialogShowing = true },
-                                onNewChatClick = { NewChatScreen { navigator?.replaceAll(ChatScreen()) } },
-                                onChatsClick = { navigator?.replaceAll(ChatScreen()) }
-                            )
-                        }
-                    }
-                }
-                layoutComposable {
-                    AnimatedVisibility(navigator != null && navBarOrientation != Orientation.Vertical) {
-                        navBar()
-                    }
+                LaunchedEffect(width, height) { windowWidth = width }
+                val verticalNavBar = @Composable {
                     AnimatedVisibility(navigator != null && navBarOrientation == Orientation.Vertical) {
-                        navBar()
+                        VerticalNavBar(
+                            isCompact = isNavBarCompact,
+                            onProfileClick = { isProfileDialogShowing = true },
+                            onNewChatClick = { navigator?.replaceAll(newChatScreen) },
+                            onChatsClick = { navigator?.replaceAll(chatScreen) }
+                        )
                     }
+                }
+                val horizontalNavBar = @Composable {
+                    AnimatedVisibility(navigator != null && navBarOrientation != Orientation.Vertical) {
+                        HorizontalNavBar(
+                            isCompact = isNavBarCompact,
+                            onProfileClick = { isProfileDialogShowing = true },
+                            onNewChatClick = { navigator?.replaceAll(NewChatScreen { navigator?.replaceAll(ChatDetailScreen { it }) }) },
+                            onChatsClick = { navigator?.replaceAll(ChatScreen()) }
+                        )
+                    }
+                }
+                val homeContent = @Composable {
                     Box(
                         modifier = Modifier.weight(1f, fill = true)
                     ) {
@@ -236,12 +227,28 @@ class HomeScreen : Screen {
                         }
                     }
                 }
+                Crossfade(navBarOrientation) {
+                    when (it) {
+                        Orientation.Vertical -> {
+                            Row {
+                                verticalNavBar()
+                                homeContent()
+                            }
+                        }
+
+                        Orientation.Horizontal -> {
+                            Column {
+                                homeContent()
+                                horizontalNavBar()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun HorizontalNavBar(
     isCompact: Boolean = false,
@@ -271,7 +278,7 @@ fun HorizontalNavBar(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun CompactChatsButton(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
@@ -291,7 +298,7 @@ private fun CompactChatsButton(onClick: () -> Unit = {}) {
     )
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun CompactProfileButton(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
@@ -311,7 +318,7 @@ private fun CompactProfileButton(onClick: () -> Unit = {}) {
     )
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun CompactNewChatButton(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(

@@ -7,7 +7,9 @@ import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
 @Single
-class ChatMemoryRepository : ChatRepository {
+class ChatMemoryRepository(
+    private val userRepository: UserRepository
+) : ChatRepository {
     private val chats = mutableMapOf<String, DomainChat>()
     private val userChats = mutableMapOf<String, List<DomainChat>>()
 
@@ -32,6 +34,9 @@ class ChatMemoryRepository : ChatRepository {
 
         chats[newChat.id!!] = newChat
         chatStateFlows[newChat.id]?.update { newChat to false }
+        val userId = userRepository.signedInUserId.value!!
+        userChats[userId] = userChats[userId]?.plus(newChat) ?: listOf(newChat)
+        userChatStateFlows[userId]?.update { userChats[userId] to false }
 
         return newChat.id
     }
