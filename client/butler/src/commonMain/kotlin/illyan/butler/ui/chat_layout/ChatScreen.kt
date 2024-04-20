@@ -37,7 +37,7 @@ class ChatScreen : Screen {
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
         val (height, width) = getWindowSizeInDp()
-        var windowWidth by rememberSaveable { mutableStateOf(width) }
+        var windowWidth by remember { mutableStateOf(width) }
         var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
@@ -55,10 +55,10 @@ class ChatScreen : Screen {
         // - if Chat is not yet opened:
         //   Selecting a list item will open Chat in list screen.
         //   Clear detail navigator.
-        val compactPaneStrategy = rememberSaveable { FractionHorizontalTwoPaneStrategy(1f) }
-        val mediumPaneStrategy = rememberSaveable { FractionHorizontalTwoPaneStrategy(0.4f) }
-        val largePaneStrategy = rememberSaveable { FixedOffsetHorizontalTwoPaneStrategy(320.dp, true) }
-        val currentPaneStrategy by rememberSaveable {
+        val compactPaneStrategy = remember { FractionHorizontalTwoPaneStrategy(1f) }
+        val mediumPaneStrategy = remember { FractionHorizontalTwoPaneStrategy(0.4f) }
+        val largePaneStrategy = remember { FixedOffsetHorizontalTwoPaneStrategy(320.dp, true) }
+        val currentPaneStrategy by remember {
             derivedStateOf {
                 if (windowWidth < 600.dp) compactPaneStrategy
                 else if (windowWidth < 1200.dp) mediumPaneStrategy
@@ -77,7 +77,7 @@ class ChatScreen : Screen {
             }
             Napier.v("Current pane strategy: $strategy")
         }
-        val isListOnly by rememberSaveable { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
+        val isListOnly by remember { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
         var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         val chatDetailScreen by remember { derivedStateOf { ChatDetailScreen { selectedChat } } }

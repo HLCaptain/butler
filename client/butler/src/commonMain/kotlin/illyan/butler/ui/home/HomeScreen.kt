@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,7 +48,10 @@ import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.components.ButlerErrorDialogContent
+import illyan.butler.ui.components.GestureType
+import illyan.butler.ui.components.RichTooltipWithContent
 import illyan.butler.ui.components.MenuButton
+import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
@@ -55,6 +59,7 @@ import illyan.butler.ui.profile.ProfileDialogScreen
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.seconds
 
 class HomeScreen : Screen {
     @Composable
@@ -76,15 +81,15 @@ class HomeScreen : Screen {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val isUserSignedIn by rememberSaveable { derivedStateOf { state.isUserSignedIn } }
-                    val isTutorialDone by rememberSaveable { derivedStateOf { state.isTutorialDone } }
-                    var isAuthFlowEnded by rememberSaveable { mutableStateOf(isUserSignedIn) }
+                    val isUserSignedIn by remember { derivedStateOf { state.isUserSignedIn } }
+                    val isTutorialDone by remember { derivedStateOf { state.isTutorialDone } }
+                    var isAuthFlowEnded by remember { mutableStateOf(isUserSignedIn) }
                     LaunchedEffect(isUserSignedIn) {
                         if (isUserSignedIn != true) isAuthFlowEnded = false
                         isProfileDialogShowing = false
                     }
                     var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
-                    val isDialogOpen by rememberSaveable {
+                    val isDialogOpen by remember {
                         derivedStateOf { isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing }
                     }
                     LaunchedEffect(isTutorialDone) {
@@ -123,7 +128,7 @@ class HomeScreen : Screen {
                         }
                     )
 
-                    val numberOfErrors by rememberSaveable { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
+                    val numberOfErrors by remember { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
                     val errorScreen by remember { derivedStateOf {
                         ArbitraryScreen {
                             val serverErrorContent = @Composable {
@@ -173,15 +178,15 @@ class HomeScreen : Screen {
 
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
                 val (height, width) = getWindowSizeInDp()
-                var windowWidth by rememberSaveable { mutableStateOf(width) }
-                val navBarOrientation by rememberSaveable {
+                var windowWidth by remember { mutableStateOf(width) }
+                val navBarOrientation by remember {
                     derivedStateOf {
                         if (windowWidth < 600.dp) Orientation.Horizontal
                         else if (windowWidth < 1200.dp) Orientation.Vertical
                         else Orientation.Vertical
                     }
                 }
-                val isNavBarCompact by rememberSaveable { derivedStateOf { windowWidth < 1200.dp } }
+                val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
                 val columnContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Column { content() } }
                 val rowContent: @Composable (@Composable () -> Unit) -> Unit = { content -> Row { content() } }
                 val layoutComposable by remember { derivedStateOf {
@@ -263,37 +268,58 @@ fun HorizontalNavBar(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun CompactChatsButton(onClick: () -> Unit = {}) {
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.Chat,
-            contentDescription = stringResource(Res.string.chats)
-        )
-    }
+    PlainTooltipWithContent(
+        showTooltipDelay = 1.seconds,
+        tooltip = { Text(stringResource(Res.string.chats)) },
+        enabledGestures = listOf(GestureType.Hover, GestureType.LongClick),
+        content = {
+            IconButton(onClick = onClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = stringResource(Res.string.chats)
+                )
+            }
+        },
+    )
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun CompactProfileButton(onClick: () -> Unit = {}) {
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = Icons.Filled.Person,
-            contentDescription = stringResource(Res.string.profile)
-        )
-    }
+    PlainTooltipWithContent(
+        showTooltipDelay = 1.seconds,
+        tooltip = { Text(stringResource(Res.string.profile)) },
+        enabledGestures = listOf(GestureType.Hover, GestureType.LongClick),
+        content = {
+            IconButton(onClick = onClick) {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = stringResource(Res.string.profile)
+                )
+            }
+        }
+    )
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun CompactNewChatButton(onClick: () -> Unit = {}) {
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = Icons.Filled.Add,
-            contentDescription = stringResource(Res.string.new_chat)
-        )
-    }
+    PlainTooltipWithContent(
+        showTooltipDelay = 1.seconds,
+        tooltip = { Text(stringResource(Res.string.new_chat)) },
+        enabledGestures = listOf(GestureType.Hover, GestureType.LongClick),
+        content = {
+            IconButton(onClick = onClick) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(Res.string.new_chat)
+                )
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -322,7 +348,6 @@ private fun ProfileButton(onClick: () -> Unit = {}) {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun VerticalNavBar(
     isCompact: Boolean = false,
