@@ -41,6 +41,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import illyan.butler.config.BuildConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.email
@@ -50,7 +51,6 @@ import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.profile
-import illyan.butler.generated.resources.reset_tutorial_and_sign_out
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
@@ -195,10 +195,12 @@ fun ProfileButtons(
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
                 }
-                Button(
-                    onClick = resetTutorialAndSignOut
-                ) {
-                    Text(text = stringResource(Res.string.reset_tutorial_and_sign_out))
+                if (BuildConfig.DEBUG) {
+                    Button(
+                        onClick = resetTutorialAndSignOut
+                    ) {
+                        Text(text = "Reset tutorial and sign out")
+                    }
                 }
             } else if (isUserSignedIn == false) {
                 Button(

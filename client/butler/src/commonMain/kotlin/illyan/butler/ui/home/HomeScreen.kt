@@ -70,6 +70,7 @@ import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.GestureType
+import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
@@ -454,13 +455,19 @@ fun NavigationDrawerItem(
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun NewChatFAB(onClick: () -> Unit = {}) {
-    FloatingActionButton(
-        onClick = onClick
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Create,
-            contentDescription = stringResource(Res.string.new_chat)
-        )
+    PlainTooltipWithContent(
+        enabledGestures = getNavBarTooltipGestures(),
+        tooltip = { Text(stringResource(Res.string.new_chat)) },
+    ) { gestureAreaModifier ->
+        FloatingActionButton(
+            modifier = gestureAreaModifier,
+            onClick = onClick
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Create,
+                contentDescription = stringResource(Res.string.new_chat)
+            )
+        }
     }
 }
 

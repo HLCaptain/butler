@@ -156,7 +156,7 @@ fun PlainTooltipWithContent(
     enabledGestures: List<GestureType> = emptyList(),
     onShowTooltip: () -> Unit = {},
     onDismissTooltip: () -> Unit = {},
-    content: @Composable (Modifier) -> Unit
+    content: @Composable (gestureAreaModifier: Modifier) -> Unit
 ) {
     val tooltipState = remember { TooltipState() }
     var willShowTooltip by rememberSaveable { mutableStateOf(false) }
