@@ -9,19 +9,35 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.DismissibleNavigationDrawer
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +46,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -41,12 +58,13 @@ import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
+import illyan.butler.generated.resources.close
+import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
 import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.auth.AuthScreen
-import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.GestureType
@@ -57,6 +75,7 @@ import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -179,11 +198,15 @@ class HomeScreen : Screen {
                 }
 
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
-                val chatScreen by remember { mutableStateOf(ChatScreen()) }
-                val newChatScreen by remember { mutableStateOf(NewChatScreen { newChat ->
-                    navigator?.replaceAll(chatScreen)
-                    chatScreen.selectedChat.update { newChat }
-                }) }
+                val chatScreen by remember { lazy { ChatScreen() } }
+                val newChatScreen by remember {
+                    lazy {
+                        NewChatScreen { newChat ->
+                            navigator?.replaceAll(chatScreen)
+                            chatScreen.selectedChat.update { newChat }
+                        }
+                    }
+                }
                 val (height, width) = getWindowSizeInDp()
                 var windowWidth by remember { mutableStateOf(width) }
                 val navBarOrientation by remember {
@@ -195,31 +218,11 @@ class HomeScreen : Screen {
                 }
                 val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
                 LaunchedEffect(width, height) { windowWidth = width }
-                val verticalNavBar = @Composable {
-                    AnimatedVisibility(navigator != null && navBarOrientation == Orientation.Vertical) {
-                        VerticalNavBar(
-                            isCompact = isNavBarCompact,
-                            onProfileClick = { isProfileDialogShowing = true },
-                            onNewChatClick = { navigator?.replaceAll(newChatScreen) },
-                            onChatsClick = { navigator?.replaceAll(chatScreen) }
-                        )
-                    }
-                }
-                val horizontalNavBar = @Composable {
-                    AnimatedVisibility(navigator != null && navBarOrientation != Orientation.Vertical) {
-                        HorizontalNavBar(
-                            isCompact = isNavBarCompact,
-                            onProfileClick = { isProfileDialogShowing = true },
-                            onNewChatClick = { navigator?.replaceAll(NewChatScreen { navigator?.replaceAll(ChatDetailScreen { it }) }) },
-                            onChatsClick = { navigator?.replaceAll(ChatScreen()) }
-                        )
-                    }
-                }
                 val homeContent = @Composable {
                     Box(
                         modifier = Modifier.weight(1f, fill = true)
                     ) {
-                        Navigator(ChatScreen()) {
+                        Navigator(chatScreen) {
                             LaunchedEffect(Unit) {
                                 navigator = it
                             }
@@ -227,20 +230,90 @@ class HomeScreen : Screen {
                         }
                     }
                 }
-                Crossfade(navBarOrientation) {
-                    when (it) {
-                        Orientation.Vertical -> {
-                            Row {
-                                verticalNavBar()
+                val coroutineScope = rememberCoroutineScope()
+                val homeContentWithVerticalNavBar = @Composable {
+                    Crossfade(isNavBarCompact) { isCompact ->
+                        if (isCompact) {
+                            val drawerState = rememberDrawerState(DrawerValue.Closed)
+                            ModalNavigationDrawer(
+                                drawerState = drawerState,
+                                drawerContent = {
+                                    NavigationDrawerContent(
+                                        currentScreen = navigator?.lastItem,
+                                        isProfileShown = isProfileDialogShowing,
+                                        onProfileClick = {
+                                            isProfileDialogShowing = true
+                                            coroutineScope.launch { drawerState.close() }
+                                        },
+                                        closeDrawer = { coroutineScope.launch { drawerState.close() } },
+                                        navigateToChats = {
+                                            navigator?.replaceAll(chatScreen)
+                                            coroutineScope.launch { drawerState.close() }
+                                        },
+                                        navigateToNewChat = {
+                                            navigator?.replaceAll(newChatScreen)
+                                            coroutineScope.launch { drawerState.close() }
+                                        }
+                                    )
+                                }
+                            ) {
+                                Row {
+                                    NavigationRail(
+                                        header = {
+                                            HamburgerButton { coroutineScope.launch { drawerState.open() } }
+                                            NewChatFAB { navigator?.replaceAll(newChatScreen) }
+                                        }
+                                    ) {
+                                        ChatsNavigationRailItem(selected = navigator?.lastItem == chatScreen && !isProfileDialogShowing) {
+                                            navigator?.replaceAll(chatScreen)
+                                        }
+                                        NewChatNavigationRailItem(selected = navigator?.lastItem == newChatScreen && !isProfileDialogShowing) {
+                                            navigator?.replaceAll(newChatScreen)
+                                        }
+                                        ProfileNavigationRailItem(selected = isProfileDialogShowing) {
+                                            isProfileDialogShowing = true
+                                        }
+                                    }
+                                    homeContent()
+                                }
+                            }
+                        } else {
+                            PermanentNavigationDrawer(
+                                drawerContent = {
+                                    NavigationDrawerContent(
+                                        currentScreen = navigator?.lastItem,
+                                        isProfileShown = isProfileDialogShowing,
+                                        onProfileClick = { isProfileDialogShowing = true },
+                                        navigateToChats = { navigator?.replaceAll(chatScreen) },
+                                        navigateToNewChat = { navigator?.replaceAll(newChatScreen) },
+                                        isDrawerPermanent = true
+                                    )
+                                }
+                            ) {
                                 homeContent()
                             }
                         }
-
-                        Orientation.Horizontal -> {
-                            Column {
-                                homeContent()
-                                horizontalNavBar()
-                            }
+                    }
+                }
+                val horizontalNavBar = @Composable {
+                    NavigationBar {
+                        ChatsNavigationBarItem(selected = navigator?.lastItem == chatScreen && !isProfileDialogShowing) {
+                            navigator?.replaceAll(chatScreen)
+                        }
+                        NewChatNavigationBarItem(selected = navigator?.lastItem == newChatScreen && !isProfileDialogShowing) {
+                            navigator?.replaceAll(newChatScreen)
+                        }
+                        ProfileNavigationBarItem(selected = isProfileDialogShowing) {
+                            isProfileDialogShowing = true
+                        }
+                    }
+                }
+                Crossfade(navBarOrientation) { orientation ->
+                    when (orientation) {
+                        Orientation.Vertical -> homeContentWithVerticalNavBar()
+                        Orientation.Horizontal -> Column {
+                            homeContent()
+                            horizontalNavBar()
                         }
                     }
                 }
@@ -362,6 +435,244 @@ private fun ProfileButton(onClick: () -> Unit = {}) {
     Button(onClick = onClick) {
         Text(stringResource(Res.string.profile))
     }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun ChatsNavigationRailItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationRailItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Chat,
+                contentDescription = stringResource(Res.string.chats)
+            )
+        },
+        label = { Text(stringResource(Res.string.chats)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun NewChatNavigationRailItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationRailItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(Res.string.new_chat)
+            )
+        },
+        label = { Text(stringResource(Res.string.new_chat)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun ProfileNavigationRailItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationRailItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = stringResource(Res.string.profile)
+            )
+        },
+        label = { Text(stringResource(Res.string.profile)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun ChatsNavigationDrawerItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationDrawerItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Chat,
+                contentDescription = stringResource(Res.string.chats)
+            )
+        },
+        label = { Text(stringResource(Res.string.chats)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun NewChatNavigationDrawerItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationDrawerItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(Res.string.new_chat)
+            )
+        },
+        label = { Text(stringResource(Res.string.new_chat)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun ProfileNavigationDrawerItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationDrawerItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = stringResource(Res.string.profile)
+            )
+        },
+        label = { Text(stringResource(Res.string.profile)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun NewChatFAB(onClick: () -> Unit = {}) {
+    FloatingActionButton(
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Create,
+            contentDescription = stringResource(Res.string.new_chat)
+        )
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun HamburgerButton(onClick: () -> Unit = {}) {
+    IconButton(
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Menu,
+            contentDescription = stringResource(Res.string.menu)
+        )
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun CloseButton(onClick: () -> Unit = {}) {
+    IconButton(
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Close,
+            contentDescription = stringResource(Res.string.close)
+        )
+    }
+}
+
+@Composable
+private fun NavigationDrawerContent(
+    currentScreen: Screen? = null,
+    isProfileShown: Boolean = false,
+    onProfileClick: () -> Unit = {},
+    closeDrawer: () -> Unit = {},
+    navigateToChats: () -> Unit = {},
+    navigateToNewChat: () -> Unit = {},
+    isDrawerPermanent: Boolean = false
+) {
+    ModalDrawerSheet {
+        AnimatedVisibility(!isDrawerPermanent) {
+            CloseButton {
+                closeDrawer()
+            }
+        }
+        ChatsNavigationDrawerItem(selected = currentScreen is ChatScreen && !isProfileShown) {
+            navigateToChats()
+        }
+        NewChatNavigationDrawerItem(selected = currentScreen is NewChatScreen && !isProfileShown) {
+            navigateToNewChat()
+        }
+        ProfileNavigationDrawerItem(selected = isProfileShown) {
+            onProfileClick()
+        }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun RowScope.ChatsNavigationBarItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Chat,
+                contentDescription = stringResource(Res.string.chats)
+            )
+        },
+        label = { Text(stringResource(Res.string.chats)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun RowScope.NewChatNavigationBarItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(Res.string.new_chat)
+            )
+        },
+        label = { Text(stringResource(Res.string.new_chat)) }
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun RowScope.ProfileNavigationBarItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = stringResource(Res.string.profile)
+            )
+        },
+        label = { Text(stringResource(Res.string.profile)) }
+    )
 }
 
 @Composable
