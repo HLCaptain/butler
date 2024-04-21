@@ -92,7 +92,7 @@ fun ButlerDialog(
                 AnimatedVisibility(
                     visible = isDialogVisible,
                     enter = fadeIn(tween(200)) + scaleIn(tween(200), 0.8f),
-                    exit = fadeOut(tween(200)) + scaleOut(tween(200), 0.8f),
+                    exit = fadeOut(tween(100)) + scaleOut(tween(100), 0.8f),
                 ) {
                     ButlerDialogSurface(shape = RoundedCornerShape(animatedRoundedCornerShape)) {
                         Box(
