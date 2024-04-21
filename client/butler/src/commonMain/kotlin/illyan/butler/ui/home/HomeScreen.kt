@@ -5,13 +5,10 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.widthIn
@@ -23,11 +20,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -53,6 +50,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -95,111 +93,105 @@ class HomeScreen : Screen {
         val state by screenModel.state.collectAsState()
         Surface(
             modifier = Modifier.safeContentPadding(),
-            color = MaterialTheme.colorScheme.surfaceColorAtElevation(0.dp)
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
             Column {
                 var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val isUserSignedIn by remember { derivedStateOf { state.isUserSignedIn } }
-                    val isTutorialDone by remember { derivedStateOf { state.isTutorialDone } }
-                    var isAuthFlowEnded by remember { mutableStateOf(isUserSignedIn) }
-                    LaunchedEffect(isUserSignedIn) {
-                        if (isUserSignedIn != true) isAuthFlowEnded = false
-                        isProfileDialogShowing = false
-                    }
-                    var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
-                    val isDialogOpen by remember {
-                        derivedStateOf { isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing }
-                    }
-                    LaunchedEffect(isTutorialDone) {
-                        if (!isTutorialDone) isDialogClosedAfterTutorial = false
-                        if (isUserSignedIn == true) isAuthFlowEnded = true
-                    }
-                    val startScreen by remember {
-                        val onBoardingScreen by lazy { OnBoardingScreen() }
-                        val profileDialogScreen by lazy { ProfileDialogScreen() }
-                        val authScreen by lazy { AuthScreen() }
-                        derivedStateOf {
-                            if (!isDialogOpen) {
-                                null
-                            } else {
-                                if (isTutorialDone && isDialogClosedAfterTutorial) {
-                                    if (isAuthFlowEnded == true && isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
-                                } else onBoardingScreen
-                            }
+                val isUserSignedIn by remember { derivedStateOf { state.isUserSignedIn } }
+                val isTutorialDone by remember { derivedStateOf { state.isTutorialDone } }
+                var isAuthFlowEnded by remember { mutableStateOf(isUserSignedIn) }
+                LaunchedEffect(isUserSignedIn) {
+                    if (isUserSignedIn != true) isAuthFlowEnded = false
+                    isProfileDialogShowing = false
+                }
+                var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
+                val isDialogOpen by remember {
+                    derivedStateOf { isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing }
+                }
+                LaunchedEffect(isTutorialDone) {
+                    if (!isTutorialDone) isDialogClosedAfterTutorial = false
+                    if (isUserSignedIn == true) isAuthFlowEnded = true
+                }
+                val startScreen by remember {
+                    val onBoardingScreen by lazy { OnBoardingScreen() }
+                    val profileDialogScreen by lazy { ProfileDialogScreen() }
+                    val authScreen by lazy { AuthScreen() }
+                    derivedStateOf {
+                        if (!isDialogOpen) {
+                            null
+                        } else {
+                            if (isTutorialDone && isDialogClosedAfterTutorial) {
+                                if (isAuthFlowEnded == true && isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
+                            } else onBoardingScreen
                         }
                     }
-
-                    ButlerDialog(
-                        startScreens = listOfNotNull(startScreen),
-                        isDialogOpen = isDialogOpen,
-                        isDialogFullscreen = isUserSignedIn != true || !isTutorialDone,
-                        onDismissDialog = {
-                            if (isUserSignedIn == true) {
-                                isAuthFlowEnded = true
-                            }
-                            isProfileDialogShowing = false
-                        },
-                        onDialogClosed = {
-                            if (isTutorialDone) {
-                                isDialogClosedAfterTutorial = true
-                            }
-                        }
-                    )
-
-                    val numberOfErrors by remember { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
-                    val errorScreen by remember {
-                        derivedStateOf {
-                            ArbitraryScreen {
-                                val serverErrorContent = @Composable {
-                                    state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
-                                        ButlerErrorDialogContent(
-                                            errorResponse = it.second,
-                                            onClose = { screenModel.clearError(it.first) }
-                                        )
-                                    }
-                                }
-                                val appErrorContent = @Composable {
-                                    state.appErrors.maxByOrNull { it.timestamp }?.let {
-                                        ButlerErrorDialogContent(
-                                            errorEvent = it,
-                                            onClose = { screenModel.clearError(it.id) }
-                                        )
-                                    }
-                                }
-                                Crossfade(
-                                    modifier = Modifier.animateContentSize(spring()),
-                                    targetState = state.appErrors + state.serverErrors
-                                ) { _ ->
-                                    val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
-                                    val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
-                                    if (latestAppError != null && latestServerError != null) {
-                                        if (latestAppError.timestamp > latestServerError.second.timestamp) {
-                                            appErrorContent()
-                                        } else {
-                                            serverErrorContent()
-                                        }
-                                    } else if (latestAppError != null) {
-                                        appErrorContent()
-                                    } else if (latestServerError != null) {
-                                        serverErrorContent()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    ButlerDialog(
-                        modifier = Modifier.zIndex(1f),
-                        startScreens = listOf(errorScreen),
-                        isDialogOpen = numberOfErrors > 0,
-                        isDialogFullscreen = false,
-                        onDismissDialog = screenModel::removeLastError
-                    )
                 }
 
+                ButlerDialog(
+                    startScreens = listOfNotNull(startScreen),
+                    isDialogOpen = isDialogOpen,
+                    isDialogFullscreen = isUserSignedIn != true || !isTutorialDone,
+                    onDismissDialog = {
+                        if (isUserSignedIn == true) {
+                            isAuthFlowEnded = true
+                        }
+                        isProfileDialogShowing = false
+                    },
+                    onDialogClosed = {
+                        if (isTutorialDone) {
+                            isDialogClosedAfterTutorial = true
+                        }
+                    }
+                )
+
+                val numberOfErrors by remember { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
+                val errorScreen by remember {
+                    derivedStateOf {
+                        ArbitraryScreen {
+                            val serverErrorContent = @Composable {
+                                state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
+                                    ButlerErrorDialogContent(
+                                        errorResponse = it.second,
+                                        onClose = { screenModel.clearError(it.first) }
+                                    )
+                                }
+                            }
+                            val appErrorContent = @Composable {
+                                state.appErrors.maxByOrNull { it.timestamp }?.let {
+                                    ButlerErrorDialogContent(
+                                        errorEvent = it,
+                                        onClose = { screenModel.clearError(it.id) }
+                                    )
+                                }
+                            }
+                            Crossfade(
+                                modifier = Modifier.animateContentSize(spring()),
+                                targetState = state.appErrors + state.serverErrors
+                            ) { _ ->
+                                val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
+                                val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
+                                if (latestAppError != null && latestServerError != null) {
+                                    if (latestAppError.timestamp > latestServerError.second.timestamp) {
+                                        appErrorContent()
+                                    } else {
+                                        serverErrorContent()
+                                    }
+                                } else if (latestAppError != null) {
+                                    appErrorContent()
+                                } else if (latestServerError != null) {
+                                    serverErrorContent()
+                                }
+                            }
+                        }
+                    }
+                }
+                ButlerDialog(
+                    modifier = Modifier.zIndex(1f),
+                    startScreens = listOf(errorScreen),
+                    isDialogOpen = numberOfErrors > 0,
+                    isDialogFullscreen = false,
+                    onDismissDialog = screenModel::removeLastError
+                )
                 var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
                 val chatScreen by remember { lazy { ChatScreen() } }
@@ -228,12 +220,13 @@ class HomeScreen : Screen {
                 LaunchedEffect(width, height) { windowWidth = width }
                 val homeContent: @Composable () -> Unit = {
                     Surface(
-                        tonalElevation = LocalAbsoluteTonalElevation.current + 1.dp,
-                        shape = RoundedCornerShape(topStart = if (navBarOrientation == Orientation.Horizontal) 0.dp else 24.dp)
+                        modifier = Modifier.weight(1f, fill = true),
+                        tonalElevation = 0.dp,
+                        shape = RoundedCornerShape(topStart = if (navBarOrientation == Orientation.Vertical) 24.dp else 0.dp)
                     ) {
                         Navigator(chatScreen) {
                             LaunchedEffect(Unit) { navigator = it }
-                            CrossfadeTransition(it)
+                            CrossfadeTransition(navigator = it)
                         }
                     }
                 }
@@ -266,12 +259,13 @@ class HomeScreen : Screen {
                             ) {
                                 Row {
                                     NavigationRail(
+                                        containerColor = Color.Transparent,
                                         header = {
                                             HamburgerButton { coroutineScope.launch { drawerState.open() } }
                                             NewChatFAB { currentScreenIndex = screens.indexOf(newChatScreen) }
                                         }
                                     ) {
-                                        Spacer(Modifier.height(16.dp))
+                                        Spacer(Modifier.weight(0.5f))
                                         ChatsNavigationRailItem(selected = screens[currentScreenIndex] == chatScreen && !isProfileDialogShowing) {
                                             currentScreenIndex = screens.indexOf(chatScreen)
                                         }
@@ -281,6 +275,7 @@ class HomeScreen : Screen {
                                         ProfileNavigationRailItem(selected = isProfileDialogShowing) {
                                             isProfileDialogShowing = true
                                         }
+                                        Spacer(Modifier.weight(1f))
                                     }
                                     homeContent()
                                 }
@@ -509,12 +504,12 @@ private fun NavigationDrawerContent(
     isDrawerPermanent: Boolean = false
 ) {
     ModalDrawerSheet(
+        drawerContainerColor = if (isDrawerPermanent) Color.Transparent else DrawerDefaults.containerColor,
+        drawerShape = DrawerDefaults.shape,
         modifier = Modifier.widthIn(max = 280.dp),
     ) {
         AnimatedVisibility(!isDrawerPermanent) {
-            CloseButton {
-                closeDrawer()
-            }
+            CloseButton { closeDrawer() }
         }
         ChatsNavigationDrawerItem(selected = currentScreen is ChatScreen && !isProfileShown) {
             navigateToChats()
