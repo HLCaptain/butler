@@ -1,21 +1,21 @@
 package illyan.butler.ui.chat_detail
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,10 +43,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
+import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.send
@@ -70,6 +72,7 @@ class ChatDetailScreen(
             Napier.d("SelectedChatId: $selectedChatId")
             selectedChatId?.let { screenModel.loadChat(it) }
         }
+        val navigator = LocalNavigator.current
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -83,20 +86,22 @@ class ChatDetailScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { onBack() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Localized description"
-                            )
+                        if (navigator != null && navigator.size > 1) {
+                            IconButton(onClick = { onBack() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(Res.string.back)
+                                )
+                            }
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* do something */ }) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Localized description"
-                            )
-                        }
+//                        IconButton(onClick = { /* do something */ }) {
+//                            Icon(
+//                                imageVector = Icons.Filled.Menu,
+//                                contentDescription = "Localized description"
+//                            )
+//                        }
                     },
                     scrollBehavior = scrollBehavior,
                 )
@@ -108,17 +113,34 @@ class ChatDetailScreen(
                     .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MessageList(
-                    modifier = Modifier.weight(1f, fill = true),
-                    chat = state.chat,
-                    messages = state.messages ?: emptyList(),
-                    userId = state.userId ?: ""
-                )
-                MessageField(sendMessage = screenModel::sendMessage)
+                AnimatedVisibility(selectedChatId == null) {
+                    SelectChat()
+                }
+                if (selectedChatId != null) {
+                    MessageList(
+                        modifier = Modifier.weight(1f, fill = true),
+                        chat = state.chat,
+                        messages = state.messages ?: emptyList(),
+                        userId = state.userId ?: ""
+                    )
+                    MessageField(sendMessage = screenModel::sendMessage)
+                }
             }
         }
     }
+
+    private @Composable
+    fun SelectChat() {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Select a chat!")
+        }
+    }
 }
+
+
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable

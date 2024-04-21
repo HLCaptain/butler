@@ -1,8 +1,5 @@
 package illyan.butler.ui.chat_layout
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -12,15 +9,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import illyan.butler.getWindowSizeInDp
-import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_list.ChatListScreen
 import illyan.butler.ui.components.ButlerTwoPane
@@ -84,7 +78,13 @@ class ChatScreen(selectedChat: String? = null) : Screen {
         val isListOnly by remember { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
         var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
-        val chatDetailScreen by remember { lazy { ChatDetailScreen({ currentChat }) { /* TODO: make back navigation */ } } }
+        val onChatDetailBack = {
+            currentChat = null
+            if (isListOnly) {
+                listNavigator?.popUntil { it is ChatListScreen }
+            }
+        }
+        val chatDetailScreen by remember { lazy { ChatDetailScreen({ currentChat }) { onChatDetailBack() } } }
         LaunchedEffect(isListOnly) {
             if (isListOnly) {
                 Napier.v("Transitioning from ListDetail to ListOnly")
@@ -92,7 +92,7 @@ class ChatScreen(selectedChat: String? = null) : Screen {
                     listNavigator?.push(chatDetailScreen)
                     Napier.v("Added chat onto list screen.")
                 } else {
-                    detailNavigator?.replaceAll(ArbitraryScreen { EmptyChatScreen() })
+                    detailNavigator?.replaceAll(chatDetailScreen)
                     Napier.v("Placed empty detail screen.")
                 }
             } else {
@@ -105,7 +105,7 @@ class ChatScreen(selectedChat: String? = null) : Screen {
                     detailNavigator?.replaceAll(chatDetailScreen)
                     Napier.v("Added chat onto detail screen.")
                 } else {
-                    detailNavigator?.replaceAll(ArbitraryScreen { EmptyChatScreen() })
+                    detailNavigator?.replaceAll(chatDetailScreen)
                     Napier.v("Placed empty detail screen.")
                 }
             }
@@ -128,7 +128,7 @@ class ChatScreen(selectedChat: String? = null) : Screen {
                 if (listNavigator?.lastItem !is ChatListScreen) {
                     listNavigator?.popUntil { it is ChatListScreen }
                 }
-                detailNavigator?.replaceAll(ArbitraryScreen { EmptyChatScreen() })
+                detailNavigator?.replaceAll(chatDetailScreen)
                 Napier.v("Popped screens from listNavigator until ChatListScreen is found")
             }
         }
@@ -141,21 +141,11 @@ class ChatScreen(selectedChat: String? = null) : Screen {
                 }
             },
             second = {
-                Navigator(ArbitraryScreen { EmptyChatScreen() }) {
+                Navigator(chatDetailScreen) {
                     LaunchedEffect(Unit) { detailNavigator = it }
                     CurrentScreen()
                 }
             }
         )
-    }
-}
-
-@Composable
-fun EmptyChatScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Select a chat")
     }
 }
