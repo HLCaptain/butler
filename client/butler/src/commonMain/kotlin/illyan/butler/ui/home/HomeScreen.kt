@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
@@ -202,19 +204,19 @@ class HomeScreen : Screen {
                     )
                 }
 
+                var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
                 val chatScreen by remember { lazy { ChatScreen() } }
                 val newChatScreen by remember {
                     lazy {
                         NewChatScreen { newChat ->
-                            navigator?.replaceAll(chatScreen)
+                            currentScreenIndex = 0
                             chatScreen.selectedChat.update { newChat }
                         }
                     }
                 }
                 val screens by remember { mutableStateOf(listOf(chatScreen, newChatScreen)) }
                 // Index is rememberSaveable, Screen is probably not.
-                var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 val currentScreen by remember { derivedStateOf { screens[currentScreenIndex] } }
                 LaunchedEffect(currentScreen) { navigator?.replaceAll(currentScreen) }
                 val (height, width) = getWindowSizeInDp()
@@ -511,7 +513,9 @@ private fun NavigationDrawerContent(
     navigateToNewChat: () -> Unit = {},
     isDrawerPermanent: Boolean = false
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(
+        modifier = Modifier.widthIn(max = 280.dp),
+    ) {
         AnimatedVisibility(!isDrawerPermanent) {
             CloseButton {
                 closeDrawer()

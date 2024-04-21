@@ -12,13 +12,21 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,6 +38,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
@@ -45,8 +55,11 @@ import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class ChatDetailScreen(private val getSelectedChatId: () -> String?) : Screen {
-    @OptIn(ExperimentalResourceApi::class)
+class ChatDetailScreen(
+    private val getSelectedChatId: () -> String?,
+    private val onBack: () -> Unit
+) : Screen {
+    @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ChatDetailScreenModel>()
@@ -57,24 +70,52 @@ class ChatDetailScreen(private val getSelectedChatId: () -> String?) : Screen {
             Napier.d("SelectedChatId: $selectedChatId")
             selectedChatId?.let { screenModel.loadChat(it) }
         }
-        Column(
-            modifier = Modifier
-                .systemBarsPadding()
-                .imePadding()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = state.chat?.name ?: stringResource(Res.string.new_chat),
-                style = MaterialTheme.typography.headlineLarge
-            )
-            MessageList(
-                modifier = Modifier.weight(1f, fill = true),
-                chat = state.chat,
-                messages = state.messages ?: emptyList(),
-                userId = state.userId ?: ""
-            )
-            MessageField(sendMessage = screenModel::sendMessage)
+        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            state.chat?.name ?: stringResource(Res.string.new_chat),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { onBack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Localized description"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* do something */ }) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Localized description"
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MessageList(
+                    modifier = Modifier.weight(1f, fill = true),
+                    chat = state.chat,
+                    messages = state.messages ?: emptyList(),
+                    userId = state.userId ?: ""
+                )
+                MessageField(sendMessage = screenModel::sendMessage)
+            }
         }
     }
 }

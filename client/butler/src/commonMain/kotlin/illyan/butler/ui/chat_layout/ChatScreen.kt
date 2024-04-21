@@ -84,7 +84,7 @@ class ChatScreen(selectedChat: String? = null) : Screen {
         val isListOnly by remember { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
         var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
         var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
-        val chatDetailScreen by remember { derivedStateOf { ChatDetailScreen { currentChat } } }
+        val chatDetailScreen by remember { lazy { ChatDetailScreen({ currentChat }) { /* TODO: make back navigation */ } } }
         LaunchedEffect(isListOnly) {
             if (isListOnly) {
                 Napier.v("Transitioning from ListDetail to ListOnly")
