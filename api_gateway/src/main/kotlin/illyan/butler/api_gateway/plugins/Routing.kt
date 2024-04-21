@@ -2,6 +2,7 @@ package illyan.butler.api_gateway.plugins
 
 import illyan.Butler_API_Gateway.BuildConfig
 import illyan.butler.api_gateway.data.model.authenticate.TokenConfiguration
+import illyan.butler.api_gateway.endpoints.aiRoute
 import illyan.butler.api_gateway.endpoints.authenticationRoutes
 import illyan.butler.api_gateway.endpoints.chatRoute
 import illyan.butler.api_gateway.endpoints.utils.ContentVersion
@@ -24,6 +25,7 @@ fun Application.configureRouting(tokenConfiguration: TokenConfiguration) {
     routing {
         authenticationRoutes(tokenConfiguration)
         chatRoute()
+        aiRoute()
         get {
             call.respond("Hello" to "World!")
         }

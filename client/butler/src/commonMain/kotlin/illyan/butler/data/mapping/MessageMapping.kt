@@ -1,34 +1,30 @@
 package illyan.butler.data.mapping
 
-import illyan.butler.data.network.model.MessageDto
+import illyan.butler.data.network.model.chat.MessageDto
 import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainMessage
-import illyan.butler.util.log.randomUUID
 
 fun Message.toDomainModel() = DomainMessage(
     id = id,
-    senderUUID = senderId,
-    role = role,
+    senderId = senderId,
     message = message,
-    timestamp = timestamp,
+    time = time,
     chatId = chatId
 )
 
 fun DomainMessage.toNetworkModel() = MessageDto(
     id = id,
-    senderId = senderUUID,
-    role = role,
+    senderId = senderId,
     message = message,
-    timestamp = timestamp,
+    time = time,
     chatId = chatId
 )
 
 fun MessageDto.toLocalModel() = Message(
-    id = id ?: randomUUID(),
+    id = id!!,
     senderId = senderId,
-    role = role,
     message = message,
-    timestamp = timestamp,
+    time = time,
     chatId = chatId
 )
 

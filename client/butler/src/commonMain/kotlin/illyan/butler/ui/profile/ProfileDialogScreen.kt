@@ -38,9 +38,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import illyan.butler.config.BuildConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.email
@@ -50,7 +51,6 @@ import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.profile
-import illyan.butler.generated.resources.reset_tutorial_and_sign_out
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
@@ -60,7 +60,7 @@ import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
-import illyan.butler.ui.theme.ButlerTheme
+import illyan.butler.ui.theme.ThemeScreen
 import illyan.butler.util.log.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
@@ -69,7 +69,7 @@ class ProfileDialogScreen : Screen {
     @Composable
     override fun Content() {
         ProfileDialogScreen(
-            screenModel = getScreenModel<ProfileScreenModel>()
+            screenModel = koinScreenModel<ProfileScreenModel>()
         )
     }
 }
@@ -195,10 +195,12 @@ fun ProfileButtons(
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
                 }
-                Button(
-                    onClick = resetTutorialAndSignOut
-                ) {
-                    Text(text = stringResource(Res.string.reset_tutorial_and_sign_out))
+                if (BuildConfig.DEBUG) {
+                    Button(
+                        onClick = resetTutorialAndSignOut
+                    ) {
+                        Text(text = "Reset tutorial and sign out")
+                    }
                 }
             } else if (isUserSignedIn == false) {
                 Button(
@@ -242,7 +244,7 @@ private fun PreviewProfileDialogScreen(
     email: String = "illyan@google.com",
     phone: String = "+123456789",
 ) {
-    ButlerTheme {
+    ThemeScreen {
         Column {
             ButlerDialogSurface {
                 ProfileDialogContent(
@@ -258,7 +260,7 @@ private fun PreviewProfileDialogScreen(
                 )
             }
         }
-    }
+    }.Content()
 }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,

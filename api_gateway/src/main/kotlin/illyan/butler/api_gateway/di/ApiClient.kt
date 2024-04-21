@@ -1,9 +1,11 @@
 package illyan.butler.api_gateway.di
 
+import illyan.butler.api_gateway.endpoints.utils.WebsocketContentConverterWithFallback
 import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -21,41 +23,21 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
-import io.ktor.util.Attributes
-import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
-import kotlin.time.Duration.Companion.seconds
 
-@Single
-fun provideHttpClientAttribute(): Attributes {
-    return Attributes(true)
-}
-
-@OptIn(ExperimentalSerializationApi::class)
-@Single
-fun provideHttpClient() = HttpClient(CIO) {
+fun HttpClientConfig<*>.setupClient() {
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
     }
-
     developmentMode = AppConfig.Ktor.DEVELOPMENT
-
-    install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(AppConfig.Ktor.SERIALIZATION_FORMAT)
-        pingInterval = 5.seconds.inWholeMilliseconds
-    }
-
-    install(KtorClientTracing) {
-        setOpenTelemetry(GlobalOpenTelemetry.get())
-    }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
         onRequest { request, content ->
-            Napier.v("ContentTypeFallback plugin called onRequest, request: $request, content: $content")
+            Napier.v("ContentTypeFallback plugin called onRequest, request: ${request.url}, content: $content")
             // Default body is EmptyContent
             // Don't set content type if content itself is not set
             if (request.contentType() == null && content !is EmptyContent) {
@@ -87,12 +69,32 @@ fun provideHttpClient() = HttpClient(CIO) {
         supportedContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES
     }
 
+    install(ContentEncoding)
+}
+
+@Single
+fun provideWebSocketClientProvider(): () -> HttpClient = { provideWebSocketClient() }
+
+@Named("WebSocket")
+@Single
+fun provideWebSocketClient() = HttpClient(OkHttp) {
+    setupClient()
+    install(WebSockets) {
+        contentConverter = WebsocketContentConverterWithFallback(
+            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
+        )
+    }
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Single
+fun provideHttpClient() = HttpClient(OkHttp) {
+    setupClient()
+
     install(ContentNegotiation) {
         json()
         protobuf()
     }
-
-    install(ContentEncoding)
 }
 
 class ContentTypeFallbackConfig {
@@ -101,5 +103,3 @@ class ContentTypeFallbackConfig {
      */
     var supportedContentTypes: List<ContentType> = emptyList()
 }
-
-// TODO: add fallback to WebSocket serialization

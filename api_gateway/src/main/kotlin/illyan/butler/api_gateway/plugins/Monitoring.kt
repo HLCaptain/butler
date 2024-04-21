@@ -1,15 +1,11 @@
 package illyan.butler.api_gateway.plugins
 
-import com.codahale.metrics.Slf4jReporter
 import illyan.Butler_API_Gateway.BuildConfig
 import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
-import io.ktor.server.application.log
-import io.ktor.server.metrics.dropwizard.DropwizardMetrics
-import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
@@ -32,7 +28,6 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.semconv.ResourceAttributes
-import java.util.concurrent.TimeUnit
 import org.slf4j.event.Level
 
 fun Application.configureMonitoring() {
@@ -74,20 +69,20 @@ fun Application.configureMonitoring() {
         setOpenTelemetry(GlobalOpenTelemetry.get())
     }
 
-    install(DropwizardMetrics) {
-        Slf4jReporter.forRegistry(registry)
-            .outputTo(this@configureMonitoring.log)
-            .convertRatesTo(TimeUnit.SECONDS)
-            .convertDurationsTo(TimeUnit.MILLISECONDS)
-            .build()
-            .start(10, TimeUnit.SECONDS)
-    }
+//    install(DropwizardMetrics) {
+//        Slf4jReporter.forRegistry(registry)
+//            .outputTo(this@configureMonitoring.log)
+//            .convertRatesTo(TimeUnit.SECONDS)
+//            .convertDurationsTo(TimeUnit.MILLISECONDS)
+//            .build()
+//            .start(10, TimeUnit.SECONDS)
+//    }
 
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
-    install(MicrometerMetrics) {
-        registry = appMicrometerRegistry
-    }
+//    install(MicrometerMetrics) {
+//        registry = appMicrometerRegistry
+//    }
     routing {
         get("/metrics-micrometer") {
             call.respond(appMicrometerRegistry.scrape())

@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -17,7 +17,7 @@ import illyan.butler.ui.select_host.SelectHostScreen
 class AuthScreen : Screen {
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<AuthScreenModel>()
+        val screenModel = koinScreenModel<AuthScreenModel>()
         val state by screenModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         // Make your Compose Multiplatform UI

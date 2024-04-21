@@ -3,6 +3,7 @@ import kotlin.collections.List;
 
 CREATE TABLE Chat (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
+    created INTEGER NOT NULL,
     name TEXT,
     members TEXT AS List<String> NOT NULL
 );
@@ -10,9 +11,8 @@ CREATE TABLE Chat (
 select:
 SELECT * FROM Chat WHERE id = ?;
 
--- Select chat by user and timestamp of last message above threshold descending with limit with join
-selectByUser:
-SELECT chat.* FROM ChatMember chatMember, Message message JOIN Chat chat ON message.chatId = chat.id WHERE chatMember.userId = ? AND chatMember.chatId = chat.id AND message.timestamp > ? ORDER BY message.timestamp DESC LIMIT ?;
+selectAll:
+SELECT * FROM Chat;
 
 upsert:
 INSERT OR REPLACE INTO Chat

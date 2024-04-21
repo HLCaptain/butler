@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: butler-identity-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: butler-identity-service
@@ -71,3 +71,8 @@ spec:
                 secretKeyRef:
                   name: butler-secret
                   key: REDIS_PASSWORD
+            - name: DEVELOPMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: DEVELOPMENT

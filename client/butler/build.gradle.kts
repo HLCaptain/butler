@@ -1,8 +1,11 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -29,13 +32,21 @@ kotlin {
 //        binaries.executable()
 //    }
 
-    androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "1.8"
-            }
-        }
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+//        apiVersion = KotlinVersion.KOTLIN_2_0
+//        languageVersion = KotlinVersion.KOTLIN_2_0
     }
+
+//    androidTarget {
+//        compilations.all {
+//            kotlinOptions {
+//                jvmTarget = "1.8"
+//            }
+//        }
+//    }
+
+    androidTarget()
 
     jvm()
 
@@ -65,6 +76,7 @@ kotlin {
                 implementation(libs.ktor.auth)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.client.websockets)
+                implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.encoding)
@@ -110,6 +122,7 @@ kotlin {
             implementation(libs.koin.logger.slf4j)
             implementation(libs.sqldelight.android)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
             implementation(libs.settings.datastore)
             implementation(libs.androidx.datastore.core)
@@ -148,16 +161,20 @@ kotlin {
     }
 }
 
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_1_8
+//        languageVersion = KotlinVersion.KOTLIN_2_0
+    }
+}
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn("kspCommonMainKotlinMetadata")
+}
+
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp)
 }
 
-// WORKAROUND: ADD this dependsOn("kspCommonMainKotlinMetadata") instead of above dependencies
-tasks.withType<KotlinCompile<*>>().configureEach {
-    if (name != "kspCommonMainKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
-    }
-}
 afterEvaluate {
     tasks.filter {
         it.name.contains("SourcesJar", true)
@@ -201,7 +218,9 @@ buildConfig {
 
         println("Task [$taskName] isProd=$isProd")
 
+        val useMemoryDb = true // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
+        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString()) //
     }
 
     // GOOGLE_CLIENT_ID from local.properties
@@ -210,8 +229,10 @@ buildConfig {
         val (key, value) = it.split("=", limit = 2)
         key to value
     }
-    buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${properties["GOOGLE_CLIENT_ID"]}\"")
-    buildConfigField("String", "API_GATEWAY_URL", "\"${properties["API_GATEWAY_URL"]}\"")
+    val googleClientId = if (properties["GOOGLE_CLIENT_ID"] == null) null else "\"${properties["GOOGLE_CLIENT_ID"]}\""
+    buildConfigField("String?", "GOOGLE_CLIENT_ID", "$googleClientId")
+    val apiGatewayUrl = if (properties["API_GATEWAY_URL"] == null) null else "\"${properties["API_GATEWAY_URL"]}\""
+    buildConfigField("String?", "API_GATEWAY_URL", "$apiGatewayUrl")
 }
 
 android {

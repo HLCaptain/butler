@@ -2,15 +2,14 @@ package illyan.butler.di
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
-import illyan.butler.config.BuildConfig
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
-import illyan.butler.data.network.model.auth.TokenInfo
-import illyan.butler.isDebugBuild
+import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.HostRepository
 import illyan.butler.repository.UserRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.ServerResponseException
@@ -22,14 +21,17 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLProtocol
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
-import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
@@ -39,29 +41,31 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
+@OptIn(ExperimentalSettingsApi::class)
 @Single
-fun provideHttpClient(
+fun provideWebSocketClientProvider(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+): () -> HttpClient = { provideWebSocketClient(settings, coroutineScopeIO, errorManager) }
+
+@OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
+@Named(KoinNames.WebSocketClient)
+@Factory
+fun provideWebSocketClient(
     settings: FlowSettings,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) = HttpClient {
-    expectSuccess = true
-    HttpResponseValidator {
-        handleResponseExceptionWithRequest { throwable, _ ->
-            Napier.e(throwable) { "Error in response" }
-            val exception = throwable as? ServerResponseException
-            if (exception != null) {
-                errorManager.reportError(exception.response)
-            } else {
-                errorManager.reportError(throwable)
-            }
-        }
-    }
-
+    setupClient(
+        settings = settings,
+        coroutineScopeIO = coroutineScopeIO,
+        errorManager = errorManager
+    )
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
             listOf(
@@ -70,8 +74,82 @@ fun provideHttpClient(
             )
         )
     }
+}
 
-    developmentMode = isDebugBuild()
+@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
+@Single
+fun provideHttpClient(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+) = HttpClient {
+    setupClient(
+        settings = settings,
+        coroutineScopeIO = coroutineScopeIO,
+        errorManager = errorManager
+    )
+
+    install(ContentNegotiation) {
+        json()
+        protobuf()
+    }
+}
+
+@OptIn(ExperimentalSettingsApi::class)
+fun HttpClientConfig<*>.setupClient(
+    settings: FlowSettings,
+    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
+    errorManager: ErrorManager
+) {
+    expectSuccess = true
+    HttpResponseValidator {
+        handleResponseExceptionWithRequest { throwable, _ ->
+            val exception = throwable as? ServerResponseException
+            Napier.e(exception ?: throwable) { "Error in response" }
+            if (exception != null) {
+                errorManager.reportError(exception.response)
+            } else {
+                errorManager.reportError(throwable)
+            }
+        }
+    }
+
+    install(Logging) {
+        logger = object: Logger {
+            override fun log(message: String) {
+                Napier.v("HTTP Client", null, message)
+            }
+        }
+        level = LogLevel.HEADERS
+    }
+
+    install(Auth) {
+        bearer {
+            // DON'T USE HTTP REQUESTS IN `loadTokens`. Only use local storage.
+            // loadTokens run every time a request is made.
+            loadTokens {
+                val accessToken = settings.getString(UserRepository.KEY_ACCESS_TOKEN, "")
+                val refreshToken = settings.getString(UserRepository.KEY_REFRESH_TOKEN, "")
+                if (accessToken.isBlank() || refreshToken.isBlank()) {
+                    Napier.d { "No access or refresh token found in settings" }
+                    return@loadTokens null
+                }
+                BearerTokens(accessToken, refreshToken)
+            }
+            refreshTokens {
+                val refreshTokenInfo = client.post("/refresh-access-token").body<UserTokensResponse>()
+                val newToken = BearerTokens(refreshTokenInfo.accessToken, refreshTokenInfo.refreshToken)
+                settings.putString(UserRepository.KEY_ACCESS_TOKEN, refreshTokenInfo.accessToken)
+                settings.putString(UserRepository.KEY_REFRESH_TOKEN, refreshTokenInfo.refreshToken)
+                settings.putLong(UserRepository.KEY_ACCESS_TOKEN_EXPIRATION, refreshTokenInfo.accessTokenExpirationMillis)
+                settings.putLong(UserRepository.KEY_REFRESH_TOKEN_EXPIRATION, refreshTokenInfo.refreshTokenExpirationMillis)
+                newToken
+            }
+        }
+    }
+
+    //    developmentMode = isDebugBuild()
+    developmentMode = true
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
@@ -114,35 +192,6 @@ fun provideHttpClient(
         }
     }
 
-    install(ContentNegotiation) {
-        json()
-        protobuf()
-    }
-
-    install(Auth) {
-        bearer {
-            loadTokens {
-                val accessToken = settings.getStringOrNull(UserRepository.KEY_ACCESS_TOKEN) ?: ""
-                val refreshToken = settings.getStringOrNull(UserRepository.KEY_REFRESH_TOKEN) ?: ""
-                BearerTokens(accessToken, refreshToken)
-            }
-            refreshTokens {
-                val refreshTokenInfo: TokenInfo = client.submitForm(
-                    url = "https://accounts.google.com/o/oauth2/token",
-                    formParameters = parameters {
-                        append("grant_type", "refresh_token")
-                        append("client_id", BuildConfig.GOOGLE_CLIENT_ID)
-                        append("refresh_token", oldTokens?.refreshToken ?: "")
-                    }
-                ) { markAsRefreshTokenRequest() }.body()
-                val newToken = BearerTokens(refreshTokenInfo.accessToken, oldTokens?.refreshToken!!)
-                settings.putString(UserRepository.KEY_ACCESS_TOKEN, refreshTokenInfo.accessToken)
-                settings.putString(UserRepository.KEY_REFRESH_TOKEN, oldTokens?.refreshToken!!)
-                newToken
-            }
-        }
-    }
-
     install(ContentEncoding)
 
     var currentApiUrl: String? = null
@@ -153,8 +202,15 @@ fun provideHttpClient(
         }
     }
     defaultRequest {
-        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl")
-        url(urlString = currentApiUrl ?: "")
+        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl, protocol: ${url.protocol}")
+        if (url.protocol == URLProtocol.WS) {
+            url(
+                host = currentApiUrl?.substringAfter("://")?.takeWhile { it != ':' } ?: "localhost",
+                port = currentApiUrl?.takeLastWhile { it != ':' }?.takeWhile { it != '/' }?.toInt() ?: 8080
+            )
+        } else {
+            url(urlString = currentApiUrl ?: "http://localhost:8080")
+        }
     }
 }
 

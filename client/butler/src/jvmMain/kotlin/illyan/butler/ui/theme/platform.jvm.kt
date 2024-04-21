@@ -1,15 +1,22 @@
 package illyan.butler.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 
 @Composable
-actual fun ButlerTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme(),
-        content = content
-    )
+actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
+}
+
+actual fun canUseDynamicColors(): Boolean {
+    return false
+}
+
+@Composable
+actual fun dynamicDarkColorScheme(): ColorScheme {
+    return DarkColors // No dynamic colors on JVM
+}
+
+@Composable
+actual fun dynamicLightColorScheme(): ColorScheme {
+    return LightColors // No dynamic colors on JVM
 }

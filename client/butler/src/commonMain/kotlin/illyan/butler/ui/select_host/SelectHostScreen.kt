@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.generated.resources.Res
@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 class SelectHostScreen(private val selectedHost: () -> Unit) : Screen {
     @Composable
     override fun Content() {
-        val screenModel = getScreenModel<SelectHostScreenModel>()
+        val screenModel = koinScreenModel<SelectHostScreenModel>()
         val state by screenModel.state.collectAsState()
 
         val navigator = LocalNavigator.currentOrThrow

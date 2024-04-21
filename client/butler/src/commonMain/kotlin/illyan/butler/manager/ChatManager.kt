@@ -1,73 +1,100 @@
 package illyan.butler.manager
 
+import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.repository.ChatRepository
 import illyan.butler.repository.MessageRepository
-import illyan.butler.util.log.randomUUID
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.launch
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Single
 class ChatManager(
     private val authManager: AuthManager,
     private val chatRepository: ChatRepository,
-    private val messageRepository: MessageRepository
+    private val messageRepository: MessageRepository,
+    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) {
     private val _userChats = MutableStateFlow<List<DomainChat>>(emptyList())
     val userChats = _userChats.asStateFlow()
 
-    suspend fun loadMoreChat(
-        limit: Int = 20,
-        timestamp: Long = Clock.System.now().toEpochMilliseconds()
-    ) {
-        val userUUID = authManager.signedInUserUUID.first()
-        val newChats = chatRepository.getUserChatsFlow(userUUID!!, limit, timestamp).filterNot { it.second }.map { it.first }.first()
-        _userChats.update { (it + newChats.orEmpty()).distinct() }
-    }
+    private val _userMessages = MutableStateFlow<List<DomainMessage>>(emptyList())
+    private val userMessages = _userMessages.asStateFlow()
 
-    fun getChatFlow(uuid: String) = chatRepository.getChatFlow(uuid).map { it.first }
-    fun getMessagesByChatFlow(
-        uuid: String,
-        limit: Int = 20,
-        timestamp: Long = Clock.System.now().toEpochMilliseconds()
-    ) = messageRepository.getChatFlow(uuid, limit, timestamp).map { it.first }
-
-    suspend fun startNewChat(modelUUID: String): String {
-        val chatUUID = randomUUID()
-        authManager.signedInUserUUID.first()?.let { userUUID ->
-            chatRepository.upsert(
-                DomainChat(
-                    id = chatUUID,
-                    members = listOf(userUUID, modelUUID)
-                )
-            )
+    init {
+        coroutineScopeIO.launch {
+            authManager.signedInUserId.flatMapLatest {
+                _userChats.update { emptyList() }
+                loadChats(it)
+            }.collectLatest { newChats ->
+                _userChats.update { chats -> (chats + newChats).distinctBy { it.id } }
+            }
         }
-        return chatUUID
+        coroutineScopeIO.launch {
+            authManager.signedInUserId.flatMapLatest {
+                _userMessages.update { emptyList() }
+                loadMessages(it)
+            }.collectLatest { newMessages ->
+                _userMessages.update { messages -> (messages + newMessages).distinctBy { it.id } }
+            }
+        }
     }
 
-    suspend fun nameChat(chatUUID: String, name: String) {
-        userChats.first().firstOrNull { it.id == chatUUID }?.let { chat ->
+    private fun loadChats(userId: String? = authManager.signedInUserId.value): Flow<List<DomainChat>> {
+        if (userId == null) {
+            Napier.v { "User not signed in, reseting chats" }
+            return flowOf(emptyList())
+        }
+        Napier.v { "Loading chats for user $userId" }
+        return chatRepository.getUserChatsFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
+    }
+
+    private fun loadMessages(userId: String? = authManager.signedInUserId.value): Flow<List<DomainMessage>> {
+        if (userId == null) {
+            Napier.v { "User not signed in, reseting messages" }
+            return flowOf(emptyList())
+        }
+        Napier.v { "Loading messages for user $userId" }
+        return messageRepository.getUserMessagesFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
+    }
+
+    fun getChatFlow(chatId: String) = userChats.map { chats -> chats.firstOrNull { it.id == chatId } }
+    fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
+
+    suspend fun startNewChat(modelId: String): String {
+        return authManager.signedInUserId.first()?.let { userId ->
+            chatRepository.upsert(DomainChat(members = listOf(userId, modelId)))
+        } ?: throw IllegalArgumentException("User not signed in")
+    }
+
+    suspend fun nameChat(chatId: String, name: String) {
+        userChats.first().firstOrNull { it.id == chatId }?.let { chat ->
             chatRepository.upsert(chat.copy(name = name))
         }
     }
 
-    suspend fun sendMessage(chatUUID: String, message: String) {
-        authManager.signedInUserUUID.first()?.let { userUUID ->
+    suspend fun sendMessage(chatId: String, message: String) {
+        authManager.signedInUserId.first()?.let { userId ->
             messageRepository.upsert(
                 DomainMessage(
-                    id = randomUUID(),
-                    chatId = chatUUID,
-                    role = DomainMessage.USER_ROLE,
-                    message = message,
-                    timestamp = Clock.System.now().toEpochMilliseconds(),
-                    senderUUID = userUUID
+                    chatId = chatId,
+                    senderId = userId,
+                    message = message
                 )
             )
         }

@@ -37,11 +37,14 @@ eval $(minikube docker-env)
 # Build the Docker images (in the correct minikube docker-env)
 docker-compose build
 
+# Load images
+
 # Deploy the config files to Kubernetes
 kubectl apply -f butler-configmap.yaml
 kubectl apply -f butler-secret.yaml # You have to create this file
 kubectl apply -f api_gateway/deployment.yaml
 kubectl apply -f api_gateway/service.yaml
+kubectl apply -f services/localai/deployment.yaml
 kubectl apply -f services/postgresql/postgresql-statefulset.yaml
 kubectl apply -f services/postgresql/pgadmin-deployment.yaml
 kubectl apply -f services/redis/redis-configmap.yaml
@@ -51,6 +54,8 @@ kubectl apply -f services/chat_service/deployment.yaml
 kubectl apply -f services/chat_service/service.yaml
 kubectl apply -f services/identity_service/deployment.yaml
 kubectl apply -f services/identity_service/service.yaml
+kubectl apply -f services/ai_service/deployment.yaml
+kubectl apply -f services/ai_service/service.yaml
 ```
 
 To expose the API Gateway's and pgAdmin's port, use command
@@ -101,11 +106,13 @@ To reset deployments and images, the following commands should help:
 kubectl delete -n default deployment butler-api-gateway
 kubectl delete -n default deployment butler-chat-service
 kubectl delete -n default deployment butler-identity-service
+kubectl delete -n default deployment butler-ai-service
 
 # Delete the images
 minikube image rm illyan1337/butler-api-gateway:latest
 minikube image rm illyan1337/butler-chat-service:latest
 minikube image rm illyan1337/butler-identity-service:latest
+minikube image rm illyan1337/butler-ai-service:latest
 
 # Build the images again
 docker-compose build
@@ -114,6 +121,7 @@ docker-compose build
 kubectl apply -f api_gateway/deployment.yaml
 kubectl apply -f services/chat_service/deployment.yaml
 kubectl apply -f services/identity_service/deployment.yaml
+kubectl apply -f services/ai_service/deployment.yaml
 ```
 
 ## License

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: butler-api-gateway
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: butler-api-gateway
@@ -41,3 +41,13 @@ spec:
                 configMapKeyRef:
                   name: butler-configmap
                   key: CHAT_API_URL
+            - name: AI_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: AI_API_URL
+            - name: DEVELOPMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: DEVELOPMENT

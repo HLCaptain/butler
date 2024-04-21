@@ -3,6 +3,7 @@ package illyan.butler.services.chat.data.db
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.utils.getLastMonthDate
 import illyan.butler.services.chat.data.utils.getLastWeekDate
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 
 interface ChatDatabase {
@@ -18,8 +19,11 @@ interface ChatDatabase {
         userId = userId,
         fromDate = getLastWeekDate().toEpochMilliseconds()
     )
+    suspend fun getChats(userId: String): List<ChatDto>
     suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto>
     suspend fun getChats(userId: String, fromDate: Long, toDate: Long = Clock.System.now().toEpochMilliseconds()): List<ChatDto>
     suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto>
     suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto>
+    fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>>
+    fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto>
 }

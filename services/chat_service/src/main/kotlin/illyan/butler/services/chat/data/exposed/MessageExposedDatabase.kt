@@ -7,6 +7,9 @@ import illyan.butler.services.chat.data.schema.ContentUrls
 import illyan.butler.services.chat.data.schema.MessageContentUrls
 import illyan.butler.services.chat.data.schema.Messages
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -14,7 +17,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.insertIgnore
 import org.jetbrains.exposed.sql.insertIgnoreAndGetId
 import org.jetbrains.exposed.sql.selectAll
@@ -33,13 +36,14 @@ class MessageExposedDatabase(
             SchemaUtils.create(Messages, ChatMembers, ContentUrls, MessageContentUrls)
         }
     }
-    override suspend fun sendMessage(userId: String, message: MessageDto) {
+    override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
+            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
-            if (isUserInChat) {
-                Messages.insert {
-                    it[time] = Clock.System.now().toEpochMilliseconds()
+            val nowMillis = Clock.System.now().toEpochMilliseconds()
+            val newMessageId = if (isUserInChat) {
+                Messages.insertAndGetId {
+                    it[time] = nowMillis
                     it[senderId] = userId
                     it[chatId] = message.chatId
                     it[this.message] = message.message
@@ -57,19 +61,20 @@ class MessageExposedDatabase(
                     newUrlId = ContentUrls.selectAll().where(ContentUrls.url eq url).first()[ContentUrls.id]
                 }
                 MessageContentUrls.insertIgnore {
-                    it[messageId] = message.id!!
+                    it[messageId] = newMessageId
                     it[urlId] = newUrlId
                 }
             }
+            message.copy(id = newMessageId.value, time = nowMillis)
         }
     }
 
-    override suspend fun editMessage(userId: String, message: MessageDto) {
+    override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId!!)
+            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
-                Messages.update { it[this.message] = message.message }
+                Messages.update({Messages.id eq message.id}) { it[this.message] = message.message }
             } else {
                 throw Exception("User is not in chat")
             }
@@ -94,6 +99,7 @@ class MessageExposedDatabase(
                     it[urlId] = contentUrl
                 }
             }
+            message
         }
     }
 
@@ -142,14 +148,69 @@ class MessageExposedDatabase(
         }
     }
 
-    private fun ResultRow.toMessageDto() = MessageDto(
-        id = this[Messages.id].value,
-        senderId = this[Messages.senderId],
-        message = this[Messages.message],
-        time = this[Messages.time],
-        contentUrls = MessageContentUrls
-            .selectAll()
-            .where(MessageContentUrls.messageId eq this[Messages.id])
-            .map { it[MessageContentUrls.urlId].value }
-    )
+    override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
+        return newSuspendedTransaction(dispatcher, database) {
+            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
+            if (isUserInChat) {
+                Messages
+                    .selectAll()
+                    .where(Messages.chatId eq chatId)
+                    .map { it.toMessageDto() }
+            } else {
+                throw Exception("User is not in chat")
+            }
+        }
+    }
+
+    override fun getChangedMessagesAffectingUser(userId: String): Flow<List<MessageDto>> {
+        return flow {
+            var previousMessages: Set<MessageDto>? = null
+            while (true) {
+                val messages = getMessages(userId).toSet()
+                val changedMessages = previousMessages?.let {
+                    messages.filter { message -> message !in it }
+                } ?: messages
+                if (changedMessages.isNotEmpty()) emit(changedMessages.toList())
+                previousMessages = messages
+                delay(10000)
+            }
+        }
+    }
+
+    override suspend fun getMessages(userId: String): List<MessageDto> {
+        return newSuspendedTransaction(dispatcher, database) {
+            // Get all messages related to the user (including messages from chats the user is a member of)
+            val userChats = ChatMembers.selectAll().where(ChatMembers.userId eq userId)
+            val messages = Messages.selectAll().where { Messages.chatId inList userChats.map { it[ChatMembers.chatId] } }
+            messages.map { it.toMessageDto() }
+        }
+    }
+
+    override fun getChangedMessagesAffectingChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+        return flow {
+            var previousMessages: Set<MessageDto>? = null
+            while (true) {
+                val messages = getMessages(userId, chatId).toSet()
+                val changedMessages = previousMessages?.let {
+                    messages.filter { message -> message !in it }
+                } ?: emptySet()
+                if (changedMessages.isNotEmpty()) emit(changedMessages.toList())
+                previousMessages = messages
+                delay(1000)
+            }
+        }
+    }
 }
+
+fun ResultRow.toMessageDto() = MessageDto(
+    id = this[Messages.id].value,
+    senderId = this[Messages.senderId],
+    message = this[Messages.message],
+    time = this[Messages.time],
+    chatId = this[Messages.chatId].value,
+//    contentUrls = MessageContentUrls
+//        .selectAll()
+//        .where(MessageContentUrls.messageId eq this[Messages.id])
+//        .map { it[MessageContentUrls.urlId].value } // TODO: join this with ContentUrls later
+)

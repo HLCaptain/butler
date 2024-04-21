@@ -15,3 +15,8 @@ services:
       context: ./services/identity_service
       dockerfile: Dockerfile
     image: illyan1337/butler-identity-service:latest
+  ai_service:
+    build:
+      context: ./services/ai_service
+      dockerfile: Dockerfile
+    image: illyan1337/butler-ai-service:latest

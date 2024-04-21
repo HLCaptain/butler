@@ -9,7 +9,7 @@ import org.koin.core.annotation.Factory
 
 @Factory
 class ChatListScreenModel(
-    chatManager: ChatManager
+    chatManager: ChatManager,
 ) : ScreenModel {
     val userChats = chatManager.userChats
         .stateIn(

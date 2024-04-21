@@ -2,6 +2,9 @@ package illyan.butler.ui.welcome
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import illyan.butler.repository.AppRepository
+import illyan.butler.repository.UserRepository
+import illyan.butler.util.log.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -12,7 +15,8 @@ import org.koin.core.annotation.Factory
 
 @Factory
 class WelcomeScreenModel(
-    // Inject your dependencies
+    private val appRepository: AppRepository,
+    private val userRepository: UserRepository
 ) : ScreenModel {
     private val dataFlow1 = MutableStateFlow(false)
     private val dataFlow2 = MutableStateFlow(true)
@@ -34,10 +38,15 @@ class WelcomeScreenModel(
         )
     )
 
-    fun setDataFlow1(state: Boolean) {
-        // Use IO dispatcher if Voyager crashes unexpectedly
+    fun skipTutorialAndLogin() {
         screenModelScope.launch {
-            dataFlow1.update { state }
+            appRepository.setTutorialDone(true)
+            val userName = "illyan${randomUUID().takeLast(8)}"
+            userRepository.signUpAndLogin(
+                "$userName@nest.ai",
+                "password",
+                userName
+            )
         }
     }
 }

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: butler-ai-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: butler-ai-service
+  template:
+    metadata:
+      labels:
+        app: butler-ai-service
+    spec:
+      containers:
+        - name: butler-ai-service
+          image: illyan1337/butler-ai-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "0.5"
+              memory: "200Mi"
+            limits:
+              cpu: "1"
+              memory: "500Mi"
+          env:
+            - name: LOCAL_AI_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: LOCAL_AI_API_URL
+            - name: CHAT_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: CHAT_API_URL
+            - name: DEVELOPMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: DEVELOPMENT

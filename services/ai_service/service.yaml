@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: butler-ai-service-service
+spec:
+  selector:
+    app: butler-ai-service
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

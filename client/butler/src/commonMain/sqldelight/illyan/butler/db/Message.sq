@@ -1,9 +1,8 @@
 CREATE TABLE Message (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
     senderId TEXT NOT NULL,
-    role TEXT NOT NULL,
-    message TEXT NOT NULL,
-    timestamp INTEGER NOT NULL,
+    message TEXT,
+    time INTEGER,
     chatId TEXT NOT NULL
 );
 
@@ -11,7 +10,10 @@ select:
 SELECT * FROM Message WHERE id = ?;
 
 selectByChat:
-SELECT * FROM Message WHERE chatId = ? AND timestamp > ? ORDER BY timestamp ASC LIMIT ?;
+SELECT * FROM Message WHERE chatId = ?;
+
+selectBySender:
+SELECT * FROM Message WHERE senderId = ?;
 
 upsert:
 INSERT OR REPLACE INTO Message
@@ -22,6 +24,9 @@ DELETE FROM Message WHERE id = ?;
 
 deleteAllChatMessagesForChat:
 DELETE FROM Message WHERE chatId = ?;
+
+deleteBySender:
+DELETE FROM Message WHERE senderId = ?;
 
 deleteAll:
 DELETE FROM Message;

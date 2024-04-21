@@ -1,10 +1,9 @@
 CREATE TABLE Model (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
-    author TEXT NOT NULL,
-    description TEXT NOT NULL,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    greetingMessage TEXT NOT NULL
+    author TEXT,
+    description TEXT,
+    name TEXT,
+    greetingMessage TEXT
 );
 
 select:
