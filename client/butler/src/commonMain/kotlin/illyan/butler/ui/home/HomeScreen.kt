@@ -97,20 +97,18 @@ class HomeScreen : Screen {
         ) {
             Column {
                 var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
-                val isUserSignedIn by remember { derivedStateOf { state.isUserSignedIn } }
-                val isTutorialDone by remember { derivedStateOf { state.isTutorialDone } }
-                var isAuthFlowEnded by remember { mutableStateOf(isUserSignedIn) }
-                LaunchedEffect(isUserSignedIn) {
-                    if (isUserSignedIn != true) isAuthFlowEnded = false
+                var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
+                LaunchedEffect(state.isUserSignedIn) {
+                    if (state.isUserSignedIn != true) isAuthFlowEnded = false
                     isProfileDialogShowing = false
                 }
-                var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(isTutorialDone) }
+                var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
                 val isDialogOpen by remember {
-                    derivedStateOf { isAuthFlowEnded != true || !isTutorialDone || isProfileDialogShowing }
+                    derivedStateOf { isAuthFlowEnded != true || !state.isTutorialDone || isProfileDialogShowing }
                 }
-                LaunchedEffect(isTutorialDone) {
-                    if (!isTutorialDone) isDialogClosedAfterTutorial = false
-                    if (isUserSignedIn == true) isAuthFlowEnded = true
+                LaunchedEffect(state.isTutorialDone) {
+                    if (!state.isTutorialDone) isDialogClosedAfterTutorial = false
+                    if (state.isUserSignedIn == true) isAuthFlowEnded = true
                 }
                 val startScreen by remember {
                     val onBoardingScreen by lazy { OnBoardingScreen() }
@@ -120,8 +118,8 @@ class HomeScreen : Screen {
                         if (!isDialogOpen) {
                             null
                         } else {
-                            if (isTutorialDone && isDialogClosedAfterTutorial) {
-                                if (isAuthFlowEnded == true && isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
+                            if (state.isTutorialDone && isDialogClosedAfterTutorial) {
+                                if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
                             } else onBoardingScreen
                         }
                     }
@@ -130,23 +128,23 @@ class HomeScreen : Screen {
                 ButlerDialog(
                     startScreens = listOfNotNull(startScreen),
                     isDialogOpen = isDialogOpen,
-                    isDialogFullscreen = isUserSignedIn != true || !isTutorialDone,
+                    isDialogFullscreen = state.isUserSignedIn != true || !state.isTutorialDone,
                     onDismissDialog = {
-                        if (isUserSignedIn == true) {
+                        if (state.isUserSignedIn == true) {
                             isAuthFlowEnded = true
                         }
                         isProfileDialogShowing = false
                     },
                     onDialogClosed = {
-                        if (isTutorialDone) {
+                        if (state.isTutorialDone) {
                             isDialogClosedAfterTutorial = true
                         }
                     }
                 )
 
-                val numberOfErrors by remember { derivedStateOf { state.appErrors.size + state.serverErrors.size } }
+                val numberOfErrors = state.appErrors.size + state.serverErrors.size
                 val errorScreen by remember {
-                    derivedStateOf {
+                    lazy {
                         ArbitraryScreen {
                             val serverErrorContent = @Composable {
                                 state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
