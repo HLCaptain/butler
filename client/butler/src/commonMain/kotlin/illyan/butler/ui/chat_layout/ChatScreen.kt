@@ -14,6 +14,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.SlideTransition
 import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_list.ChatListScreen
@@ -137,13 +138,13 @@ class ChatScreen(selectedChat: String? = null) : Screen {
             first = {
                 Navigator(ChatListScreen { currentChat = it; Napier.v { "Selected chat ID: $it" } }) {
                     LaunchedEffect(Unit) { listNavigator = it }
-                    CurrentScreen()
+                    SlideTransition(it)
                 }
             },
             second = {
                 Navigator(chatDetailScreen) {
                     LaunchedEffect(Unit) { detailNavigator = it }
-                    CurrentScreen()
+                    SlideTransition(it)
                 }
             }
         )

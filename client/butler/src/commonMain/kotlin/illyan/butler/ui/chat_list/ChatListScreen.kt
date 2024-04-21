@@ -12,7 +12,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -125,14 +127,8 @@ class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
         chat: DomainChat,
         openChat: () -> Unit
     ) {
-        ElevatedCard(
-            onClick = openChat,
-            colors = CardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-                contentColor = MaterialTheme.colorScheme.primary,
-                disabledContentColor = MaterialTheme.colorScheme.secondary
-            )
+        Card(
+            onClick = openChat
         ) {
             Row(
                 modifier = Modifier

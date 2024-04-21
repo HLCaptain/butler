@@ -3,6 +3,7 @@ package illyan.butler.ui.new_chat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,7 +53,7 @@ fun ModelList(
 ) {
     AnimatedVisibility(state.availableModels != null) {
         LazyColumn(
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(8.dp).fillMaxHeight()
         ) {
             items(state.availableModels ?: emptyList()) {
                 ModelListItem(

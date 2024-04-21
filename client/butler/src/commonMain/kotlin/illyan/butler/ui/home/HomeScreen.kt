@@ -6,7 +6,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -15,8 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
@@ -24,11 +23,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -53,15 +52,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.CrossfadeTransition
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.close
@@ -74,8 +72,6 @@ import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.GestureType
-import illyan.butler.ui.components.MenuButton
-import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
@@ -230,15 +226,14 @@ class HomeScreen : Screen {
                 }
                 val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
                 LaunchedEffect(width, height) { windowWidth = width }
-                val homeContent = @Composable {
-                    Box(
-                        modifier = Modifier.weight(1f, fill = true)
+                val homeContent: @Composable () -> Unit = {
+                    Surface(
+                        tonalElevation = LocalAbsoluteTonalElevation.current + 1.dp,
+                        shape = RoundedCornerShape(topStart = if (navBarOrientation == Orientation.Horizontal) 0.dp else 24.dp)
                     ) {
                         Navigator(chatScreen) {
-                            LaunchedEffect(Unit) {
-                                navigator = it
-                            }
-                            CurrentScreen()
+                            LaunchedEffect(Unit) { navigator = it }
+                            CrossfadeTransition(it)
                         }
                     }
                 }
