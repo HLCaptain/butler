@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -21,7 +23,6 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.PermanentNavigationDrawer
@@ -49,7 +51,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
@@ -77,6 +81,7 @@ import illyan.butler.ui.profile.ProfileDialogScreen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 class HomeScreen : Screen {
@@ -207,6 +212,11 @@ class HomeScreen : Screen {
                         }
                     }
                 }
+                val screens by remember { mutableStateOf(listOf(chatScreen, newChatScreen)) }
+                // Index is rememberSaveable, Screen is probably not.
+                var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
+                val currentScreen by remember { derivedStateOf { screens[currentScreenIndex] } }
+                LaunchedEffect(currentScreen) { navigator?.replaceAll(currentScreen) }
                 val (height, width) = getWindowSizeInDp()
                 var windowWidth by remember { mutableStateOf(width) }
                 val navBarOrientation by remember {
@@ -239,7 +249,7 @@ class HomeScreen : Screen {
                                 drawerState = drawerState,
                                 drawerContent = {
                                     NavigationDrawerContent(
-                                        currentScreen = navigator?.lastItem,
+                                        currentScreen = currentScreen,
                                         isProfileShown = isProfileDialogShowing,
                                         onProfileClick = {
                                             isProfileDialogShowing = true
@@ -247,11 +257,11 @@ class HomeScreen : Screen {
                                         },
                                         closeDrawer = { coroutineScope.launch { drawerState.close() } },
                                         navigateToChats = {
-                                            navigator?.replaceAll(chatScreen)
+                                            currentScreenIndex = screens.indexOf(chatScreen)
                                             coroutineScope.launch { drawerState.close() }
                                         },
                                         navigateToNewChat = {
-                                            navigator?.replaceAll(newChatScreen)
+                                            currentScreenIndex = screens.indexOf(newChatScreen)
                                             coroutineScope.launch { drawerState.close() }
                                         }
                                     )
@@ -261,14 +271,15 @@ class HomeScreen : Screen {
                                     NavigationRail(
                                         header = {
                                             HamburgerButton { coroutineScope.launch { drawerState.open() } }
-                                            NewChatFAB { navigator?.replaceAll(newChatScreen) }
+                                            NewChatFAB { currentScreenIndex = screens.indexOf(newChatScreen) }
                                         }
                                     ) {
-                                        ChatsNavigationRailItem(selected = navigator?.lastItem == chatScreen && !isProfileDialogShowing) {
-                                            navigator?.replaceAll(chatScreen)
+                                        Spacer(Modifier.height(16.dp))
+                                        ChatsNavigationRailItem(selected = screens[currentScreenIndex] == chatScreen && !isProfileDialogShowing) {
+                                            currentScreenIndex = screens.indexOf(chatScreen)
                                         }
-                                        NewChatNavigationRailItem(selected = navigator?.lastItem == newChatScreen && !isProfileDialogShowing) {
-                                            navigator?.replaceAll(newChatScreen)
+                                        NewChatNavigationRailItem(selected = screens[currentScreenIndex] == newChatScreen && !isProfileDialogShowing) {
+                                            currentScreenIndex = screens.indexOf(newChatScreen)
                                         }
                                         ProfileNavigationRailItem(selected = isProfileDialogShowing) {
                                             isProfileDialogShowing = true
@@ -281,11 +292,11 @@ class HomeScreen : Screen {
                             PermanentNavigationDrawer(
                                 drawerContent = {
                                     NavigationDrawerContent(
-                                        currentScreen = navigator?.lastItem,
+                                        currentScreen = currentScreen,
                                         isProfileShown = isProfileDialogShowing,
                                         onProfileClick = { isProfileDialogShowing = true },
-                                        navigateToChats = { navigator?.replaceAll(chatScreen) },
-                                        navigateToNewChat = { navigator?.replaceAll(newChatScreen) },
+                                        navigateToChats = { currentScreenIndex = screens.indexOf(chatScreen) },
+                                        navigateToNewChat = { currentScreenIndex = screens.indexOf(newChatScreen) },
                                         isDrawerPermanent = true
                                     )
                                 }
@@ -297,11 +308,11 @@ class HomeScreen : Screen {
                 }
                 val horizontalNavBar = @Composable {
                     NavigationBar {
-                        ChatsNavigationBarItem(selected = navigator?.lastItem == chatScreen && !isProfileDialogShowing) {
-                            navigator?.replaceAll(chatScreen)
+                        ChatsNavigationBarItem(selected = currentScreen == chatScreen && !isProfileDialogShowing) {
+                            currentScreenIndex = screens.indexOf(chatScreen)
                         }
-                        NewChatNavigationBarItem(selected = navigator?.lastItem == newChatScreen && !isProfileDialogShowing) {
-                            navigator?.replaceAll(newChatScreen)
+                        NewChatNavigationBarItem(selected = currentScreen == newChatScreen && !isProfileDialogShowing) {
+                            currentScreenIndex = screens.indexOf(newChatScreen)
                         }
                         ProfileNavigationBarItem(selected = isProfileDialogShowing) {
                             isProfileDialogShowing = true
@@ -322,121 +333,6 @@ class HomeScreen : Screen {
     }
 }
 
-@Composable
-fun HorizontalNavBar(
-    isCompact: Boolean = false,
-    onProfileClick: () -> Unit = {},
-    onNewChatClick: () -> Unit = {},
-    onChatsClick: () -> Unit = {}
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-    ) {
-        Crossfade(isCompact) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                if (it) {
-                    CompactChatsButton(onClick = onChatsClick)
-                    CompactNewChatButton(onClick = onNewChatClick)
-                    CompactProfileButton(onClick = onProfileClick)
-                } else {
-                    ChatsButton(onClick = onChatsClick)
-                    NewChatButton(onClick = onNewChatClick)
-                    ProfileButton(onClick = onProfileClick)
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun CompactChatsButton(onClick: () -> Unit = {}) {
-    PlainTooltipWithContent(
-        tooltip = { Text(stringResource(Res.string.chats)) },
-        enabledGestures = getNavBarTooltipGestures(),
-        content = { modifier ->
-            IconButton(
-                onClick = onClick
-            ) {
-                Icon(
-                    modifier = modifier,
-                    imageVector = Icons.AutoMirrored.Filled.Chat,
-                    contentDescription = stringResource(Res.string.chats)
-                )
-            }
-        },
-    )
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun CompactProfileButton(onClick: () -> Unit = {}) {
-    PlainTooltipWithContent(
-        tooltip = { Text(stringResource(Res.string.profile)) },
-        enabledGestures = getNavBarTooltipGestures(),
-        content = { modifier ->
-            IconButton(
-                onClick = onClick
-            ) {
-                Icon(
-                    modifier = modifier,
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = stringResource(Res.string.profile)
-                )
-            }
-        }
-    )
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun CompactNewChatButton(onClick: () -> Unit = {}) {
-    PlainTooltipWithContent(
-        tooltip = { Text(stringResource(Res.string.new_chat)) },
-        enabledGestures = getNavBarTooltipGestures(),
-        content = { modifier ->
-            IconButton(
-                onClick = onClick
-            ) {
-                Icon(
-                    modifier = modifier,
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = stringResource(Res.string.new_chat)
-                )
-            }
-        }
-    )
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun ChatsButton(onClick: () -> Unit = {}) {
-    MenuButton(
-        text = stringResource(Res.string.chats),
-        onClick = onClick
-    )
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun NewChatButton(onClick: () -> Unit = {}) {
-    MenuButton(
-        text = stringResource(Res.string.new_chat),
-        onClick = onClick
-    )
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun ProfileButton(onClick: () -> Unit = {}) {
-    Button(onClick = onClick) {
-        Text(stringResource(Res.string.profile))
-    }
-}
-
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun ChatsNavigationRailItem(
@@ -446,13 +342,8 @@ private fun ChatsNavigationRailItem(
     NavigationRailItem(
         selected = selected,
         onClick = onClick,
-        icon = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Chat,
-                contentDescription = stringResource(Res.string.chats)
-            )
-        },
-        label = { Text(stringResource(Res.string.chats)) }
+        icon = Icons.AutoMirrored.Filled.Chat,
+        stringResource = Res.string.chats
     )
 }
 
@@ -465,13 +356,8 @@ private fun NewChatNavigationRailItem(
     NavigationRailItem(
         selected = selected,
         onClick = onClick,
-        icon = {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = stringResource(Res.string.new_chat)
-            )
-        },
-        label = { Text(stringResource(Res.string.new_chat)) }
+        icon = Icons.Filled.Add,
+        stringResource = Res.string.new_chat
     )
 }
 
@@ -484,13 +370,29 @@ private fun ProfileNavigationRailItem(
     NavigationRailItem(
         selected = selected,
         onClick = onClick,
+        icon = Icons.Filled.Person,
+        stringResource = Res.string.profile
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun NavigationRailItem(
+    selected: Boolean = false,
+    onClick: () -> Unit = {},
+    icon: ImageVector,
+    stringResource: StringResource
+) {
+    NavigationRailItem(
+        onClick = onClick,
+        selected = selected,
         icon = {
             Icon(
-                imageVector = Icons.Filled.Person,
-                contentDescription = stringResource(Res.string.profile)
+                imageVector = icon,
+                contentDescription = stringResource(stringResource)
             )
         },
-        label = { Text(stringResource(Res.string.profile)) }
+        label = { Text(stringResource(stringResource)) }
     )
 }
 
@@ -501,15 +403,10 @@ fun ChatsNavigationDrawerItem(
     onClick: () -> Unit = {}
 ) {
     NavigationDrawerItem(
-        selected = selected,
         onClick = onClick,
-        icon = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Chat,
-                contentDescription = stringResource(Res.string.chats)
-            )
-        },
-        label = { Text(stringResource(Res.string.chats)) }
+        selected = selected,
+        icon = Icons.AutoMirrored.Filled.Chat,
+        stringResource = Res.string.chats
     )
 }
 
@@ -522,13 +419,8 @@ fun NewChatNavigationDrawerItem(
     NavigationDrawerItem(
         selected = selected,
         onClick = onClick,
-        icon = {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = stringResource(Res.string.new_chat)
-            )
-        },
-        label = { Text(stringResource(Res.string.new_chat)) }
+        icon = Icons.Filled.Add,
+        stringResource = Res.string.new_chat
     )
 }
 
@@ -541,13 +433,31 @@ fun ProfileNavigationDrawerItem(
     NavigationDrawerItem(
         selected = selected,
         onClick = onClick,
+        icon = Icons.Filled.Person,
+        stringResource = Res.string.profile
+    )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun NavigationDrawerItem(
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    onClick: () -> Unit = {},
+    icon: ImageVector,
+    stringResource: StringResource
+) {
+    NavigationDrawerItem(
+        modifier = modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+        selected = selected,
+        onClick = onClick,
         icon = {
             Icon(
-                imageVector = Icons.Filled.Person,
-                contentDescription = stringResource(Res.string.profile)
+                imageVector = icon,
+                contentDescription = stringResource(stringResource)
             )
         },
-        label = { Text(stringResource(Res.string.profile)) }
+        label = { Text(stringResource(stringResource)) }
     )
 }
 
@@ -581,6 +491,7 @@ fun HamburgerButton(onClick: () -> Unit = {}) {
 @Composable
 fun CloseButton(onClick: () -> Unit = {}) {
     IconButton(
+        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
         onClick = onClick
     ) {
         Icon(
@@ -673,41 +584,6 @@ fun RowScope.ProfileNavigationBarItem(
         },
         label = { Text(stringResource(Res.string.profile)) }
     )
-}
-
-@Composable
-fun VerticalNavBar(
-    isCompact: Boolean = false,
-    onProfileClick: () -> Unit = {},
-    onNewChatClick: () -> Unit = {},
-    onChatsClick: () -> Unit = {}
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-    ) {
-        Crossfade(isCompact) {
-            Column(
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    if (it) {
-                        CompactChatsButton(onClick = onChatsClick)
-                        CompactNewChatButton(onClick = onNewChatClick)
-                    } else {
-                        ChatsButton(onClick = onChatsClick)
-                        NewChatButton(onClick = onNewChatClick)
-
-                    }
-                }
-                if (it) {
-                    CompactProfileButton(onClick = onProfileClick)
-                } else {
-                    ProfileButton(onClick = onProfileClick)
-                }
-            }
-        }
-    }
 }
 
 expect fun getNavBarTooltipGestures(): List<GestureType>
