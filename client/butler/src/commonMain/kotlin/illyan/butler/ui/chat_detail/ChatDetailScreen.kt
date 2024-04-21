@@ -13,18 +13,19 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -52,6 +53,7 @@ import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.send
+import illyan.butler.generated.resources.send_message
 import illyan.butler.generated.resources.you
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -211,35 +213,33 @@ fun MessageField(
     modifier: Modifier = Modifier,
     sendMessage: (String) -> Unit,
 ) {
-    Card(
+    Row(
         modifier = modifier
+            .padding(8.dp)
+            .animateContentSize(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .animateContentSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            var textMessage by rememberSaveable { mutableStateOf("") }
-            TextField(
-                modifier = Modifier.weight(1f, fill = true),
-                value = textMessage,
-                onValueChange = { textMessage = it },
-            )
+        var textMessage by rememberSaveable { mutableStateOf("") }
+        OutlinedTextField(
+            modifier = Modifier.weight(1f, fill = true),
+            value = textMessage,
+            onValueChange = { textMessage = it },
+            shape = RoundedCornerShape(16.dp),
+            placeholder = { Text(stringResource(Res.string.send_message)) }
+        )
 
-            IconButton(
-                modifier = Modifier.padding(4.dp),
-                onClick = {
-                    sendMessage(textMessage)
-                    textMessage = ""
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = stringResource(Res.string.send),
-                    tint =  MaterialTheme.colorScheme.primary
-                )
+        IconButton(
+            modifier = Modifier.padding(4.dp),
+            onClick = {
+                sendMessage(textMessage)
+                textMessage = ""
             }
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.Send,
+                contentDescription = stringResource(Res.string.send),
+                tint =  MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

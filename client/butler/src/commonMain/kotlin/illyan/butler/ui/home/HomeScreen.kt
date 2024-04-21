@@ -222,7 +222,7 @@ class HomeScreen : Screen {
                         tonalElevation = 0.dp,
                         shape = RoundedCornerShape(topStart = if (navBarOrientation == Orientation.Vertical) 24.dp else 0.dp)
                     ) {
-                        Navigator(chatScreen) {
+                        Navigator(currentScreen) {
                             LaunchedEffect(Unit) { navigator = it }
                             CrossfadeTransition(navigator = it)
                         }

@@ -1,33 +1,43 @@
 package illyan.butler.ui.new_chat
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select
 import illyan.butler.ui.components.MenuButton
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
 class NewChatScreen(private val createdNewChat: (String) -> Unit) : Screen {
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<NewChatScreenModel>()
@@ -38,29 +48,54 @@ class NewChatScreen(private val createdNewChat: (String) -> Unit) : Screen {
                 createdNewChat(state.newChatId!!)
             }
         }
-
-        ModelList(
-            state = state,
-            selectModel = screenModel::createChatWithModel
-        )
+        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(Res.string.new_chat),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    scrollBehavior = scrollBehavior,
+                )
+            },
+        ) { innerPadding ->
+            Crossfade(state.availableModels) { models ->
+                if (models == null) {
+                    Text("Loading...")
+                } else if (models.isNotEmpty()) {
+                    ModelList(
+                        modifier = Modifier.padding(innerPadding),
+                        state = state,
+                        selectModel = screenModel::createChatWithModel
+                    )
+                } else {
+                    Text("No models available")
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun ModelList(
+    modifier: Modifier = Modifier,
     state: NewChatState,
     selectModel: (String) -> Unit
 ) {
-    AnimatedVisibility(state.availableModels != null) {
-        LazyColumn(
-            modifier = Modifier.padding(8.dp).fillMaxHeight()
-        ) {
-            items(state.availableModels ?: emptyList()) {
-                ModelListItem(
-                    model = it,
-                    selectModel = { selectModel(it.id) }
-                )
-            }
+    LazyColumn(
+        modifier = modifier.fillMaxHeight(),
+        contentPadding = PaddingValues(12.dp),
+    ) {
+        items(state.availableModels ?: emptyList()) {
+            ModelListItem(
+                model = it,
+                selectModel = { selectModel(it.id) }
+            )
         }
     }
 }
@@ -71,7 +106,8 @@ fun ModelListItem(
     model: DomainModel,
     selectModel: () -> Unit
 ) {
-    Card(
+    ElevatedCard(
+        modifier = Modifier.padding(vertical = 4.dp),
         onClick = selectModel
     ) {
         Row(

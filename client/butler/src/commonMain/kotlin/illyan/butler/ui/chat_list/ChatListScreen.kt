@@ -4,31 +4,20 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallTopAppBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -79,41 +68,28 @@ class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
                     scrollBehavior = scrollBehavior,
                 )
             },
-        ) {
+        ) { insetsPadding ->
             Crossfade(
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier.padding(insetsPadding),
                 targetState = chats.isEmpty()
             ) {
                 if (it) {
                     Text(
+                        modifier = Modifier.padding(8.dp),
                         text = stringResource(Res.string.no_chats),
                         style = MaterialTheme.typography.headlineLarge
                     )
                 } else {
-                    Column {
-                        Text(
-                            text = stringResource(Res.string.chats),
-                            style = MaterialTheme.typography.headlineLarge
-                        )
-                        Column(
-                            modifier = Modifier
-                                .animateContentSize()
-                                .padding(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .animateContentSize()
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(chats) { chat ->
-                                    ChatCard(
-                                        chat = chat,
-                                        openChat = { openChat(chat.id!!) }
-                                    )
-                                }
-                            }
+                    LazyColumn(
+                        modifier = Modifier.animateContentSize(),
+                        contentPadding = PaddingValues(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(chats) { chat ->
+                            ChatCard(
+                                chat = chat,
+                                openChat = { openChat(chat.id!!) }
+                            )
                         }
                     }
                 }
@@ -127,7 +103,7 @@ class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
         chat: DomainChat,
         openChat: () -> Unit
     ) {
-        Card(
+        ElevatedCard(
             onClick = openChat
         ) {
             Row(
