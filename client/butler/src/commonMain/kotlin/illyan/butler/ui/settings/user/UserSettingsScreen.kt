@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,7 +65,6 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -96,7 +94,6 @@ import illyan.butler.generated.resources.disabled
 import illyan.butler.generated.resources.dismiss
 import illyan.butler.generated.resources.dynamic_color
 import illyan.butler.generated.resources.enabled
-import illyan.butler.generated.resources.last_update
 import illyan.butler.generated.resources.light
 import illyan.butler.generated.resources.not_synced
 import illyan.butler.generated.resources.not_syncing
@@ -123,11 +120,7 @@ import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.ui.theme.canUseDynamicColors
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.random.Random
-import kotlin.time.Duration.Companion.seconds
 
 class UserSettingsScreen : Screen {
     @Composable
@@ -252,7 +245,7 @@ fun AnalyticsRequestDialogContent(
         },
         buttons = {
             AnalyticsRequestButtons(
-                modifier = Modifier.align(Alignment.End),
+//                modifier = Modifier.align(Alignment.End),
                 onDismiss = {
                     analyticsSet = true
                     setAnalytics(false)
@@ -292,7 +285,6 @@ fun UserSettingsTitle(
     preferences: DomainPreferences? = null,
 ) {
     FlowRow(
-        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
@@ -309,12 +301,12 @@ fun UserSettingsTitle(
                 label = "User Settings Title",
             ) {
                 if (it && preferences != null) {
-                    Column(
-                        horizontalAlignment = Alignment.End
-                    ) {
+//                    Column(
+//                        horizontalAlignment = Alignment.End
+//                    ) {
 //                        ClientLabel(clientUUID = preferences.clientId)
 //                        LastUpdateLabel(lastUpdate = preferences.lastUpdate)
-                    }
+//                    }
                 } else {
                     MediumCircularProgressIndicator()
                 }
@@ -371,7 +363,6 @@ fun UserSettingsButtons(
     navigateToDataSettings: () -> Unit = {}
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -436,47 +427,47 @@ private fun SyncPreferencesButton(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun LastUpdateLabel(
-    lastUpdate: ZonedDateTime,
-) {
-    val time = lastUpdate
-        .withZoneSameInstant(ZoneId.systemDefault())
-        .minusNanos(lastUpdate.nano.toLong()) // No millis in formatted time
-        .format(DateTimeFormatter.ISO_LOCAL_TIME)
-    val date = lastUpdate
-        .withZoneSameInstant(ZoneId.systemDefault())
-        .minusNanos(lastUpdate.nano.toLong()) // No millis in formatted time
-        .format(DateTimeFormatter.ISO_LOCAL_DATE)
-    val isDateVisible by remember {
-        derivedStateOf {
-            lastUpdate.toEpochSecond().seconds.inWholeDays !=
-                    ZonedDateTime.now().toEpochSecond().seconds.inWholeDays
-        }
-    }
-    val textStyle = MaterialTheme.typography.bodyMedium
-    SettingLabel(
-        settingName = stringResource(Res.string.last_update),
-        settingNameStyle = textStyle.plus(TextStyle(fontWeight = FontWeight.SemiBold)),
-        settingIndicator = {
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                AnimatedVisibility(visible = isDateVisible) {
-                    Text(
-                        text = date,
-                        style = textStyle,
-                    )
-                }
-                Text(
-                    text = time,
-                    style = textStyle
-                )
-            }
-        },
-    )
-}
+//@OptIn(ExperimentalResourceApi::class)
+//@Composable
+//private fun LastUpdateLabel(
+//    lastUpdate: ZonedDateTime,
+//) {
+//    val time = lastUpdate
+//        .withZoneSameInstant(ZoneId.systemDefault())
+//        .minusNanos(lastUpdate.nano.toLong()) // No millis in formatted time
+//        .format(DateTimeFormatter.ISO_LOCAL_TIME)
+//    val date = lastUpdate
+//        .withZoneSameInstant(ZoneId.systemDefault())
+//        .minusNanos(lastUpdate.nano.toLong()) // No millis in formatted time
+//        .format(DateTimeFormatter.ISO_LOCAL_DATE)
+//    val isDateVisible by remember {
+//        derivedStateOf {
+//            lastUpdate.toEpochSecond().seconds.inWholeDays !=
+//                    ZonedDateTime.now().toEpochSecond().seconds.inWholeDays
+//        }
+//    }
+//    val textStyle = MaterialTheme.typography.bodyMedium
+//    SettingLabel(
+//        settingName = stringResource(Res.string.last_update),
+//        settingNameStyle = textStyle.plus(TextStyle(fontWeight = FontWeight.SemiBold)),
+//        settingIndicator = {
+//            Column(
+//                horizontalAlignment = Alignment.End
+//            ) {
+//                AnimatedVisibility(visible = isDateVisible) {
+//                    Text(
+//                        text = date,
+//                        style = textStyle,
+//                    )
+//                }
+//                Text(
+//                    text = time,
+//                    style = textStyle
+//                )
+//            }
+//        },
+//    )
+//}
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -641,7 +632,6 @@ fun BooleanSetting(
     enabled: Boolean = true,
 ) {
     SettingItem(
-        modifier = Modifier.fillMaxWidth(),
         settingName = settingName,
         onClick = { setValue(!value) },
         titleStyle = textStyle,
@@ -689,7 +679,6 @@ fun <T : Any> DropdownSetting(
     fontWeight: FontWeight = FontWeight.Normal,
 ) {
     SettingItem(
-        modifier = Modifier.fillMaxWidth(),
         settingName = settingName,
         onClick = toggleDropdown,
         titleStyle = textStyle,
@@ -887,9 +876,7 @@ fun SettingItem(
         enabled = enabled,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

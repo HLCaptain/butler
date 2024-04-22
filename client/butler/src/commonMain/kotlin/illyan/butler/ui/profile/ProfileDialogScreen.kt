@@ -4,11 +4,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -331,23 +335,20 @@ fun ProfileDetailsScreen(
     showConfidentialInfo: Boolean = false,
     onConfidentialInfoVisibilityChanged: (Boolean) -> Unit = {},
 ) {
-    Column(
-        modifier = modifier
+    Row(
+        modifier = modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-//            modifier = Modifier.fillMaxWidth(),
-        ) {
-            ConfidentialInfoToggleButton(
-                showConfidentialInfo = showConfidentialInfo,
-                anyConfidentialInfo = confidentialInfo.isNotEmpty(),
-                onVisibilityChanged = onConfidentialInfoVisibilityChanged
-            )
-            UserInfoList(
-                confidentialInfo = confidentialInfo,
-                info = info,
-                showConfidentialInfo = showConfidentialInfo
-            )
-        }
+        UserInfoList(
+            confidentialInfo = confidentialInfo,
+            info = info,
+            showConfidentialInfo = showConfidentialInfo
+        )
+        ConfidentialInfoToggleButton(
+            showConfidentialInfo = showConfidentialInfo,
+            anyConfidentialInfo = confidentialInfo.isNotEmpty(),
+            onVisibilityChanged = onConfidentialInfoVisibilityChanged
+        )
     }
 }
 
