@@ -1,6 +1,7 @@
 package illyan.butler.repository
 
 import illyan.butler.domain.model.AppSettings
+import illyan.butler.domain.model.DomainPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -19,5 +20,9 @@ class AppMemoryRepository : AppRepository {
 
     override suspend fun setTutorialDone(isTutorialDone: Boolean) {
         _isTutorialDone.update { isTutorialDone }
+    }
+
+    override suspend fun setUserPreferences(preferences: DomainPreferences) {
+        _appSettings.update { it.copy(preferences = preferences) }
     }
 }

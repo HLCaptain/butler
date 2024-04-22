@@ -38,4 +38,26 @@
     <string name="assistant">Assistant</string>
     <string name="back">Back</string>
     <string name="menu">Menu</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="turn_on">Turn on</string>
+    <string name="settings">Settings</string>
+    <string name="data_settings">Data settings</string>
+    <string name="synced">Synced</string>
+    <string name="not_synced">Not synced</string>
+    <string name="syncing">Syncing</string>
+    <string name="not_syncing">Not syncing</string>
+    <string name="last_update">Last update</string>
+    <string name="theme">Theme</string>
+    <string name="system">System</string>
+    <string name="dark">Dark</string>
+    <string name="light">Light</string>
+    <string name="day_night_cycle">Day-Night Cycle</string>
+    <string name="dynamic_color">Dynamic color</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    <string name="analytics">Analytics</string>
+    <string name="turn_on_analytics">Turn on analytics</string>
+    <string name="turn_on_analytics_description">Analytics help the development of Butler to provide a more stable and better experience. By turning on analytics, you anonymously send event data, crash logs and performance metrics to us. App restart may be required for the setting to be active.</string>
 </resources>

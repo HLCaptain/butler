@@ -4,6 +4,7 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.AppSettings
+import illyan.butler.domain.model.DomainPreferences
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -57,4 +58,9 @@ class AppSettingsRepository(
     )
 
     override suspend fun setTutorialDone(isTutorialDone: Boolean) = settings.putBoolean("IS_TUTORIAL_DONE", isTutorialDone)
+
+    @OptIn(ExperimentalSerializationApi::class)
+    override suspend fun setUserPreferences(preferences: DomainPreferences) {
+        settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(appSettings.value?.copy(preferences = preferences)))
+    }
 }
