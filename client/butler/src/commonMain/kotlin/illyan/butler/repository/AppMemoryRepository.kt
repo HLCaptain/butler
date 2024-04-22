@@ -1,5 +1,6 @@
 package illyan.butler.repository
 
+import illyan.butler.domain.model.AppSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -7,7 +8,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class AppMemoryRepository : AppRepository {
-    private val _appSettings = MutableStateFlow(null)
+    private val _appSettings = MutableStateFlow(AppSettings.default)
     override val appSettings = _appSettings.asStateFlow()
 
     private val _firstSignInHappenedYet = MutableStateFlow(false)
