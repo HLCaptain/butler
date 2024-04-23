@@ -21,13 +21,13 @@ package illyan.butler.ui.settings.user
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -61,7 +61,6 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -116,6 +115,7 @@ import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.TooltipElevatedCard
+import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.ui.theme.canUseDynamicColors
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -163,7 +163,7 @@ fun UserSettingsDialogContent(
     navigateToMLSettings: () -> Unit = {},
 ) {
     Crossfade(
-        modifier = modifier.animateContentSize(),
+        modifier = modifier.animateContentSize().smallDialogWidth(),
         targetState = showAnalyticsRequestDialog,
         label = "User Settings Dialog Content",
     ) {
@@ -292,7 +292,6 @@ fun UserSettingsTitle(
             SyncPreferencesLabel(arePreferencesSynced = arePreferencesSynced)
         }
         Row(
-            modifier = Modifier.weight(1f),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.Top
         ) {
@@ -363,6 +362,7 @@ fun UserSettingsButtons(
     navigateToDataSettings: () -> Unit = {}
 ) {
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -743,11 +743,11 @@ fun <T : Any> DropdownSetting(
                     }
                 }
                 DropdownMenuItem(
-                    modifier = if (value == selectedValue) {
-                        Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(elevation = 1.dp))
-                    } else {
-                        Modifier
-                    },
+//                    modifier = if (value == selectedValue) {
+//                        Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(elevation = 1.dp))
+//                    } else {
+//                        Modifier
+//                    },
                     text = { Text(text = getValueName(value)) },
                     leadingIcon = (if (leadingIcon != null) leadingComposable else null) as? @Composable (() -> Unit),
                     trailingIcon = (if (trailingIcon != null) trailingComposable else null) as? @Composable (() -> Unit),
@@ -858,7 +858,6 @@ fun SettingItem(
     content = content
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingItem(
     modifier: Modifier = Modifier,
@@ -870,13 +869,23 @@ fun SettingItem(
     Card(
         modifier = modifier.animateContentSize(),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            disabledElevation = 0.dp,
+            draggedElevation = 0.dp,
+            hoveredElevation = 0.dp,
         ),
         onClick = onClick,
         enabled = enabled,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
