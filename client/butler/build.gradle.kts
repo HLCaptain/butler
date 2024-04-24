@@ -99,6 +99,7 @@ kotlin {
                 implementation(libs.store)
                 implementation(libs.settings)
                 implementation(libs.settings.coroutines)
+                implementation(libs.korge.core)
 
                 api(libs.napier)
             }
