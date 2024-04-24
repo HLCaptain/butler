@@ -201,6 +201,12 @@ kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
 }
 
+val localProperties = localPropertiesFile.readLines().associate {
+    if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
+    val (key, value) = it.split("=", limit = 2)
+    key to value
+}
+
 buildConfig {
     // Setting required for collision avoidance with Android platform BuildConfig
     packageName = "illyan.butler.config"
@@ -218,7 +224,7 @@ buildConfig {
 
         println("Task [$taskName] isProd=$isProd")
 
-        val useMemoryDb = true // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
+        val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
         buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString()) //
     }
@@ -251,26 +257,20 @@ android {
     }
 
     signingConfigs {
-        val properties = localPropertiesFile.readLines().associate {
-            if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
-            val (key, value) = it.split("=", limit = 2)
-            key to value
-        }
-
-        val debugStorePath = properties["DEBUG_KEY_PATH"].toString()
-        val debugKeyAlias = properties["DEBUG_KEY_ALIAS"].toString()
-        val debugStorePassword = properties["DEBUG_KEYSTORE_PASSWORD"].toString()
-        val debugKeyPassword = properties["DEBUG_KEY_PASSWORD"].toString()
+        val debugStorePath = localProperties["DEBUG_KEY_PATH"].toString()
+        val debugKeyAlias = localProperties["DEBUG_KEY_ALIAS"].toString()
+        val debugStorePassword = localProperties["DEBUG_KEYSTORE_PASSWORD"].toString()
+        val debugKeyPassword = localProperties["DEBUG_KEY_PASSWORD"].toString()
         getByName("debug") {
             storeFile = file(debugStorePath)
             keyAlias = debugKeyAlias
             storePassword = debugStorePassword
             keyPassword = debugKeyPassword
         }
-        val releaseStorePath = properties["RELEASE_KEY_PATH"].toString()
-        val releaseKeyAlias = properties["RELEASE_KEY_ALIAS"].toString()
-        val releaseStorePassword = properties["RELEASE_KEYSTORE_PASSWORD"].toString()
-        val releaseKeyPassword = properties["RELEASE_KEY_PASSWORD"].toString()
+        val releaseStorePath = localProperties["RELEASE_KEY_PATH"].toString()
+        val releaseKeyAlias = localProperties["RELEASE_KEY_ALIAS"].toString()
+        val releaseStorePassword = localProperties["RELEASE_KEYSTORE_PASSWORD"].toString()
+        val releaseKeyPassword = localProperties["RELEASE_KEY_PASSWORD"].toString()
         create("release") {
             storeFile = file(releaseStorePath)
             keyAlias = releaseKeyAlias
