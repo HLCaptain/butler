@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.crypt)
     implementation(libs.exposed.dao)
+    implementation(libs.exposed.json)
 
     implementation(libs.napier)
 

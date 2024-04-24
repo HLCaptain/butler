@@ -31,14 +31,14 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
 }
 
 @Single
-fun provideOpenAIClients(client: HttpClient): List<OpenAI> {
-    return AppConfig.Api.OPEN_AI_API_URLS.map {
+fun provideOpenAIClients(client: HttpClient): Map<String, OpenAI> {
+    return AppConfig.Api.OPEN_AI_API_URLS.associateWith { url ->
         OpenAI(
             config = OpenAIConfig(
                 token = AppConfig.Api.OPEN_AI_API_KEY,
                 logging = LoggingConfig(LogLevel.All, Logger.Default),
                 engine = client.engine,
-                host = OpenAIHost(baseUrl = it),
+                host = OpenAIHost(baseUrl = url),
                 timeout = Timeout(
                     request = 10.minutes,
                     connect = 10.minutes,

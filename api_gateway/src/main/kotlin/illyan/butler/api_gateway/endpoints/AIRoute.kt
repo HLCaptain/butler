@@ -24,4 +24,10 @@ fun Route.aiRoute() {
             call.respond(HttpStatusCode.OK, aiService.getAIModel(modelId))
         }
     }
+
+    route("/providers") {
+        get {
+            call.respond(HttpStatusCode.OK, aiService.getAIModelProviders())
+        }
+    }
 }

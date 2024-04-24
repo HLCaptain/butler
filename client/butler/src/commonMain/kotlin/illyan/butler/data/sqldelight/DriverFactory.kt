@@ -23,7 +23,10 @@ private suspend fun createDatabase(): Database {
 
     val database = Database(
         driver = driver,
-        ChatAdapter = Chat.Adapter(membersAdapter = listAdapter),
+        ChatAdapter = Chat.Adapter(
+            membersAdapter = listAdapter,
+            aiEndpointsAdapter = mapAdapter
+        ),
         ErrorEventAdapter = ErrorEvent.Adapter(
             stateAdapter = errorStateAdapter,
             metadataAdapter = mapAdapter

@@ -76,9 +76,14 @@ class ChatManager(
     fun getChatFlow(chatId: String) = userChats.map { chats -> chats.firstOrNull { it.id == chatId } }
     fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
 
-    suspend fun startNewChat(modelId: String): String {
+    suspend fun startNewChat(modelId: String, endpoint: String? = null): String {
         return authManager.signedInUserId.first()?.let { userId ->
-            chatRepository.upsert(DomainChat(members = listOf(userId, modelId)))
+            chatRepository.upsert(
+                DomainChat(
+                    members = listOf(userId, modelId),
+                    aiEndpoints = endpoint?.let { mapOf(modelId to it) } ?: emptyMap()
+                )
+            )
         } ?: throw IllegalArgumentException("User not signed in")
     }
 

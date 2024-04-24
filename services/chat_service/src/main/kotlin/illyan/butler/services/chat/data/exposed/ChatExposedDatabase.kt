@@ -12,6 +12,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -57,6 +60,7 @@ class ChatExposedDatabase(
             val chatId = Chats.insertAndGetId {
                 it[name] = chat.name
                 it[created] = createdMillis
+                it[endpoints] = chat.aiEndpoint
             }
             (chat.members + userId).distinct().forEach { member ->
                 ChatMembers.insertIgnore {
@@ -241,6 +245,7 @@ class ChatExposedDatabase(
         created = this[Chats.created],
         name = this[Chats.name],
         members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.userId] },
-        lastFewMessages = messages
+        lastFewMessages = messages,
+        aiEndpoint = this[Chats.endpoints]
     )
 }

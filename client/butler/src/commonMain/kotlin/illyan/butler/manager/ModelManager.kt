@@ -8,5 +8,5 @@ import org.koin.core.annotation.Single
 class ModelManager(
     private val modelRepository: ModelRepository
 ) {
-    suspend fun getAvailableModels() = modelRepository.getAvailableModels().map { it.toDomainModel() }
+    suspend fun getAvailableModels() = modelRepository.getAvailableModels().mapKeys { (model, _) -> model.toDomainModel() }
 }

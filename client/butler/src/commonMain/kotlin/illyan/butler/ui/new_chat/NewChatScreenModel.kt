@@ -22,7 +22,7 @@ class NewChatScreenModel(
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
     private val chatManager: ChatManager
 ) : ScreenModel {
-    private val availableModels = MutableStateFlow(emptyList<DomainModel>())
+    private val availableModels = MutableStateFlow(emptyMap<DomainModel, List<String>>())
     private val creatingNewChat = MutableStateFlow(false)
     private val newChatId = MutableStateFlow<String?>(null)
 
@@ -48,10 +48,10 @@ class NewChatScreenModel(
         initialValue = NewChatState()
     )
 
-    fun createChatWithModel(modelId: String) {
+    fun createChatWithModel(modelId: String, endpoint: String? = null) {
         screenModelScope.launch(dispatcherIO) {
             creatingNewChat.update { true }
-            val id = chatManager.startNewChat(modelId)
+            val id = chatManager.startNewChat(modelId, endpoint)
             creatingNewChat.update { false }
             newChatId.update { id }
         }
