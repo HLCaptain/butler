@@ -13,3 +13,5 @@ expect fun getWindowSizeInDp(): Pair<Dp, Dp>
 expect fun getOsName(): String
 
 expect fun getSystemMetadata(): Map<String, String>
+
+expect fun canRecordAudio(): Boolean

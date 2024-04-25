@@ -34,3 +34,7 @@ actual fun getSystemMetadata(): Map<String, String> {
         "Build.VERSION.SECURITY_PATCH" to Build.VERSION.SECURITY_PATCH
     )
 }
+
+actual fun canRecordAudio(): Boolean {
+    return true
+}

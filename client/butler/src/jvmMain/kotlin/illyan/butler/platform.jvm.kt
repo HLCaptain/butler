@@ -37,3 +37,7 @@ actual fun getSystemMetadata(): Map<String, String> {
         "java.vm.name" to System.getProperty("java.vm.name")
     )
 }
+
+actual fun canRecordAudio(): Boolean {
+    return false
+}

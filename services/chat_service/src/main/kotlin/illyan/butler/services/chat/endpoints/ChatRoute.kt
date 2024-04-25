@@ -2,6 +2,7 @@ package illyan.butler.services.chat.endpoints
 
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
+import illyan.butler.services.chat.data.model.chat.ResourceDto
 import illyan.butler.services.chat.data.service.ChatService
 import illyan.butler.services.chat.endpoints.utils.WebSocketServerHandler
 import io.github.aakira.napier.Napier
@@ -123,6 +124,13 @@ fun Route.chatRoute() {
                             call.respond(chatService.editMessage(userId, message))
                         }
 
+                        post("/resources") {
+                            val userId = call.parameters["userId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                            val messageId = call.parameters["messageId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                            val resource = call.receive<ResourceDto>()
+                            call.respond(HttpStatusCode.Created, chatService.createResource(userId, messageId, resource))
+                        }
+
                         delete {
                             val userId = call.parameters["userId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
                             val chatId = call.parameters["chatId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
@@ -131,6 +139,19 @@ fun Route.chatRoute() {
                         }
                     }
                 }
+            }
+        }
+        route("/resources/{resourceId}") {
+            get {
+                val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val resourceId = call.parameters["resourceId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                call.respond(HttpStatusCode.OK, chatService.getResource(userId, resourceId))
+            }
+
+            delete {
+                val userId = call.parameters["userId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                val resourceId = call.parameters["resourceId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                call.respond(chatService.deleteResource(userId, resourceId))
             }
         }
     }

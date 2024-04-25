@@ -1,13 +1,13 @@
 package illyan.butler.services.chat.data.service
 
-import illyan.butler.services.chat.data.cache.ChatCache
-import illyan.butler.services.chat.data.cache.MessageCache
 import illyan.butler.services.chat.data.datasource.ChatDataSource
 import illyan.butler.services.chat.data.datasource.MessageDataSource
+import illyan.butler.services.chat.data.datasource.ResourceDataSource
 import illyan.butler.services.chat.data.db.ChatDatabase
 import illyan.butler.services.chat.data.db.MessageDatabase
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
+import illyan.butler.services.chat.data.model.chat.ResourceDto
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single
@@ -28,7 +28,7 @@ class ChatService(
     private val chatDatabase: ChatDatabase,
 //    private val messageCache: MessageCache,
     private val messageDatabase: MessageDatabase
-) : ChatDataSource, MessageDataSource {
+) : ChatDataSource, MessageDataSource, ResourceDataSource {
     override suspend fun getChat(userId: String, chatId: String): ChatDto {
 //        return chatCache.getChat(chatId) ?: chatDatabase.getChat(userId, chatId).also {
 //            chatCache.setChat(it)
@@ -153,5 +153,17 @@ class ChatService(
     override fun getChangedMessagesByChat(userId: String, chatId: String): Flow<List<MessageDto>> {
 //        return messageCache.getChangedMessagesByChat(chatId)
         return messageDatabase.getChangedMessagesAffectingChat(userId, chatId)
+    }
+
+    override suspend fun createResource(userId: String, messageId: String, resource: ResourceDto): ResourceDto {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getResource(userId: String, resourceId: String): ResourceDto? {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteResource(userId: String, resourceId: String): Boolean {
+        TODO("Not yet implemented")
     }
 }

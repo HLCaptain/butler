@@ -3,9 +3,9 @@ package illyan.butler.services.chat.data.exposed
 import illyan.butler.services.chat.data.db.MessageDatabase
 import illyan.butler.services.chat.data.model.chat.MessageDto
 import illyan.butler.services.chat.data.schema.ChatMembers
-import illyan.butler.services.chat.data.schema.ContentUrls
-import illyan.butler.services.chat.data.schema.MessageContentUrls
+import illyan.butler.services.chat.data.schema.MessageResources
 import illyan.butler.services.chat.data.schema.Messages
+import illyan.butler.services.chat.data.schema.Resources
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +33,7 @@ class MessageExposedDatabase(
 ): MessageDatabase {
     init {
         transaction(database) {
-            SchemaUtils.create(Messages, ChatMembers, ContentUrls, MessageContentUrls)
+            SchemaUtils.create(Messages, ChatMembers, Resources, MessageResources)
         }
     }
     override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
@@ -53,16 +53,16 @@ class MessageExposedDatabase(
             }
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
-            message.contentUrls.forEach { url ->
-                var newUrlId = ContentUrls.insertIgnoreAndGetId { it[this.url] = url }
+            message.resourceIds.forEach { id ->
+                var newUrlId = Resources.insertIgnoreAndGetId { it[this.type] = id }
                 // InsertIgnoreAndGetId returns null if the row already exists
                 if (newUrlId == null) {
                     // If the row already exists, get the id of the existing row
-                    newUrlId = ContentUrls.selectAll().where(ContentUrls.url eq url).first()[ContentUrls.id]
+                    newUrlId = Resources.selectAll().where(Resources.type eq id).first()[Resources.id]
                 }
-                MessageContentUrls.insertIgnore {
+                MessageResources.insertIgnore {
                     it[messageId] = newMessageId
-                    it[urlId] = newUrlId
+                    it[resourceId] = newUrlId
                 }
             }
             message.copy(id = newMessageId.value, time = nowMillis)
@@ -81,22 +81,22 @@ class MessageExposedDatabase(
             // Remove all content urls for the message
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
-            val currentMessageUrls = MessageContentUrls.selectAll().where(MessageContentUrls.messageId eq message.id!!)
-            val newMessageUrls = message.contentUrls
+            val currentMessageUrls = MessageResources.selectAll().where(MessageResources.messageId eq message.id!!)
+            val newMessageUrls = message.resourceIds
             val removedMessageUrls = currentMessageUrls.filter { url ->
-                newMessageUrls.contains(url[MessageContentUrls.urlId].value)
+                newMessageUrls.contains(url[MessageResources.resourceId].value)
             }
             removedMessageUrls.forEach { url ->
-                MessageContentUrls.deleteWhere { (messageId eq message.id) and (urlId eq url[urlId]) }
+                MessageResources.deleteWhere { (messageId eq message.id) and (resourceId eq url[resourceId]) }
             }
-            val addedMessageUrls = message.contentUrls.filter { url ->
-                currentMessageUrls.none { it[MessageContentUrls.urlId].value == url }
+            val addedMessageUrls = message.resourceIds.filter { url ->
+                currentMessageUrls.none { it[MessageResources.resourceId].value == url }
             }
             addedMessageUrls.forEach { contentUrl ->
-                ContentUrls.insertIgnore { it[url] = contentUrl }
-                MessageContentUrls.insertIgnore {
+                Resources.insertIgnore { it[type] = contentUrl }
+                MessageResources.insertIgnore {
                     it[messageId] = message.id
-                    it[urlId] = contentUrl
+                    it[resourceId] = contentUrl
                 }
             }
             message
@@ -109,6 +109,7 @@ class MessageExposedDatabase(
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 // Deleted more than 0 rows
+                MessageResources.deleteWhere { MessageResources.messageId eq messageId }
                 Messages.deleteWhere { (id eq messageId) and (Messages.chatId eq chatId) and (senderId eq userId) } > 0
             } else {
                 throw Exception("User is not in chat")
@@ -209,8 +210,8 @@ fun ResultRow.toMessageDto() = MessageDto(
     message = this[Messages.message],
     time = this[Messages.time],
     chatId = this[Messages.chatId].value,
-//    contentUrls = MessageContentUrls
-//        .selectAll()
-//        .where(MessageContentUrls.messageId eq this[Messages.id])
-//        .map { it[MessageContentUrls.urlId].value } // TODO: join this with ContentUrls later
+    resourceIds = MessageResources
+        .selectAll()
+        .where(MessageResources.messageId eq this[Messages.id])
+        .map { it[MessageResources.resourceId].value }
 )

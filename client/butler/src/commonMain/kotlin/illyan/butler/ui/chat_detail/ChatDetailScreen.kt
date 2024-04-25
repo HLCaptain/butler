@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -125,7 +127,10 @@ class ChatDetailScreen(
                         messages = state.messages ?: emptyList(),
                         userId = state.userId ?: ""
                     )
-                    MessageField(sendMessage = screenModel::sendMessage)
+                    MessageField(
+                        sendMessage = screenModel::sendMessage,
+                        toggleRecord = screenModel::toggleRecording
+                    )
                 }
             }
         }
@@ -212,6 +217,8 @@ fun MessageItem(
 fun MessageField(
     modifier: Modifier = Modifier,
     sendMessage: (String) -> Unit,
+    isRecording: Boolean = false,
+    toggleRecord: () -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -219,6 +226,27 @@ fun MessageField(
             .animateContentSize(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(
+            modifier = Modifier.padding(4.dp),
+            onClick = toggleRecord
+        ) {
+            Crossfade(isRecording) {
+                if (it) {
+                    Icon(
+                        imageVector = Icons.Rounded.StopCircle,
+                        contentDescription = stringResource(Res.string.send),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.Mic,
+                        contentDescription = stringResource(Res.string.send),
+                        tint =  MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+        }
         var textMessage by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
             modifier = Modifier.weight(1f, fill = true),

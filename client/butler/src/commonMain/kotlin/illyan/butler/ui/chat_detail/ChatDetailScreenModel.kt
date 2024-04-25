@@ -3,6 +3,7 @@ package illyan.butler.ui.chat_detail
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.KoinNames
+import illyan.butler.manager.AudioManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,9 +24,11 @@ import org.koin.core.annotation.Named
 class ChatDetailScreenModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
+    private val audioManager: AudioManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
+    private val isRecording = audioManager.isRecording
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
@@ -63,6 +66,12 @@ class ChatDetailScreenModel(
     fun sendMessage(message: String) {
         screenModelScope.launch(dispatcherIO) {
             chatIdStateFlow.value?.let { chatManager.sendMessage(it, message) }
+        }
+    }
+
+    fun toggleRecording() {
+        screenModelScope.launch(dispatcherIO) {
+
         }
     }
 }
