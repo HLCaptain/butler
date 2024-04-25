@@ -34,8 +34,8 @@ import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.new_chat
-import illyan.butler.generated.resources.select
 import illyan.butler.generated.resources.select_host
+import illyan.butler.generated.resources.select_self_hosted
 import illyan.butler.ui.components.ExpandableCard
 import illyan.butler.ui.components.MenuButton
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -152,7 +152,7 @@ fun ModelListItem(
             )
             MenuButton(
                 onClick = { selectModelWithProvider(null) },
-                text = stringResource(Res.string.select)
+                text = stringResource(Res.string.select_self_hosted)
             )
         }
     }

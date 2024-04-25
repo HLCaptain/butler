@@ -231,10 +231,7 @@ fun MessageField(
             .animateContentSize(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            modifier = Modifier.padding(4.dp),
-            onClick = toggleRecord
-        ) {
+        IconButton(onClick = toggleRecord) {
             Crossfade(isRecording) {
                 if (it) {
                     Icon(
@@ -252,10 +249,7 @@ fun MessageField(
             }
         }
         var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
-        IconButton(
-            modifier = Modifier.padding(4.dp),
-            onClick = { isFilePickerShown = true }
-        ) {
+        IconButton(onClick = { isFilePickerShown = true }) {
             Icon(
                 imageVector = Icons.Rounded.Image,
                 contentDescription = stringResource(Res.string.send),
@@ -271,7 +265,9 @@ fun MessageField(
         }
         var textMessage by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
-            modifier = Modifier.weight(1f, fill = true),
+            modifier = Modifier
+                .padding(horizontal = 4.dp)
+                .weight(1f, fill = true),
             value = textMessage,
             onValueChange = { textMessage = it },
             shape = RoundedCornerShape(16.dp),
@@ -279,7 +275,6 @@ fun MessageField(
         )
 
         IconButton(
-            modifier = Modifier.padding(4.dp),
             onClick = {
                 sendMessage(textMessage)
                 textMessage = ""

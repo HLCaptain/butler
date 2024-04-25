@@ -73,7 +73,11 @@ class ChatDetailScreenModel(
 
     fun toggleRecording() {
         screenModelScope.launch(dispatcherIO) {
-
+            if (state.value.isRecording) {
+                audioManager.stopRecording()
+            } else {
+                audioManager.startRecording()
+            }
         }
     }
 
