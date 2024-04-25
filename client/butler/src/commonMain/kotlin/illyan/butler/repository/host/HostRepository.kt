@@ -1,7 +1,6 @@
-package illyan.butler.repository
+package illyan.butler.repository.host
 
 import kotlinx.coroutines.flow.StateFlow
-import org.koin.core.annotation.Single
 
 interface HostRepository {
     companion object {

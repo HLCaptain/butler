@@ -1,16 +1,11 @@
-package illyan.butler.repository
+package illyan.butler.repository.host
 
 import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.coroutines.FlowSettings
-import illyan.butler.data.network.datasource.HostNetworkDataSource
 import illyan.butler.di.KoinNames
-import illyan.butler.repository.HostRepository.Companion.KEY_API_URL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
@@ -18,24 +13,19 @@ import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSettingsApi::class)
 @Single
-class HostSettingsRepository(
-    private val hostNetworkDataSource: HostNetworkDataSource,
-    private val settings: FlowSettings,
+class HostMemoryRepository(
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
 ) : HostRepository {
 
     private val _isConnectingToHost = MutableStateFlow(false)
     override val isConnectingToHost = _isConnectingToHost.asStateFlow()
 
-    override val currentHost = settings.getStringOrNullFlow(KEY_API_URL).stateIn(
-        coroutineScope,
-        SharingStarted.Eagerly,
-        null
-    )
+    private val _currentHost = MutableStateFlow<String?>(null)
+    override val currentHost = _currentHost.asStateFlow()
 
     override suspend fun testAndSelectHost(url: String): Boolean {
         return testHost(url).also { isHostAvailable ->
-            if (isHostAvailable) settings.putString(KEY_API_URL, url)
+            if (isHostAvailable) _currentHost.update { url }
         }
     }
 
@@ -47,7 +37,10 @@ class HostSettingsRepository(
                 delay(5000)
                 if (!testingEnded) throw Exception("Connection timeout")
             }
-            hostNetworkDataSource.tryToConnect(url).also { testingEnded = true}
+            // Simulate a network connection test
+            delay(1000)
+            testingEnded = true
+            true
         } catch (e: Exception) {
             false
         }.also { _isConnectingToHost.update { false } }

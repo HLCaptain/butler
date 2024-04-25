@@ -1,4 +1,4 @@
-package illyan.butler.repository
+package illyan.butler.repository.app
 
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences

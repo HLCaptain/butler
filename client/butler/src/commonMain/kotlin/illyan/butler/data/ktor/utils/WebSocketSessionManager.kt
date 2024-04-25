@@ -1,6 +1,6 @@
 package illyan.butler.data.ktor.utils
 
-import illyan.butler.repository.HostRepository
+import illyan.butler.repository.host.HostRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession

@@ -6,5 +6,6 @@ import illyan.butler.domain.model.DomainMessage
 data class ChatDetailState(
     val chat: DomainChat? = null,
     val messages: List<DomainMessage>? = null,
-    val userId: String? = null
+    val userId: String? = null,
+    val isRecording: Boolean = false
 )

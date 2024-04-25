@@ -1,6 +1,7 @@
-package illyan.butler.repository
+package illyan.butler.repository.chat
 
 import illyan.butler.domain.model.DomainChat
+import illyan.butler.repository.user.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update

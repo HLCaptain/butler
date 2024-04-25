@@ -6,6 +6,7 @@ import illyan.butler.di.KoinNames
 import illyan.butler.manager.AudioManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,6 @@ class ChatDetailScreenModel(
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
-    private val isRecording = audioManager.isRecording
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
@@ -42,12 +42,14 @@ class ChatDetailScreenModel(
     val state = combine(
         chat,
         messages,
-        authManager.signedInUserId
-    ) { chat, messages, userId ->
+        authManager.signedInUserId,
+        audioManager.isRecording
+    ) { chat, messages, userId, recording ->
         ChatDetailState(
             chat = chat,
             messages = messages,
-            userId = userId
+            userId = userId,
+            isRecording = recording
         )
     }.stateIn(
         screenModelScope,
@@ -73,5 +75,9 @@ class ChatDetailScreenModel(
         screenModelScope.launch(dispatcherIO) {
 
         }
+    }
+
+    fun sendImage(path: String) {
+        Napier.d("Sending image $path")
     }
 }

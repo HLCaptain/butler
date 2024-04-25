@@ -1,6 +1,6 @@
 package illyan.butler.manager
 
-import illyan.butler.repository.ErrorRepository
+import illyan.butler.repository.error.ErrorRepository
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

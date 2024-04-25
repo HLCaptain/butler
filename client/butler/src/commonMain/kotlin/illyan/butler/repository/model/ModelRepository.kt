@@ -1,4 +1,4 @@
-package illyan.butler.repository
+package illyan.butler.repository.model
 
 import illyan.butler.data.network.model.ai.ModelDto
 

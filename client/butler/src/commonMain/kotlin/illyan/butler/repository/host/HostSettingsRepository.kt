@@ -1,10 +1,10 @@
-package illyan.butler.repository
+package illyan.butler.repository.host
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.data.network.datasource.HostNetworkDataSource
 import illyan.butler.di.KoinNames
-import illyan.butler.repository.HostRepository.Companion.KEY_API_URL
+import illyan.butler.repository.host.HostRepository.Companion.KEY_API_URL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,19 +18,24 @@ import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalSettingsApi::class)
 @Single
-class HostMemoryRepository(
+class HostSettingsRepository(
+    private val hostNetworkDataSource: HostNetworkDataSource,
+    private val settings: FlowSettings,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
 ) : HostRepository {
 
     private val _isConnectingToHost = MutableStateFlow(false)
     override val isConnectingToHost = _isConnectingToHost.asStateFlow()
 
-    private val _currentHost = MutableStateFlow<String?>(null)
-    override val currentHost = _currentHost.asStateFlow()
+    override val currentHost = settings.getStringOrNullFlow(KEY_API_URL).stateIn(
+        coroutineScope,
+        SharingStarted.Eagerly,
+        null
+    )
 
     override suspend fun testAndSelectHost(url: String): Boolean {
         return testHost(url).also { isHostAvailable ->
-            if (isHostAvailable) _currentHost.update { url }
+            if (isHostAvailable) settings.putString(KEY_API_URL, url)
         }
     }
 
@@ -42,10 +47,7 @@ class HostMemoryRepository(
                 delay(5000)
                 if (!testingEnded) throw Exception("Connection timeout")
             }
-            // Simulate a network connection test
-            delay(1000)
-            testingEnded = true
-            true
+            hostNetworkDataSource.tryToConnect(url).also { testingEnded = true}
         } catch (e: Exception) {
             false
         }.also { _isConnectingToHost.update { false } }

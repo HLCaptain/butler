@@ -1,4 +1,4 @@
-package illyan.butler.repository
+package illyan.butler.repository.chat
 
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel

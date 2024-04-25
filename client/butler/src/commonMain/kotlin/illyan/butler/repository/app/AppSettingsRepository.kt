@@ -1,10 +1,11 @@
-package illyan.butler.repository
+package illyan.butler.repository.app
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.repository.user.UserRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted

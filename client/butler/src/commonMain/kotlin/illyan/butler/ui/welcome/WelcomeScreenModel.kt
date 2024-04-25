@@ -2,14 +2,13 @@ package illyan.butler.ui.welcome
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.repository.AppRepository
-import illyan.butler.repository.UserRepository
+import illyan.butler.repository.app.AppRepository
+import illyan.butler.repository.user.UserRepository
 import illyan.butler.util.log.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
 

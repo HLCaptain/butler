@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Card
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
+import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
@@ -125,11 +127,13 @@ class ChatDetailScreen(
                         modifier = Modifier.weight(1f, fill = true),
                         chat = state.chat,
                         messages = state.messages ?: emptyList(),
-                        userId = state.userId ?: ""
+                        userId = state.userId ?: "",
                     )
                     MessageField(
                         sendMessage = screenModel::sendMessage,
-                        toggleRecord = screenModel::toggleRecording
+                        isRecording = state.isRecording,
+                        toggleRecord = screenModel::toggleRecording,
+                        sendImage = screenModel::sendImage
                     )
                 }
             }
@@ -219,6 +223,7 @@ fun MessageField(
     sendMessage: (String) -> Unit,
     isRecording: Boolean = false,
     toggleRecord: () -> Unit,
+    sendImage: (String) -> Unit
 ) {
     Row(
         modifier = modifier
@@ -245,7 +250,24 @@ fun MessageField(
                     )
                 }
             }
-
+        }
+        var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
+        IconButton(
+            modifier = Modifier.padding(4.dp),
+            onClick = { isFilePickerShown = true }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Image,
+                contentDescription = stringResource(Res.string.send),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+        FilePicker(
+            show = isFilePickerShown,
+            fileExtensions = listOf("jpg", "jpeg", "png"),
+        ) { platformFile ->
+            isFilePickerShown = false
+            platformFile?.path?.let(sendImage)
         }
         var textMessage by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(

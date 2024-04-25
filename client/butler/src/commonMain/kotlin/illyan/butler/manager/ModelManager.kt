@@ -1,7 +1,7 @@
 package illyan.butler.manager
 
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.repository.ModelRepository
+import illyan.butler.repository.model.ModelRepository
 import org.koin.core.annotation.Single
 
 @Single

@@ -100,6 +100,7 @@ kotlin {
                 implementation(libs.settings)
                 implementation(libs.settings.coroutines)
                 implementation(libs.korge.core)
+                implementation(libs.filepicker)
 
                 api(libs.napier)
             }

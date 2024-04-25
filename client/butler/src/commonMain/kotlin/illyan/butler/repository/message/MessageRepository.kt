@@ -1,4 +1,4 @@
-package illyan.butler.repository
+package illyan.butler.repository.message
 
 import illyan.butler.domain.model.DomainMessage
 import kotlinx.coroutines.flow.StateFlow

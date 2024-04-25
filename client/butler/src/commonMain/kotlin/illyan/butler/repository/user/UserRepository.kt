@@ -1,4 +1,4 @@
-package illyan.butler.repository
+package illyan.butler.repository.user
 
 import illyan.butler.data.network.model.identity.UserDto
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,4 @@
-package illyan.butler.repository
+package illyan.butler.repository.user
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings

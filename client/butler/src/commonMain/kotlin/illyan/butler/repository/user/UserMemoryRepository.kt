@@ -1,16 +1,9 @@
-package illyan.butler.repository
+package illyan.butler.repository.user
 
 import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.coroutines.FlowSettings
-import illyan.butler.data.network.datasource.AuthNetworkDataSource
-import illyan.butler.data.network.model.auth.PasswordResetRequest
-import illyan.butler.data.network.model.auth.UserLoginDto
-import illyan.butler.data.network.model.auth.UserLoginResponseDto
-import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.KoinNames
 import illyan.butler.util.log.randomUUID
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,10 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromHexString
-import kotlinx.serialization.encodeToHexString
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 

@@ -3,8 +3,8 @@ package illyan.butler.manager
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
-import illyan.butler.repository.ChatRepository
-import illyan.butler.repository.MessageRepository
+import illyan.butler.repository.chat.ChatRepository
+import illyan.butler.repository.message.MessageRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi

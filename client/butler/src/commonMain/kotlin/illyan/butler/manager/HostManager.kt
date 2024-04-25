@@ -1,6 +1,6 @@
 package illyan.butler.manager
 
-import illyan.butler.repository.HostRepository
+import illyan.butler.repository.host.HostRepository
 import org.koin.core.annotation.Single
 
 @Single
