@@ -19,6 +19,9 @@ import illyan.butler.repository.message.MessageStoreRepository
 import illyan.butler.repository.model.ModelMemoryRepository
 import illyan.butler.repository.model.ModelNetworkRepository
 import illyan.butler.repository.model.ModelRepository
+import illyan.butler.repository.resource.ResourceMemoryRepository
+import illyan.butler.repository.resource.ResourceRepository
+import illyan.butler.repository.resource.ResourceStoreRepository
 import illyan.butler.repository.user.UserMemoryRepository
 import illyan.butler.repository.user.UserRepository
 import illyan.butler.repository.user.UserSettingsRepository
@@ -92,4 +95,14 @@ fun provideUserRepository(
     userMemoryRepository
 } else {
     userSettingsRepository
+}
+
+@Single
+fun provideResourceRepository(
+    resourceMemoryRepository: ResourceMemoryRepository,
+    resourceStoreRepository: ResourceStoreRepository
+): ResourceRepository = if (BuildConfig.USE_MEMORY_DB) {
+    resourceMemoryRepository
+} else {
+    resourceStoreRepository
 }

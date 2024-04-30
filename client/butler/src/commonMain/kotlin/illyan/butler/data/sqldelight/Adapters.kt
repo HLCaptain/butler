@@ -50,3 +50,13 @@ val errorStateAdapter = object : ColumnAdapter<ErrorState, String> {
         return value.name
     }
 }
+
+val byteArrayToTextAdapter = object : ColumnAdapter<ByteArray, String> {
+    override fun decode(databaseValue: String): ByteArray {
+        return databaseValue.toByteArray()
+    }
+
+    override fun encode(value: ByteArray): String {
+        return value.toString(Charsets.UTF_8)
+    }
+}

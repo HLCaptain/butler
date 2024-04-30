@@ -6,6 +6,7 @@ import app.cash.sqldelight.db.SqlSchema
 import illyan.butler.db.Chat
 import illyan.butler.db.Database
 import illyan.butler.db.ErrorEvent
+import illyan.butler.db.Resource
 import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +31,9 @@ private suspend fun createDatabase(): Database {
         ErrorEventAdapter = ErrorEvent.Adapter(
             stateAdapter = errorStateAdapter,
             metadataAdapter = mapAdapter
+        ),
+        ResourceAdapter = Resource.Adapter(
+            data_Adapter = byteArrayToTextAdapter
         )
     )
 

@@ -29,6 +29,6 @@ class AudioManager(
                 type = "audio/wav", // WAV,
                 data = audioData.toWav()
             )
-        ).id!!
+        )
     }
 }
