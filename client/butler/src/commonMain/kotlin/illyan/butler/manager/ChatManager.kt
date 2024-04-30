@@ -46,15 +46,13 @@ class ChatManager(
     private val _userMessages = MutableStateFlow<List<DomainMessage>>(emptyList())
     private val userMessages = _userMessages.asStateFlow()
 
-    val messageResources = userMessages.map { messages ->
-        messages.groupBy { it.id }.mapValues { (_, messages) ->
+    private val messageResources = userMessages.flatMapLatest { messages ->
+        // map to Flow<Map<String?, List<DomainResource?>>>
+        combine(messages.filter { it.resourceIds.isNotEmpty() }.groupBy { it.id }.mapValues { (_, messages) ->
             combine(messages.map { message ->
                 combine(message.resourceIds.map { loadResource(it) }) { it.toList() }
             }) { flows -> flows.toList().flatten().distinctBy { it?.id } }
-        }
-    }.flatMapLatest { messagesAndResources: Map<String?, Flow<List<DomainResource?>>> ->
-        // map to Flow<Map<String?, List<DomainResource?>>>
-        combine(messagesAndResources.map { (key, value) -> value.map { key to it } }) { resources ->
+        }.map { (key, value) -> value.map { key to it } }) { resources ->
             resources.toList().toMap()
         }
     }.stateIn(

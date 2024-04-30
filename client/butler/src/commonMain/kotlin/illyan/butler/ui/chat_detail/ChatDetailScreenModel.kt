@@ -53,6 +53,7 @@ class ChatDetailScreenModel(
         }) { flows ->
             val resources = flows.toList().filterNotNull().flatten()
             Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
+            resources
         }
     }
 
@@ -70,10 +71,13 @@ class ChatDetailScreenModel(
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>
+        Napier.v("Resources: ${resources?.map { it.id }}")
         val sounds = resources?.filter { it.type == ContentType.Audio.Wav.toString() }
             ?.associate { it.id!! to it.data.toWav()!!.totalTime.seconds.toFloat() } ?: emptyMap()
+        Napier.v("Sounds: ${sounds.keys}")
         val images = resources?.filter { it.type.split('/')[0] == "image" }
             ?.associate { it.id!! to it.data } ?: emptyMap()
+        Napier.v("Images: ${images.keys}")
         ChatDetailState(
             chat = chat,
             messages = messages,
