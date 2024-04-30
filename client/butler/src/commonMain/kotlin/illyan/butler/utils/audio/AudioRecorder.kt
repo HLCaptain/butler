@@ -1,4 +1,4 @@
-package illyan.butler.utils
+package illyan.butler.utils.audio
 
 import korlibs.audio.sound.AudioData
 import kotlinx.coroutines.flow.StateFlow

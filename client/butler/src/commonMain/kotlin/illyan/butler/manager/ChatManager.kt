@@ -3,22 +3,31 @@ package illyan.butler.manager
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.DomainResource
 import illyan.butler.repository.chat.ChatRepository
 import illyan.butler.repository.message.MessageRepository
+import illyan.butler.repository.resource.ResourceRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteArray
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
@@ -28,6 +37,7 @@ class ChatManager(
     private val authManager: AuthManager,
     private val chatRepository: ChatRepository,
     private val messageRepository: MessageRepository,
+    private val resourceRepository: ResourceRepository,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) {
     private val _userChats = MutableStateFlow<List<DomainChat>>(emptyList())
@@ -35,6 +45,23 @@ class ChatManager(
 
     private val _userMessages = MutableStateFlow<List<DomainMessage>>(emptyList())
     private val userMessages = _userMessages.asStateFlow()
+
+    val messageResources = userMessages.map { messages ->
+        messages.groupBy { it.id }.mapValues { (_, messages) ->
+            combine(messages.map { message ->
+                combine(message.resourceIds.map { loadResource(it) }) { it.toList() }
+            }) { flows -> flows.toList().flatten().distinctBy { it?.id } }
+        }
+    }.flatMapLatest { messagesAndResources: Map<String?, Flow<List<DomainResource?>>> ->
+        // map to Flow<Map<String?, List<DomainResource?>>>
+        combine(messagesAndResources.map { (key, value) -> value.map { key to it } }) { resources ->
+            resources.toList().toMap()
+        }
+    }.stateIn(
+        coroutineScopeIO,
+        SharingStarted.Eagerly,
+        emptyMap()
+    )
 
     init {
         coroutineScopeIO.launch {
@@ -73,8 +100,14 @@ class ChatManager(
         return messageRepository.getUserMessagesFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
     }
 
+    private fun loadResource(resourceId: String): Flow<DomainResource?> {
+        return resourceRepository.getResourceFlow(resourceId).filterNot { it.second }.map { it.first }
+    }
+
     fun getChatFlow(chatId: String) = userChats.map { chats -> chats.firstOrNull { it.id == chatId } }
     fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
+    fun getResourcesByMessageFlow(messageId: String) = messageResources.map { resources -> resources[messageId] }
+
 
     suspend fun startNewChat(modelId: String, endpoint: String? = null): String {
         return authManager.signedInUserId.first()?.let { userId ->
@@ -93,13 +126,18 @@ class ChatManager(
         }
     }
 
-    suspend fun sendMessage(chatId: String, message: String? = null, resourceIds: List<String>? = null) {
+    suspend fun sendMessage(
+        chatId: String,
+        message: String? = null,
+        resourceIds: List<String> = emptyList()
+    ) {
         authManager.signedInUserId.first()?.let { userId ->
             messageRepository.upsert(
                 DomainMessage(
                     chatId = chatId,
                     senderId = userId,
-                    message = message
+                    message = message,
+                    resourceIds = resourceIds
                 )
             )
         }
@@ -107,5 +145,17 @@ class ChatManager(
 
     suspend fun sendAudioMessage(chatId: String, audioId: String) {
         sendMessage(chatId, resourceIds = listOf(audioId))
+    }
+
+    suspend fun sendImageMessage(chatId: String, imagePath: String) {
+        val path = Path(imagePath)
+        val imageContent = SystemFileSystem.source(path).buffered().readByteArray()
+        val imageId = resourceRepository.upsert(
+            DomainResource(
+                type = "image/${path.name.substringAfterLast('.')}",
+                data = imageContent
+            )
+        )
+        sendMessage(chatId, resourceIds = listOf(imageId))
     }
 }

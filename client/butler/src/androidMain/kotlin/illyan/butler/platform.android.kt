@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import illyan.butler.utils.AudioRecorder
+import illyan.butler.utils.audio.AudioRecorder
 import illyan.butler.utils.sound.AndroidAudioRecorder
 import org.koin.core.context.GlobalContext
 

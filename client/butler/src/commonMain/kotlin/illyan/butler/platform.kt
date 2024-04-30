@@ -2,7 +2,7 @@ package illyan.butler
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
-import illyan.butler.utils.AudioRecorder
+import illyan.butler.utils.audio.AudioRecorder
 
 expect fun getPlatformName(): String
 

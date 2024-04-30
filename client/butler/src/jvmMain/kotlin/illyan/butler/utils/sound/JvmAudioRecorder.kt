@@ -1,6 +1,6 @@
 package illyan.butler.utils.sound
 
-import illyan.butler.utils.AudioRecorder
+import illyan.butler.utils.audio.AudioRecorder
 import io.github.aakira.napier.Napier
 import korlibs.audio.sound.AudioData
 import korlibs.audio.sound.readAudioData

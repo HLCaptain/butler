@@ -1,10 +1,12 @@
-package illyan.butler.di
+package illyan.butler.utils
 
 import app.cash.sqldelight.Query
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
+import io.ktor.http.ContentType
+import korlibs.audio.format.WAV
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -23,3 +25,8 @@ fun <T : Any, R : Any?> Flow<Query<T>>.flatMapLatestAsList(map: suspend (List<T>
 fun <T : Any> Flow<Query<T>>.flatMapLatestAsOne(): Flow<T> = flatMapLatestAs(Query<T>::awaitAsOne)
 fun <T : Any> Flow<Query<T>>.flatMapLatestAsOneOrNull(): Flow<T?> = flatMapLatestAs(Query<T>::awaitAsOneOrNull)
 fun <T : Any> Flow<Query<T>>.flatMapLatestAsList(): Flow<List<T>> = flatMapLatestAs(Query<T>::awaitAsList)
+
+val ContentType.Audio.Wav: ContentType
+    get() = ContentType("audio", "wav")
+
+suspend fun ByteArray.toWav() = WAV.decode(this)

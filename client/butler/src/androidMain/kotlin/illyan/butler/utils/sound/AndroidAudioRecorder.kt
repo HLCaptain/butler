@@ -5,7 +5,7 @@ import android.media.MediaRecorder
 import android.os.Build
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
-import illyan.butler.utils.AudioRecorder
+import illyan.butler.utils.audio.AudioRecorder
 import korlibs.audio.sound.AudioData
 import korlibs.audio.sound.readAudioData
 import korlibs.io.file.std.resourcesVfs

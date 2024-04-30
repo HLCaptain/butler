@@ -8,5 +8,8 @@ data class ChatDetailState(
     val messages: List<DomainMessage>? = null,
     val userId: String? = null,
     val isRecording: Boolean = false,
-    val canRecordAudio: Boolean = false
+    val canRecordAudio: Boolean = false,
+    val sounds: Map<String, Float> = emptyMap(),
+    val playingAudio: String? = null,
+    val images: Map<String, ByteArray> = emptyMap(),
 )

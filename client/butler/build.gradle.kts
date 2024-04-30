@@ -90,6 +90,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.io)
 
                 implementation(libs.sqldelight.coroutines)
                 implementation(libs.sqldelight.adapters)
@@ -102,6 +103,7 @@ kotlin {
                 implementation(libs.korge.core)
                 implementation(libs.filepicker)
                 implementation(libs.coil)
+                implementation(libs.coil.compose)
 
                 api(libs.napier)
             }

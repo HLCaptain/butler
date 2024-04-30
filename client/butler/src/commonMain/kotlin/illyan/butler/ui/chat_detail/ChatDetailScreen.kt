@@ -3,6 +3,7 @@ package illyan.butler.ui.chat_detail
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.StopCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,6 +51,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
+import coil3.ImageLoader
+import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
@@ -56,10 +64,14 @@ import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
+import illyan.butler.generated.resources.play
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
+import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.you
+import illyan.butler.ui.MediumCircularProgressIndicator
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -128,6 +140,11 @@ class ChatDetailScreen(
                         chat = state.chat,
                         messages = state.messages ?: emptyList(),
                         userId = state.userId ?: "",
+                        sounds = state.sounds,
+                        playAudio = screenModel::playAudio,
+                        playingAudio = state.playingAudio,
+                        stopAudio = screenModel::stopAudio,
+                        images = state.images
                     )
                     MessageField(
                         sendMessage = screenModel::sendMessage,
@@ -160,6 +177,11 @@ fun MessageList(
     modifier: Modifier = Modifier,
     chat: DomainChat?,
     messages: List<DomainMessage> = emptyList(),
+    sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
+    playAudio: (String) -> Unit = {},
+    stopAudio: () -> Unit = {},
+    playingAudio: String? = null,
+    images: Map<String, ByteArray> = emptyMap(), // URIs of images
     userId: String
 ) {
     Crossfade(
@@ -183,7 +205,15 @@ fun MessageList(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(messages) { message ->
-                    MessageItem(message = message, userId = userId)
+                    MessageItem(
+                        message = message,
+                        userId = userId,
+                        sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                        playAudio = playAudio,
+                        playingAudio = playingAudio,
+                        stopAudio = stopAudio,
+                        images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                    )
                 }
             }
         }
@@ -194,13 +224,17 @@ fun MessageList(
 @Composable
 fun MessageItem(
     message: DomainMessage,
+    sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
+    playAudio: (String) -> Unit = {},
+    stopAudio: () -> Unit = {},
+    playingAudio: String? = null,
+    images: List<ByteArray> = emptyList(),
     userId: String
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .animateContentSize(),
+            .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = if (message.senderId == userId) Alignment.End else Alignment.Start
     ) {
@@ -208,11 +242,88 @@ fun MessageItem(
             text = stringResource(if (message.senderId == userId) Res.string.you else Res.string.assistant),
             style = MaterialTheme.typography.labelMedium
         )
-        Card {
-            Text(
-                modifier = Modifier.padding(8.dp),
-                text = message.message ?: ""
-            )
+        AudioMessages(
+            resources = sounds,
+            onPlay = playAudio,
+            onStop = stopAudio,
+            isPlaying = playingAudio
+        )
+        images.forEach { image ->
+            SubcomposeAsyncImage(
+                modifier = Modifier.sizeIn(maxHeight = 200.dp, maxWidth = 200.dp),
+                model = image,
+                imageLoader = ImageLoader(context = LocalPlatformContext.current),
+                contentDescription = "Image"
+            ) {
+                when (painter.state) {
+                    AsyncImagePainter.State.Empty -> Text("Empty")
+                    is AsyncImagePainter.State.Error -> Text("Error")
+                    is AsyncImagePainter.State.Loading -> MediumCircularProgressIndicator()
+                    is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
+                }
+            }
+        }
+        if (!message.message.isNullOrBlank()) {
+            Card {
+                Text(
+                    modifier = Modifier.padding(8.dp),
+                    text = message.message
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun AudioMessages(
+    resources: Map<String, Float>, // Audio to length in seconds
+    onPlay: (String) -> Unit = {},
+    onStop: () -> Unit = {},
+    isPlaying: String? = null
+) {
+    Column {
+        resources.forEach { (resourceId, length) ->
+            var progress by remember { mutableStateOf(0f) }
+            val isActive = isPlaying == resourceId
+
+            LaunchedEffect(isActive, progress) {
+                if (isActive && progress < 1f) {
+                    delay(100)
+                    progress += 0.1f / length
+                    if (progress >= 1f) {
+                        onStop()
+                        progress = 0f
+                    }
+                } else if (!isActive && progress > 0f) {
+                    progress = 0f
+                }
+            }
+
+            Button(
+                onClick = {
+                    if (isActive) {
+                        onStop()
+                    } else {
+                        onPlay(resourceId)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = progress),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+            ) {
+                Text(
+                    text = stringResource(if (isActive) Res.string.stop else Res.string.play),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
         }
     }
 }
