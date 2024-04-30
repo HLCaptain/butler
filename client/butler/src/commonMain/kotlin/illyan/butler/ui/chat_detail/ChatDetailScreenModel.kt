@@ -43,18 +43,19 @@ class ChatDetailScreenModel(
         chat,
         messages,
         authManager.signedInUserId,
-        audioManager.isRecording
+        audioManager.isRecording,
     ) { chat, messages, userId, recording ->
         ChatDetailState(
             chat = chat,
             messages = messages,
             userId = userId,
-            isRecording = recording
+            isRecording = recording,
+            canRecordAudio = audioManager.canRecordAudio
         )
     }.stateIn(
         screenModelScope,
         SharingStarted.Eagerly,
-        ChatDetailState()
+        ChatDetailState(canRecordAudio = audioManager.canRecordAudio)
     )
 
     fun loadChat(chatId: String) {
@@ -72,9 +73,11 @@ class ChatDetailScreenModel(
     }
 
     fun toggleRecording() {
+        if (!audioManager.canRecordAudio) return
         screenModelScope.launch(dispatcherIO) {
             if (state.value.isRecording) {
-                audioManager.stopRecording()
+                val audioId = audioManager.stopRecording()
+                chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, audioId) }
             } else {
                 audioManager.startRecording()
             }

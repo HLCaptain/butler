@@ -64,7 +64,7 @@ import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.settings.user.UserSettingsScreen
 import illyan.butler.ui.theme.ThemeScreen
-import illyan.butler.util.log.randomUUID
+import illyan.butler.utils.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

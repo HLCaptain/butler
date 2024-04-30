@@ -132,6 +132,7 @@ class ChatDetailScreen(
                     MessageField(
                         sendMessage = screenModel::sendMessage,
                         isRecording = state.isRecording,
+                        canRecordAudio = state.canRecordAudio,
                         toggleRecord = screenModel::toggleRecording,
                         sendImage = screenModel::sendImage
                     )
@@ -222,6 +223,7 @@ fun MessageField(
     modifier: Modifier = Modifier,
     sendMessage: (String) -> Unit,
     isRecording: Boolean = false,
+    canRecordAudio: Boolean = false,
     toggleRecord: () -> Unit,
     sendImage: (String) -> Unit
 ) {
@@ -231,20 +233,22 @@ fun MessageField(
             .animateContentSize(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = toggleRecord) {
-            Crossfade(isRecording) {
-                if (it) {
-                    Icon(
-                        imageVector = Icons.Rounded.StopCircle,
-                        contentDescription = stringResource(Res.string.send),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Rounded.Mic,
-                        contentDescription = stringResource(Res.string.send),
-                        tint =  MaterialTheme.colorScheme.primary
-                    )
+        AnimatedVisibility(visible = canRecordAudio) {
+            IconButton(onClick = toggleRecord) {
+                Crossfade(isRecording) {
+                    if (it) {
+                        Icon(
+                            imageVector = Icons.Rounded.StopCircle,
+                            contentDescription = stringResource(Res.string.send),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Mic,
+                            contentDescription = stringResource(Res.string.send),
+                            tint =  MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }

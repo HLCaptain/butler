@@ -129,6 +129,7 @@ kotlin {
             implementation(libs.settings.datastore)
             implementation(libs.androidx.datastore.core)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.ffmpeg.kit)
         }
 
         jvmMain.dependencies {

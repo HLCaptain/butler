@@ -1,4 +1,4 @@
-package illyan.butler.util.log
+package illyan.butler.utils
 
 import com.benasher44.uuid.uuid4
 

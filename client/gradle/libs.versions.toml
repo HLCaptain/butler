@@ -84,8 +84,9 @@ settings = { module = "com.russhwolf:multiplatform-settings", version = "1.1.1" 
 settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version = "1.1.1" }
 settings-datastore = { module = "com.russhwolf:multiplatform-settings-datastore", version = "1.1.1" }
 credential-storage-jvm = { module = "com.microsoft:credential-secure-storage", version = "1.0.0" }
-korge-core = { module = "com.soywiz.korge:korge-core", version = "5.1.0" }
+korge-core = { module = "com.soywiz:korlibs-audio", version = "6.0.0-alpha1" }
 filepicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }
+ffmpeg-kit = { module = "com.arthenica:ffmpeg-kit-full", version = "6.0-2" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }

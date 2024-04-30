@@ -1,23 +1,34 @@
 package illyan.butler.manager
 
-import illyan.butler.repository.audio.AudioRepository
+import illyan.butler.domain.model.DomainResource
+import illyan.butler.repository.resource.ResourceRepository
+import illyan.butler.utils.AudioRecorder
+import korlibs.audio.format.toWav
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
 @Single
 class AudioManager(
-    private val audioRepository: AudioRepository
+    private val audioRecorder: AudioRecorder?,
+    private val resourceRepository: ResourceRepository
 ) {
-    private val _isRecording = MutableStateFlow(false)
-    val isRecording = _isRecording.asStateFlow()
+    val isRecording = audioRecorder?.isRecording ?: MutableStateFlow(false).asStateFlow()
+    val canRecordAudio = audioRecorder != null
 
-    fun startRecording() {
-        _isRecording.update { true }
+    suspend fun startRecording() {
+        if (audioRecorder == null) throw IllegalStateException("Audio recording is not supported")
+        audioRecorder.startRecording()
     }
 
-    fun stopRecording() {
-        _isRecording.update { false }
+    suspend fun stopRecording(): String {
+        if (audioRecorder == null) throw IllegalStateException("Audio recording is not supported")
+        val audioData = audioRecorder.stopRecording()
+        return resourceRepository.upsert(
+            DomainResource(
+                type = "audio/wav", // WAV,
+                data = audioData.toWav()
+            )
+        ).id!!
     }
 }

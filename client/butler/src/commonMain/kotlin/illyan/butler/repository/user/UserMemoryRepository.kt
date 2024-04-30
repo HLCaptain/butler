@@ -3,7 +3,7 @@ package illyan.butler.repository.user
 import com.russhwolf.settings.ExperimentalSettingsApi
 import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.KoinNames
-import illyan.butler.util.log.randomUUID
+import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

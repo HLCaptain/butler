@@ -9,7 +9,7 @@ import illyan.butler.domain.model.ErrorState
 import illyan.butler.getOsName
 import illyan.butler.getPlatformName
 import illyan.butler.getSystemMetadata
-import illyan.butler.util.log.randomUUID
+import illyan.butler.utils.randomUUID
 import io.github.aakira.napier.Napier
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse

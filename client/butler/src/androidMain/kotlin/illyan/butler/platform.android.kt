@@ -5,12 +5,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import illyan.butler.utils.AudioRecorder
+import illyan.butler.utils.sound.AndroidAudioRecorder
+import org.koin.core.context.GlobalContext
 
 actual fun getPlatformName(): String {
     return "Android"
 }
 
-actual fun isDebugBuild() = BuildConfig.DEBUG
+actual fun isDebugBuild(): Boolean = BuildConfig.DEBUG
 
 @Composable
 actual fun getWindowSizeInDp(): Pair<Dp, Dp> {
@@ -35,6 +38,6 @@ actual fun getSystemMetadata(): Map<String, String> {
     )
 }
 
-actual fun canRecordAudio(): Boolean {
-    return true
+actual fun getAudioRecorder(): AudioRecorder? {
+    return AndroidAudioRecorder(GlobalContext.get().get())
 }

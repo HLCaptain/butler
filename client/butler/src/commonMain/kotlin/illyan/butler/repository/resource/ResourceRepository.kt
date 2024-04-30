@@ -1,9 +1,10 @@
 package illyan.butler.repository.resource
 
 import illyan.butler.domain.model.DomainResource
+import kotlinx.coroutines.flow.StateFlow
 
 interface ResourceRepository {
-    suspend fun getResource(resourceId: String): DomainResource?
-    suspend fun createResource(resource: DomainResource): DomainResource
+    fun getResourceFlow(resourceId: String): StateFlow<Pair<DomainResource?, Boolean>>
+    suspend fun upsert(resource: DomainResource): String
     suspend fun deleteResource(resourceId: String): Boolean
 }

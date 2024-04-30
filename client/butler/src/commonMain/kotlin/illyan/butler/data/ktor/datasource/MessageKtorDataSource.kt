@@ -36,7 +36,7 @@ class MessageKtorDataSource(
 ) : MessageNetworkDataSource {
     private val newMessagesStateFlow = MutableStateFlow<List<MessageDto>?>(null)
     private var isLoadingNewMessagesWebSocketSession = false
-    private var isLoadedMeWebSocketSession = false
+    private var isLoadedNewMessagesWebSocketSession = false
 
     private suspend fun createNewMessagesFlow() {
         Napier.v { "Receiving new messages" }
@@ -59,11 +59,11 @@ class MessageKtorDataSource(
     }
 
     override fun fetchNewMessages(): Flow<List<MessageDto>> {
-        return if (newMessagesStateFlow.value == null && !isLoadingNewMessagesWebSocketSession && !isLoadedMeWebSocketSession) {
+        return if (newMessagesStateFlow.value == null && !isLoadingNewMessagesWebSocketSession && !isLoadedNewMessagesWebSocketSession) {
             isLoadingNewMessagesWebSocketSession = true
             flow {
                 createNewMessagesFlow()
-                isLoadedMeWebSocketSession = true
+                isLoadedNewMessagesWebSocketSession = true
                 isLoadingNewMessagesWebSocketSession = false
                 Napier.v { "Created new message flow, emitting messages" }
                 emitAll(newMessagesStateFlow)

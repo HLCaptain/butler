@@ -93,7 +93,7 @@ class ChatManager(
         }
     }
 
-    suspend fun sendMessage(chatId: String, message: String) {
+    suspend fun sendMessage(chatId: String, message: String? = null, resourceIds: List<String>? = null) {
         authManager.signedInUserId.first()?.let { userId ->
             messageRepository.upsert(
                 DomainMessage(
@@ -103,5 +103,9 @@ class ChatManager(
                 )
             )
         }
+    }
+
+    suspend fun sendAudioMessage(chatId: String, audioId: String) {
+        sendMessage(chatId, resourceIds = listOf(audioId))
     }
 }

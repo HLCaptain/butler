@@ -1,4 +1,4 @@
-package illyan.butler.util.log
+package illyan.butler.utils
 
 import illyan.butler.isDebugBuild
 import io.github.aakira.napier.DebugAntilog

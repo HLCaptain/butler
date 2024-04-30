@@ -4,7 +4,7 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.repository.app.AppRepository
 import illyan.butler.repository.user.UserRepository
-import illyan.butler.util.log.randomUUID
+import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine

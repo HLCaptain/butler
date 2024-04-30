@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DomainResource(
     val id: String? = null,
-    val type: String,
+    val type: String, // MIME type
     val data: ByteArray
 ) {
     override fun equals(other: Any?): Boolean {

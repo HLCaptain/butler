@@ -8,7 +8,7 @@ import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ErrorManager
-import illyan.butler.util.log.randomUUID
+import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

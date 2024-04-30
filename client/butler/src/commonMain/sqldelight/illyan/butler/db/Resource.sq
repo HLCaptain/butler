@@ -1,7 +1,9 @@
+import kotlin.ByteArray;
+
 CREATE TABLE Resource (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
     type TEXT NOT NULL,
-    data TEXT NOT NULL
+    data TEXT AS ByteArray NOT NULL
 );
 
 select:
