@@ -45,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -242,15 +243,19 @@ fun MessageItem(
             text = stringResource(if (message.senderId == userId) Res.string.you else Res.string.assistant),
             style = MaterialTheme.typography.labelMedium
         )
-        AudioMessages(
-            resources = sounds,
-            onPlay = playAudio,
-            onStop = stopAudio,
-            isPlaying = playingAudio
-        )
+        if (sounds.isNotEmpty()) {
+            AudioMessages(
+                resources = sounds,
+                onPlay = playAudio,
+                onStop = stopAudio,
+                isPlaying = playingAudio
+            )
+        }
         images.forEach { image ->
             SubcomposeAsyncImage(
-                modifier = Modifier.sizeIn(maxHeight = 200.dp, maxWidth = 200.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp),
                 model = image,
                 imageLoader = ImageLoader(context = LocalPlatformContext.current),
                 contentDescription = "Image"
