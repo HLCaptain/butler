@@ -16,6 +16,7 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
+//    alias(libs.plugins.compose.compiler)
 }
 
 group = "illyan"
