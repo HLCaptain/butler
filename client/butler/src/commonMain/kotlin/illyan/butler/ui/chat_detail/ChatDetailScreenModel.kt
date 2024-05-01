@@ -40,11 +40,13 @@ class ChatDetailScreenModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getChatFlow(chatId) } ?: flowOf(null) }
+        .stateIn(screenModelScope, SharingStarted.Eagerly, null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(null) }
         .map { messages -> messages?.sortedBy { it.time }?.reversed() }
+        .stateIn(screenModelScope, SharingStarted.Eagerly, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val resources = messages.flatMapLatest { messages ->
@@ -55,14 +57,18 @@ class ChatDetailScreenModel(
             Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
             resources
         }
-    }
+    }.stateIn(
+        screenModelScope,
+        SharingStarted.Eagerly,
+        emptyList()
+    )
 
     val state = combine(
         chat,
         messages,
         authManager.signedInUserId,
         audioManager.isRecording,
-        audioManager.isPlaying,
+        audioManager.playingAudioId,
         resources
     ) { flows ->
         val chat = flows[0] as? DomainChat
@@ -71,13 +77,10 @@ class ChatDetailScreenModel(
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>
-        Napier.v("Resources: ${resources?.map { it.id }}")
         val sounds = resources?.filter { it.type == ContentType.Audio.Wav.toString() }
             ?.associate { it.id!! to it.data.toWav()!!.totalTime.seconds.toFloat() } ?: emptyMap()
-        Napier.v("Sounds: ${sounds.keys}")
         val images = resources?.filter { it.type.split('/')[0] == "image" }
             ?.associate { it.id!! to it.data } ?: emptyMap()
-        Napier.v("Images: ${images.keys}")
         ChatDetailState(
             chat = chat,
             messages = messages,
