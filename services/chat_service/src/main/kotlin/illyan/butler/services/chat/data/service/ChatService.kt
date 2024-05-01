@@ -5,6 +5,7 @@ import illyan.butler.services.chat.data.datasource.MessageDataSource
 import illyan.butler.services.chat.data.datasource.ResourceDataSource
 import illyan.butler.services.chat.data.db.ChatDatabase
 import illyan.butler.services.chat.data.db.MessageDatabase
+import illyan.butler.services.chat.data.db.ResourceDatabase
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
 import illyan.butler.services.chat.data.model.chat.ResourceDto
@@ -27,7 +28,8 @@ class ChatService(
 //    private val chatCache: ChatCache,
     private val chatDatabase: ChatDatabase,
 //    private val messageCache: MessageCache,
-    private val messageDatabase: MessageDatabase
+    private val messageDatabase: MessageDatabase,
+    private val resourceDatabase: ResourceDatabase
 ) : ChatDataSource, MessageDataSource, ResourceDataSource {
     override suspend fun getChat(userId: String, chatId: String): ChatDto {
 //        return chatCache.getChat(chatId) ?: chatDatabase.getChat(userId, chatId).also {
@@ -156,14 +158,14 @@ class ChatService(
     }
 
     override suspend fun createResource(userId: String, messageId: String, resource: ResourceDto): ResourceDto {
-        TODO("Not yet implemented")
+        return resourceDatabase.createResource(userId, messageId, resource)
     }
 
-    override suspend fun getResource(userId: String, resourceId: String): ResourceDto? {
-        TODO("Not yet implemented")
+    override suspend fun getResource(userId: String, resourceId: String): ResourceDto {
+        return resourceDatabase.getResource(userId, resourceId)
     }
 
     override suspend fun deleteResource(userId: String, resourceId: String): Boolean {
-        TODO("Not yet implemented")
+        return resourceDatabase.deleteResource(userId, resourceId)
     }
 }

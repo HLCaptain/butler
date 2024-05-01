@@ -2,6 +2,7 @@ package illyan.butler.api_gateway.endpoints
 
 import illyan.butler.api_gateway.data.model.chat.ChatDto
 import illyan.butler.api_gateway.data.model.chat.MessageDto
+import illyan.butler.api_gateway.data.model.chat.ResourceDto
 import illyan.butler.api_gateway.data.service.ChatService
 import illyan.butler.api_gateway.endpoints.utils.ChatSocketHandler
 import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
@@ -147,6 +148,22 @@ fun Route.chatRoute() {
                         }
                     }
                 }
+            }
+        }
+
+        route("/resources") {
+            route("/{resourceId}") {
+                get {
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                    val resourceId = call.parameters["resourceId"]?.trim().orEmpty()
+                    call.respond(HttpStatusCode.OK, chatService.getResource(userId, resourceId))
+                }
+            }
+
+            post {
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                val resource = call.receive<ResourceDto>()
+                call.respond(HttpStatusCode.Created, chatService.createResource(userId, resource))
             }
         }
     }

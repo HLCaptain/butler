@@ -2,6 +2,7 @@ package illyan.butler.api_gateway.data.service
 
 import illyan.butler.api_gateway.data.model.chat.ChatDto
 import illyan.butler.api_gateway.data.model.chat.MessageDto
+import illyan.butler.api_gateway.data.model.chat.ResourceDto
 import illyan.butler.api_gateway.data.model.response.PaginationResponse
 import illyan.butler.api_gateway.data.utils.getLastMonthDate
 import illyan.butler.api_gateway.data.utils.getLastWeekDate
@@ -50,6 +51,9 @@ class ChatService(
     suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") { setBody(chat) }.body<ChatDto>()
     suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId") { setBody(chat) }.body<ChatDto>()
     suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId").body<Boolean>()
+
+    suspend fun getResource(userId: String, resourceId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources/$resourceId").body<ResourceDto>()
+    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources") { setBody(resource) }.body<ResourceDto>()
 
     /**
      * @param fromDate epoch milli

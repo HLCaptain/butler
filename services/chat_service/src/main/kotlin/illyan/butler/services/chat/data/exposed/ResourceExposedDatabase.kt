@@ -51,13 +51,13 @@ class ResourceExposedDatabase(
         }
     }
 
-    override suspend fun getResource(userId: String, resourceId: String): ResourceDto? {
+    override suspend fun getResource(userId: String, resourceId: String): ResourceDto {
         return newSuspendedTransaction(dispatcher, database) {
             // Check if user is part of chat where message is which is connected to resource
             if (!canUserAccessResource(resourceId, userId)) {
                 throw Exception("User cannot access resource")
             }
-            Resources.selectAll().where(Resources.id eq resourceId).firstOrNull()?.let {
+            Resources.selectAll().where(Resources.id eq resourceId).first().let {
                 ResourceDto(
                     id = it[Resources.id].value,
                     type = it[Resources.type],

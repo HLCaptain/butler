@@ -114,13 +114,13 @@ class ChatExposedDatabase(
     override suspend fun getChats(userId: String, fromDate: Long, toDate: Long): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
             val userChatIds = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
-                .map { it[ChatMembers.chatId].value }
+                .map { it[ChatMembers.chatId] }
 
             val relevantChatIds = Messages.selectAll().where {
                 (Messages.chatId inList userChatIds) and
                         (Messages.time greaterEq fromDate) and
                         (Messages.time lessEq toDate)
-            }.map { it[Messages.chatId].value }.distinct()
+            }.map { it[Messages.chatId] }.distinct()
 
             val chats = Chats.selectAll().where {
                 (Chats.id inList relevantChatIds) or
@@ -134,13 +134,15 @@ class ChatExposedDatabase(
 
     override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChats = ChatMembers.selectAll().where { ChatMembers.userId eq userId }.map { it.toChatDto() }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
+            val userChats = userChatQuery.map { it.toChatDto() }
 
             // Take the max of Chat.created and the max of Message.time for each Chat
             val chatAndLastMessageTime = Messages
                 .select(Messages.time.max())
                 .groupBy(Messages.chatId)
-                .where { (Messages.chatId inList userChats.map { it.id!! }) }
+                .where { (Messages.chatId inList userChatReferences) }
                 .asSequence()
                 .sortedBy { Messages.time }
                 .associate { it[Messages.chatId].value to it[Messages.time] }
@@ -155,15 +157,15 @@ class ChatExposedDatabase(
 
     override suspend fun getChats(userId: String): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatIds = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
-                .map { it[ChatMembers.chatId].value }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
 
             val relevantMessages = Messages
                 .selectAll()
-                .where { (Messages.chatId inList userChatIds) }
+                .where { (Messages.chatId inList userChatReferences) }
                 .map { it.toMessageDto() }.distinct()
 
-            val chats = Chats.selectAll().where { Chats.id inList userChatIds }.map { chatRow ->
+            val chats = Chats.selectAll().where { Chats.id inList userChatReferences }.map { chatRow ->
                 chatRow.toChatDto(relevantMessages.filter { it.chatId == chatRow[Chats.id].value })
             }
             chats
@@ -172,19 +174,19 @@ class ChatExposedDatabase(
 
     override suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatIds = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
-                .map { it[ChatMembers.chatId].value }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
 
             val relevantChatIds = Messages
                 .selectAll()
-                .where { (Messages.chatId inList userChatIds) and (Messages.time lessEq timestamp) }
+                .where { (Messages.chatId inList userChatReferences) and (Messages.time lessEq timestamp) }
                 .sortedByDescending { Messages.time }
                 .take(limit)
                 .map { it[Messages.chatId].value }.distinct()
 
             val chats = Chats.selectAll()
                 .where {
-                    (Chats.id inList relevantChatIds) or ((Chats.id notInList relevantChatIds) and (Chats.created lessEq timestamp))
+                    (Chats.id inList userChatReferences) or ((Chats.id notInList userChatReferences) and (Chats.created lessEq timestamp))
                 }.map { chatRow -> chatRow.toChatDto() }
                 .sortedByDescending { it.lastFewMessages.firstOrNull()?.time ?: it.created }
                 .take(limit)
@@ -194,13 +196,15 @@ class ChatExposedDatabase(
 
     override suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChats = ChatMembers.selectAll().where { ChatMembers.userId eq userId }.map { it.toChatDto() }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
+            val userChats = userChatQuery.map { it.toChatDto() }
 
             // Take the max of Chat.created and the max of Message.time for each Chat
             val chatAndLastMessageTime = Messages
                 .select(Messages.time.max())
                 .groupBy(Messages.chatId)
-                .where { (Messages.chatId inList userChats.map { it.id!! }) }
+                .where { (Messages.chatId inList userChatReferences) }
                 .asSequence()
                 .sortedBy { Messages.time }
                 .associate { it[Messages.chatId].value to it[Messages.time] }
