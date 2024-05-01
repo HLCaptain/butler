@@ -38,13 +38,13 @@ class AuthKtorDataSource(
 
     private suspend fun createNewMeFlow() {
         Napier.v { "Receiving new me" }
-        val session = webSocketSessionManager.createSession("/me")
-        coroutineScopeIO.launch {
-            session.incoming.receiveAsFlow().collect {
-                Napier.v { "Received new me" }
-                newMeStateFlow.update { session.receiveDeserialized() }
-            }
-        }
+//        val session = webSocketSessionManager.createSession("/me")
+//        coroutineScopeIO.launch {
+//            session.incoming.receiveAsFlow().collect {
+//                Napier.v { "Received new me" }
+//                newMeStateFlow.update { session.receiveDeserialized() }
+//            }
+//        }
     }
 
     override suspend fun getMe(): Flow<UserDto?> {

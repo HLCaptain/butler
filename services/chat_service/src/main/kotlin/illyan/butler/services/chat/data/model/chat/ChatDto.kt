@@ -9,5 +9,5 @@ data class ChatDto(
     val name: String? = null,
     val members: List<String> = emptyList(),
     val lastFewMessages: List<MessageDto> = emptyList(),
-    val aiEndpoint: Map<String, String>, // senderId -> endpoint, if sender is not in the map, it is considered self-hosted
+    val aiEndpoints: Map<String, String>, // senderId -> endpoint, if sender is not in the map, it is considered self-hosted
 )

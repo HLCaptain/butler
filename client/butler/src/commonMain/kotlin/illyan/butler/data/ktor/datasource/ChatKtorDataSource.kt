@@ -40,13 +40,13 @@ class ChatKtorDataSource(
 
     private suspend fun createNewChatsFlow() {
         Napier.v { "Receiving new chats" }
-        val session = webSocketSessionManager.createSession("/chats")
-        coroutineScopeIO.launch {
-            session.incoming.receiveAsFlow().collect { _ ->
-                Napier.v { "Received new chat" }
-                newChatsStateFlow.update { session.receiveDeserialized() }
-            }
-        }
+//        val session = webSocketSessionManager.createSession("/chats")
+//        coroutineScopeIO.launch {
+//            session.incoming.receiveAsFlow().collect { _ ->
+//                Napier.v { "Received new chat" }
+//                newChatsStateFlow.update { session.receiveDeserialized() }
+//            }
+//        }
         // TODO: remove when websockets are fixed
         coroutineScopeIO.launch {
             while (true) {

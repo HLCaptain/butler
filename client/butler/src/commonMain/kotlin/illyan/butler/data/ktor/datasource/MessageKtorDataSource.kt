@@ -40,14 +40,14 @@ class MessageKtorDataSource(
 
     private suspend fun createNewMessagesFlow() {
         Napier.v { "Receiving new messages" }
-        val session = webSocketSessionManager.createSession("/messages")
-        coroutineScopeIO.launch {
-            session.incoming.receiveAsFlow().collect { _ ->
-                val messages = session.receiveDeserialized<List<MessageDto>?>()
-                Napier.v { "Received new ${messages?.size} messages " }
-                newMessagesStateFlow.update { messages }
-            }
-        }
+//        val session = webSocketSessionManager.createSession("/messages")
+//        coroutineScopeIO.launch {
+//            session.incoming.receiveAsFlow().collect { _ ->
+//                val messages = session.receiveDeserialized<List<MessageDto>?>()
+//                Napier.v { "Received new ${messages?.size} messages " }
+//                newMessagesStateFlow.update { messages }
+//            }
+//        }
         // TODO: remove when websockets are fixed
         coroutineScopeIO.launch {
             while (true) {
