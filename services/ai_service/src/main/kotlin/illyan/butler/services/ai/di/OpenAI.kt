@@ -12,15 +12,15 @@ import io.ktor.client.HttpClient
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.minutes
 
-// TODO: Add several more OpenAI API endpoints if needed
 @Single
 fun provideOpenAiClient(client: HttpClient): OpenAI {
+    val url = AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL
     return OpenAI(
         config = OpenAIConfig(
-            token = AppConfig.Api.OPEN_AI_API_KEY,
+            token = "",
             logging = LoggingConfig(LogLevel.All, Logger.Default),
             engine = client.engine,
-            host = OpenAIHost(baseUrl = AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL),
+            host = OpenAIHost(baseUrl = if (url.endsWith('/')) url else "$url/"), // Ensure URL ends with '/'
             timeout = Timeout(
                 request = 10.minutes,
                 connect = 10.minutes,
@@ -32,13 +32,13 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
 
 @Single
 fun provideOpenAIClients(client: HttpClient): Map<String, OpenAI> {
-    return AppConfig.Api.OPEN_AI_API_URLS.associateWith { url ->
+    return AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapValues { (url, key) ->
         OpenAI(
             config = OpenAIConfig(
-                token = AppConfig.Api.OPEN_AI_API_KEY,
+                token = key,
                 logging = LoggingConfig(LogLevel.All, Logger.Default),
                 engine = client.engine,
-                host = OpenAIHost(baseUrl = url),
+                host = OpenAIHost(baseUrl = if (url.endsWith('/')) url else "$url/"), // Ensure URL ends with '/'
                 timeout = Timeout(
                     request = 10.minutes,
                     connect = 10.minutes,

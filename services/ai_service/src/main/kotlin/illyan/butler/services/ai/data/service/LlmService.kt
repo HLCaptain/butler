@@ -5,6 +5,7 @@ import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
+import illyan.butler.services.ai.AppConfig
 import illyan.butler.services.ai.data.model.ai.ModelDto
 import illyan.butler.services.ai.data.model.chat.ChatDto
 import illyan.butler.services.ai.data.model.chat.MessageDto
@@ -71,7 +72,7 @@ class LlmService(
         if (messages.isEmpty() || messages.last().senderId == modelId) return
         // Then last message is by a user, so run inference on it
         val chatMessages = messages.toConversation(listOf(modelId!!))
-        val modelEndpoint = chat.aiEndpoints[modelId] ?: throw Exception("No AI endpoint found for model with id: $modelId")
+        val modelEndpoint = chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL // Use local AI (self-hosting) as default
         val openAI = openAIClients[modelEndpoint] ?: throw Exception("No OpenAI client found for endpoint $modelEndpoint")
         val chatCompletion = openAI.chatCompletion(
             request = ChatCompletionRequest(
@@ -114,7 +115,7 @@ class LlmService(
             val chat = chatsByModels[modelId]?.firstOrNull { it.id == chatId }
             val messages = chat?.lastFewMessages?.sortedBy { it.time } ?: return
             val chatMessages = messages.toConversation(listOf(modelId!!))
-            val modelEndpoint = chat.aiEndpoints[modelId] ?: throw Exception("No AI endpoint found for model with id: $modelId")
+            val modelEndpoint = chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL // Use local AI (self-hosting) as default
             val openAI = openAIClients[modelEndpoint] ?: throw Exception("No OpenAI client found for endpoint $modelEndpoint")
             val updatedMessage = openAI.chatCompletion(
                 request = ChatCompletionRequest(

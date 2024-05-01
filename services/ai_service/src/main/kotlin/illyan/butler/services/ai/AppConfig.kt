@@ -32,15 +32,20 @@ data object AppConfig {
             }
         }.distinct()
         val SERIALIZATION_FORMAT = SERIALIZATION_FORMATS.first()
+        val SSL_CERT_PASSWORD = System.getenv("SSL_CERT_PASSWORD") ?: "password"
     }
     data object Api {
+        val CHAT_API_URL = System.getenv("CHAT_API_URL") ?: "http://localhost:8084"
         val LOCAL_AI_OPEN_AI_API_URL = System.getenv("LOCAL_AI_API_URL") ?: "http://localai:8080"
         val ANYSCALE_API_URL = System.getenv("ANYSCALE_API_URL") ?: "https://api.endpoints.anyscale.com/v1"
+        val OPEN_AI_API_URL = System.getenv("OPEN_AI_API_URL") ?: "https://api.openai.com/v1"
         // val OTHER_AI_PROVIDER_OPEN_AI_API_URL...
         val OPEN_AI_API_KEY = System.getenv("OPEN_AI_API_KEY") ?: "sk-1234567890abcdef1234567890abcdef"
-        val CHAT_API_URL = System.getenv("CHAT_API_URL") ?: "http://localhost:8084"
-        val OPEN_AI_API_URLS = listOf(
-            LOCAL_AI_OPEN_AI_API_URL,
+        val ANYSCALE_API_CREDENTIAL = System.getenv("ANYSCALE_API_CREDENTIAL") ?: "sk-1234567890abcdef1234567890abcdef"
+        val OPEN_AI_API_URLS_AND_KEYS = mapOf(
+            LOCAL_AI_OPEN_AI_API_URL to "",
+            ANYSCALE_API_URL to ANYSCALE_API_CREDENTIAL,
+            OPEN_AI_API_URL to OPEN_AI_API_KEY
         )
     }
 }

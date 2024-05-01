@@ -74,11 +74,11 @@ fun provideUserMessageMutableStore(
             flow {
                 while (true) {
                     val newMessages = databaseHelper.withDatabase { database ->
-                        Napier.d("Reading chat at $key")
+//                        Napier.d("Reading chat at $key")
                         // TODO: could use ChatMembership table to get all chats for user, but this is simpler and probably faster
                         val chats = database.chatQueries.selectAll().executeAsList()
                         val userChats = chats.filter { it.members.contains(key) }
-                        Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
+//                        Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
                         val messages = userChats.map { chat ->
                             database.messageQueries.selectByChat(chat.id).executeAsList()
                         }.flatten()

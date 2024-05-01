@@ -87,6 +87,8 @@ dependencies {
     implementation(libs.koin.core)
     implementation(platform(libs.koin.annotations.bom))
     implementation(libs.koin.annotations)
+    implementation("io.ktor:ktor-client-core-jvm:2.3.10")
+    implementation("io.ktor:ktor-client-apache:2.3.10")
     ksp(libs.koin.ksp.compiler)
 
     // Tests

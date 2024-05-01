@@ -8,13 +8,13 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.http.headers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flatMap
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -44,12 +44,14 @@ class ModelHealthService(
 
     init {
         coroutineScope.launch {
-            AppConfig.Api.OPEN_AI_API_URLS.map { url ->
+            AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.map { (url, key) ->
                 // TODO: open websocket to each URL and get model ids and health status
                 flow {
                     while (true) {
                         try {
-                            emit(url to client.get("$url/models").body<ModelsResponse>().data)
+                            emit(url to client.get("$url/models"){
+                                headers { append("Authorization", "Bearer $key") }
+                            }.body<ModelsResponse>().data)
                         } catch (e: Exception) {
                             Napier.e(e) { "Error fetching models from $url" }
                         }

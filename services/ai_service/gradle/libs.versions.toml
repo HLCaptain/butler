@@ -41,7 +41,7 @@ napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.2.3" }
 bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.77" }
 
-openai-client = { module = "com.aallam.openai:openai-client", version = "3.7.0" }
+openai-client = { module = "com.aallam.openai:openai-client", version = "3.7.2" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
