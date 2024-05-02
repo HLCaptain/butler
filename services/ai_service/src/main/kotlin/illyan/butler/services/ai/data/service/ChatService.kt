@@ -3,6 +3,7 @@ package illyan.butler.services.ai.data.service
 import illyan.butler.services.ai.AppConfig
 import illyan.butler.services.ai.data.model.chat.ChatDto
 import illyan.butler.services.ai.data.model.chat.MessageDto
+import illyan.butler.services.ai.data.model.chat.ResourceDto
 import illyan.butler.services.ai.data.model.response.PaginationResponse
 import illyan.butler.services.ai.data.utils.getLastMonthDate
 import illyan.butler.services.ai.data.utils.getLastWeekDate
@@ -15,6 +16,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.http.encodeURLPath
 import io.ktor.http.encodeURLPathPart
 import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
@@ -34,6 +36,9 @@ class ChatService(private val client: HttpClient) {
     suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/chats/$chatId").body<Boolean>()
 
     fun getChangedChatsAffectingUser(userId: String) = client.tryToExecuteWebSocket<List<ChatDto>>("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/chats")
+
+    suspend fun getResource(userId: String, resourceId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/resources/$resourceId").body<ResourceDto>()
+    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/resources") { setBody(resource) }.body<ResourceDto>()
 
     /**
      * @param fromDate epoch milli

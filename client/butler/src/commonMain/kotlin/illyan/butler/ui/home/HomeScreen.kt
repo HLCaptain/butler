@@ -116,10 +116,10 @@ class HomeScreen : Screen {
                     if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
                     if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
                 }
+                val onBoardingScreen by remember { lazy { OnBoardingScreen() } }
+                val profileDialogScreen by remember { lazy { ProfileDialogScreen() } }
+                val authScreen by remember { lazy { AuthScreen() } }
                 val startScreen by remember {
-                    val onBoardingScreen by lazy { OnBoardingScreen() }
-                    val profileDialogScreen by lazy { ProfileDialogScreen() }
-                    val authScreen by lazy { AuthScreen() }
                     derivedStateOf {
                         if (!isDialogOpen) {
                             null

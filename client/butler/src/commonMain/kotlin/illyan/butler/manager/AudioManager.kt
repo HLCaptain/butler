@@ -7,6 +7,7 @@ import illyan.butler.utils.Wav
 import illyan.butler.utils.audio.AudioRecorder
 import io.github.aakira.napier.Napier
 import io.ktor.http.ContentType
+import korlibs.audio.format.MP3
 import korlibs.audio.format.WAV
 import korlibs.audio.format.toWav
 import korlibs.audio.sound.SoundChannel
@@ -57,7 +58,8 @@ class AudioManager(
     suspend fun playAudio(audioId: String) {
         val resource = resourceRepository.getResourceFlow(audioId).first { !it.second }.first!!
         val audioData = when (resource.type) {
-            ContentType.Audio.Wav.toString() -> WAV.decode(resource.data)
+            "audio/wav" -> WAV.decode(resource.data)
+            "audio/mp3" -> MP3.decode(resource.data)
             else -> throw IllegalArgumentException("Unsupported audio type: ${resource.type}")
         }
         _playingAudioId.update { audioId }
