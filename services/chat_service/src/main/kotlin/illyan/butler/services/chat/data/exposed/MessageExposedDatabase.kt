@@ -19,7 +19,6 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.insertIgnore
-import org.jetbrains.exposed.sql.insertIgnoreAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -54,15 +53,10 @@ class MessageExposedDatabase(
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
             message.resourceIds.forEach { id ->
-                var newUrlId = Resources.insertIgnoreAndGetId { it[this.type] = id }
-                // InsertIgnoreAndGetId returns null if the row already exists
-                if (newUrlId == null) {
-                    // If the row already exists, get the id of the existing row
-                    newUrlId = Resources.selectAll().where(Resources.type eq id).first()[Resources.id]
-                }
+                val resource = Resources.selectAll().where(Resources.id eq id).first()
                 MessageResources.insertIgnore {
                     it[messageId] = newMessageId
-                    it[resourceId] = newUrlId
+                    it[resourceId] = resource[Resources.id]
                 }
             }
             message.copy(id = newMessageId.value, time = nowMillis)
@@ -74,7 +68,7 @@ class MessageExposedDatabase(
             val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
-                Messages.update({Messages.id eq message.id}) { it[this.message] = message.message }
+                Messages.update({ Messages.id eq message.id }) { it[this.message] = message.message }
             } else {
                 throw Exception("User is not in chat")
             }

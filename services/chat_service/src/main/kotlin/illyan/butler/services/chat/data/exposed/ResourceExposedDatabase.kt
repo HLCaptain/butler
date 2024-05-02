@@ -12,7 +12,6 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -30,22 +29,11 @@ class ResourceExposedDatabase(
         }
     }
 
-    override suspend fun createResource(userId: String, messageId: String, resource: ResourceDto): ResourceDto {
+    override suspend fun createResource(userId: String, resource: ResourceDto): ResourceDto {
         return newSuspendedTransaction(dispatcher, database) {
-            // Find chat based on message.chatId
-            // Check if the user is in the chat
-            // Insert resource.id to Resources table
-            // Connect resource.id to message.id in MessageResources table
-            val message = Messages.selectAll().where(Messages.id eq messageId).firstOrNull() ?: throw Exception("Cannot attach resource to message, message not found")
-            val isUserPartOfChat = ChatMembers.selectAll().where((ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message[Messages.chatId])).count() > 0
-            if (!isUserPartOfChat) throw Exception("User is not part of chat")
             val newResourceId = Resources.insertAndGetId {
                 it[this.type] = resource.type
                 it[this.data] = resource.data
-            }
-            MessageResources.insert {
-                it[this.messageId] = messageId
-                it[this.resourceId] = newResourceId
             }
             resource.copy(id = newResourceId.value)
         }

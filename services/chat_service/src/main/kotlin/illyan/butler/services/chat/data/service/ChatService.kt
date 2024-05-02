@@ -157,8 +157,8 @@ class ChatService(
         return messageDatabase.getChangedMessagesAffectingChat(userId, chatId)
     }
 
-    override suspend fun createResource(userId: String, messageId: String, resource: ResourceDto): ResourceDto {
-        return resourceDatabase.createResource(userId, messageId, resource)
+    override suspend fun createResource(userId: String, resource: ResourceDto): ResourceDto {
+        return resourceDatabase.createResource(userId, resource)
     }
 
     override suspend fun getResource(userId: String, resourceId: String): ResourceDto {

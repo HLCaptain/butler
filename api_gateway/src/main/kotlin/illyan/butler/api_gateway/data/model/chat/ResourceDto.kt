@@ -27,4 +27,8 @@ data class ResourceDto(
         result = 31 * result + data.contentHashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "ResourceDto(id=$id, type='$type', data.size=${data.size})"
+    }
 }
