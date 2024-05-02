@@ -46,16 +46,16 @@ class AppSettingsRepository(
         null
     )
 
-    override val firstSignInHappenedYet = settings.getBooleanFlow(UserRepository.FIRST_SIGN_IN_HAPPENED_YET, false).stateIn(
+    override val firstSignInHappenedYet = settings.getBooleanOrNullFlow(UserRepository.FIRST_SIGN_IN_HAPPENED_YET).stateIn(
         coroutineScopeIO,
         SharingStarted.Eagerly,
-        false
+        null
     )
 
-    override val isTutorialDone = settings.getBooleanFlow("IS_TUTORIAL_DONE", false).stateIn(
+    override val isTutorialDone = settings.getBooleanOrNullFlow("IS_TUTORIAL_DONE").stateIn(
         coroutineScopeIO,
         SharingStarted.Eagerly,
-        false
+        null
     )
 
     override suspend fun setTutorialDone(isTutorialDone: Boolean) = settings.putBoolean("IS_TUTORIAL_DONE", isTutorialDone)

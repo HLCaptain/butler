@@ -87,7 +87,6 @@ class HomeScreen : Screen {
         HomeScreen()
     }
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     internal fun HomeScreen() {
         val screenModel = koinScreenModel<HomeScreenModel>()
@@ -105,10 +104,10 @@ class HomeScreen : Screen {
                 }
                 var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
                 val isDialogOpen by remember {
-                    derivedStateOf { isAuthFlowEnded != true || !state.isTutorialDone || isProfileDialogShowing }
+                    derivedStateOf { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
                 }
                 LaunchedEffect(state.isTutorialDone) {
-                    if (!state.isTutorialDone) isDialogClosedAfterTutorial = false
+                    if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
                     if (state.isUserSignedIn == true) isAuthFlowEnded = true
                 }
                 val startScreen by remember {
@@ -119,7 +118,7 @@ class HomeScreen : Screen {
                         if (!isDialogOpen) {
                             null
                         } else {
-                            if (state.isTutorialDone && isDialogClosedAfterTutorial) {
+                            if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
                                 if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
                             } else onBoardingScreen
                         }
@@ -129,7 +128,7 @@ class HomeScreen : Screen {
                 ButlerDialog(
                     startScreens = listOfNotNull(startScreen),
                     isDialogOpen = isDialogOpen,
-                    isDialogFullscreen = state.isUserSignedIn != true || !state.isTutorialDone,
+                    isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
                     onDismissDialog = {
                         if (state.isUserSignedIn == true) {
                             isAuthFlowEnded = true
@@ -137,7 +136,7 @@ class HomeScreen : Screen {
                         isProfileDialogShowing = false
                     },
                     onDialogClosed = {
-                        if (state.isTutorialDone) {
+                        if (state.isTutorialDone == true) {
                             isDialogClosedAfterTutorial = true
                         }
                     }
