@@ -53,7 +53,7 @@ class ModelHealthService(
                         } catch (e: Exception) {
                             Napier.e(e) { "Error fetching models from $url" }
                         }
-                        delay(10000L)
+                        delay(60000L)
                     }
                 }
             }.merge().collectLatest { models -> _models.update { it + models } }

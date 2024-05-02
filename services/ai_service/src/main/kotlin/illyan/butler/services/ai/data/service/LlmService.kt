@@ -11,6 +11,7 @@ import illyan.butler.services.ai.data.model.chat.ChatDto
 import illyan.butler.services.ai.data.model.chat.MessageDto
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -55,12 +56,16 @@ class LlmService(
                                 chatsByModels[model.id] = chats
                                 Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
                                 emit(chatsByModels[model.id]!!.mapNotNull { it.id }.toSet())
-                                delay(10000L)
+                                delay(60000L)
                             }
                         }
                     }
                 }.merge()
-            }.collectLatest { chatIds -> updateChatsIfNeeded(chatIds) }
+            }.collectLatest { chatIds ->
+                coroutineScope.launch(Dispatchers.IO) {
+                    updateChatsIfNeeded(chatIds)
+                }
+            }
         }
     }
 

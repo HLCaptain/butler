@@ -23,8 +23,9 @@ import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -130,7 +131,7 @@ class ChatDetailScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 AnimatedVisibility(selectedChatId == null) {
                     SelectChat()
@@ -232,6 +233,7 @@ fun MessageItem(
     images: List<ByteArray> = emptyList(),
     userId: String
 ) {
+    val sentByUser = message.senderId == userId
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -240,7 +242,7 @@ fun MessageItem(
         horizontalAlignment = if (message.senderId == userId) Alignment.End else Alignment.Start
     ) {
         Text(
-            text = stringResource(if (message.senderId == userId) Res.string.you else Res.string.assistant),
+            text = stringResource(if (sentByUser) Res.string.you else Res.string.assistant),
             style = MaterialTheme.typography.labelMedium
         )
         if (sounds.isNotEmpty()) {
@@ -269,7 +271,15 @@ fun MessageItem(
             }
         }
         if (!message.message.isNullOrBlank()) {
-            Card {
+            val cardColors = if (sentByUser) CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            ) else CardDefaults.elevatedCardColors()
+            ElevatedCard(
+                colors = cardColors
+            ) {
                 Text(
                     modifier = Modifier.padding(8.dp),
                     text = message.message
@@ -345,7 +355,7 @@ fun MessageField(
 ) {
     Row(
         modifier = modifier
-            .padding(8.dp)
+            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
             .animateContentSize(),
         verticalAlignment = Alignment.CenterVertically
     ) {

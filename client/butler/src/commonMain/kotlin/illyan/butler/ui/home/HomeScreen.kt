@@ -99,16 +99,22 @@ class HomeScreen : Screen {
                 var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                 var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
                 LaunchedEffect(state.isUserSignedIn) {
+                    if (isAuthFlowEnded == null) isAuthFlowEnded = state.isUserSignedIn
                     if (state.isUserSignedIn != true) isAuthFlowEnded = false
                     isProfileDialogShowing = false
                 }
-                var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
-                val isDialogOpen by remember {
-                    derivedStateOf { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
+//                val isDialogOpen by remember {
+//                    derivedStateOf { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
+//                }
+                var isDialogOpen by rememberSaveable { mutableStateOf(isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing) }
+                LaunchedEffect(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) {
+                    isDialogOpen = isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing
                 }
+                var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
                 LaunchedEffect(state.isTutorialDone) {
+                    if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
                     if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
-                    if (state.isUserSignedIn == true) isAuthFlowEnded = true
+                    if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
                 }
                 val startScreen by remember {
                     val onBoardingScreen by lazy { OnBoardingScreen() }

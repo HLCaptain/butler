@@ -20,7 +20,7 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
         config = OpenAIConfig(
             token = "",
             logging = LoggingConfig(LogLevel.All, Logger.Default),
-            engine = client.engine,
+//            engine = client.engine,
             host = OpenAIHost(baseUrl = if (url.endsWith('/')) url else "$url/"), // Ensure URL ends with '/'
             timeout = Timeout(
                 request = 10.minutes,
@@ -39,7 +39,7 @@ fun provideOpenAIClients(client: HttpClient): Map<String, OpenAI> {
             config = OpenAIConfig(
                 token = key,
                 logging = LoggingConfig(LogLevel.All, Logger.Default),
-                engine = client.engine,
+//                engine = client.engine,
                 host = OpenAIHost(baseUrl = if (url.endsWith('/')) url else "$url/"), // Ensure URL ends with '/'
                 timeout = Timeout(
                     request = 10.minutes,
