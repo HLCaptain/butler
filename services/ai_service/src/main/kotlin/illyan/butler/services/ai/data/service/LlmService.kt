@@ -19,13 +19,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
 class LlmService(
     private val modelHealthService: ModelHealthService,
     private val chatService: ChatService,
-    private val openAIClients: Map<String, OpenAI>,
+    @Named("OpenAIClients") private val openAIClients: Map<String, OpenAI>,
     private val coroutineScope: CoroutineScope
 ) {
     // All messages per model

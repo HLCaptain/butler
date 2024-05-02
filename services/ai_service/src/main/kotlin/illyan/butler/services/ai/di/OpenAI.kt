@@ -9,6 +9,7 @@ import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import illyan.butler.services.ai.AppConfig
 import io.ktor.client.HttpClient
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.minutes
 
@@ -30,6 +31,7 @@ fun provideOpenAiClient(client: HttpClient): OpenAI {
     )
 }
 
+@Named("OpenAIClients")
 @Single
 fun provideOpenAIClients(client: HttpClient): Map<String, OpenAI> {
     return AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapValues { (url, key) ->

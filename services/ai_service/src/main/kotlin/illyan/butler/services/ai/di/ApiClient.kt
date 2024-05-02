@@ -7,10 +7,16 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.engine.okhttp.OkHttpConfig
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -18,6 +24,7 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
@@ -30,7 +37,10 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
+import kotlin.time.Duration.Companion.minutes
 
 fun HttpClientConfig<OkHttpConfig>.setupClient() {
     install(Logging) {
@@ -126,28 +136,51 @@ class ContentTypeFallbackConfig {
     var supportedContentTypes: List<ContentType> = emptyList()
 }
 
-//object SslSettings {
-//    fun getKeyStore(): KeyStore {
-//        val keyStoreFile = FileInputStream("keystore.jks")
-//        val keyStorePassword = "foobar".toCharArray()
-//        val keyStore: KeyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-//        keyStore.load(keyStoreFile, keyStorePassword)
-//        return keyStore
-//    }
-//
-//    fun getTrustManagerFactory(): TrustManagerFactory? {
-//        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-//        trustManagerFactory.init(getKeyStore())
-//        return trustManagerFactory
-//    }
-//
-//    fun getSslContext(): SSLContext? {
-//        val sslContext = SSLContext.getInstance("TLS")
-//        sslContext.init(null, getTrustManagerFactory()?.trustManagers, null)
-//        return sslContext
-//    }
-//
-//    fun getTrustManager(): X509TrustManager {
-//        return getTrustManagerFactory()?.trustManagers?.first { it is X509TrustManager } as X509TrustManager
-//    }
-//}
+@Named("OpenAIHttpClients")
+@Single
+fun provideOpenAIHttpClients(): Map<String, HttpClient> {
+    return AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapValues { (url, key) ->
+        HttpClient(OkHttp) {
+            install(ContentNegotiation) {
+                json(Json {
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                })
+            }
+
+            install(Logging) {
+                logger = Logger.DEFAULT
+                level = LogLevel.ALL
+                sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
+
+            install(Auth) {
+                bearer {
+                    loadTokens {
+                        BearerTokens(accessToken = key, refreshToken = "")
+                    }
+                }
+            }
+
+            install(HttpTimeout) {
+                socketTimeoutMillis = 10.minutes.inWholeMilliseconds
+                connectTimeoutMillis = 10.minutes.inWholeMilliseconds
+                requestTimeoutMillis = 10.minutes.inWholeMilliseconds
+
+            }
+
+            install(HttpRequestRetry) {
+                maxRetries = 2
+                // retry on rate limit error.
+                retryIf { _, response -> response.status.value.let { it == 429 } }
+                exponentialDelay()
+            }
+
+            defaultRequest {
+                url(url)
+            }
+
+            expectSuccess = true
+        }
+    }
+}
