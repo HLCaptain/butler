@@ -37,7 +37,7 @@ class ResourceExposedDatabase(
             // Insert resource.id to Resources table
             // Connect resource.id to message.id in MessageResources table
             val message = Messages.selectAll().where(Messages.id eq messageId).firstOrNull() ?: throw Exception("Cannot attach resource to message, message not found")
-            val isUserPartOfChat = ChatMembers.selectAll().where((ChatMembers.userId eq userId) and (ChatMembers.chatId eq message[Messages.chatId])).count() > 0
+            val isUserPartOfChat = ChatMembers.selectAll().where((ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message[Messages.chatId])).count() > 0
             if (!isUserPartOfChat) throw Exception("User is not part of chat")
             val newResourceId = Resources.insertAndGetId {
                 it[this.type] = resource.type
@@ -80,7 +80,7 @@ class ResourceExposedDatabase(
     private fun canUserAccessResource(resourceId: String, userId: String): Boolean {
         val messageId = MessageResources.selectAll().where(MessageResources.resourceId eq resourceId).firstOrNull()?.get(MessageResources.messageId) ?: throw Exception("Resource not found")
         val message = Messages.selectAll().where(Messages.id eq messageId).firstOrNull() ?: throw Exception("Resource not found")
-        val isUserPartOfChat = ChatMembers.selectAll().where((ChatMembers.userId eq userId) and (ChatMembers.chatId eq message[Messages.chatId])).count() > 0
+        val isUserPartOfChat = ChatMembers.selectAll().where((ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message[Messages.chatId])).count() > 0
         return isUserPartOfChat
     }
 }

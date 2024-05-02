@@ -40,7 +40,7 @@ class ChatExposedDatabase(
     }
     override suspend fun getChat(userId: String, chatId: String): ChatDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 Chats.selectAll().where(Chats.id eq chatId).first().toChatDto()
@@ -62,7 +62,7 @@ class ChatExposedDatabase(
             (chat.members + userId).distinct().forEach { member ->
                 ChatMembers.insertIgnore {
                     it[ChatMembers.chatId] = chatId
-                    it[ChatMembers.userId] = member
+                    it[ChatMembers.memberId] = member
                 }
             }
             chat.copy(id = chatId.value, created = createdMillis)
@@ -71,22 +71,22 @@ class ChatExposedDatabase(
 
     override suspend fun editChat(userId: String, chat: ChatDto) {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chat.id!!)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chat.id!!)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 Chats.update({ Chats.id eq chat.id }) { it[name] = chat.name }
                 val currentMembers =
-                    ChatMembers.selectAll().where(ChatMembers.chatId eq chat.id).map { it[ChatMembers.userId] }
+                    ChatMembers.selectAll().where(ChatMembers.chatId eq chat.id).map { it[ChatMembers.memberId] }
                 val newMembers = chat.members
                 val removedMembers = currentMembers.filter { !newMembers.contains(it) }
                 val addedMembers = newMembers.filter { !currentMembers.contains(it) }
                 removedMembers.forEach { member ->
-                    ChatMembers.deleteWhere { (chatId eq chat.id) and (ChatMembers.userId eq member) }
+                    ChatMembers.deleteWhere { (chatId eq chat.id) and (ChatMembers.memberId eq member) }
                 }
                 addedMembers.forEach { member ->
                     ChatMembers.insertIgnore {
                         it[chatId] = chat.id
-                        it[ChatMembers.userId] = member
+                        it[ChatMembers.memberId] = member
                     }
                 }
             } else {
@@ -97,7 +97,7 @@ class ChatExposedDatabase(
 
     override suspend fun deleteChat(userId: String, chatId: String): Boolean {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 ChatMembers.deleteWhere { ChatMembers.chatId eq chatId }
@@ -110,7 +110,7 @@ class ChatExposedDatabase(
 
     override suspend fun getChats(userId: String, fromDate: Long, toDate: Long): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatIds = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatIds = ChatMembers.selectAll().where { ChatMembers.memberId eq userId }
                 .map { it[ChatMembers.chatId] }
 
             val relevantChatIds = Messages.selectAll().where {
@@ -131,7 +131,7 @@ class ChatExposedDatabase(
 
     override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.memberId eq userId }
             val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
             val userChats = userChatQuery.map { it.toChatDto() }
 
@@ -154,7 +154,7 @@ class ChatExposedDatabase(
 
     override suspend fun getChats(userId: String): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.memberId eq userId }
             val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
 
             val relevantMessages = Messages
@@ -171,7 +171,7 @@ class ChatExposedDatabase(
 
     override suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.memberId eq userId }
             val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
 
             val relevantChatIds = Messages
@@ -193,7 +193,7 @@ class ChatExposedDatabase(
 
     override suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.userId eq userId }
+            val userChatQuery = ChatMembers.selectAll().where { ChatMembers.memberId eq userId }
             val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
             val userChats = userChatQuery.map { it.toChatDto() }
 
@@ -245,7 +245,7 @@ class ChatExposedDatabase(
         id = this[Chats.id].value,
         created = this[Chats.created],
         name = this[Chats.name],
-        members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.userId] },
+        members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.memberId] },
         lastFewMessages = messages,
         aiEndpoints = this[Chats.endpoints]
     )
