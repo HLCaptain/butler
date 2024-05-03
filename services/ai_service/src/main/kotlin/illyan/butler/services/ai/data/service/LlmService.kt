@@ -71,7 +71,9 @@ class LlmService(
                                     chat.lastFewMessages.forEach { message ->
                                         message.resourceIds.forEach { resourceId ->
                                             if (!resources.containsKey(resourceId)) {
-                                                resources[resourceId] = chatService.getResource(model.id, resourceId)
+                                                coroutineScope.launch {
+                                                    resources[resourceId] = chatService.getResource(model.id, resourceId)
+                                                }
                                             }
                                         }
                                     }
