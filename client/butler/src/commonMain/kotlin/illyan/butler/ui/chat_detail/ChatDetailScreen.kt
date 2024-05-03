@@ -265,12 +265,11 @@ fun MessageItem(
                 imageLoader = ImageLoader(LocalPlatformContext.current),
                 contentDescription = "Image"
             ) {
-                val state = painter.state
-                when (state) {
+                when (val state = painter.state) {
                     AsyncImagePainter.State.Empty -> Text("Empty")
                     is AsyncImagePainter.State.Error -> {
-                        Text("Error")
-                        Napier.e("Error loading image: ${painter.state}", state.result.throwable)
+                        Text("Error loading image")
+                        Napier.e("Error loading image with size ${image.size} and painter.state: ${painter.state}", state.result.throwable)
                     }
                     is AsyncImagePainter.State.Loading -> MediumCircularProgressIndicator()
                     is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()

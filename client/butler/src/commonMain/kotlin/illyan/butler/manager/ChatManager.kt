@@ -150,7 +150,7 @@ class ChatManager(
         val imageContent = SystemFileSystem.source(path).buffered().readByteArray()
         val imageId = resourceRepository.upsert(
             DomainResource(
-                type = "image/${path.name.substringAfterLast('.')}",
+                type = "image/${path.name.substringAfterLast('.').lowercase()}",
                 data = imageContent
             )
         )
