@@ -1,9 +1,13 @@
+import kotlin.String;
+import kotlin.collections.List;
+
 CREATE TABLE Message (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
     senderId TEXT NOT NULL,
     message TEXT,
     time INTEGER,
-    chatId TEXT NOT NULL
+    chatId TEXT NOT NULL,
+    resourceIds TEXT AS List<String> NOT NULL
 );
 
 select:

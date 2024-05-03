@@ -233,6 +233,9 @@ fun MessageItem(
     images: List<ByteArray> = emptyList(),
     userId: String
 ) {
+    LaunchedEffect(images) {
+        Napier.d("Number of images for message ${message.id}: ${images.size}")
+    }
     val sentByUser = message.senderId == userId
     Column(
         modifier = Modifier
@@ -256,15 +259,19 @@ fun MessageItem(
         images.forEach { image ->
             SubcomposeAsyncImage(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp),
+                    .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+                    .clip(RoundedCornerShape(8.dp)),
                 model = image,
-                imageLoader = ImageLoader(context = LocalPlatformContext.current),
+                imageLoader = ImageLoader(LocalPlatformContext.current),
                 contentDescription = "Image"
             ) {
-                when (painter.state) {
+                val state = painter.state
+                when (state) {
                     AsyncImagePainter.State.Empty -> Text("Empty")
-                    is AsyncImagePainter.State.Error -> Text("Error")
+                    is AsyncImagePainter.State.Error -> {
+                        Text("Error")
+                        Napier.e("Error loading image: ${painter.state}", state.result.throwable)
+                    }
                     is AsyncImagePainter.State.Loading -> MediumCircularProgressIndicator()
                     is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
                 }

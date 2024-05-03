@@ -27,4 +27,8 @@ data class DomainResource(
         result = 31 * result + data.contentHashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "DomainResource(id=$id, type='$type', data.size=${data.size})"
+    }
 }

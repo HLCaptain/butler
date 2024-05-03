@@ -6,6 +6,7 @@ import app.cash.sqldelight.db.SqlSchema
 import illyan.butler.db.Chat
 import illyan.butler.db.Database
 import illyan.butler.db.ErrorEvent
+import illyan.butler.db.Message
 import illyan.butler.db.Resource
 import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
@@ -34,6 +35,9 @@ private suspend fun createDatabase(): Database {
         ),
         ResourceAdapter = Resource.Adapter(
             data_Adapter = byteArrayToTextAdapter
+        ),
+        MessageAdapter = Message.Adapter(
+            resourceIdsAdapter = listAdapter
         )
     )
 

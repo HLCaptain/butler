@@ -9,10 +9,10 @@ import illyan.butler.domain.model.DomainResource
 import illyan.butler.manager.AudioManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager
-import illyan.butler.utils.Wav
 import illyan.butler.utils.toWav
 import io.github.aakira.napier.Napier
-import io.ktor.http.ContentType
+import korlibs.audio.format.MP3
+import korlibs.audio.sound.AudioData
 import korlibs.time.seconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -77,9 +77,10 @@ class ChatDetailScreenModel(
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>
-        val sounds = resources?.filter { it.type == ContentType.Audio.Wav.toString() }
-            ?.associate { it.id!! to it.data.toWav()!!.totalTime.seconds.toFloat() } ?: emptyMap()
-        val images = resources?.filter { it.type.split('/')[0] == "image" }
+        Napier.v("Resources: $resources")
+        val sounds = resources?.filter { it.type.startsWith("audio") }
+            ?.associate { it.id!! to it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } ?: emptyMap()
+        val images = resources?.filter { it.type.startsWith("image") }
             ?.associate { it.id!! to it.data } ?: emptyMap()
         ChatDetailState(
             chat = chat,
@@ -142,5 +143,13 @@ class ChatDetailScreenModel(
         screenModelScope.launch {
             audioManager.stopAudio()
         }
+    }
+}
+
+private suspend fun ByteArray.toAudioData(mimeType: String): AudioData? {
+    return when (mimeType) {
+        "audio/wav" -> toWav()
+        "audio/mp3" -> MP3.decode(this)
+        else -> null
     }
 }

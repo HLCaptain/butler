@@ -10,6 +10,7 @@ fun Message.toDomainModel() = DomainMessage(
     message = message,
     time = time,
     chatId = chatId,
+    resourceIds = resourceIds,
 )
 
 fun DomainMessage.toNetworkModel() = MessageDto(
@@ -27,6 +28,7 @@ fun MessageDto.toLocalModel() = Message(
     message = message,
     time = time,
     chatId = chatId,
+    resourceIds = resourceIds,
 )
 
 fun Message.toNetworkModel() = toDomainModel().toNetworkModel()
