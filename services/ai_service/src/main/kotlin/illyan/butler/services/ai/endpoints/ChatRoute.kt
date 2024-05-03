@@ -42,6 +42,8 @@ fun Route.chatRoute() {
 
     // Best case scenario: 10000 DAU * 0.0417 USD / MONTH = 417 USD / MONTH
 
+    // TODO: calculate accumulation of tokens in a single chat (more input tokens per message)
+
     route("/chats/{chatId}") {
         get("/regenerate") {
             val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)

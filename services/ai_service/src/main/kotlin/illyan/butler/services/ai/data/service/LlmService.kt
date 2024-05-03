@@ -10,10 +10,8 @@ import com.aallam.openai.api.chat.ContentPart
 import com.aallam.openai.api.chat.ImagePart
 import com.aallam.openai.api.chat.TextContent
 import com.aallam.openai.api.chat.TextPart
-import com.aallam.openai.api.core.RequestOptions
 import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.model.ModelId
-import com.aallam.openai.client.Chat
 import com.aallam.openai.client.OpenAI
 import illyan.butler.services.ai.AppConfig
 import illyan.butler.services.ai.data.model.ai.ModelDto
@@ -25,9 +23,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -36,7 +34,6 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.io.path.pathString
 
 @Single
 class LlmService(
@@ -50,6 +47,7 @@ class LlmService(
     private val chatsByModels = hashMapOf<String, List<ChatDto>>()
     private val awaitingChatReplies = hashMapOf<String, List<String>>()
     private var modelsAndProviderIds = mapOf<ModelDto, List<String>>()
+    private val resources: MutableMap<String, ResourceDto> = mutableMapOf()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun loadModels() {
@@ -62,27 +60,28 @@ class LlmService(
                         if (!chatsByModels.containsKey(model.id)) {
                             Napier.v("Model with id: $model not found in chatsByModels. Fetching chats.")
                             while (true) {
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    val chats = try {
-                                        chatService.getChats(model.id)
-                                    } catch (e: Exception) {
-                                        Napier.e("Error fetching chats for model with id: ${model.id}", e)
-                                        emptyList()
-                                    }
-                                    chatsByModels[model.id] = chats
-                                    Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
-                                    emit(chatsByModels[model.id]!!.mapNotNull { it.id }.toSet())
-                                    delay(60000L)
+                                val chats = try {
+                                    chatService.getChats(model.id)
+                                } catch (e: Exception) {
+                                    Napier.e("Error fetching chats for model with id: ${model.id}", e)
+                                    emptyList()
                                 }
+                                chatsByModels[model.id] = chats
+                                chats.forEach { chat ->
+                                    chat.lastFewMessages.forEach { message ->
+                                        message.resourceIds.forEach { resourceId ->
+                                            resources[resourceId] = chatService.getResource(model.id, resourceId)
+                                        }
+                                    }
+                                }
+                                Napier.v("Fetched ${chats.size} chats for model with id: ${model.id}")
+                                emit(chatsByModels[model.id]!!.mapNotNull { it.id }.toSet())
+                                delay(60000L)
                             }
                         }
                     }
-                }.merge()
-            }.collectLatest { chatIds ->
-                coroutineScope.launch(Dispatchers.IO) {
-                    updateChatsIfNeeded(chatIds)
-                }
-            }
+                }.merge().flowOn(Dispatchers.IO)
+            }.collect { chatIds -> updateChatsIfNeeded(chatIds) }
         }
     }
 
@@ -128,26 +127,29 @@ class LlmService(
         } else {
             messages.last()
         }
-        val conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(listOf(modelId!!))
+        val resources = lastMessage.resourceIds.map { resources.getOrPut(it) { chatService.getResource(modelId!!, it) } }
+        val conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(listOf(modelId!!), resources)
         if (awaitingChatReplies[modelId]?.contains(chatId) != true) {
             awaitingChatReplies[modelId] = ((awaitingChatReplies[modelId] ?: emptyList()) + chatId).distinct()
             val modelEndpoint = chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL // Use local AI (self-hosting) as default
             if (lastMessage.resourceIds.isEmpty()) {
                 // Last message is simple text
                 // Answer with simple text
+                Napier.v("Last message is simple text, answering with text")
                 val answer = answerChatWithText(modelId, modelEndpoint, conversation)
                 upsertNewMessage(regenerateMessage, modelId, chatId, answer)
             } else {
                 // Describe image
                 // For audio, reply with text and audio
-                val resources = lastMessage.resourceIds.map { chatService.getResource(modelId, it) }
                 resources.forEach { resource ->
                     when (resource.type.split("/").first()) {
                         "image" -> {
+                            Napier.v("Resource is an image, answering with text")
                             val answer = answerChatWithText("gpt-4-vision-preview", AppConfig.Api.OPEN_AI_API_URL, conversation)
                             upsertNewMessage(regenerateMessage, modelId, chatId, answer)
                         }
                         "audio" -> {
+                            Napier.v("Resource is audio, transcribing and answering with text and audio")
                             val speechToTextContent = transcribeAudio("whisper-1", AppConfig.Api.OPEN_AI_API_URL, resource)
                             val modifiedConversation = conversation.toMutableList()
                             modifiedConversation.removeLast()
@@ -155,7 +157,7 @@ class LlmService(
                                 lastMessage.toChatMessage(
                                     modelIds = listOf(modelId),
                                     previousMessageContent = "${modifiedConversation.last().content}\n$speechToTextContent",
-                                    imageResources = resources.filter { it.type.startsWith("image") }
+                                    resources = resources.filter { it.type.startsWith("image") }
                                 )
                             )
                             val answer = answerChatWithText(modelId, modelEndpoint, modifiedConversation)
@@ -251,7 +253,7 @@ class LlmService(
     }
 }
 
-fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> {
+fun List<MessageDto>.toConversation(modelIds: List<String>, resources: List<ResourceDto>): List<ChatMessage> {
     val currentMessages = this
     return fold<MessageDto, MutableList<ChatMessage>>(mutableListOf()) { acc, message ->
         val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && modelIds.contains(message.senderId)
@@ -259,10 +261,10 @@ fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> {
         if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
             val previousMessageContent = acc.last().content
             acc.removeLast()
-            acc.add(message.toChatMessage(modelIds, previousMessageContent))
+            acc.add(message.toChatMessage(modelIds, previousMessageContent, resources))
             return@fold acc
         }
-        acc.add(message.toChatMessage(modelIds))
+        acc.add(message.toChatMessage(modelIds, resources = resources))
         acc
     }.also {
         Napier.v { "Converted messages $currentMessages to conversation: $it" }
@@ -273,16 +275,16 @@ fun List<MessageDto>.toConversation(modelIds: List<String>): List<ChatMessage> {
 fun MessageDto.toChatMessage(
     modelIds: List<String>,
     previousMessageContent: String? = null,
-    imageResources: List<ResourceDto> = emptyList(),
+    resources: List<ResourceDto> = emptyList(),
 ): ChatMessage {
     val textPart = if (previousMessageContent?.filter { it != '\n' }.isNullOrBlank()) message ?: "" else "$previousMessageContent\n$message"
     val content = mutableListOf<ContentPart>()
-    imageResources.forEach { imageResource ->
+    resources.filter { it.type.startsWith("image") }.forEach { imageResource ->
         val imageData = "data:${imageResource.type};base64,${Base64.encode(imageResource.data)}"
         content += ImagePart(imageData)
     }
     if (textPart.isNotBlank()) content += TextPart(textPart)
-    return if (imageResources.isEmpty()) {
+    return if (resources.isEmpty()) {
         // Only text
         ChatMessage(
             role = if (modelIds.contains(senderId)) ChatRole.Assistant else ChatRole.User,

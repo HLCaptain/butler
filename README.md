@@ -44,7 +44,7 @@ kubectl apply -f butler-configmap.yaml
 kubectl apply -f butler-secret.yaml # You have to create this file
 kubectl apply -f api_gateway/deployment.yaml
 kubectl apply -f api_gateway/service.yaml
-kubectl apply -f services/localai/deployment.yaml
+# kubectl apply -f services/localai/deployment.yaml # Uncomment if you want self-hosted AI
 kubectl apply -f services/postgresql/postgresql-statefulset.yaml
 kubectl apply -f services/postgresql/pgadmin-deployment.yaml
 kubectl apply -f services/redis/redis-configmap.yaml
