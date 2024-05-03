@@ -70,7 +70,9 @@ class LlmService(
                                 chats.forEach { chat ->
                                     chat.lastFewMessages.forEach { message ->
                                         message.resourceIds.forEach { resourceId ->
-                                            resources[resourceId] = chatService.getResource(model.id, resourceId)
+                                            if (!resources.containsKey(resourceId)) {
+                                                resources[resourceId] = chatService.getResource(model.id, resourceId)
+                                            }
                                         }
                                     }
                                 }
