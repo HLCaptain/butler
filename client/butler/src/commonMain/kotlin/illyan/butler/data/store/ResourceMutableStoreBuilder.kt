@@ -56,7 +56,7 @@ fun provideResourceMutableStore(
         },
         writer = { key, local ->
             databaseHelper.withDatabase { db ->
-                Napier.d("Writing resource at $key with $local")
+                Napier.d("Writing resource at $key")
                 db.resourceQueries.upsert(local)
             }
         },

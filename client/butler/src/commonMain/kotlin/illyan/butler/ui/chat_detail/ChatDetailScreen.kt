@@ -73,7 +73,7 @@ import illyan.butler.generated.resources.send_message
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
-import illyan.butler.ui.arbitrary.ArbitraryScreen
+import illyan.butler.ui.chat_details.ChatDetailsScreen
 import illyan.butler.ui.dialog.ButlerDialog
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
@@ -162,19 +162,11 @@ class ChatDetailScreen(
                 }
             }
         }
+        val authScreen by remember { lazy { ChatDetailsScreen() } }
         ButlerDialog(
             isDialogOpen = isChatDetailsDialogOpen,
             onDismissDialog = { isChatDetailsDialogOpen = false },
-            startScreens = listOf(
-                ArbitraryScreen {
-                    Column {
-                        Text("Chat details")
-                        Text("Chat name: ${state.chat?.name}")
-                        Text("Chat ID: ${state.chat?.id}")
-                        Text("AI members: ${state.chat?.members?.filter { it != state.userId }}")
-                    }
-                }
-            )
+            startScreens = listOf(authScreen)
         )
     }
 
