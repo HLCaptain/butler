@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -62,6 +63,21 @@ class ResourceExposedDatabase(
             }
             MessageResources.deleteWhere { MessageResources.resourceId eq resourceId }
             Resources.deleteWhere { Resources.id eq resourceId } > 0
+        }
+    }
+
+    override suspend fun getResources(userId: String): List<ResourceDto> {
+        return newSuspendedTransaction(dispatcher, database) {
+            val userChats = ChatMembers.selectAll().where(ChatMembers.memberId eq userId).map { it[ChatMembers.chatId] }
+            val userRelatedMessages = Messages.selectAll().where(Messages.chatId inList userChats).map { it[Messages.id] }
+            val userRelatedResources = MessageResources.selectAll().where(MessageResources.messageId inList userRelatedMessages).map { it[MessageResources.resourceId] }
+            Resources.selectAll().where(Resources.id inList userRelatedResources).map {
+                ResourceDto(
+                    id = it[Resources.id].value,
+                    type = it[Resources.type],
+                    data = it[Resources.data]
+                )
+            }
         }
     }
 

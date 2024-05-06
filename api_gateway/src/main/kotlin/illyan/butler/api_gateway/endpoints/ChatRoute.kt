@@ -152,6 +152,10 @@ fun Route.chatRoute() {
         }
 
         route("/resources") {
+            get {
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                call.respond(HttpStatusCode.OK, chatService.getResources(userId))
+            }
             route("/{resourceId}") {
                 get {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')

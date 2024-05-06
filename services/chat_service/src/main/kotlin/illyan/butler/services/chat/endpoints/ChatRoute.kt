@@ -135,6 +135,10 @@ fun Route.chatRoute() {
             }
         }
         route("/resources") {
+            get {
+                val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                call.respond(chatService.getResources(userId))
+            }
             route("/{resourceId}") {
                 get {
                     val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)

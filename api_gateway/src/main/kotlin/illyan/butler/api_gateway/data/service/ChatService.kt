@@ -52,6 +52,7 @@ class ChatService(
     suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId") { setBody(chat) }.body<ChatDto>()
     suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId").body<Boolean>()
 
+    suspend fun getResources(userId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources").body<List<ResourceDto>>()
     suspend fun getResource(userId: String, resourceId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources/$resourceId").body<ResourceDto>()
     suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources") { setBody(resource) }.body<ResourceDto>()
 

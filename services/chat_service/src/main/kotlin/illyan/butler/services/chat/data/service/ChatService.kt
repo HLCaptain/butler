@@ -168,4 +168,8 @@ class ChatService(
     override suspend fun deleteResource(userId: String, resourceId: String): Boolean {
         return resourceDatabase.deleteResource(userId, resourceId)
     }
+
+    override suspend fun getResources(userId: String): List<ResourceDto> {
+        return resourceDatabase.getResources(userId)
+    }
 }
