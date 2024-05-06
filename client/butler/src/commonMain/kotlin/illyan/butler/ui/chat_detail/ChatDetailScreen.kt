@@ -162,7 +162,7 @@ class ChatDetailScreen(
                 }
             }
         }
-        val authScreen by remember { lazy { ChatDetailsScreen() } }
+        val authScreen by remember { lazy { ChatDetailsScreen { state.chat?.id } } }
         ButlerDialog(
             isDialogOpen = isChatDetailsDialogOpen,
             onDismissDialog = { isChatDetailsDialogOpen = false },

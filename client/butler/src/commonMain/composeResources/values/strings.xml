@@ -27,6 +27,10 @@
     <string name="no_chats">No chats</string>
     <string name="chats">Chats</string>
     <string name="new_chat">New chat</string>
+    <string name="chat_details">Chat details</string>
+    <string name="chat_name_is_x">Chat name: %s</string>
+    <string name="chat_id_is_x">Chat ID: %s</string>
+    <string name="ai_members">AI members: %s</string>
     <string name="no_messages">No messages</string>
     <string name="select">Select</string>
     <string name="send">Send</string>
@@ -62,6 +66,7 @@
     <string name="analytics">Analytics</string>
     <string name="stop">Stop</string>
     <string name="play">Play</string>
+    <string name="none">None</string>
     <string name="turn_on_analytics">Turn on analytics</string>
     <string name="turn_on_analytics_description">Analytics help the development of Butler to provide a more stable and better experience. By turning on analytics, you anonymously send event data, crash logs and performance metrics to us. App restart may be required for the setting to be active.</string>
 </resources>

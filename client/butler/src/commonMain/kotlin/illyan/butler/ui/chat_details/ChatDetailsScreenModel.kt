@@ -34,7 +34,7 @@ class ChatDetailsScreenModel(
             userId = userId
         )
     }.stateIn(screenModelScope, SharingStarted.Eagerly, ChatDetailsScreenState())
-    fun loadChat(chatId: String) {
+    fun loadChat(chatId: String?) {
         _currentChatId.update { chatId }
     }
 }
