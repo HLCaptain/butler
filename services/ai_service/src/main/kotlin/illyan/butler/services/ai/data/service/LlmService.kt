@@ -142,6 +142,7 @@ class LlmService(
                 Napier.v("Last message is simple text, answering with text")
                 val answer = answerChatWithText(modelId, modelEndpoint, conversation)
                 upsertNewMessage(regenerateMessage, modelId, chatId, answer)
+                upsertNewChatName(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
             } else {
                 // Describe image
                 // For audio, reply with text and audio
@@ -151,6 +152,7 @@ class LlmService(
                             Napier.v("Resource is an image, answering with text")
                             val answer = answerChatWithText("gpt-4-vision-preview", AppConfig.Api.OPEN_AI_API_URL, conversation)
                             upsertNewMessage(regenerateMessage, modelId, chatId, answer)
+                            upsertNewChatName(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
                         }
                         "audio" -> {
                             Napier.v("Resource is audio, transcribing and answering with text and audio")
@@ -176,6 +178,17 @@ class LlmService(
                             // Send message with resourceId
                             val newResourceId = chatService.createResource(modelId, audioResource).id!!
                             upsertNewMessage(regenerateMessage, modelId, chatId, answer, listOf(newResourceId))
+                            upsertNewChatName(
+                                modelId,
+                                chat,
+                                conversation + listOf(
+                                    MessageDto(
+                                        senderId = modelId,
+                                        message = answer,
+                                        resourceIds = listOf(newResourceId)
+                                    )
+                                ).toConversation(listOf(modelId), listOf(resource))
+                            )
                         }
                         else -> Napier.v { "Resource type ${resource.type} not supported" }
                     }
@@ -211,6 +224,21 @@ class LlmService(
         } catch (e: Exception) {
             Napier.e("Error sending message for model with id: $modelId and chat with id: $chatId", e)
         }
+    }
+
+    /**
+     * Last message should be from AI.
+     */
+    private suspend fun upsertNewChatName(
+        modelId: String,
+        chat: ChatDto,
+        conversation: List<ChatMessage>
+    ) {
+        if (chat.name != null) return
+        val newChatPrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 60 characters."
+        val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatPrompt))
+        val newName = answerChatWithText(modelId, chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL, newConversation)
+        chatService.editChat(modelId, chat.id!!, chat.copy(name = newName))
     }
 
     suspend fun answerChatWithText(modelId: String, endpoint: String, conversation: List<ChatMessage>): String {
@@ -257,7 +285,7 @@ class LlmService(
     }
 }
 
-fun List<MessageDto>.toConversation(modelIds: List<String>, resources: List<ResourceDto>): List<ChatMessage> {
+fun List<MessageDto>.toConversation(modelIds: List<String>, resources: List<ResourceDto> = emptyList()): List<ChatMessage> {
     val currentMessages = this
     return fold<MessageDto, MutableList<ChatMessage>>(mutableListOf()) { acc, message ->
         val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && modelIds.contains(message.senderId)
