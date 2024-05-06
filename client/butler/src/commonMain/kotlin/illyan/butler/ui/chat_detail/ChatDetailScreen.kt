@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.StopCircle
@@ -72,6 +73,8 @@ import illyan.butler.generated.resources.send_message
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
+import illyan.butler.ui.arbitrary.ArbitraryScreen
+import illyan.butler.ui.dialog.ButlerDialog
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -94,6 +97,7 @@ class ChatDetailScreen(
         }
         val navigator = LocalNavigator.current
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+        var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
@@ -116,12 +120,12 @@ class ChatDetailScreen(
                         }
                     },
                     actions = {
-//                        IconButton(onClick = { /* do something */ }) {
-//                            Icon(
-//                                imageVector = Icons.Filled.Menu,
-//                                contentDescription = "Localized description"
-//                            )
-//                        }
+                        IconButton(onClick = { isChatDetailsDialogOpen = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Chat details"
+                            )
+                        }
                     },
                     scrollBehavior = scrollBehavior,
                 )
@@ -158,6 +162,20 @@ class ChatDetailScreen(
                 }
             }
         }
+        ButlerDialog(
+            isDialogOpen = isChatDetailsDialogOpen,
+            onDismissDialog = { isChatDetailsDialogOpen = false },
+            startScreens = listOf(
+                ArbitraryScreen {
+                    Column {
+                        Text("Chat details")
+                        Text("Chat name: ${state.chat?.name}")
+                        Text("Chat ID: ${state.chat?.id}")
+                        Text("AI members: ${state.chat?.members?.filter { it != state.userId }}")
+                    }
+                }
+            )
+        )
     }
 
     private @Composable
