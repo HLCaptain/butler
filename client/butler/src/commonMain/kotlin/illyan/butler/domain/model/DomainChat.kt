@@ -5,6 +5,7 @@ data class DomainChat(
     val created: Long? = null,
     val name: String? = null,
     val members: List<String>,
-    val aiEndpoints: Map<String, String>
+    val aiEndpoints: Map<String, String>,
+    val summary: String? = null
 )
 

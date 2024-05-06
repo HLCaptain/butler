@@ -9,7 +9,8 @@ fun Chat.toDomainModel() = DomainChat(
     created = created,
     name = name,
     members = members,
-    aiEndpoints = aiEndpoints
+    aiEndpoints = aiEndpoints,
+    summary = summary
 )
 
 fun DomainChat.toNetworkModel() = ChatDto(
@@ -17,7 +18,8 @@ fun DomainChat.toNetworkModel() = ChatDto(
     created = created,
     name = name,
     members = members,
-    aiEndpoints = aiEndpoints
+    aiEndpoints = aiEndpoints,
+    summary = summary
 )
 
 fun ChatDto.toLocalModel() = Chat(
@@ -25,7 +27,8 @@ fun ChatDto.toLocalModel() = Chat(
     created = created!!,
     name = name,
     members = members,
-    aiEndpoints = aiEndpoints
+    aiEndpoints = aiEndpoints,
+    summary = summary
 )
 
 fun Chat.toNetworkModel() = toDomainModel().toNetworkModel()

@@ -247,6 +247,7 @@ class ChatExposedDatabase(
         name = this[Chats.name],
         members = ChatMembers.selectAll().where(ChatMembers.chatId eq this[Chats.id]).map { it[ChatMembers.memberId] },
         lastFewMessages = messages,
-        aiEndpoints = this[Chats.endpoints]
+        aiEndpoints = this[Chats.endpoints],
+        summary = this[Chats.summary]
     )
 }

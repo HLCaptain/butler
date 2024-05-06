@@ -7,7 +7,8 @@ CREATE TABLE Chat (
     created INTEGER NOT NULL,
     name TEXT,
     members TEXT AS List<String> NOT NULL,
-    aiEndpoints TEXT AS Map<String, String> NOT NULL
+    aiEndpoints TEXT AS Map<String, String> NOT NULL,
+    summary TEXT
 );
 
 select:

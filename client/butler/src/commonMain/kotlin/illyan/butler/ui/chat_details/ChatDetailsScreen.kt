@@ -52,6 +52,7 @@ class ChatDetailsScreen(private val getChatId: () -> String?) : Screen {
                     Text(stringResource(Res.string.chat_name_is_x).format(state.chat?.name ?: stringResource(Res.string.new_chat)))
                     Text(stringResource(Res.string.chat_id_is_x).format(state.chat?.id ?: stringResource(Res.string.unknown)))
                     Text(stringResource(Res.string.ai_members).format(aiMembersString))
+                    state.chat?.summary?.let { Text(it) }
                 }
             },
             containerColor = Color.Transparent
