@@ -140,7 +140,14 @@ class LlmService(
         val resources = messages.map { message -> message.resourceIds.map { resources.getOrPut(it) { chatService.getResource(modelId!!, it) } } }.flatten()
         val conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(listOf(modelId!!), resources)
         if (lastMessage.senderId == modelId) {
-            refreshChatInfo(modelId, chat, conversation)
+            if (chat.summary == null) {
+                refreshChatInfo(
+                    modelId,
+                    chat,
+                    generateSummaryForChat(modelId, chat, conversation),
+                    chat.name ?: generateNewChatName(modelId, chat, conversation)
+                )
+            }
             return
         }
 
@@ -153,7 +160,8 @@ class LlmService(
                 Napier.v("Last message is simple text, answering with text")
                 val answer = answerChatWithTextAndContext(modelId, modelEndpoint, conversation, chat.id!!, listOf(modelId))
                 upsertNewMessage(regenerateMessage, modelId, chatId, answer)
-                refreshChatInfo(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
+                val newConversation = conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId))
+                refreshChatInfo(modelId, chat, newConversation)
             } else {
                 // Describe image
                 // For audio, reply with text and audio
@@ -163,7 +171,8 @@ class LlmService(
                             Napier.v("Resource is an image, answering with text")
                             val answer = answerChatWithTextAndContext("gpt-4-vision-preview", AppConfig.Api.OPEN_AI_API_URL, conversation, chatId, listOf(modelId))
                             upsertNewMessage(regenerateMessage, modelId, chatId, answer)
-                            refreshChatInfo(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
+                            val newConversation = conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId))
+                            refreshChatInfo(modelId, chat, newConversation)
                         }
                         "audio" -> {
                             Napier.v("Resource is audio, transcribing and answering with text and audio")
@@ -242,11 +251,24 @@ class LlmService(
         chat: ChatDto,
         conversation: List<ChatMessage>,
     ) {
-        val newName = generateNewChatName(modelId, chat, conversation)
-        val newSummary = generateSummaryForChat(modelId, chat, conversation)
-        if (chat.name != newName || chat.summary != newSummary) {
-            chatService.editChat(modelId, chat.id!!, chat.copy(name = newName, summary = newSummary))
+        Napier.v { "Refreshing chat info for chat with id: ${chat.id}" }
+        val newName = chat.name ?: generateNewChatName(modelId, chat, conversation).also {
+            Napier.v { "Generated new name for chat with id: ${chat.id}" }
         }
+        val newSummary = generateSummaryForChat(modelId, chat, conversation).also {
+            Napier.v { "Generated new summary for chat with id: ${chat.id}" }
+        }
+        chatService.editChat(modelId, chat.id!!, chat.copy(name = newName, summary = newSummary))
+    }
+
+    private suspend fun refreshChatInfo(
+        modelId: String,
+        chat: ChatDto,
+        newSummary: String? = null,
+        newName: String? = null
+    ) {
+        Napier.v { "Refreshing chat info for chat with id: ${chat.id}" }
+        chatService.editChat(modelId, chat.id!!, chat.copy(name = newName ?: chat.name, summary = newSummary ?: chat.summary))
     }
 
     private suspend fun generateSummaryForChat(
@@ -254,7 +276,7 @@ class LlmService(
         chat: ChatDto,
         conversation: List<ChatMessage>,
     ): String {
-        val newChatSummaryPrompt = "\n\nPlease provide a summary of this conversation. No more than 200 characters. Answer with only the summary, nothing else."
+        val newChatSummaryPrompt = "\n\nPlease provide a summary of this conversation. No more than 200 characters. ANSWER WITH ONLY THE SUMMARY, NOTHING ELSE."
         val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatSummaryPrompt))
         return answerChatWithText(modelId, chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL, newConversation)
     }
@@ -268,7 +290,7 @@ class LlmService(
         conversation: List<ChatMessage>,
     ): String {
         if (chat.name != null) return chat.name
-        val newChatNamePrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 60 characters. Answer with only the name, nothing else."
+        val newChatNamePrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 60 characters. ANSWER WITH ONLY THE NAME, NOTHING ELSE."
         val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatNamePrompt))
         return answerChatWithText(modelId, chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL, newConversation)
     }
