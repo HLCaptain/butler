@@ -36,6 +36,9 @@ class ChatStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     val userChatMutableStore = userChatMutableStoreBuilder.store
+    override suspend fun deleteAllChats(userId: String) {
+        userChatMutableStore.clear(userId)
+    }
 
     init {
         coroutineScopeIO.launch {

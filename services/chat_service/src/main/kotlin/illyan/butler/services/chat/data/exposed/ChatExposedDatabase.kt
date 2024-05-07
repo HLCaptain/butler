@@ -43,7 +43,10 @@ class ChatExposedDatabase(
             val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
-                Chats.selectAll().where(Chats.id eq chatId).first().toChatDto()
+                val messages = Messages.selectAll().where { Messages.chatId eq chatId }.map { it.toMessageDto() }
+                Chats.selectAll().where(Chats.id eq chatId).first().toChatDto(messages).also {
+                    Napier.d("Returning chat $it")
+                }
             } else {
                 throw Exception("User is not in chat")
             }
@@ -58,11 +61,12 @@ class ChatExposedDatabase(
                 it[name] = chat.name
                 it[created] = createdMillis
                 it[endpoints] = chat.aiEndpoints
+                it[summary] = chat.summary
             }
             (chat.members + userId).distinct().forEach { member ->
                 ChatMembers.insertIgnore {
                     it[ChatMembers.chatId] = chatId
-                    it[ChatMembers.memberId] = member
+                    it[memberId] = member
                 }
             }
             chat.copy(id = chatId.value, created = createdMillis)
@@ -74,9 +78,11 @@ class ChatExposedDatabase(
             val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chat.id!!)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
-                Chats.update({ Chats.id eq chat.id }) { it[name] = chat.name }
-                val currentMembers =
-                    ChatMembers.selectAll().where(ChatMembers.chatId eq chat.id).map { it[ChatMembers.memberId] }
+                Chats.update({ Chats.id eq chat.id }) {
+                    it[name] = chat.name
+                    it[summary] = chat.summary
+                }
+                val currentMembers = ChatMembers.selectAll().where(ChatMembers.chatId eq chat.id).map { it[ChatMembers.memberId] }
                 val newMembers = chat.members
                 val removedMembers = currentMembers.filter { !newMembers.contains(it) }
                 val addedMembers = newMembers.filter { !currentMembers.contains(it) }
@@ -86,7 +92,7 @@ class ChatExposedDatabase(
                 addedMembers.forEach { member ->
                     ChatMembers.insertIgnore {
                         it[chatId] = chat.id
-                        it[ChatMembers.memberId] = member
+                        it[memberId] = member
                     }
                 }
             } else {

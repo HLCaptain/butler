@@ -170,8 +170,8 @@ class ChatDetailScreen(
         )
     }
 
-    private @Composable
-    fun SelectChat() {
+    @Composable
+    private fun SelectChat() {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -247,12 +247,15 @@ fun MessageItem(
         Napier.d("Number of images for message ${message.id}: ${images.size}")
     }
     val sentByUser = message.senderId == userId
+    LaunchedEffect(sentByUser) {
+        Napier.d("Message ${message.id} sent by user: $sentByUser, senderId: ${message.senderId}, userId: $userId")
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = if (message.senderId == userId) Alignment.End else Alignment.Start
+        horizontalAlignment = if (sentByUser) Alignment.End else Alignment.Start
     ) {
         Text(
             text = stringResource(if (sentByUser) Res.string.you else Res.string.assistant),

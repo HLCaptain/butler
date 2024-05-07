@@ -8,4 +8,5 @@ interface MessageRepository {
     fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>>
     suspend fun upsert(message: DomainMessage): String
     fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>>
+    suspend fun deleteAllMessages(userId: String)
 }

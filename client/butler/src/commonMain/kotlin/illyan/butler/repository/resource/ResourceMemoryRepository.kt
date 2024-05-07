@@ -20,6 +20,11 @@ class ResourceMemoryRepository : ResourceRepository {
         return resourceWithId.id
     }
 
+    override suspend fun deleteAllResources(userId: String) {
+        resources.values.forEach { it.update { null to false } }
+        resources.clear()
+    }
+
     override suspend fun deleteResource(resourceId: String): Boolean {
         return resources.remove(resourceId) != null
     }

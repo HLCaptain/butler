@@ -41,4 +41,9 @@ class ChatMemoryRepository(
 
         return newChat.id
     }
+
+    override suspend fun deleteAllChats(userId: String) {
+        userChats.remove(userId)
+        userChatStateFlows[userId]?.update { null to false }
+    }
 }

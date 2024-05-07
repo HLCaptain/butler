@@ -40,6 +40,10 @@ class ResourceStoreRepository(
         }
     }
 
+    override suspend fun deleteAllResources(userId: String) {
+
+    }
+
     private val resourceStateFlows = mutableMapOf<String, StateFlow<Pair<DomainResource?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
     override fun getResourceFlow(resourceId: String): StateFlow<Pair<DomainResource?, Boolean>> {

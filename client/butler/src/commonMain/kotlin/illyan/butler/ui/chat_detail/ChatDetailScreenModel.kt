@@ -74,6 +74,7 @@ class ChatDetailScreenModel(
         val chat = flows[0] as? DomainChat
         val messages = flows[1] as? List<DomainMessage>
         val userId = flows[2] as? String
+        Napier.v { "User ID: $userId" }
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>

@@ -45,6 +45,7 @@ class LlmService(
     // All messages per model
     // Messages can be grouped and sorted by chatId
     private val chatsByModels = hashMapOf<String, List<ChatDto>>()
+    private val chatsByUsers = hashMapOf<String, MutableList<ChatDto>>()
     private val awaitingChatReplies = hashMapOf<String, List<String>>()
     private var modelsAndProviderIds = mapOf<ModelDto, List<String>>()
     private val resources: MutableMap<String, ResourceDto> = mutableMapOf()
@@ -68,6 +69,11 @@ class LlmService(
                                 }
                                 chatsByModels[model.id] = chats
                                 chats.forEach { chat ->
+                                    chat.members.filter { it != model.id }.forEach { memberId ->
+                                        // TODO: every other member counts as a user for now
+                                        chatsByUsers[memberId]?.removeIf { it.id == chat.id }
+                                        chatsByUsers[memberId]?.add(chat) ?: run { chatsByUsers[memberId] = mutableListOf(chat) }
+                                    }
                                     chat.lastFewMessages.forEach { message ->
                                         message.resourceIds.forEach { resourceId ->
                                             if (!resources.containsKey(resourceId)) {
@@ -120,19 +126,24 @@ class LlmService(
         }
     }
 
-    suspend fun answerChat(chatId: String, regenerateMessage: MessageDto? = null) {
+    private suspend fun answerChat(chatId: String, regenerateMessage: MessageDto? = null) {
         val modelId = chatsByModels.keys.find { modelId -> chatsByModels[modelId]?.any { it.id == chatId } == true }
         val chat = chatsByModels[modelId]?.firstOrNull { it.id == chatId }
         val messages = chat?.lastFewMessages?.sortedBy { it.time } ?: return
-        if (messages.isEmpty() || messages.last().senderId == modelId) return
+        if (messages.isEmpty()) return
         // Then last message is by a user
         val lastMessage = if (regenerateMessage != null) {
             messages.first { it.id == regenerateMessage.id }
         } else {
             messages.last()
         }
-        val resources = lastMessage.resourceIds.map { resources.getOrPut(it) { chatService.getResource(modelId!!, it) } }
+        val resources = messages.map { message -> message.resourceIds.map { resources.getOrPut(it) { chatService.getResource(modelId!!, it) } } }.flatten()
         val conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(listOf(modelId!!), resources)
+        if (lastMessage.senderId == modelId) {
+            refreshChatInfo(modelId, chat, conversation)
+            return
+        }
+
         if (awaitingChatReplies[modelId]?.contains(chatId) != true) {
             awaitingChatReplies[modelId] = ((awaitingChatReplies[modelId] ?: emptyList()) + chatId).distinct()
             val modelEndpoint = chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL // Use local AI (self-hosting) as default
@@ -140,9 +151,9 @@ class LlmService(
                 // Last message is simple text
                 // Answer with simple text
                 Napier.v("Last message is simple text, answering with text")
-                val answer = answerChatWithText(modelId, modelEndpoint, conversation)
+                val answer = answerChatWithTextAndContext(modelId, modelEndpoint, conversation, chat.id!!, listOf(modelId))
                 upsertNewMessage(regenerateMessage, modelId, chatId, answer)
-                upsertNewChatName(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
+                refreshChatInfo(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
             } else {
                 // Describe image
                 // For audio, reply with text and audio
@@ -150,9 +161,9 @@ class LlmService(
                     when (resource.type.split("/").first()) {
                         "image" -> {
                             Napier.v("Resource is an image, answering with text")
-                            val answer = answerChatWithText("gpt-4-vision-preview", AppConfig.Api.OPEN_AI_API_URL, conversation)
+                            val answer = answerChatWithTextAndContext("gpt-4-vision-preview", AppConfig.Api.OPEN_AI_API_URL, conversation, chatId, listOf(modelId))
                             upsertNewMessage(regenerateMessage, modelId, chatId, answer)
-                            upsertNewChatName(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
+                            refreshChatInfo(modelId, chat, conversation + listOf(MessageDto(senderId = modelId, message = answer)).toConversation(listOf(modelId)))
                         }
                         "audio" -> {
                             Napier.v("Resource is audio, transcribing and answering with text and audio")
@@ -166,7 +177,7 @@ class LlmService(
                                     resources = resources.filter { it.type.startsWith("image") }
                                 )
                             )
-                            val answer = answerChatWithText(modelId, modelEndpoint, modifiedConversation)
+                            val answer = answerChatWithTextAndContext(modelId, modelEndpoint, modifiedConversation, chatId, listOf(modelId))
                             val audioResource = generateSpeechFromText("tts-1", AppConfig.Api.OPEN_AI_API_URL, answer)
                             // Append transcription to last message
                             chatService.editMessage(
@@ -178,7 +189,7 @@ class LlmService(
                             // Send message with resourceId
                             val newResourceId = chatService.createResource(modelId, audioResource).id!!
                             upsertNewMessage(regenerateMessage, modelId, chatId, answer, listOf(newResourceId))
-                            upsertNewChatName(
+                            refreshChatInfo(
                                 modelId,
                                 chat,
                                 conversation + listOf(
@@ -187,7 +198,7 @@ class LlmService(
                                         message = answer,
                                         resourceIds = listOf(newResourceId)
                                     )
-                                ).toConversation(listOf(modelId), listOf(resource))
+                                ).toConversation(listOf(modelId), listOf(resource)),
                             )
                         }
                         else -> Napier.v { "Resource type ${resource.type} not supported" }
@@ -226,23 +237,72 @@ class LlmService(
         }
     }
 
+    private suspend fun refreshChatInfo(
+        modelId: String,
+        chat: ChatDto,
+        conversation: List<ChatMessage>,
+    ) {
+        val newName = generateNewChatName(modelId, chat, conversation)
+        val newSummary = generateSummaryForChat(modelId, chat, conversation)
+        if (chat.name != newName || chat.summary != newSummary) {
+            chatService.editChat(modelId, chat.id!!, chat.copy(name = newName, summary = newSummary))
+        }
+    }
+
+    private suspend fun generateSummaryForChat(
+        modelId: String,
+        chat: ChatDto,
+        conversation: List<ChatMessage>,
+    ): String {
+        val newChatSummaryPrompt = "\n\nPlease provide a summary of this conversation. No more than 200 characters. Answer with only the summary, nothing else."
+        val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatSummaryPrompt))
+        return answerChatWithText(modelId, chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL, newConversation)
+    }
+
     /**
      * Last message should be from AI.
      */
-    private suspend fun upsertNewChatName(
+    private suspend fun generateNewChatName(
         modelId: String,
         chat: ChatDto,
-        conversation: List<ChatMessage>
-    ) {
-        if (chat.name != null) return
-        val newChatPrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 60 characters."
-        val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatPrompt))
-        val newName = answerChatWithText(modelId, chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL, newConversation)
-        chatService.editChat(modelId, chat.id!!, chat.copy(name = newName))
+        conversation: List<ChatMessage>,
+    ): String {
+        if (chat.name != null) return chat.name
+        val newChatNamePrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 60 characters. Answer with only the name, nothing else."
+        val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatNamePrompt))
+        return answerChatWithText(modelId, chat.aiEndpoints[modelId] ?: AppConfig.Api.LOCAL_AI_OPEN_AI_API_URL, newConversation)
     }
 
-    suspend fun answerChatWithText(modelId: String, endpoint: String, conversation: List<ChatMessage>): String {
+    private suspend fun answerChatWithTextAndContext(
+        modelId: String,
+        endpoint: String,
+        conversation: List<ChatMessage>,
+        chatId: String,
+        modelIds: List<String>
+    ): String {
+        // get all chats with user
+        val userId = chatsByUsers.values.flatten().first { it.id == chatId }.members.first { !modelIds.contains(it) }
+        // get last 10 chats with user
+        val userChats = chatsByUsers[userId]?.sortedByDescending { chat -> chat.lastFewMessages.maxOf { it.time ?: 0L } }?.take(10) ?: emptyList()
+        val chatSummaries = userChats.mapNotNull { it.summary }
         // generate response text
+        val openAI = openAIClients[endpoint] ?: throw Exception("No OpenAI client found for endpoint $endpoint")
+        return openAI.chatCompletion(
+            request = ChatCompletionRequest(
+                model = ModelId(modelId),
+                messages = conversation + ChatMessage(
+                    role = ChatRole.System,
+                    messageContent = TextContent("Previous chat summaries: ${chatSummaries.joinToString("\n")}")
+                )
+            )
+        ).choices.first().message.content!!
+    }
+
+    private suspend fun answerChatWithText(
+        modelId: String,
+        endpoint: String,
+        conversation: List<ChatMessage>,
+    ): String {
         val openAI = openAIClients[endpoint] ?: throw Exception("No OpenAI client found for endpoint $endpoint")
         return openAI.chatCompletion(
             request = ChatCompletionRequest(
@@ -252,7 +312,7 @@ class LlmService(
         ).choices.first().message.content!!
     }
 
-    suspend fun transcribeAudio(modelId: String, endpoint: String, resource: ResourceDto): String {
+    private suspend fun transcribeAudio(modelId: String, endpoint: String, resource: ResourceDto): String {
         // get chat history with chatId
         // transcribe audio with whisper or other speech to text model
         // answer the transcribed text
@@ -268,7 +328,7 @@ class LlmService(
         ).text.also { audioFilePath.toFile().delete() }
     }
 
-    suspend fun generateSpeechFromText(modelId: String, endpoint: String, text: String): ResourceDto {
+    private suspend fun generateSpeechFromText(modelId: String, endpoint: String, text: String): ResourceDto {
         // generate audio from text
         // return audio resource
         val openAI = openAIClients[endpoint] ?: throw Exception("No OpenAI client found for endpoint $endpoint")
@@ -311,7 +371,7 @@ fun MessageDto.toChatMessage(
 ): ChatMessage {
     val textPart = if (previousMessageContent?.filter { it != '\n' }.isNullOrBlank()) message ?: "" else "$previousMessageContent\n$message"
     val content = mutableListOf<ContentPart>()
-    resources.filter { it.type.startsWith("image") }.forEach { imageResource ->
+    resources.filter { it.type.startsWith("image") && resourceIds.contains(it.id) }.forEach { imageResource ->
         val imageData = "data:${imageResource.type};base64,${Base64.encode(imageResource.data)}"
         content += ImagePart(imageData)
     }

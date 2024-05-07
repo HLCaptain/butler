@@ -38,6 +38,10 @@ class MessageStoreRepository(
     val chatMessageMutableStore = chatMessageMutableStoreBuilder.store
     @OptIn(ExperimentalStoreApi::class)
     val userMessageMutableStore = userMessageMutableStoreBuilder.store
+    @OptIn(ExperimentalStoreApi::class)
+    override suspend fun deleteAllMessages(userId: String) {
+        userMessageMutableStore.clear(userId)
+    }
 
     init {
         coroutineScopeIO.launch {
@@ -79,7 +83,7 @@ class MessageStoreRepository(
                 it.throwIfError()
                 Napier.d("Read Response: ${it::class.simpleName}")
                 val data = it.dataOrNull()
-                Napier.d("Last 5 messages: ${data?.takeLast(5)}")
+                Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
             }.stateIn(
                 coroutineScopeIO,
@@ -113,7 +117,7 @@ class MessageStoreRepository(
                 it.throwIfError()
                 Napier.d("Read Response: ${it::class.simpleName}")
                 val data = it.dataOrNull()
-                Napier.d("Last 5 messages: ${data?.takeLast(5)}")
+                Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
             }.stateIn(
                 coroutineScopeIO,

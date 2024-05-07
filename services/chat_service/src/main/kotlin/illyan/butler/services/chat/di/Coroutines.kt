@@ -3,10 +3,11 @@ package illyan.butler.services.chat.di
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Single
 
 @Single
 fun provideDispatcher() = Dispatchers.IO
 
-@Single
+@Factory
 fun provideCoroutineScope(dispatcher: CoroutineDispatcher) = CoroutineScope(dispatcher)
