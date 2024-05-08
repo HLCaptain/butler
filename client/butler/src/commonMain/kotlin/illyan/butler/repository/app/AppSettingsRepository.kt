@@ -27,12 +27,12 @@ class AppSettingsRepository(
     @OptIn(ExperimentalSerializationApi::class)
     override val appSettings = settings.getStringOrNullFlow("APP_SETTINGS").map {
         try {
-            if (it == null) {
+            if (it.isNullOrBlank()) {
                 Napier.d { "No app settings found, creating one" }
                 settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(AppSettings.default))
                 null
             } else {
-                ProtoBuf.decodeFromHexString<AppSettings>(it).also {
+                ProtoBuf.decodeFromHexString<AppSettings?>(it).also {
                     Napier.d { "Decoded app settings: $it" }
                 }
             }

@@ -40,7 +40,7 @@ class HomeScreenModel(
     ) { flows ->
         val isUserSignedIn = flows[0] as? Boolean
         val signedInUserUUID = flows[1] as? String
-        val isTutorialDone = flows[2] as Boolean
+        val isTutorialDone = flows[2] as? Boolean
         val serverErrors = flows[3] as List<Pair<String, DomainErrorResponse>>
         val appErrors = flows[4] as List<DomainErrorEvent>
         HomeScreenState(

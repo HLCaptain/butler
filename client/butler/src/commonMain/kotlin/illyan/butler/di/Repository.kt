@@ -31,7 +31,7 @@ import org.koin.core.annotation.Single
 fun provideAppRepository(
     appMemoryRepository: AppMemoryRepository,
     appSettingsRepository: AppSettingsRepository
-): AppRepository = if (BuildConfig.DEBUG) {
+): AppRepository = if (BuildConfig.USE_MEMORY_DB) {
     appMemoryRepository
 } else {
     appSettingsRepository

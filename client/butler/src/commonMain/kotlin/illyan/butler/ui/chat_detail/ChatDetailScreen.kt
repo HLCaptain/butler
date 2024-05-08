@@ -120,11 +120,13 @@ class ChatDetailScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { isChatDetailsDialogOpen = true }) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Chat details"
-                            )
+                        if (selectedChatId != null) {
+                            IconButton(onClick = { isChatDetailsDialogOpen = true }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Menu,
+                                    contentDescription = "Chat details"
+                                )
+                            }
                         }
                     },
                     scrollBehavior = scrollBehavior,
