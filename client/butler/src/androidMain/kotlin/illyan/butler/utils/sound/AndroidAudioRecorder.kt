@@ -42,7 +42,7 @@ class AndroidAudioRecorder(private val context: Context) : AudioRecorder {
             release()
         }
         recorder = null
-        // Convert auido file to WAV
+        // Convert audio file to WAV
 
         val session = FFmpegKit.execute("-i $audioPath.3gp $audioPath.wav")
         if (ReturnCode.isSuccess(session.returnCode).not()) {

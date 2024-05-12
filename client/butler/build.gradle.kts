@@ -254,11 +254,13 @@ android {
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     namespace = "illyan.butler"
-    compileSdk = 34
+//    compileSdk = 34
+    compileSdkPreview = "VanillaIceCream"
     defaultConfig {
         applicationId = "illyan.butler"
         minSdk = 26
-        targetSdk = 34
+//        targetSdk = 34
+        targetSdkPreview = "VanillaIceCream"
         versionCode = 4
         versionName = libs.versions.butler.get()
     }
