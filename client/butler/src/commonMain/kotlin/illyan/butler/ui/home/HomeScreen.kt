@@ -74,6 +74,7 @@ import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
+import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -195,6 +196,13 @@ class HomeScreen : Screen {
                     isDialogOpen = numberOfErrors > 0,
                     isDialogFullscreen = false,
                     onDismissDialog = screenModel::removeLastError
+                )
+                val permissionRequestScreen by remember { lazy { PermissionRequestScreen() } }
+                ButlerDialog(
+                    modifier = Modifier.zIndex(2f),
+                    startScreens = listOf(permissionRequestScreen),
+                    isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
+                    isDialogFullscreen = false,
                 )
                 var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 var navigator by remember { mutableStateOf<Navigator?>(null) }

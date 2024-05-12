@@ -62,6 +62,7 @@ import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back
@@ -159,7 +160,9 @@ class ChatDetailScreen(
                         isRecording = state.isRecording,
                         canRecordAudio = state.canRecordAudio,
                         toggleRecord = screenModel::toggleRecording,
-                        sendImage = screenModel::sendImage
+                        sendImage = screenModel::sendImage,
+                        galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
+                        requestGalleryAccess = screenModel::requestGalleryPermission
                     )
                 }
             }
@@ -372,7 +375,9 @@ fun MessageField(
     isRecording: Boolean = false,
     canRecordAudio: Boolean = false,
     toggleRecord: () -> Unit,
-    sendImage: (String) -> Unit
+    sendImage: (String) -> Unit,
+    galleryAccessGranted: Boolean = false,
+    requestGalleryAccess: () -> Unit
 ) {
     Row(
         modifier = modifier
@@ -400,7 +405,13 @@ fun MessageField(
             }
         }
         var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
-        IconButton(onClick = { isFilePickerShown = true }) {
+        IconButton(onClick = {
+            if (galleryAccessGranted) {
+                isFilePickerShown = true
+            } else {
+                requestGalleryAccess()
+            }
+        }) {
             Icon(
                 imageVector = Icons.Rounded.Image,
                 contentDescription = stringResource(Res.string.send),

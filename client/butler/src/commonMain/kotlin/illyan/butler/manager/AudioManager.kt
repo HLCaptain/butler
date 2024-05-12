@@ -2,6 +2,8 @@ package illyan.butler.manager
 
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Permission
+import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.repository.resource.ResourceRepository
 import illyan.butler.utils.Wav
 import illyan.butler.utils.audio.AudioRecorder
@@ -17,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -30,6 +33,7 @@ class AudioManager(
 //    private val audioPlayer: AudioPlayer?,
 //    private val nativeSoundChannel: NativeSoundProviderNew,
     private val resourceRepository: ResourceRepository,
+    private val permissionManager: PermissionManager,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) {
     private val _playingAudioId = MutableStateFlow<String?>(null)
@@ -41,7 +45,12 @@ class AudioManager(
 
     suspend fun startRecording() {
         if (audioRecorder == null) throw IllegalStateException("Audio recording is not supported")
-        audioRecorder.startRecording()
+        val permissionStatus = permissionManager.getPermissionStatus(Permission.RECORD_AUDIO).filterNotNull().first()
+        if (permissionStatus is PermissionStatus.Denied) {
+            permissionManager.preparePermissionRequest(Permission.RECORD_AUDIO)
+        } else {
+            audioRecorder.startRecording()
+        }
     }
 
     suspend fun stopRecording(): String {

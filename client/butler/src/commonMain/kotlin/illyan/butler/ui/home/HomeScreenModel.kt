@@ -5,9 +5,11 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
+import illyan.butler.domain.model.Permission
 import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ErrorManager
+import illyan.butler.manager.PermissionManager
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +28,7 @@ class HomeScreenModel(
     authManager: AuthManager,
     appManager: AppManager,
     errorManager: ErrorManager,
+    permissionManager: PermissionManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
@@ -36,19 +39,22 @@ class HomeScreenModel(
         authManager.signedInUserId,
         appManager.isTutorialDone,
         _serverErrors,
-        _appErrors
+        _appErrors,
+        permissionManager.preparedPermissionsToRequest
     ) { flows ->
         val isUserSignedIn = flows[0] as? Boolean
         val signedInUserUUID = flows[1] as? String
         val isTutorialDone = flows[2] as? Boolean
         val serverErrors = flows[3] as List<Pair<String, DomainErrorResponse>>
         val appErrors = flows[4] as List<DomainErrorEvent>
+        val preparedPermissionsToRequest = flows[5] as Set<Permission>
         HomeScreenState(
             isUserSignedIn = isUserSignedIn,
             signedInUserUUID = signedInUserUUID,
             isTutorialDone = isTutorialDone,
             serverErrors = serverErrors,
-            appErrors = appErrors
+            appErrors = appErrors,
+            preparedPermissionsToRequest = preparedPermissionsToRequest,
         )
     }.stateIn(
         screenModelScope,

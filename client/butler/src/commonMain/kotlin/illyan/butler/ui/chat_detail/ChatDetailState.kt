@@ -2,6 +2,7 @@ package illyan.butler.ui.chat_detail
 
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.PermissionStatus
 
 data class ChatDetailState(
     val chat: DomainChat? = null,
@@ -12,4 +13,5 @@ data class ChatDetailState(
     val sounds: Map<String, Float> = emptyMap(),
     val playingAudio: String? = null,
     val images: Map<String, ByteArray> = emptyMap(),
+    val galleryPermission: PermissionStatus? = null
 )

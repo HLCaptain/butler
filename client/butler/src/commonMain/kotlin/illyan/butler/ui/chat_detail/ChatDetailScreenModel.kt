@@ -6,9 +6,12 @@ import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Permission
+import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.manager.AudioManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager
+import illyan.butler.manager.PermissionManager
 import illyan.butler.utils.toWav
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
@@ -33,6 +36,7 @@ class ChatDetailScreenModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
+    private val permissionManager: PermissionManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
@@ -69,7 +73,8 @@ class ChatDetailScreenModel(
         authManager.signedInUserId,
         audioManager.isRecording,
         audioManager.playingAudioId,
-        resources
+        resources,
+        permissionManager.getPermissionStatus(Permission.GALLERY)
     ) { flows ->
         val chat = flows[0] as? DomainChat
         val messages = flows[1] as? List<DomainMessage>
@@ -78,6 +83,8 @@ class ChatDetailScreenModel(
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>
+        val galleryPermission = flows[6] as? PermissionStatus
+        Napier.v("Gallery permission: $galleryPermission")
         Napier.v("Resources: $resources")
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate { it.id!! to it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } ?: emptyMap()
@@ -91,7 +98,8 @@ class ChatDetailScreenModel(
             canRecordAudio = audioManager.canRecordAudio,
             playingAudio = playing,
             sounds = sounds,
-            images = images
+            images = images,
+            galleryPermission = galleryPermission
         )
     }.stateIn(
         screenModelScope,
@@ -143,6 +151,12 @@ class ChatDetailScreenModel(
     fun stopAudio() {
         screenModelScope.launch {
             audioManager.stopAudio()
+        }
+    }
+
+    fun requestGalleryPermission() {
+        screenModelScope.launch {
+            permissionManager.preparePermissionRequest(Permission.GALLERY)
         }
     }
 }

@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import illyan.butler.di.AndroidPermissionRepository
+import illyan.butler.repository.permission.PermissionRepository
 import illyan.butler.utils.audio.AudioRecorder
 import illyan.butler.utils.sound.AndroidAudioRecorder
 import org.koin.core.context.GlobalContext
@@ -40,4 +42,8 @@ actual fun getSystemMetadata(): Map<String, String> {
 
 actual fun getAudioRecorder(): AudioRecorder? {
     return AndroidAudioRecorder(GlobalContext.get().get())
+}
+
+actual fun getPlatformPermissionRepository(): PermissionRepository {
+    return AndroidPermissionRepository(GlobalContext.get().get())
 }
