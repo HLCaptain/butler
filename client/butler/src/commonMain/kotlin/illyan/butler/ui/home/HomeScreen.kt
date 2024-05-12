@@ -74,6 +74,7 @@ import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
+import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -87,7 +88,6 @@ class HomeScreen : Screen {
         HomeScreen()
     }
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     internal fun HomeScreen() {
         val screenModel = koinScreenModel<HomeScreenModel>()
@@ -100,26 +100,32 @@ class HomeScreen : Screen {
                 var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
                 var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
                 LaunchedEffect(state.isUserSignedIn) {
+                    if (isAuthFlowEnded == null) isAuthFlowEnded = state.isUserSignedIn
                     if (state.isUserSignedIn != true) isAuthFlowEnded = false
                     isProfileDialogShowing = false
                 }
+//                val isDialogOpen by remember {
+//                    derivedStateOf { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
+//                }
+                var isDialogOpen by rememberSaveable { mutableStateOf(isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing) }
+                LaunchedEffect(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) {
+                    isDialogOpen = isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing
+                }
                 var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
-                val isDialogOpen by remember {
-                    derivedStateOf { isAuthFlowEnded != true || !state.isTutorialDone || isProfileDialogShowing }
-                }
                 LaunchedEffect(state.isTutorialDone) {
-                    if (!state.isTutorialDone) isDialogClosedAfterTutorial = false
-                    if (state.isUserSignedIn == true) isAuthFlowEnded = true
+                    if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
+                    if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
+                    if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
                 }
+                val onBoardingScreen by remember { lazy { OnBoardingScreen() } }
+                val profileDialogScreen by remember { lazy { ProfileDialogScreen() } }
+                val authScreen by remember { lazy { AuthScreen() } }
                 val startScreen by remember {
-                    val onBoardingScreen by lazy { OnBoardingScreen() }
-                    val profileDialogScreen by lazy { ProfileDialogScreen() }
-                    val authScreen by lazy { AuthScreen() }
                     derivedStateOf {
                         if (!isDialogOpen) {
                             null
                         } else {
-                            if (state.isTutorialDone && isDialogClosedAfterTutorial) {
+                            if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
                                 if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
                             } else onBoardingScreen
                         }
@@ -129,7 +135,7 @@ class HomeScreen : Screen {
                 ButlerDialog(
                     startScreens = listOfNotNull(startScreen),
                     isDialogOpen = isDialogOpen,
-                    isDialogFullscreen = state.isUserSignedIn != true || !state.isTutorialDone,
+                    isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
                     onDismissDialog = {
                         if (state.isUserSignedIn == true) {
                             isAuthFlowEnded = true
@@ -137,7 +143,7 @@ class HomeScreen : Screen {
                         isProfileDialogShowing = false
                     },
                     onDialogClosed = {
-                        if (state.isTutorialDone) {
+                        if (state.isTutorialDone == true) {
                             isDialogClosedAfterTutorial = true
                         }
                     }
@@ -190,6 +196,13 @@ class HomeScreen : Screen {
                     isDialogOpen = numberOfErrors > 0,
                     isDialogFullscreen = false,
                     onDismissDialog = screenModel::removeLastError
+                )
+                val permissionRequestScreen by remember { lazy { PermissionRequestScreen() } }
+                ButlerDialog(
+                    modifier = Modifier.zIndex(2f),
+                    startScreens = listOf(permissionRequestScreen),
+                    isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
+                    isDialogFullscreen = false,
                 )
                 var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 var navigator by remember { mutableStateOf<Navigator?>(null) }

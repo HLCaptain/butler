@@ -2,6 +2,7 @@ package illyan.butler.services.chat.endpoints
 
 import illyan.butler.services.chat.data.model.chat.ChatDto
 import illyan.butler.services.chat.data.model.chat.MessageDto
+import illyan.butler.services.chat.data.model.chat.ResourceDto
 import illyan.butler.services.chat.data.service.ChatService
 import illyan.butler.services.chat.endpoints.utils.WebSocketServerHandler
 import io.github.aakira.napier.Napier
@@ -131,6 +132,30 @@ fun Route.chatRoute() {
                         }
                     }
                 }
+            }
+        }
+        route("/resources") {
+            get {
+                val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                call.respond(chatService.getResources(userId))
+            }
+            route("/{resourceId}") {
+                get {
+                    val userId = call.parameters["userId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val resourceId = call.parameters["resourceId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    call.respond(HttpStatusCode.OK, chatService.getResource(userId, resourceId))
+                }
+
+                delete {
+                    val userId = call.parameters["userId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    val resourceId = call.parameters["resourceId"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    call.respond(chatService.deleteResource(userId, resourceId))
+                }
+            }
+            post {
+                val userId = call.parameters["userId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                val resource = call.receive<ResourceDto>()
+                call.respond(HttpStatusCode.Created, chatService.createResource(userId, resource))
             }
         }
     }

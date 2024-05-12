@@ -3,8 +3,20 @@ package illyan.butler.ui.chat_detail
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.di.KoinNames
+import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Permission
+import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.manager.AudioManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager
+import illyan.butler.manager.PermissionManager
+import illyan.butler.utils.toWav
+import io.github.aakira.napier.Napier
+import korlibs.audio.format.MP3
+import korlibs.audio.sound.AudioData
+import korlibs.time.seconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +35,8 @@ import org.koin.core.annotation.Named
 class ChatDetailScreenModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
+    private val audioManager: AudioManager,
+    private val permissionManager: PermissionManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
@@ -30,26 +44,67 @@ class ChatDetailScreenModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getChatFlow(chatId) } ?: flowOf(null) }
+        .stateIn(screenModelScope, SharingStarted.Eagerly, null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(null) }
         .map { messages -> messages?.sortedBy { it.time }?.reversed() }
+        .stateIn(screenModelScope, SharingStarted.Eagerly, emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val resources = messages.flatMapLatest { messages ->
+        combine((messages ?: emptyList()).map { message ->
+            chatManager.getResourcesByMessageFlow(message.id!!)
+        }) { flows ->
+            val resources = flows.toList().filterNotNull().flatten()
+            Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
+            resources
+        }
+    }.stateIn(
+        screenModelScope,
+        SharingStarted.Eagerly,
+        emptyList()
+    )
 
     val state = combine(
         chat,
         messages,
-        authManager.signedInUserId
-    ) { chat, messages, userId ->
+        authManager.signedInUserId,
+        audioManager.isRecording,
+        audioManager.playingAudioId,
+        resources,
+        permissionManager.getPermissionStatus(Permission.GALLERY)
+    ) { flows ->
+        val chat = flows[0] as? DomainChat
+        val messages = flows[1] as? List<DomainMessage>
+        val userId = flows[2] as? String
+        Napier.v { "User ID: $userId" }
+        val recording = flows[3] as? Boolean ?: false
+        val playing = flows[4] as? String
+        val resources = flows[5] as? List<DomainResource>
+        val galleryPermission = flows[6] as? PermissionStatus
+        Napier.v("Gallery permission: $galleryPermission")
+        Napier.v("Resources: $resources")
+        val sounds = resources?.filter { it.type.startsWith("audio") }
+            ?.associate { it.id!! to it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } ?: emptyMap()
+        val images = resources?.filter { it.type.startsWith("image") }
+            ?.associate { it.id!! to it.data } ?: emptyMap()
         ChatDetailState(
             chat = chat,
             messages = messages,
-            userId = userId
+            userId = userId,
+            isRecording = recording,
+            canRecordAudio = audioManager.canRecordAudio,
+            playingAudio = playing,
+            sounds = sounds,
+            images = images,
+            galleryPermission = galleryPermission
         )
     }.stateIn(
         screenModelScope,
         SharingStarted.Eagerly,
-        ChatDetailState()
+        ChatDetailState(canRecordAudio = audioManager.canRecordAudio)
     )
 
     fun loadChat(chatId: String) {
@@ -64,5 +119,52 @@ class ChatDetailScreenModel(
         screenModelScope.launch(dispatcherIO) {
             chatIdStateFlow.value?.let { chatManager.sendMessage(it, message) }
         }
+    }
+
+    fun toggleRecording() {
+        if (!audioManager.canRecordAudio) return
+        screenModelScope.launch(dispatcherIO) {
+            if (state.value.isRecording) {
+                val audioId = audioManager.stopRecording()
+                chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, audioId) }
+            } else {
+                audioManager.startRecording()
+            }
+        }
+    }
+
+    fun sendImage(path: String) {
+        screenModelScope.launch(dispatcherIO) {
+            chatIdStateFlow.value?.let {
+                chatManager.sendImageMessage(it, path)
+                Napier.d("Image sent: $path")
+            }
+        }
+    }
+
+    fun playAudio(audioId: String) {
+        screenModelScope.launch {
+            audioManager.playAudio(audioId)
+        }
+    }
+
+    fun stopAudio() {
+        screenModelScope.launch {
+            audioManager.stopAudio()
+        }
+    }
+
+    fun requestGalleryPermission() {
+        screenModelScope.launch {
+            permissionManager.preparePermissionRequest(Permission.GALLERY)
+        }
+    }
+}
+
+private suspend fun ByteArray.toAudioData(mimeType: String): AudioData? {
+    return when (mimeType) {
+        "audio/wav" -> toWav()
+        "audio/mp3" -> MP3.decode(this)
+        else -> null
     }
 }

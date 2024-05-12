@@ -13,6 +13,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.Theme
@@ -41,16 +43,15 @@ fun ButlerTheme(
     val theme by themeState
     val dynamicColorEnabled by dynamicColorEnabledState
     val isNight by isNightState
-    val isSystemInDarkTheme: Boolean = isSystemInDarkTheme()
-    val isDark by remember {
-        derivedStateOf {
-            when (theme) {
-                Theme.Light -> false
-                Theme.Dark -> true
-                Theme.System -> isSystemInDarkTheme
-                Theme.DayNightCycle -> isNight
-                null -> null
-            }
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+    var isDark by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(theme, dynamicColorEnabled, isNight) {
+        isDark = when (theme) {
+            Theme.Light -> false
+            Theme.Dark -> true
+            Theme.System -> isSystemInDarkTheme
+            Theme.DayNightCycle -> isNight
+            null -> null
         }
     }
     val dynamicLightColorScheme = dynamicDarkColorScheme()

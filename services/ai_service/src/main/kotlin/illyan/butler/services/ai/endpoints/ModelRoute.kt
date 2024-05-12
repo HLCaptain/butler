@@ -8,6 +8,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import kotlinx.coroutines.flow.first
 import org.koin.ktor.ext.inject
 
 fun Route.modelRoute() {
@@ -15,14 +16,28 @@ fun Route.modelRoute() {
 
     route("/models") {
         get {
-            call.respond(HttpStatusCode.OK, modelHealthService.healthyModels.value?.map { it.toModelDto() } ?: emptyList())
+            call.respond(HttpStatusCode.OK, modelHealthService.modelsAndProviders.first())
         }
 
         get("/{modelId}") {
             val modelId = call.parameters["modelId"]?.trim().orEmpty()
-            modelHealthService.healthyModels.value?.first { modelId == it.id }?.toModelDto()?.let {
-                call.respond(HttpStatusCode.OK, it)
-            } ?: call.respond(HttpStatusCode.NotFound)
+            modelHealthService.providerModels.value.let { providerModels ->
+                val model = providerModels.values.firstNotNullOfOrNull { models -> models.firstOrNull { it.id == modelId } }
+                val providersOfModel = providerModels.flatMap { (provider, models) ->
+                    if (models.any { it.id == modelId }) listOf(provider) else emptyList()
+                }
+                model?.let {
+                    call.respond(HttpStatusCode.OK, it.toModelDto() to providersOfModel)
+                } ?: call.respond(HttpStatusCode.NotFound)
+            }
+        }
+    }
+    route("/providers") {
+        get {
+            call.respond(
+                HttpStatusCode.OK,
+                modelHealthService.providerModels.value.map { it.key }
+            )
         }
     }
 }

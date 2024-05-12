@@ -41,3 +41,19 @@ spec:
                 configMapKeyRef:
                   name: butler-configmap
                   key: DEVELOPMENT
+            - name: ANYSCALE_API_CREDENTIAL
+              valueFrom:
+                secretKeyRef:
+                  name: butler-secret
+                  key: ANYSCALE_API_CREDENTIAL
+            - name: OPEN_AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: butler-secret
+                  key: OPEN_AI_API_KEY
+            - name: SSL_CERT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: butler-secret
+                  key: SSL_CERT_PASSWORD
+            - name: SSL_CERT_PATH

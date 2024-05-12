@@ -1,34 +1,40 @@
 package illyan.butler.di
 
 import illyan.butler.config.BuildConfig
-import illyan.butler.repository.AppMemoryRepository
-import illyan.butler.repository.AppRepository
-import illyan.butler.repository.AppSettingsRepository
-import illyan.butler.repository.ChatMemoryRepository
-import illyan.butler.repository.ChatRepository
-import illyan.butler.repository.ChatStoreRepository
-import illyan.butler.repository.ErrorLocalRepository
-import illyan.butler.repository.ErrorMemoryRepository
-import illyan.butler.repository.ErrorRepository
-import illyan.butler.repository.HostMemoryRepository
-import illyan.butler.repository.HostRepository
-import illyan.butler.repository.HostSettingsRepository
-import illyan.butler.repository.MessageMemoryRepository
-import illyan.butler.repository.MessageRepository
-import illyan.butler.repository.MessageStoreRepository
-import illyan.butler.repository.ModelMemoryRepository
-import illyan.butler.repository.ModelNetworkRepository
-import illyan.butler.repository.ModelRepository
-import illyan.butler.repository.UserMemoryRepository
-import illyan.butler.repository.UserRepository
-import illyan.butler.repository.UserSettingsRepository
+import illyan.butler.getPlatformPermissionRepository
+import illyan.butler.repository.app.AppMemoryRepository
+import illyan.butler.repository.app.AppRepository
+import illyan.butler.repository.app.AppSettingsRepository
+import illyan.butler.repository.chat.ChatMemoryRepository
+import illyan.butler.repository.chat.ChatRepository
+import illyan.butler.repository.chat.ChatStoreRepository
+import illyan.butler.repository.error.ErrorLocalRepository
+import illyan.butler.repository.error.ErrorMemoryRepository
+import illyan.butler.repository.error.ErrorRepository
+import illyan.butler.repository.host.HostMemoryRepository
+import illyan.butler.repository.host.HostRepository
+import illyan.butler.repository.host.HostSettingsRepository
+import illyan.butler.repository.message.MessageMemoryRepository
+import illyan.butler.repository.message.MessageRepository
+import illyan.butler.repository.message.MessageStoreRepository
+import illyan.butler.repository.model.ModelMemoryRepository
+import illyan.butler.repository.model.ModelNetworkRepository
+import illyan.butler.repository.model.ModelRepository
+import illyan.butler.repository.permission.MemoryPermissionRepository
+import illyan.butler.repository.permission.PermissionRepository
+import illyan.butler.repository.resource.ResourceMemoryRepository
+import illyan.butler.repository.resource.ResourceRepository
+import illyan.butler.repository.resource.ResourceStoreRepository
+import illyan.butler.repository.user.UserMemoryRepository
+import illyan.butler.repository.user.UserRepository
+import illyan.butler.repository.user.UserSettingsRepository
 import org.koin.core.annotation.Single
 
 @Single
 fun provideAppRepository(
     appMemoryRepository: AppMemoryRepository,
     appSettingsRepository: AppSettingsRepository
-): AppRepository = if (BuildConfig.DEBUG) {
+): AppRepository = if (BuildConfig.USE_MEMORY_DB) {
     appMemoryRepository
 } else {
     appSettingsRepository
@@ -92,4 +98,23 @@ fun provideUserRepository(
     userMemoryRepository
 } else {
     userSettingsRepository
+}
+
+@Single
+fun provideResourceRepository(
+    resourceMemoryRepository: ResourceMemoryRepository,
+    resourceStoreRepository: ResourceStoreRepository
+): ResourceRepository = if (BuildConfig.USE_MEMORY_DB) {
+    resourceMemoryRepository
+} else {
+    resourceStoreRepository
+}
+
+@Single
+fun providePermissionRepository(
+    memoryPermissionRepository: MemoryPermissionRepository
+): PermissionRepository = if (BuildConfig.USE_MEMORY_DB) {
+    memoryPermissionRepository
+} else {
+    getPlatformPermissionRepository()
 }

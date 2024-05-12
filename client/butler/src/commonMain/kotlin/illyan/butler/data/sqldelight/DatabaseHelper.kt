@@ -3,9 +3,9 @@ package illyan.butler.data.sqldelight
 import app.cash.sqldelight.Query
 import illyan.butler.db.Database
 import illyan.butler.di.KoinNames
-import illyan.butler.di.flatMapLatestAsList
-import illyan.butler.di.flatMapLatestAsOne
-import illyan.butler.di.flatMapLatestAsOneOrNull
+import illyan.butler.utils.flatMapLatestAsList
+import illyan.butler.utils.flatMapLatestAsOne
+import illyan.butler.utils.flatMapLatestAsOneOrNull
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull

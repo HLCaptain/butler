@@ -5,8 +5,8 @@ import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.manager.ErrorManager
-import illyan.butler.repository.HostRepository
-import illyan.butler.repository.UserRepository
+import illyan.butler.repository.host.HostRepository
+import illyan.butler.repository.user.UserRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig

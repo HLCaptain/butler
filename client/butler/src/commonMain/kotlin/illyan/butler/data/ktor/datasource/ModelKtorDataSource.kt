@@ -11,11 +11,15 @@ import org.koin.core.annotation.Single
 class ModelKtorDataSource(
     private val client: HttpClient
 ) : ModelNetworkDataSource {
-    override suspend fun fetch(modelId: String): ModelDto {
+    override suspend fun fetch(modelId: String): Pair<ModelDto, List<String>> {
         return client.get("/models/$modelId").body()
     }
 
-    override suspend fun fetchAll(): List<ModelDto> {
+    override suspend fun fetchAll(): Map<ModelDto, List<String>> {
         return client.get("/models").body()
+    }
+
+    override suspend fun fetchProviders(): List<String> {
+        return client.get("/providers").body()
     }
 }

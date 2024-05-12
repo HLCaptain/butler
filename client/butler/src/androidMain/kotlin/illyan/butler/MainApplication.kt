@@ -1,7 +1,7 @@
 package illyan.butler
 
 import android.app.Application
-import illyan.butler.util.log.initNapier
+import illyan.butler.utils.initNapier
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin

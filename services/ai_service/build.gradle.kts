@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.client.encoding)
+    implementation(libs.ktor.client.auth)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.ktor.client.websockets)
 
@@ -87,6 +88,8 @@ dependencies {
     implementation(libs.koin.core)
     implementation(platform(libs.koin.annotations.bom))
     implementation(libs.koin.annotations)
+    implementation("io.ktor:ktor-client-core-jvm:2.3.10")
+    implementation("io.ktor:ktor-client-apache:2.3.10")
     ksp(libs.koin.ksp.compiler)
 
     // Tests

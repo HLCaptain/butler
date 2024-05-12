@@ -51,17 +51,20 @@ import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.profile
+import illyan.butler.generated.resources.settings
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
+import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
+import illyan.butler.ui.settings.user.UserSettingsScreen
 import illyan.butler.ui.theme.ThemeScreen
-import illyan.butler.util.log.randomUUID
+import illyan.butler.utils.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -102,7 +105,7 @@ fun ProfileDialogScreen(
         onSignOut = screenModel::signOut,
 //        onShowLoginScreen = { navigator.push(LoginScreen()) },
 //        onShowAboutScreen = { navigator.push(AboutDialogScreen) },
-//        onShowSettingsScreen = { navigator.push(UserSettingsDialogScreen) },
+        onShowSettingsScreen = { navigator.push(UserSettingsScreen()) },
         resetTutorialAndSignOut = screenModel::resetTutorialAndSignOut
     )
 }
@@ -124,7 +127,7 @@ fun ProfileDialogContent(
 ) {
     var showConfidentialInfo by remember { mutableStateOf(showConfidentialInfoInitially) }
     ButlerDialogContent(
-        modifier = modifier.smallDialogWidth().fillMaxWidth(),
+        modifier = modifier.smallDialogWidth(),
         title = {
             ProfileTitleScreen(
                 userUUID = userUUID,
@@ -328,23 +331,20 @@ fun ProfileDetailsScreen(
     showConfidentialInfo: Boolean = false,
     onConfidentialInfoVisibilityChanged: (Boolean) -> Unit = {},
 ) {
-    Column(
-        modifier = modifier
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-//            modifier = Modifier.fillMaxWidth(),
-        ) {
-            ConfidentialInfoToggleButton(
-                showConfidentialInfo = showConfidentialInfo,
-                anyConfidentialInfo = confidentialInfo.isNotEmpty(),
-                onVisibilityChanged = onConfidentialInfoVisibilityChanged
-            )
-            UserInfoList(
-                confidentialInfo = confidentialInfo,
-                info = info,
-                showConfidentialInfo = showConfidentialInfo
-            )
-        }
+        UserInfoList(
+            confidentialInfo = confidentialInfo,
+            info = info,
+            showConfidentialInfo = showConfidentialInfo
+        )
+        ConfidentialInfoToggleButton(
+            showConfidentialInfo = showConfidentialInfo,
+            anyConfidentialInfo = confidentialInfo.isNotEmpty(),
+            onVisibilityChanged = onConfidentialInfoVisibilityChanged
+        )
     }
 }
 
@@ -360,7 +360,6 @@ fun UserInfoList(
     ) {
         item {
             LazyColumn(
-//                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(confidentialInfo) {
@@ -439,6 +438,7 @@ fun UserInfo(
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileMenu(
     modifier: Modifier = Modifier,
@@ -453,10 +453,10 @@ fun ProfileMenu(
 //            onClick = onShowAboutScreen,
 //            text = stringResource(R.string.about)
 //        )
-//        MenuButton(
-//            onClick = onShowSettingsScreen,
-//            text = stringResource(R.string.settings)
-//        )
+        MenuButton(
+            onClick = onShowSettingsScreen,
+            text = stringResource(Res.string.settings)
+        )
     }
 }
 

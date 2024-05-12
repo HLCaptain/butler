@@ -3,9 +3,9 @@ package illyan.butler.services.chat.data.exposed
 import illyan.butler.services.chat.data.db.MessageDatabase
 import illyan.butler.services.chat.data.model.chat.MessageDto
 import illyan.butler.services.chat.data.schema.ChatMembers
-import illyan.butler.services.chat.data.schema.ContentUrls
-import illyan.butler.services.chat.data.schema.MessageContentUrls
+import illyan.butler.services.chat.data.schema.MessageResources
 import illyan.butler.services.chat.data.schema.Messages
+import illyan.butler.services.chat.data.schema.Resources
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +19,6 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.insertIgnore
-import org.jetbrains.exposed.sql.insertIgnoreAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -33,12 +32,12 @@ class MessageExposedDatabase(
 ): MessageDatabase {
     init {
         transaction(database) {
-            SchemaUtils.create(Messages, ChatMembers, ContentUrls, MessageContentUrls)
+            SchemaUtils.create(Messages, ChatMembers, Resources, MessageResources)
         }
     }
     override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             val nowMillis = Clock.System.now().toEpochMilliseconds()
             val newMessageId = if (isUserInChat) {
@@ -53,16 +52,11 @@ class MessageExposedDatabase(
             }
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
-            message.contentUrls.forEach { url ->
-                var newUrlId = ContentUrls.insertIgnoreAndGetId { it[this.url] = url }
-                // InsertIgnoreAndGetId returns null if the row already exists
-                if (newUrlId == null) {
-                    // If the row already exists, get the id of the existing row
-                    newUrlId = ContentUrls.selectAll().where(ContentUrls.url eq url).first()[ContentUrls.id]
-                }
-                MessageContentUrls.insertIgnore {
+            message.resourceIds.forEach { id ->
+                val resource = Resources.selectAll().where(Resources.id eq id).first()
+                MessageResources.insertIgnore {
                     it[messageId] = newMessageId
-                    it[urlId] = newUrlId
+                    it[resourceId] = resource[Resources.id]
                 }
             }
             message.copy(id = newMessageId.value, time = nowMillis)
@@ -71,32 +65,32 @@ class MessageExposedDatabase(
 
     override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq message.chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message.chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
-                Messages.update({Messages.id eq message.id}) { it[this.message] = message.message }
+                Messages.update({ Messages.id eq message.id }) { it[this.message] = message.message }
             } else {
                 throw Exception("User is not in chat")
             }
             // Remove all content urls for the message
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
-            val currentMessageUrls = MessageContentUrls.selectAll().where(MessageContentUrls.messageId eq message.id!!)
-            val newMessageUrls = message.contentUrls
+            val currentMessageUrls = MessageResources.selectAll().where(MessageResources.messageId eq message.id!!)
+            val newMessageUrls = message.resourceIds
             val removedMessageUrls = currentMessageUrls.filter { url ->
-                newMessageUrls.contains(url[MessageContentUrls.urlId].value)
+                newMessageUrls.contains(url[MessageResources.resourceId].value)
             }
             removedMessageUrls.forEach { url ->
-                MessageContentUrls.deleteWhere { (messageId eq message.id) and (urlId eq url[urlId]) }
+                MessageResources.deleteWhere { (messageId eq message.id) and (resourceId eq url[resourceId]) }
             }
-            val addedMessageUrls = message.contentUrls.filter { url ->
-                currentMessageUrls.none { it[MessageContentUrls.urlId].value == url }
+            val addedMessageUrls = message.resourceIds.filter { url ->
+                currentMessageUrls.none { it[MessageResources.resourceId].value == url }
             }
             addedMessageUrls.forEach { contentUrl ->
-                ContentUrls.insertIgnore { it[url] = contentUrl }
-                MessageContentUrls.insertIgnore {
+                Resources.insertIgnore { it[type] = contentUrl }
+                MessageResources.insertIgnore {
                     it[messageId] = message.id
-                    it[urlId] = contentUrl
+                    it[resourceId] = contentUrl
                 }
             }
             message
@@ -105,10 +99,11 @@ class MessageExposedDatabase(
 
     override suspend fun deleteMessage(userId: String, chatId: String, messageId: String): Boolean {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 // Deleted more than 0 rows
+                MessageResources.deleteWhere { MessageResources.messageId eq messageId }
                 Messages.deleteWhere { (id eq messageId) and (Messages.chatId eq chatId) and (senderId eq userId) } > 0
             } else {
                 throw Exception("User is not in chat")
@@ -118,7 +113,7 @@ class MessageExposedDatabase(
 
     override suspend fun getPreviousMessages(userId: String, chatId: String, limit: Int, timestamp: Long): List<MessageDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 val messages = Messages.selectAll().where { (Messages.time lessEq timestamp) and (Messages.chatId eq chatId) }
@@ -134,7 +129,7 @@ class MessageExposedDatabase(
 
     override suspend fun getMessages(userId: String, chatId: String, limit: Int, offset: Int): List<MessageDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 val messages = Messages.selectAll().where(Messages.chatId eq chatId)
@@ -150,7 +145,7 @@ class MessageExposedDatabase(
 
     override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
         return newSuspendedTransaction(dispatcher, database) {
-            val userChat = (ChatMembers.userId eq userId) and (ChatMembers.chatId eq chatId)
+            val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chatId)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 Messages
@@ -181,7 +176,7 @@ class MessageExposedDatabase(
     override suspend fun getMessages(userId: String): List<MessageDto> {
         return newSuspendedTransaction(dispatcher, database) {
             // Get all messages related to the user (including messages from chats the user is a member of)
-            val userChats = ChatMembers.selectAll().where(ChatMembers.userId eq userId)
+            val userChats = ChatMembers.selectAll().where(ChatMembers.memberId eq userId)
             val messages = Messages.selectAll().where { Messages.chatId inList userChats.map { it[ChatMembers.chatId] } }
             messages.map { it.toMessageDto() }
         }
@@ -209,8 +204,8 @@ fun ResultRow.toMessageDto() = MessageDto(
     message = this[Messages.message],
     time = this[Messages.time],
     chatId = this[Messages.chatId].value,
-//    contentUrls = MessageContentUrls
-//        .selectAll()
-//        .where(MessageContentUrls.messageId eq this[Messages.id])
-//        .map { it[MessageContentUrls.urlId].value } // TODO: join this with ContentUrls later
+    resourceIds = MessageResources
+        .selectAll()
+        .where(MessageResources.messageId eq this[Messages.id])
+        .map { it[MessageResources.resourceId].value }
 )

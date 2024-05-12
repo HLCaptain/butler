@@ -2,20 +2,19 @@ package illyan.butler.ui.welcome
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.repository.AppRepository
-import illyan.butler.repository.UserRepository
-import illyan.butler.util.log.randomUUID
+import illyan.butler.manager.AppManager
+import illyan.butler.repository.user.UserRepository
+import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
 
 @Factory
 class WelcomeScreenModel(
-    private val appRepository: AppRepository,
+    private val appManager: AppManager,
     private val userRepository: UserRepository
 ) : ScreenModel {
     private val dataFlow1 = MutableStateFlow(false)
@@ -40,7 +39,7 @@ class WelcomeScreenModel(
 
     fun skipTutorialAndLogin() {
         screenModelScope.launch {
-            appRepository.setTutorialDone(true)
+            appManager.setTutorialDone()
             val userName = "illyan${randomUUID().takeLast(8)}"
             userRepository.signUpAndLogin(
                 "$userName@nest.ai",

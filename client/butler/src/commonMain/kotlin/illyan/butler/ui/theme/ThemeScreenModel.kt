@@ -21,7 +21,7 @@ package illyan.butler.ui.theme
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import illyan.butler.manager.SettingsManager
-import illyan.butler.util.log.calculateSunriseSunsetTimes
+import illyan.butler.utils.calculateSunriseSunsetTimes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

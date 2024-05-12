@@ -1,11 +1,14 @@
 import kotlin.String;
 import kotlin.collections.List;
+import kotlin.collections.Map;
 
 CREATE TABLE Chat (
     id TEXT PRIMARY KEY NOT NULL UNIQUE,
     created INTEGER NOT NULL,
     name TEXT,
-    members TEXT AS List<String> NOT NULL
+    members TEXT AS List<String> NOT NULL,
+    aiEndpoints TEXT AS Map<String, String> NOT NULL,
+    summary TEXT
 );
 
 select:

@@ -5,12 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import illyan.butler.di.AndroidPermissionRepository
+import illyan.butler.repository.permission.PermissionRepository
+import illyan.butler.utils.audio.AudioRecorder
+import illyan.butler.utils.sound.AndroidAudioRecorder
+import org.koin.core.context.GlobalContext
 
 actual fun getPlatformName(): String {
     return "Android"
 }
 
-actual fun isDebugBuild() = BuildConfig.DEBUG
+actual fun isDebugBuild(): Boolean = BuildConfig.DEBUG
 
 @Composable
 actual fun getWindowSizeInDp(): Pair<Dp, Dp> {
@@ -33,4 +38,12 @@ actual fun getSystemMetadata(): Map<String, String> {
         "Build.VERSION.PREVIEW_SDK_INT" to Build.VERSION.PREVIEW_SDK_INT.toString(),
         "Build.VERSION.SECURITY_PATCH" to Build.VERSION.SECURITY_PATCH
     )
+}
+
+actual fun getAudioRecorder(): AudioRecorder? {
+    return AndroidAudioRecorder(GlobalContext.get().get())
+}
+
+actual fun getPlatformPermissionRepository(): PermissionRepository {
+    return AndroidPermissionRepository(GlobalContext.get().get())
 }

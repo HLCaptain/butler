@@ -58,11 +58,19 @@ actual fun canUseDynamicColors(): Boolean {
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 actual fun dynamicDarkColorScheme(): ColorScheme {
-    return dynamicDarkColorScheme(LocalContext.current)
+    return if (canUseDynamicColors()) {
+        dynamicDarkColorScheme(LocalContext.current)
+    } else {
+        darkColorScheme()
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 actual fun dynamicLightColorScheme(): ColorScheme {
-    return dynamicLightColorScheme(LocalContext.current)
+    return if (canUseDynamicColors()) {
+        dynamicLightColorScheme(LocalContext.current)
+    } else {
+        lightColorScheme()
+    }
 }
