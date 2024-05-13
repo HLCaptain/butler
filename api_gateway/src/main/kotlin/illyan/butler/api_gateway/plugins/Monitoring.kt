@@ -17,9 +17,16 @@ import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
+import io.micrometer.core.instrument.binder.system.UptimeMetrics
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.opentelemetry.api.GlobalOpenTelemetry
@@ -33,6 +40,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.semconv.ResourceAttributes
 import org.slf4j.event.Level
+import kotlin.time.Duration.Companion.seconds
 
 fun Application.configureMonitoring() {
     install(CallLogging) {
@@ -76,14 +84,27 @@ fun Application.configureMonitoring() {
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
     install(MicrometerMetrics) {
         registry = appMicrometerRegistry
+        distributionStatisticConfig = DistributionStatisticConfig.Builder()
+            .percentilesHistogram(true)
+            .maximumExpectedValue(20.seconds.inWholeNanoseconds.toDouble())
+            .serviceLevelObjectives(
+                100.seconds.inWholeMilliseconds.toDouble(),
+                500.seconds.inWholeMilliseconds.toDouble()
+            ).build()
         meterBinders = listOf(
             JvmMemoryMetrics(),
             JvmGcMetrics(),
-            ProcessorMetrics()
+            ProcessorMetrics(),
+            JvmThreadMetrics(),
+            ClassLoaderMetrics(),
+            UptimeMetrics(),
+            JvmCompilationMetrics(),
+            FileDescriptorMetrics(),
+            JvmHeapPressureMetrics(),
         )
     }
     routing {
-        get("/metrics-micrometer") {
+        get("/metrics") {
             call.respond(appMicrometerRegistry.scrape())
         }
     }

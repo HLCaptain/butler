@@ -37,6 +37,9 @@ eval $(minikube docker-env)
 # Build the Docker images (in the correct minikube docker-env)
 docker-compose build
 
+# Separate namespace for monitoring
+kubectl create namespace monitoring
+
 # Load images
 
 # Deploy the config files to Kubernetes
@@ -56,6 +59,13 @@ kubectl apply -f services/identity_service/deployment.yaml
 kubectl apply -f services/identity_service/service.yaml
 kubectl apply -f services/ai_service/deployment.yaml
 kubectl apply -f services/ai_service/service.yaml
+kubectl apply -f services/prometheus/clusterRole.yaml
+kubectl apply -f services/prometheus/config-map.yaml
+kubectl apply -f services/prometheus/prometheus-deployment.yaml
+kubectl apply -f services/prometheus/prometheus-service.yaml
+kubectl apply -f services/grafana/grafana-datasource-config.yaml
+kubectl apply -f services/grafana/deployment.yaml
+kubectl apply -f services/grafana/service.yaml
 ```
 
 To expose the API Gateway's and pgAdmin's port, use command
@@ -63,6 +73,8 @@ To expose the API Gateway's and pgAdmin's port, use command
 ```sh
 minikube service butler-api-gateway-service
 minikube service pgadmin
+minikube service prometheus-service --namespace monitoring
+minikube service grafana --namespace monitoring
 ```
 
 #### Monitoring
