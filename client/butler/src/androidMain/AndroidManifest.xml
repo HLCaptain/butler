@@ -9,6 +9,7 @@
         android:label="Butler"
         android:allowBackup="false"
         android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         android:name=".MainApplication">
 

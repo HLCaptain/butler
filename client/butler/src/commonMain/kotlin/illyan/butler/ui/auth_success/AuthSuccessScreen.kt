@@ -7,6 +7,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
@@ -14,14 +15,14 @@ import kotlinx.coroutines.delay
 
 class AuthSuccessScreen(
     private val delayMillis: Long = 1000,
-    private val close: () -> Unit
 ) : Screen {
     @Composable
     override fun Content() {
+        val authSuccessDone = LocalAuthSuccessDone.current
         // Big checkmark for 1 second, then close
         LaunchedEffect(Unit) {
             delay(delayMillis)
-            close()
+            authSuccessDone()
         }
         Icon(
             modifier = Modifier.size(128.dp),
@@ -31,3 +32,5 @@ class AuthSuccessScreen(
         )
     }
 }
+
+val LocalAuthSuccessDone = compositionLocalOf { {} }

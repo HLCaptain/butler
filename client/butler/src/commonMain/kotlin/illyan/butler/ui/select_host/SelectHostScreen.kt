@@ -25,8 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
@@ -34,17 +32,16 @@ import illyan.butler.ui.SmallCircularProgressIndicator
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
+import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class SelectHostScreen(private val selectedHost: () -> Unit) : Screen {
+class SelectHostScreen : Screen {
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<SelectHostScreenModel>()
         val state by screenModel.state.collectAsState()
-
-        val navigator = LocalNavigator.currentOrThrow
 
         var triedToConnect by rememberSaveable { mutableStateOf(false) }
         LaunchedEffect(state.isConnecting) {
@@ -56,6 +53,7 @@ class SelectHostScreen(private val selectedHost: () -> Unit) : Screen {
 
         var isTestingOnly by rememberSaveable { mutableStateOf(false) }
 
+        val selectedHost = LocalSelectHostCallback.current
         LaunchedEffect(state) {
             if (state.isConnected == true && triedToConnect) {
                 triedToConnect = false // Tried to connect from last successful connection

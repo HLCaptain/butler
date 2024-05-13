@@ -63,7 +63,7 @@ import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.settings.user.UserSettingsScreen
-import illyan.butler.ui.theme.ThemeScreen
+import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.utils.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
@@ -247,7 +247,7 @@ private fun PreviewProfileDialogScreen(
     email: String = "illyan@google.com",
     phone: String = "+123456789",
 ) {
-    ThemeScreen {
+    ButlerTheme {
         Column {
             ButlerDialogSurface {
                 ProfileDialogContent(
@@ -263,7 +263,7 @@ private fun PreviewProfileDialogScreen(
                 )
             }
         }
-    }.Content()
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,

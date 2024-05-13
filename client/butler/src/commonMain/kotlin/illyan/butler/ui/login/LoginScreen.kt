@@ -12,6 +12,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,31 +39,34 @@ import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.select_host.SelectHostScreen
+import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
 import illyan.butler.ui.signup.SignUpScreen
+import illyan.butler.ui.signup_tutorial.LocalSignInCallback
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class LoginScreen(
-    private val onSignIn: suspend () -> Unit
-) : Screen {
+class LoginScreen : Screen {
     // TODO: Implement LoginScreen with member composable methods and class variables
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<LoginScreenModel>()
         val state by screenModel.state.collectAsState()
 
+        val onSignIn = LocalSignInCallback.current
         LaunchedEffect(state.isSignedIn) {
             if (state.isSignedIn == true) onSignIn()
         }
         val navigator = LocalNavigator.currentOrThrow
         // TODO: implement oath authentication
-        LoginDialogContent(
-            isUserSigningIn = state.isSigningIn,
-            signInAnonymously = {}, // TODO: Implement sign in anonymously
-            signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
-            navigateToSignUp = { email, password -> navigator.push(SignUpScreen(email, password) { navigator.pop() }) },
-            selectHost = { navigator.push(SelectHostScreen { navigator.pop() }) }
-        )
+        CompositionLocalProvider(LocalSelectHostCallback provides { navigator.pop() }) {
+            LoginDialogContent(
+                isUserSigningIn = state.isSigningIn,
+                signInAnonymously = {}, // TODO: Implement sign in anonymously
+                signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
+                navigateToSignUp = { email, password -> navigator.push(SignUpScreen(email, password) { navigator.pop() }) },
+                selectHost = { navigator.push(SelectHostScreen()) }
+            )
+        }
     }
 }
 

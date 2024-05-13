@@ -78,6 +78,7 @@ import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -125,7 +126,9 @@ class HomeScreen : Screen {
                         }
                     }
                 }
-
+                LaunchedEffect(startScreen) {
+                    Napier.d("HomeScreen: startScreen: $startScreen")
+                }
                 ButlerDialog(
                     startScreens = listOfNotNull(startScreen),
                     isDialogOpen = isDialogOpen,

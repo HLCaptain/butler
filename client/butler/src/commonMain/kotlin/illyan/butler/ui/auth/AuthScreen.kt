@@ -1,18 +1,21 @@
 package illyan.butler.ui.auth
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.ui.auth_success.AuthSuccessScreen
+import illyan.butler.ui.auth_success.LocalAuthSuccessDone
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.select_host.SelectHostScreen
+import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
+import illyan.butler.ui.signup_tutorial.LocalSignInCallback
 
 class AuthScreen : Screen {
     @Composable
@@ -27,34 +30,26 @@ class AuthScreen : Screen {
         // 2. Show login screen
         // 3. Close if user is authenticated
 
-        AuthDialogContent(
-            state = state,
-            navigator = navigator
-        )
-    }
-}
+        val dismissDialog = LocalDialogDismissRequest.current
+        val close = { dismissDialog() }
 
-@Composable
-fun AuthDialogContent(
-    state: AuthState,
-    navigator: Navigator
-) {
-    val dismissDialog = LocalDialogDismissRequest.current
-    val close = {
-        dismissDialog()
-    }
+        val authSuccessScreen by lazy { AuthSuccessScreen(1000) }
+        val selecHostScreen by lazy { SelectHostScreen() }
+        val loginScreen by lazy { LoginScreen() }
 
-    val authSuccessThenClose = suspend {
-        navigator.replaceAll(AuthSuccessScreen(1000) { close() })
-    }
-    LaunchedEffect(state) {
-        if (state.isUserSignedIn == true) close()
-        if (state.hostSelected == false) {
-            navigator.replace(SelectHostScreen {
-                navigator.push(LoginScreen { authSuccessThenClose() })
-            })
-        } else if (state.hostSelected == true && state.isUserSignedIn == false) {
-            navigator.replace(LoginScreen { authSuccessThenClose() })
+        CompositionLocalProvider(
+            LocalAuthSuccessDone provides { close() },
+            LocalSignInCallback provides { navigator.replaceAll(authSuccessScreen) },
+            LocalSelectHostCallback provides { navigator.push(loginScreen) }
+        ) {
+            LaunchedEffect(state) {
+                if (state.isUserSignedIn == true) close()
+                if (state.hostSelected == false) {
+                    navigator.replace(selecHostScreen)
+                } else if (state.hostSelected == true && state.isUserSignedIn == false) {
+                    navigator.replace(loginScreen)
+                }
+            }
         }
     }
 }

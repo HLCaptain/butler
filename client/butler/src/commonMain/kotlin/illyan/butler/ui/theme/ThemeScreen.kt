@@ -16,10 +16,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.SlideTransition
 import illyan.butler.domain.model.Theme
+import illyan.butler.ui.home.HomeScreen
 import io.github.aakira.napier.Napier
 
-class ThemeScreen(private val content: @Composable () -> Unit) : Screen {
+class ThemeScreen : Screen {
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ThemeScreenModel>()
@@ -28,7 +31,11 @@ class ThemeScreen(private val content: @Composable () -> Unit) : Screen {
             theme = state.theme,
             dynamicColorEnabled = state.dynamicColorEnabled,
             isNight = state.isNight,
-            content = content
+            content = {
+                Navigator(HomeScreen()) { navigator ->
+                    SlideTransition(navigator)
+                }
+            }
         )
     }
 }
