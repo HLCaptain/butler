@@ -206,9 +206,7 @@ fun MessageList(
         targetState = chat == null || messages.isEmpty()
     ) {
         Column(
-            modifier = Modifier
-                .padding(8.dp)
-                .animateContentSize(),
+            modifier = Modifier.animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (it) {

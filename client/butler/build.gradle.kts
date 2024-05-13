@@ -105,6 +105,7 @@ kotlin {
                 implementation(libs.filepicker)
                 implementation(libs.coil)
                 implementation(libs.coil.compose)
+                implementation(libs.haze)
 
                 api(libs.napier)
             }
