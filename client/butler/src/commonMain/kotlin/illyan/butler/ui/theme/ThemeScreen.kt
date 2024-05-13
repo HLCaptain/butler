@@ -7,7 +7,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -24,10 +23,11 @@ class ThemeScreen(private val content: @Composable () -> Unit) : Screen {
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ThemeScreenModel>()
+        val state by screenModel.state.collectAsState()
         ButlerTheme(
-            themeState = screenModel.theme.collectAsState(),
-            dynamicColorEnabledState = screenModel.dynamicColorEnabled.collectAsState(),
-            isNightState = screenModel.isNight.collectAsState(),
+            theme = state.theme,
+            dynamicColorEnabled = state.dynamicColorEnabled,
+            isNight = state.isNight,
             content = content
         )
     }
@@ -35,14 +35,11 @@ class ThemeScreen(private val content: @Composable () -> Unit) : Screen {
 
 @Composable
 fun ButlerTheme(
-    themeState: State<Theme?> = mutableStateOf(Theme.System),
-    dynamicColorEnabledState: State<Boolean> = mutableStateOf(true),
-    isNightState: State<Boolean> = mutableStateOf(false),
+    theme: Theme? = null,
+    dynamicColorEnabled: Boolean = false,
+    isNight: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val theme by themeState
-    val dynamicColorEnabled by dynamicColorEnabledState
-    val isNight by isNightState
     val isSystemInDarkTheme = isSystemInDarkTheme()
     var isDark by rememberSaveable { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(theme, dynamicColorEnabled, isNight) {

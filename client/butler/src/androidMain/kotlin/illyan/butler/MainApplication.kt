@@ -1,10 +1,12 @@
 package illyan.butler
 
 import android.app.Application
+import illyan.butler.di.AndroidPermissionRepository
 import illyan.butler.utils.initNapier
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
+import org.koin.dsl.module
 import org.koin.ksp.generated.defaultModule
 
 class MainApplication : Application() {
@@ -16,7 +18,9 @@ class MainApplication : Application() {
         startKoin {
             androidLogger()
             androidContext(applicationContext)
-            defaultModule()
+            modules(defaultModule, module {
+                single { AndroidPermissionRepository() }
+            })
         }
     }
 }

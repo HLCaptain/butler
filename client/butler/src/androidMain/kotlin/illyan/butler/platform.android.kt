@@ -45,5 +45,5 @@ actual fun getAudioRecorder(): AudioRecorder? {
 }
 
 actual fun getPlatformPermissionRepository(): PermissionRepository {
-    return AndroidPermissionRepository(GlobalContext.get().get())
+    return GlobalContext.get().get<AndroidPermissionRepository>()
 }

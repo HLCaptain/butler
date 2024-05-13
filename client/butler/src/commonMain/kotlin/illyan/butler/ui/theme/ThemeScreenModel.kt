@@ -25,6 +25,7 @@ import illyan.butler.utils.calculateSunriseSunsetTimes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -38,14 +39,30 @@ import org.koin.core.annotation.Factory
 class ThemeScreenModel(
     settingsManager: SettingsManager,
 ) : ScreenModel {
-    val theme = settingsManager.userPreferences.map { it?.theme }
+    private val theme = settingsManager.userPreferences.map { it?.theme }
         .stateIn(screenModelScope, SharingStarted.Eagerly, null)
 
-    val dynamicColorEnabled = settingsManager.userPreferences
+    private val dynamicColorEnabled = settingsManager.userPreferences
         .map { it?.dynamicColorEnabled == true }
         .stateIn(screenModelScope, SharingStarted.Eagerly, false)
 
-    val isNight = MutableStateFlow(isNight())
+    private val isNight = MutableStateFlow(isNight())
+
+    val state = combine(
+        theme,
+        dynamicColorEnabled,
+        isNight,
+    ) { theme, dynamicColorEnabled, isNight ->
+        ThemeScreenState(
+            theme = theme,
+            dynamicColorEnabled = dynamicColorEnabled,
+            isNight = isNight,
+        )
+    }.stateIn(
+        screenModelScope,
+        SharingStarted.Eagerly,
+        ThemeScreenState()
+    )
 
     init {
         screenModelScope.launch {

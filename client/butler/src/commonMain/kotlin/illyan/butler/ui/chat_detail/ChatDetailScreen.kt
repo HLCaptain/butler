@@ -39,7 +39,6 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,6 +80,7 @@ import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
+import illyan.butler.ui.chat_layout.LocalChatBackHandler
 import illyan.butler.ui.dialog.ButlerDialog
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
@@ -88,8 +88,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
 class ChatDetailScreen(
-    private val getSelectedChatId: () -> String?,
-    private val onBack: () -> Unit
+    private val selectedChatId: String?
 ) : Screen {
     @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class,
         ExperimentalHazeMaterialsApi::class
@@ -99,7 +98,7 @@ class ChatDetailScreen(
         val screenModel = koinScreenModel<ChatDetailScreenModel>()
         val state by screenModel.state.collectAsState()
         LaunchedEffect(state.chat) { Napier.d("ChatScreen: ${state.chat}") }
-        val selectedChatId by remember { derivedStateOf(getSelectedChatId) }
+        val selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
         LaunchedEffect(selectedChatId) {
             Napier.d("SelectedChatId: $selectedChatId")
             selectedChatId?.let { screenModel.loadChat(it) }
@@ -108,6 +107,7 @@ class ChatDetailScreen(
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
         var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
         val hazeState = remember { HazeState() }
+        val chatBackHandler = LocalChatBackHandler.current
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
@@ -123,7 +123,7 @@ class ChatDetailScreen(
                     },
                     navigationIcon = {
                         if (navigator != null && navigator.size > 1) {
-                            IconButton(onClick = { onBack() }) {
+                            IconButton(onClick = { chatBackHandler() }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = stringResource(Res.string.back)

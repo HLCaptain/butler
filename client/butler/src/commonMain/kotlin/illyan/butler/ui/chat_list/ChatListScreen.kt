@@ -33,14 +33,16 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
+import illyan.butler.ui.chat_layout.LocalChatSelector
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class ChatListScreen(private val selectChat: (String) -> Unit) : Screen {
+class ChatListScreen : Screen {
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ChatListScreenModel>()
         val chats by screenModel.userChats.collectAsState()
+        val selectChat = LocalChatSelector.current
         ChatList(
             chats = chats,
             openChat = { selectChat(it) }

@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -65,9 +66,10 @@ import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
 import illyan.butler.getWindowSizeInDp
-import illyan.butler.ui.arbitrary.ArbitraryScreen
 import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.chat_layout.ChatScreen
+import illyan.butler.ui.chat_layout.LocalChatSelector
+import illyan.butler.ui.chat_layout.LocalSelectedChat
 import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.GestureType
 import illyan.butler.ui.components.PlainTooltipWithContent
@@ -77,7 +79,6 @@ import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
@@ -144,7 +145,12 @@ class HomeScreen : Screen {
 
                 val numberOfErrors = state.appErrors.size + state.serverErrors.size
                 val errorScreen by remember {
-                    lazy { ArbitraryScreen { ErrorScreen(state, screenModel) } }
+                    lazy { object : Screen {
+                        @Composable
+                        override fun Content() {
+                            ErrorScreen(state, screenModel)
+                        }
+                    } }
                 }
                 ButlerDialog(
                     modifier = Modifier.zIndex(1f),
@@ -163,14 +169,7 @@ class HomeScreen : Screen {
                 var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
                 val chatScreen by remember { lazy { ChatScreen() } }
-                val newChatScreen by remember {
-                    lazy {
-                        NewChatScreen { newChat ->
-                            currentScreenIndex = 0
-                            chatScreen.selectedChat.update { newChat }
-                        }
-                    }
-                }
+                val newChatScreen by remember { lazy { NewChatScreen() } }
                 val screens by remember { mutableStateOf(listOf(chatScreen, newChatScreen)) }
                 // Index is rememberSaveable, Screen is probably not.
                 val currentScreen by remember { derivedStateOf { screens[currentScreenIndex] } }
@@ -187,34 +186,45 @@ class HomeScreen : Screen {
                 val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
                 LaunchedEffect(width, height) { windowWidth = width }
                 val coroutineScope = rememberCoroutineScope()
-                Crossfade(navBarOrientation) { orientation ->
-                    when (orientation) {
-                        Orientation.Vertical -> HomeContentWithVerticalNavBar(
-                            isNavBarCompact,
-                            currentScreen,
-                            isProfileDialogShowing,
-                            coroutineScope,
-                            currentScreenIndex,
-                            screens,
-                            chatScreen,
-                            newChatScreen,
-                            navBarOrientation,
-                            setCurrentDialogShowing = { isProfileDialogShowing = it },
-                            setCurrentScreenIndex = { currentScreenIndex = it },
-                            setNavigator = { navigator = it }
-                        )
+                var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
+                val selectChat = { chat: String ->
+                    selectedChat = chat
+                    currentScreenIndex = 0
+                }
+                CompositionLocalProvider(
+                    LocalSelectedChat provides selectedChat,
+                    LocalChatSelector provides selectChat
+                ) {
 
-                        Orientation.Horizontal -> Column {
-                            HomeContent(navBarOrientation, currentScreen) { navigator = it }
-                            HorizontalNavBar(
+                    Crossfade(navBarOrientation) { orientation ->
+                        when (orientation) {
+                            Orientation.Vertical -> HomeContentWithVerticalNavBar(
+                                isNavBarCompact,
                                 currentScreen,
-                                chatScreen,
                                 isProfileDialogShowing,
-                                setProfileDialogShowing = { isProfileDialogShowing = it },
-                                setCurrentScreenIndex = { currentScreenIndex = it },
+                                coroutineScope,
+                                currentScreenIndex,
                                 screens,
-                                newChatScreen
+                                chatScreen,
+                                newChatScreen,
+                                navBarOrientation,
+                                setCurrentDialogShowing = { isProfileDialogShowing = it },
+                                setCurrentScreenIndex = { currentScreenIndex = it },
+                                setNavigator = { navigator = it }
                             )
+
+                            Orientation.Horizontal -> Column {
+                                HomeContent(navBarOrientation, currentScreen) { navigator = it }
+                                HorizontalNavBar(
+                                    currentScreen,
+                                    chatScreen,
+                                    isProfileDialogShowing,
+                                    setProfileDialogShowing = { isProfileDialogShowing = it },
+                                    setCurrentScreenIndex = { currentScreenIndex = it },
+                                    screens,
+                                    newChatScreen
+                                )
+                            }
                         }
                     }
                 }

@@ -36,21 +36,23 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
+import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.components.ExpandableCard
 import illyan.butler.ui.components.MenuButton
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class NewChatScreen(private val createdNewChat: (String) -> Unit) : Screen {
+class NewChatScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<NewChatScreenModel>()
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
+        val selectNewChat = LocalChatSelector.current
         LaunchedEffect(state.newChatId) {
             if (state.newChatId != null) {
-                createdNewChat(state.newChatId!!)
+                selectNewChat(state.newChatId!!)
             }
         }
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
