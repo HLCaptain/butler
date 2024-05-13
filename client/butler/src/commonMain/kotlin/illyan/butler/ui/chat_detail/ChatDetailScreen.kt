@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,11 @@ import coil3.compose.LocalPlatformContext
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.PermissionStatus
@@ -85,7 +91,9 @@ class ChatDetailScreen(
     private val getSelectedChatId: () -> String?,
     private val onBack: () -> Unit
 ) : Screen {
-    @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class,
+        ExperimentalHazeMaterialsApi::class
+    )
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ChatDetailScreenModel>()
@@ -99,10 +107,13 @@ class ChatDetailScreen(
         val navigator = LocalNavigator.current
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
         var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
+        val hazeState = remember { HazeState() }
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 CenterAlignedTopAppBar(
+                    modifier = Modifier.hazeChild(hazeState),
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Transparent),
                     title = {
                         Text(
                             state.chat?.name ?: stringResource(Res.string.new_chat),
@@ -133,9 +144,24 @@ class ChatDetailScreen(
                     scrollBehavior = scrollBehavior,
                 )
             },
+            bottomBar = {
+                if (selectedChatId != null) {
+                    MessageField(
+                        modifier = Modifier.hazeChild(hazeState),
+                        sendMessage = screenModel::sendMessage,
+                        isRecording = state.isRecording,
+                        canRecordAudio = state.canRecordAudio,
+                        toggleRecord = screenModel::toggleRecording,
+                        sendImage = screenModel::sendImage,
+                        galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
+                        requestGalleryAccess = screenModel::requestGalleryPermission
+                    )
+                }
+            }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
+                    .haze(hazeState, HazeMaterials.thin())
                     .padding(innerPadding)
                     .imePadding(),
                 verticalArrangement = Arrangement.SpaceBetween
@@ -154,15 +180,6 @@ class ChatDetailScreen(
                         playingAudio = state.playingAudio,
                         stopAudio = screenModel::stopAudio,
                         images = state.images
-                    )
-                    MessageField(
-                        sendMessage = screenModel::sendMessage,
-                        isRecording = state.isRecording,
-                        canRecordAudio = state.canRecordAudio,
-                        toggleRecord = screenModel::toggleRecording,
-                        sendImage = screenModel::sendImage,
-                        galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
-                        requestGalleryAccess = screenModel::requestGalleryPermission
                     )
                 }
             }
