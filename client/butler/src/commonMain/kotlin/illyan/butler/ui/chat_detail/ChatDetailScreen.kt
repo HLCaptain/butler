@@ -80,7 +80,8 @@ import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
-import illyan.butler.ui.chat_layout.LocalChatBackHandler
+import illyan.butler.ui.chat_layout.LocalChatSelector
+import illyan.butler.ui.chat_layout.LocalSelectedChat
 import illyan.butler.ui.dialog.ButlerDialog
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
@@ -98,16 +99,18 @@ class ChatDetailScreen(
         val screenModel = koinScreenModel<ChatDetailScreenModel>()
         val state by screenModel.state.collectAsState()
         LaunchedEffect(state.chat) { Napier.d("ChatScreen: ${state.chat}") }
-        val selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
-        LaunchedEffect(selectedChatId) {
-            Napier.d("SelectedChatId: $selectedChatId")
-            selectedChatId?.let { screenModel.loadChat(it) }
+        var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
+        val currentSelectedChat = LocalSelectedChat.current
+        LaunchedEffect(currentSelectedChat) {
+            Napier.d("SelectedChatId: $currentSelectedChat")
+            selectedChatId = currentSelectedChat
+            currentSelectedChat?.let { screenModel.loadChat(it) }
         }
         val navigator = LocalNavigator.current
+        val chatSelector = LocalChatSelector.current
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
         var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
         val hazeState = remember { HazeState() }
-        val chatBackHandler = LocalChatBackHandler.current
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
@@ -123,7 +126,10 @@ class ChatDetailScreen(
                     },
                     navigationIcon = {
                         if (navigator != null && navigator.size > 1) {
-                            IconButton(onClick = { chatBackHandler() }) {
+                            IconButton(onClick = {
+                                chatSelector(null)
+                                navigator.pop()
+                            }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = stringResource(Res.string.back)

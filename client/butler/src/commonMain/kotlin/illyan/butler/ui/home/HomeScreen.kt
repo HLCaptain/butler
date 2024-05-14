@@ -85,6 +85,7 @@ import illyan.butler.ui.usage_tutorial.LocalUsageTutorialDone
 import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
 import illyan.butler.ui.welcome.LocalWelcomeScreenDone
 import illyan.butler.ui.welcome.WelcomeScreen
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -178,6 +179,7 @@ class HomeScreen : Screen {
                     startScreens = listOf(permissionRequestScreen),
                     isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
                     isDialogFullscreen = false,
+                    onDismissDialog = screenModel::removeLastPermissionRequest
                 )
                 var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
                 var navigator by remember { mutableStateOf<Navigator?>(null) }
@@ -200,7 +202,8 @@ class HomeScreen : Screen {
                 LaunchedEffect(width, height) { windowWidth = width }
                 val coroutineScope = rememberCoroutineScope()
                 var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
-                val selectChat = { chat: String ->
+                val selectChat = { chat: String? ->
+                    Napier.d("Selected chat: $chat")
                     selectedChat = chat
                     currentScreenIndex = 0
                 }
@@ -226,7 +229,9 @@ class HomeScreen : Screen {
                             )
 
                             Orientation.Horizontal -> Column {
-                                HomeContent(navBarOrientation, currentScreen) { navigator = it }
+                                Row(Modifier.weight(1f)) {
+                                    HomeContent(navBarOrientation, currentScreen) { navigator = it }
+                                }
                                 HorizontalNavBar(
                                     currentScreen,
                                     chatScreen,

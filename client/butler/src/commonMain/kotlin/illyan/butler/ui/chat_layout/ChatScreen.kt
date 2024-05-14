@@ -57,6 +57,7 @@ class ChatScreen : Screen {
     @Composable
     override fun Content() {
         val selectedChat = LocalSelectedChat.current
+        val selectChat = LocalChatSelector.current
         val screenModel = koinScreenModel<ChatScreenModel>()
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
@@ -66,6 +67,10 @@ class ChatScreen : Screen {
         LaunchedEffect(selectedChat) {
             currentChat = selectedChat
         }
+        val onSelectChat = remember { { chatId: String? ->
+            selectChat(chatId)
+            currentChat = chatId
+        } }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
         // - if Chat is opened from List:
@@ -107,17 +112,35 @@ class ChatScreen : Screen {
         val isListOnly by derivedStateOf { currentPaneStrategy == compactPaneStrategy }
         var listNavigator = remember<Navigator?> { null }
         var detailNavigator = remember<Navigator?> { null }
-        val onChatDetailBack = {
-            currentChat = null
-            if (isListOnly) {
-                listNavigator?.replaceAll(listNavigator?.items?.first()!!)
+        val chatDetailScreen = remember(listNavigator, isListOnly) { ChatDetailScreen(selectedChat) }
+        ButlerTwoPane(
+            strategy = currentPaneStrategy,
+            first = {
+                CompositionLocalProvider(LocalChatSelector provides onSelectChat) {
+                    Navigator(ChatListScreen()) {
+                        LaunchedEffect(Unit) {
+                            Napier.v("listNavigator: $it")
+                            listNavigator = it
+                        }
+                        SlideTransition(it)
+                    }
+                }
+            },
+            second = {
+                Navigator(chatDetailScreen) {
+                    LaunchedEffect(Unit) {
+                        Napier.v("detailNavigator: $it")
+                        detailNavigator = it
+                    }
+                    SlideTransition(it)
+                }
             }
-        }
-        val chatDetailScreen = ChatDetailScreen(currentChat)
-        LaunchedEffect(isListOnly) {
+        )
+        LaunchedEffect(isListOnly, listNavigator, detailNavigator) {
+            Napier.v { "listNavigator: ${listNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}, detailNavigator: ${detailNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}" }
             if (isListOnly) {
                 Napier.v("Transitioning from ListDetail to ListOnly")
-                if (currentChat != null) {
+                if (selectedChat != null) {
                     listNavigator?.push(chatDetailScreen)
                     Napier.v("Added chat onto list screen.")
                 } else {
@@ -126,7 +149,7 @@ class ChatScreen : Screen {
                 }
             } else {
                 Napier.v("Transitioning from ListOnly to ListDetail")
-                if (currentChat != null) {
+                if (selectedChat != null) {
                     if (listNavigator?.lastItem is ChatDetailScreen) {
                         listNavigator?.replaceAll(listNavigator?.items?.first()!!)
                     }
@@ -139,7 +162,8 @@ class ChatScreen : Screen {
                 }
             }
         }
-        LaunchedEffect(currentChat) {
+        LaunchedEffect(currentChat, listNavigator, detailNavigator) {
+            Napier.v("currentChat: $currentChat, selectedChat: $selectedChat, isListOnly: $isListOnly, listNavigator: $listNavigator, detailNavigator: $detailNavigator")
             if (currentChat != null) {
                 Napier.v("selectedChat is not null")
                 if (isListOnly) {
@@ -161,25 +185,6 @@ class ChatScreen : Screen {
                 Napier.v("Popped screens from listNavigator until ChatListScreen is found")
             }
         }
-        ButlerTwoPane(
-            strategy = currentPaneStrategy,
-            first = {
-                CompositionLocalProvider(LocalChatSelector provides { currentChat = it }) {
-                    Navigator(ChatListScreen()) {
-                        LaunchedEffect(Unit) { listNavigator = it }
-                        SlideTransition(it)
-                    }
-                }
-            },
-            second = {
-                CompositionLocalProvider(LocalChatBackHandler provides onChatDetailBack) {
-                    Navigator(chatDetailScreen) {
-                        LaunchedEffect(Unit) { detailNavigator = it }
-                        SlideTransition(it)
-                    }
-                }
-            }
-        )
     }
 }
 
@@ -263,6 +268,6 @@ fun ChatCard(
     }
 }
 
-val LocalChatSelector = compositionLocalOf<((String) -> Unit)> { {} }
+val LocalChatSelector = compositionLocalOf<((String?) -> Unit)> { {} }
 val LocalChatBackHandler = compositionLocalOf { {} }
 val LocalSelectedChat = compositionLocalOf<String?> { null }
