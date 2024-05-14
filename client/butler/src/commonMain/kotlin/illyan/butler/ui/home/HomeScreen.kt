@@ -204,8 +204,8 @@ class HomeScreen : Screen {
                 var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
                 val selectChat = { chat: String? ->
                     Napier.d("Selected chat: $chat")
-                    selectedChat = chat
                     currentScreenIndex = 0
+                    selectedChat = chat
                 }
                 CompositionLocalProvider(
                     LocalSelectedChat provides selectedChat,
