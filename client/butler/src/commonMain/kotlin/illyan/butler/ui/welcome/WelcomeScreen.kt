@@ -30,6 +30,7 @@ class WelcomeScreen : Screen {
         Column {
             Text(text = "Welcome to Butler!")
             Button(onClick = {
+                Napier.d("WelcomeScreen: Next")
                 onDone()
             }) {
                 Text(text = "Next")

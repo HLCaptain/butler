@@ -48,7 +48,8 @@ fun ButlerDialog(
     isDialogOpen: Boolean = true,
     isDialogFullscreen: Boolean = false,
     onDismissDialog: () -> Unit = {},
-    onDialogClosed: () -> Unit = {}
+    onDialogClosed: () -> Unit = {},
+    onNavigatorSet: (Navigator) -> Unit = {}
 ) {
     var isDialogClosing by rememberSaveable { mutableStateOf(false) }
     var isDialogClosingAnimationEnded by rememberSaveable { mutableStateOf(true) }
@@ -67,6 +68,7 @@ fun ButlerDialog(
             navigator?.pop()
         }
     }
+    var currentLastScreen by remember { mutableStateOf<Screen?>(null) }
     if (!isDialogClosingAnimationEnded) {
         Dialog(
             onDismissRequest = onDismissRequest,
@@ -80,10 +82,14 @@ fun ButlerDialog(
                 modifier,
                 isDialogFullscreen,
                 isDialogClosing,
+                currentLastScreen,
                 onDismissRequest,
                 startScreens,
-                navigator,
-                setNavigator = { navigator = it }
+                setNavigator = {
+                    navigator = it
+                    currentLastScreen = it.lastItem
+                    onNavigatorSet(it)
+                }
             )
         }
     } else {
@@ -96,9 +102,9 @@ private fun DialogContent(
     modifier: Modifier,
     isDialogFullscreen: Boolean,
     isDialogClosing: Boolean,
+    currentLastScreen: Screen? = null,
     onDismissRequest: () -> Unit,
     startScreens: List<Screen>,
-    navigator: Navigator?,
     setNavigator: (Navigator) -> Unit
 ) {
     val containerSize = getWindowSizeInDp() // first: height, second: width
@@ -139,45 +145,44 @@ private fun DialogContent(
             }
         }
     ) {
-        if (navigator != null && startScreens.isNotEmpty()) {
-            CompositionLocalProvider(
-                LocalDialogDismissRequest provides onDismissRequest,
-            ) {
-                Navigator(
-                    screens = startScreens,
-                ) { nav ->
-                    // This hack is needed to avoid navigation issues with Voyager
-                    // https://github.com/adrielcafe/voyager/issues/378
-                    LaunchedEffect(startScreens) {
-                        Napier.d("${nav.items}")
-                        if (startScreens.isNotEmpty()) nav.replaceAll(startScreens)
-                        setNavigator(nav)
-                    }
-                    val animationTime = 200
-                    ScreenTransition(
-                        navigator = nav,
-                        enterTransition = {
-                            (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
-                                tween(
-                                    animationTime
-                                )
-                            )) togetherWith
-                                    (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
-                                        tween(animationTime)
-                                    ))
-                        },
-                        exitTransition = {
-                            (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
-                                tween(
-                                    animationTime
-                                )
-                            )) togetherWith
-                                    (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
-                                        tween(animationTime)
-                                    ))
-                        }
-                    ) { it.Content() }
+        CompositionLocalProvider(
+            LocalDialogDismissRequest provides onDismissRequest,
+        ) {
+            Navigator(
+                screens = startScreens.ifEmpty { listOf(currentLastScreen!!) },
+                onBackPressed = { onDismissRequest(); true }
+            ) { nav ->
+                // This hack is needed to avoid navigation issues with Voyager
+                // https://github.com/adrielcafe/voyager/issues/378
+                LaunchedEffect(startScreens) {
+                    Napier.d("${nav.items}")
+                    if (startScreens.isNotEmpty()) nav.replaceAll(startScreens) else nav.replaceAll(currentLastScreen!!)
+                    setNavigator(nav)
                 }
+                val animationTime = 200
+                ScreenTransition(
+                    navigator = nav,
+                    enterTransition = {
+                        (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
+                            tween(
+                                animationTime
+                            )
+                        )) togetherWith
+                                (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
+                                    tween(animationTime)
+                                ))
+                    },
+                    exitTransition = {
+                        (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
+                            tween(
+                                animationTime
+                            )
+                        )) togetherWith
+                                (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
+                                    tween(animationTime)
+                                ))
+                    }
+                )
             }
         }
     }

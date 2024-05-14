@@ -2,8 +2,6 @@ package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,18 +65,26 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
 import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.auth.AuthScreen
+import illyan.butler.ui.auth_success.AuthSuccessScreen
+import illyan.butler.ui.auth_success.LocalAuthSuccessDone
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.chat_layout.LocalSelectedChat
-import illyan.butler.ui.components.ButlerErrorDialogContent
 import illyan.butler.ui.components.GestureType
 import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
+import illyan.butler.ui.error.ErrorScreen
 import illyan.butler.ui.new_chat.NewChatScreen
-import illyan.butler.ui.onboarding.OnBoardingScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
-import io.github.aakira.napier.Napier
+import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
+import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
+import illyan.butler.ui.signup_tutorial.LocalSignInCallback
+import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
+import illyan.butler.ui.usage_tutorial.LocalUsageTutorialDone
+import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
+import illyan.butler.ui.welcome.LocalWelcomeScreenDone
+import illyan.butler.ui.welcome.WelcomeScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -112,9 +118,13 @@ class HomeScreen : Screen {
                     if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
                     if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
                 }
-                val onBoardingScreen by remember { lazy { OnBoardingScreen() } }
-                val profileDialogScreen by remember { lazy { ProfileDialogScreen() } }
-                val authScreen by remember { lazy { AuthScreen() } }
+                val usageTutorialScreen by remember { lazy { UsageTutorialScreen() } }
+                val authSuccessScreen by remember { lazy { AuthSuccessScreen(1000) } }
+                val signUpTutorialScreen by remember { lazy { SignUpTutorialScreen() } }
+                val selectHostTutorialScreen by remember { lazy { SelectHostTutorialScreen() } }
+                val welcomeScreen by remember { lazy { WelcomeScreen() } }
+                val profileDialogScreen = remember { ProfileDialogScreen() }
+                val authScreen = remember { AuthScreen() }
                 val startScreen by remember {
                     derivedStateOf {
                         if (!isDialogOpen) {
@@ -122,39 +132,39 @@ class HomeScreen : Screen {
                         } else {
                             if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
                                 if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
-                            } else onBoardingScreen
+                            } else welcomeScreen
                         }
                     }
                 }
-                LaunchedEffect(startScreen) {
-                    Napier.d("HomeScreen: startScreen: $startScreen")
+                var onBoardingNavigator by remember { mutableStateOf<Navigator?>(null) }
+                CompositionLocalProvider(
+                    LocalWelcomeScreenDone provides { onBoardingNavigator?.push(selectHostTutorialScreen) },
+                    LocalSelectHostCallback provides { onBoardingNavigator?.push(signUpTutorialScreen) },
+                    LocalSignInCallback provides { onBoardingNavigator?.replaceAll(authSuccessScreen) },
+                    LocalAuthSuccessDone provides { onBoardingNavigator?.replaceAll(usageTutorialScreen) },
+                    LocalUsageTutorialDone provides { screenModel.setTutorialDone() },
+                ) {
+                    ButlerDialog(
+                        startScreens = listOfNotNull(startScreen),
+                        isDialogOpen = isDialogOpen,
+                        isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
+                        onDismissDialog = {
+                            if (state.isUserSignedIn == true) {
+                                isAuthFlowEnded = true
+                            }
+                            isProfileDialogShowing = false
+                        },
+                        onDialogClosed = {
+                            if (state.isTutorialDone == true) {
+                                isDialogClosedAfterTutorial = true
+                            }
+                        },
+                        onNavigatorSet = { onBoardingNavigator = it }
+                    )
                 }
-                ButlerDialog(
-                    startScreens = listOfNotNull(startScreen),
-                    isDialogOpen = isDialogOpen,
-                    isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
-                    onDismissDialog = {
-                        if (state.isUserSignedIn == true) {
-                            isAuthFlowEnded = true
-                        }
-                        isProfileDialogShowing = false
-                    },
-                    onDialogClosed = {
-                        if (state.isTutorialDone == true) {
-                            isDialogClosedAfterTutorial = true
-                        }
-                    }
-                )
 
                 val numberOfErrors = state.appErrors.size + state.serverErrors.size
-                val errorScreen by remember {
-                    lazy { object : Screen {
-                        @Composable
-                        override fun Content() {
-                            ErrorScreen(state, screenModel)
-                        }
-                    } }
-                }
+                val errorScreen = remember { ErrorScreen() }
                 ButlerDialog(
                     modifier = Modifier.zIndex(1f),
                     startScreens = listOf(errorScreen),
@@ -175,7 +185,7 @@ class HomeScreen : Screen {
                 val newChatScreen by remember { lazy { NewChatScreen() } }
                 val screens by remember { mutableStateOf(listOf(chatScreen, newChatScreen)) }
                 // Index is rememberSaveable, Screen is probably not.
-                val currentScreen by remember { derivedStateOf { screens[currentScreenIndex] } }
+                val currentScreen = screens[currentScreenIndex]
                 LaunchedEffect(currentScreen) { navigator?.replaceAll(currentScreen) }
                 val (height, width) = getWindowSizeInDp()
                 var windowWidth by remember { mutableStateOf(width) }
@@ -198,7 +208,6 @@ class HomeScreen : Screen {
                     LocalSelectedChat provides selectedChat,
                     LocalChatSelector provides selectChat
                 ) {
-
                     Crossfade(navBarOrientation) { orientation ->
                         when (orientation) {
                             Orientation.Vertical -> HomeContentWithVerticalNavBar(
@@ -358,43 +367,31 @@ class HomeScreen : Screen {
     }
 
     @Composable
-    private fun ErrorScreen(
-        state: HomeScreenState,
-        screenModel: HomeScreenModel
+    private fun OnboardingContent(
+        navigator: Navigator?,
+        setTutorialDone: () -> Unit
     ) {
-        val serverErrorContent = @Composable {
-            state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
-                ButlerErrorDialogContent(
-                    errorResponse = it.second,
-                    onClose = { screenModel.clearError(it.first) }
-                )
-            }
-        }
-        val appErrorContent = @Composable {
-            state.appErrors.maxByOrNull { it.timestamp }?.let {
-                ButlerErrorDialogContent(
-                    errorEvent = it,
-                    onClose = { screenModel.clearError(it.id) }
-                )
-            }
-        }
-        Crossfade(
-            modifier = Modifier.animateContentSize(spring()),
-            targetState = state.appErrors + state.serverErrors
-        ) { _ ->
-            val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
-            val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
-            if (latestAppError != null && latestServerError != null) {
-                if (latestAppError.timestamp > latestServerError.second.timestamp) {
-                    appErrorContent()
-                } else {
-                    serverErrorContent()
-                }
-            } else if (latestAppError != null) {
-                appErrorContent()
-            } else if (latestServerError != null) {
-                serverErrorContent()
-            }
+        // (language selection may be in a corner?)
+        // 1. Show welcome screen
+        // 2. Show host selection tutorial
+        // 3. Show sign up tutorial
+        // 4. Show usage tutorial
+        // 5. If done, set tutorial done.
+
+        val usageTutorialScreen by remember { lazy { UsageTutorialScreen() } }
+        val authSuccessScreen by remember { lazy { AuthSuccessScreen(1000) } }
+        val signUpTutorialScreen by remember { lazy { SignUpTutorialScreen() } }
+        val selectHostTutorialScreen by remember { lazy { SelectHostTutorialScreen() } }
+        val welcomeScreen by remember { lazy { WelcomeScreen() } }
+
+        CompositionLocalProvider(
+            LocalWelcomeScreenDone provides { navigator?.push(selectHostTutorialScreen) },
+            LocalSelectHostCallback provides { navigator?.push(signUpTutorialScreen) },
+            LocalSignInCallback provides { navigator?.replaceAll(authSuccessScreen) },
+            LocalAuthSuccessDone provides { navigator?.replaceAll(usageTutorialScreen) },
+            LocalUsageTutorialDone provides { setTutorialDone() },
+        ) {
+
         }
     }
 }
