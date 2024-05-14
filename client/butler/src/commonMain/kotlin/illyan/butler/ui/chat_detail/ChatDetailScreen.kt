@@ -98,7 +98,7 @@ class ChatDetailScreen(
     override fun Content() {
         val screenModel = koinScreenModel<ChatDetailScreenModel>()
         val state by screenModel.state.collectAsState()
-        LaunchedEffect(state.chat) { Napier.d("ChatScreen: ${state.chat}") }
+        LaunchedEffect(state.chat) { Napier.d("DomainChat: ${state.chat}") }
         var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
         val currentSelectedChat = LocalSelectedChat.current
         LaunchedEffect(currentSelectedChat) {

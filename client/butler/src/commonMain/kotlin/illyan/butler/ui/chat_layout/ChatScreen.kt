@@ -68,7 +68,7 @@ class ChatScreen : Screen {
             currentChat = selectedChat
         }
         val onSelectChat = remember { { chatId: String? ->
-            selectChat(chatId)
+//            selectChat(chatId)
             currentChat = chatId
         } }
         // React properly to list-detail transitions:
@@ -110,14 +110,78 @@ class ChatScreen : Screen {
             Napier.v("Current pane strategy: $strategy")
         }
         val isListOnly by derivedStateOf { currentPaneStrategy == compactPaneStrategy }
-        var listNavigator = remember<Navigator?> { null }
-        var detailNavigator = remember<Navigator?> { null }
-        val chatDetailScreen = remember(listNavigator, isListOnly) { ChatDetailScreen(selectedChat) }
+        var listNavigator by remember { mutableStateOf<Navigator?>(null) }
+        var detailNavigator by remember { mutableStateOf<Navigator?>(null) }
+        val chatDetailScreen = remember(selectedChat) { ChatDetailScreen(selectedChat) }
+        val chatListScreen = remember { ChatListScreen() }
+        LaunchedEffect(isListOnly) {
+            Napier.v { "listNavigator: ${listNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}, detailNavigator: ${detailNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}" }
+            if (isListOnly) {
+                Napier.v("Transitioning from ListDetail to ListOnly")
+                if (selectedChat != null) {
+                    if (listNavigator?.lastItem !is ChatDetailScreen) {
+                        listNavigator?.push(chatDetailScreen)
+                    }
+                    Napier.v("Added chat onto list screen.")
+                } else {
+                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                        detailNavigator?.replaceAll(chatDetailScreen)
+                    }
+                    Napier.v("Placed empty detail screen.")
+                }
+            } else {
+                Napier.v("Transitioning from ListOnly to ListDetail")
+                if (selectedChat != null) {
+                    if (listNavigator?.lastItem is ChatDetailScreen) {
+                        listNavigator?.replaceAll(listNavigator?.items?.first()!!)
+                    }
+                    Napier.v("Removed chat from list screen.")
+                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                        detailNavigator?.replaceAll(chatDetailScreen)
+                    }
+                    Napier.v("Added chat onto detail screen.")
+                } else {
+                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                        detailNavigator?.replaceAll(chatDetailScreen)
+                    }
+                    Napier.v("Placed empty detail screen.")
+                }
+            }
+        }
+        LaunchedEffect(currentChat) {
+            Napier.v("currentChat: $currentChat, isListOnly: $isListOnly, listNavigator: $listNavigator, detailNavigator: $detailNavigator")
+            if (currentChat != null) {
+                Napier.v("selectedChat is not null")
+                if (isListOnly) {
+                    if (listNavigator?.lastItem is ChatDetailScreen) {
+                        listNavigator?.replaceAll(listNavigator?.items?.first()!!)
+                    }
+                    if (listNavigator?.lastItem !is ChatDetailScreen) {
+                        listNavigator?.push(chatDetailScreen)
+                    }
+                    Napier.v("Pushed ChatDetailScreen to listNavigator")
+                } else {
+                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                        detailNavigator?.replaceAll(chatDetailScreen)
+                    }
+                    Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
+                }
+            } else {
+                Napier.v("selectedChat is null")
+                if (listNavigator?.lastItem is ChatDetailScreen) {
+                    listNavigator?.replaceAll(listNavigator?.items?.first()!!)
+                    Napier.v("Popped screens from listNavigator until ChatListScreen is found")
+                }
+                if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                    detailNavigator?.replaceAll(chatDetailScreen)
+                }
+            }
+        }
         ButlerTwoPane(
             strategy = currentPaneStrategy,
             first = {
                 CompositionLocalProvider(LocalChatSelector provides onSelectChat) {
-                    Navigator(ChatListScreen()) {
+                    Navigator(chatListScreen) {
                         LaunchedEffect(Unit) {
                             Napier.v("listNavigator: $it")
                             listNavigator = it
@@ -136,55 +200,6 @@ class ChatScreen : Screen {
                 }
             }
         )
-        LaunchedEffect(isListOnly, listNavigator, detailNavigator) {
-            Napier.v { "listNavigator: ${listNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}, detailNavigator: ${detailNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}" }
-            if (isListOnly) {
-                Napier.v("Transitioning from ListDetail to ListOnly")
-                if (selectedChat != null) {
-                    listNavigator?.push(chatDetailScreen)
-                    Napier.v("Added chat onto list screen.")
-                } else {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Placed empty detail screen.")
-                }
-            } else {
-                Napier.v("Transitioning from ListOnly to ListDetail")
-                if (selectedChat != null) {
-                    if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.replaceAll(listNavigator?.items?.first()!!)
-                    }
-                    Napier.v("Removed chat from list screen.")
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Added chat onto detail screen.")
-                } else {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Placed empty detail screen.")
-                }
-            }
-        }
-        LaunchedEffect(currentChat, listNavigator, detailNavigator) {
-            Napier.v("currentChat: $currentChat, selectedChat: $selectedChat, isListOnly: $isListOnly, listNavigator: $listNavigator, detailNavigator: $detailNavigator")
-            if (currentChat != null) {
-                Napier.v("selectedChat is not null")
-                if (isListOnly) {
-                    if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.replaceAll(listNavigator?.items?.first()!!)
-                    }
-                    listNavigator?.push(chatDetailScreen)
-                    Napier.v("Pushed ChatDetailScreen to listNavigator")
-                } else {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
-                }
-            } else {
-                Napier.v("selectedChat is null")
-                if (listNavigator?.lastItem is ChatDetailScreen) {
-                    listNavigator?.replaceAll(listNavigator?.items?.first()!!)
-                }
-                detailNavigator?.replaceAll(chatDetailScreen)
-                Napier.v("Popped screens from listNavigator until ChatListScreen is found")
-            }
-        }
     }
 }
 
