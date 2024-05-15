@@ -84,7 +84,7 @@ minikube service butler-api-gateway-service
 minikube service pgadmin
 minikube service prometheus-service --namespace monitoring
 minikube service grafana --namespace monitoring
-minikube service
+minikube service jaeger-spm-query --namespace observability
 ```
 
 #### Monitoring
