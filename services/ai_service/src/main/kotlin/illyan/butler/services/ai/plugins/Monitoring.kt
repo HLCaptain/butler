@@ -41,6 +41,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.exporter.prometheus.PrometheusHttpServer
@@ -49,6 +50,7 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
+import io.opentelemetry.sdk.trace.samplers.Sampler
 import io.opentelemetry.semconv.ResourceAttributes
 import kotlinx.datetime.Clock
 import org.slf4j.event.Level
@@ -58,7 +60,7 @@ fun Application.configureMonitoring() {
     install(CallLogging) {
         level = Level.INFO
         filter { call -> call.request.path().startsWith("/") }
-        callIdMdc("call-id")
+        callIdMdc(HttpHeaders.XRequestId)
     }
     install(CallId) {
         header(HttpHeaders.XRequestId)
@@ -84,6 +86,7 @@ fun Application.configureMonitoring() {
     val spanProcessor = BatchSpanProcessor.builder(spanExporter).build()
     val tracerProvider = SdkTracerProvider.builder()
         .setResource(Resource.getDefault().merge(resource))
+        .setSampler(Sampler.parentBased(if (AppConfig.Ktor.DEVELOPMENT) Sampler.alwaysOn() else Sampler.alwaysOff()))
         .addSpanProcessor(spanProcessor)
         .build()
 
@@ -92,7 +95,7 @@ fun Application.configureMonitoring() {
 
     OpenTelemetrySdk.builder()
         .setTracerProvider(tracerProvider)
-        .setPropagators(ContextPropagators.noop())
+        .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
         .buildAndRegisterGlobal()
 
     install(KtorServerTracing) {
