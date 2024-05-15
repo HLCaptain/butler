@@ -7,66 +7,69 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
+import illyan.butler.domain.model.DomainErrorEvent
+import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.ui.components.ButlerErrorDialogContent
-import illyan.butler.ui.dialog.ButlerDialog
 
 class ErrorScreen : Screen {
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ErrorScreenModel>()
         val state by screenModel.state.collectAsState()
-        val numberOfErrors = state.appErrors.size + state.serverErrors.size
-        ErrorScreen(state, screenModel)
-        ButlerDialog(
-            modifier = Modifier.zIndex(1f),
-            startScreens = listOf(this),
-            isDialogOpen = numberOfErrors > 0,
-            isDialogFullscreen = false,
-            onDismissDialog = screenModel::removeLastError
-        )
+        ErrorScreen(screenModel, state.appErrors, state.serverErrors)
     }
 }
 
 @Composable
 private fun ErrorScreen(
-    state: ErrorScreenState,
-    screenModel: ErrorScreenModel
+    screenModel: ErrorScreenModel,
+    appErrors: List<DomainErrorEvent>,
+    serverErrors: List<Pair<String, DomainErrorResponse>>
 ) {
-    val serverErrorContent = @Composable {
-        state.serverErrors.maxByOrNull { it.second.timestamp }?.let {
-            ButlerErrorDialogContent(
-                errorResponse = it.second,
-                onClose = { screenModel.clearError(it.first) }
-            )
-        }
-    }
-    val appErrorContent = @Composable {
-        state.appErrors.maxByOrNull { it.timestamp }?.let {
-            ButlerErrorDialogContent(
-                errorEvent = it,
-                onClose = { screenModel.clearError(it.id) }
-            )
-        }
-    }
     Crossfade(
         modifier = Modifier.animateContentSize(spring()),
-        targetState = state.appErrors + state.serverErrors
+        targetState = appErrors + serverErrors
     ) { _ ->
-        val latestAppError = state.appErrors.maxByOrNull { it.timestamp }
-        val latestServerError = state.serverErrors.maxByOrNull { it.second.timestamp }
+        val latestAppError = appErrors.maxByOrNull { it.timestamp }
+        val latestServerError = serverErrors.maxByOrNull { it.second.timestamp }
         if (latestAppError != null && latestServerError != null) {
             if (latestAppError.timestamp > latestServerError.second.timestamp) {
-                appErrorContent()
+                AppErrorContent(appErrors, screenModel::clearError)
             } else {
-                serverErrorContent()
+                ServerErrorContent(serverErrors, screenModel::clearError)
             }
         } else if (latestAppError != null) {
-            appErrorContent()
+            AppErrorContent(appErrors, screenModel::clearError)
         } else if (latestServerError != null) {
-            serverErrorContent()
+            ServerErrorContent(serverErrors, screenModel::clearError)
         }
+    }
+}
+
+@Composable
+fun AppErrorContent(
+    appErrors: List<DomainErrorEvent>,
+    clearError: (String) -> Unit
+) {
+    appErrors.maxByOrNull { it.timestamp }?.let {
+        ButlerErrorDialogContent(
+            errorEvent = it,
+            onClose = { clearError(it.id) }
+        )
+    }
+}
+
+@Composable
+fun ServerErrorContent(
+    serverErrors: List<Pair<String, DomainErrorResponse>>,
+    clearError: (String) -> Unit
+) {
+    serverErrors.maxByOrNull { it.second.timestamp }?.let {
+        ButlerErrorDialogContent(
+            errorResponse = it.second,
+            onClose = { clearError(it.first) }
+        )
     }
 }

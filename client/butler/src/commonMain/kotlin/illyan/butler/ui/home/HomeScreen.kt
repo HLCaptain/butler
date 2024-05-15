@@ -165,7 +165,7 @@ class HomeScreen : Screen {
                 }
 
                 val numberOfErrors = state.appErrors.size + state.serverErrors.size
-                val errorScreen = remember { ErrorScreen() }
+                val errorScreen by remember { lazy { ErrorScreen() } }
                 ButlerDialog(
                     modifier = Modifier.zIndex(1f),
                     startScreens = listOf(errorScreen),

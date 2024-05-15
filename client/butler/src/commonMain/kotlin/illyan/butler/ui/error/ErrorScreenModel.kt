@@ -16,8 +16,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Named
 
+@Factory
 class ErrorScreenModel(
     private val errorManager: ErrorManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
