@@ -37,15 +37,24 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
+import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.exporter.prometheus.PrometheusHttpServer
 import io.opentelemetry.instrumentation.ktor.v2_0.server.KtorServerTracing
+import io.opentelemetry.instrumentation.resources.ContainerResource
+import io.opentelemetry.instrumentation.resources.HostResource
+import io.opentelemetry.instrumentation.resources.OsResource
+import io.opentelemetry.instrumentation.resources.ProcessResource
+import io.opentelemetry.instrumentation.resources.ProcessRuntimeResource
 import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.logs.SdkLoggerProvider
+import io.opentelemetry.sdk.metrics.SdkMeterProvider
+import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
@@ -65,34 +74,49 @@ fun Application.configureMonitoring() {
     // Configure OpenTelemetry
 
     // Configure app resource
-    val resource = Resource.builder()
-        .put(ResourceAttributes.SERVICE_NAME, BuildConfig.PROJECT_NAME)
-        .put(ResourceAttributes.SERVICE_NAMESPACE, BuildConfig.PROJECT_GROUP)
-        .put(ResourceAttributes.SERVICE_VERSION, BuildConfig.PROJECT_VERSION)
-        .put(ResourceAttributes.DEPLOYMENT_ENVIRONMENT, AppConfig.DEPLOYMENT_ENVIRONMENT)
-        .build()
+    val resource = Resource.getDefault()
+        .merge(ContainerResource.get())
+        .merge(HostResource.get())
+        .merge(OsResource.get())
+        .merge(ProcessResource.get())
+        .merge(ProcessRuntimeResource.get())
+        .merge(Resource.create(Attributes.builder()
+            .put(ResourceAttributes.SERVICE_NAME, BuildConfig.PROJECT_NAME)
+            .put(ResourceAttributes.SERVICE_NAMESPACE, BuildConfig.PROJECT_GROUP)
+            .put(ResourceAttributes.SERVICE_VERSION, BuildConfig.PROJECT_VERSION)
+            .put(ResourceAttributes.DEPLOYMENT_ENVIRONMENT, AppConfig.DEPLOYMENT_ENVIRONMENT)
+            .build()))
 
     // Connecting to Jaeger
     val spanExporter = OtlpGrpcSpanExporter.builder()
-        .setEndpoint(AppConfig.Telemetry.OTLP_EXPORTER_ENDPOINT)
+        .setEndpoint(AppConfig.Telemetry.OTEL_EXPORTER_OTLP_ENDPOINT)
         .build()
     val spanProcessor = BatchSpanProcessor.builder(spanExporter).build()
     val tracerProvider = SdkTracerProvider.builder()
         .setResource(Resource.getDefault().merge(resource))
-        .setSampler(Sampler.parentBased(if (AppConfig.Ktor.DEVELOPMENT) Sampler.alwaysOn() else Sampler.alwaysOff()))
+        .setSampler(if (AppConfig.Ktor.DEVELOPMENT) Sampler.alwaysOn() else Sampler.alwaysOff())
         .addSpanProcessor(spanProcessor)
         .build()
+    val meterProvider = SdkMeterProvider.builder()
+        .registerMetricReader(PrometheusHttpServer.builder().build()) // Starting Prometheus server on localhost and default port 9464
+        .registerMetricReader(PeriodicMetricReader.builder(OtlpGrpcMetricExporter.builder().build()).build())
+        .setResource(Resource.getDefault().merge(resource))
+        .build()
+    val loggerProvider = SdkLoggerProvider.builder()
+        .setResource(Resource.getDefault().merge(resource))
+        .build()
 
-    // Starting Prometheus server on localhost and default port 9464
-    PrometheusHttpServer.builder().build()
-
-    OpenTelemetrySdk.builder()
+    val otlp = OpenTelemetrySdk.builder()
+        .setMeterProvider(meterProvider)
+        .setLoggerProvider(loggerProvider)
         .setTracerProvider(tracerProvider)
         .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
         .buildAndRegisterGlobal()
 
+//    val otlp = AutoConfiguredOpenTelemetrySdk.initialize().openTelemetrySdk
+
     install(KtorServerTracing) {
-        setOpenTelemetry(GlobalOpenTelemetry.get())
+        setOpenTelemetry(otlp)
 
         knownMethods(HttpMethod.DefaultMethods)
         capturedRequestHeaders(HttpHeaders.UserAgent)

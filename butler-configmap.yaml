@@ -15,4 +15,4 @@ data:
   POSTGRES_DRIVER: "org.postgresql.Driver"
   POSTGRES_URL: "jdbc:postgresql://postgres:5432"
   PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-  OTLP_EXPORTER_ENDPOINT: "http://jaeger-spm-collector.observability:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger-spm-collector.observability:4317"

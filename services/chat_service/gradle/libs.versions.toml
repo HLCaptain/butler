@@ -46,6 +46,7 @@ opentelemetry-exporter-prometheus = { module = "io.opentelemetry:opentelemetry-e
 opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.38.0" }
 opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.38.0" }
 opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0", version = "2.3.0-alpha" }
+opentelemetry-resources = { module = "io.opentelemetry.instrumentation:opentelemetry-resources", version = "2.3.0-alpha" }
 
 ktor-server-tests = { module = "io.ktor:ktor-server-tests", version.ref = "ktor" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

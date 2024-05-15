@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.opentelemetry.trace)
     implementation(libs.opentelemetry.autoconfigure)
     implementation(libs.opentelemetry.ktor)
+    implementation(libs.opentelemetry.resources)
 
     // Ktor Metrics
     implementation(libs.ktor.server.call.logging)

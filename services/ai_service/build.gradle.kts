@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.opentelemetry.trace)
     implementation(libs.opentelemetry.autoconfigure)
     implementation(libs.opentelemetry.ktor)
+    implementation(libs.opentelemetry.resources)
 
     implementation(libs.spring.security.crypto)
     implementation(libs.bouncycastle)
