@@ -1,6 +1,11 @@
 package illyan.butler.api_gateway.di
 
 import illyan.butler.api_gateway.endpoints.utils.WebsocketContentConverterWithFallback
+import illyan.butler.api_gateway.plugins.opentelemetry.client.attributeExtractor
+import illyan.butler.api_gateway.plugins.opentelemetry.client.capturedRequestHeaders
+import illyan.butler.api_gateway.plugins.opentelemetry.client.capturedResponseHeaders
+import illyan.butler.api_gateway.plugins.opentelemetry.client.emitExperimentalHttpClientMetrics
+import illyan.butler.api_gateway.plugins.opentelemetry.client.knownMethods
 import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -17,12 +22,17 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
+import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -67,6 +77,25 @@ fun HttpClientConfig<*>.setupClient() {
 
     install(fallbackPlugin) {
         supportedContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES
+    }
+
+    install(KtorClientTracing) {
+        setOpenTelemetry(GlobalOpenTelemetry.get())
+
+        emitExperimentalHttpClientMetrics()
+
+        knownMethods(HttpMethod.DefaultMethods)
+        capturedRequestHeaders(HttpHeaders.Accept)
+        capturedResponseHeaders(HttpHeaders.ContentType)
+
+        attributeExtractor {
+            onStart {
+                attributes.put("start-time", Clock.System.now().toEpochMilliseconds())
+            }
+            onEnd {
+                attributes.put("end-time", Clock.System.now().toEpochMilliseconds())
+            }
+        }
     }
 
     install(ContentEncoding)

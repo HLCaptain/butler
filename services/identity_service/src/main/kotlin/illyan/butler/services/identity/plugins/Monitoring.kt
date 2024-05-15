@@ -126,8 +126,8 @@ fun Application.configureMonitoring() {
         setOpenTelemetry(otlp)
 
         knownMethods(HttpMethod.DefaultMethods)
-        capturedRequestHeaders(HttpHeaders.UserAgent)
-        capturedResponseHeaders(HttpHeaders.ContentType)
+        capturedRequestHeaders(HttpHeaders.UserAgent, HttpHeaders.XRequestId)
+        capturedResponseHeaders(HttpHeaders.ContentType, HttpHeaders.XRequestId)
 
         spanStatusExtractor {
             val path = response?.call?.request?.path() ?: ""

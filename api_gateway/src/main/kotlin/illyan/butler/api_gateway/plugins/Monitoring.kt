@@ -1,12 +1,12 @@
 package illyan.butler.api_gateway.plugins
 
 import illyan.Butler_API_Gateway.BuildConfig
-import illyan.butler.api_gateway.plugins.opentelemetry.attributeExtractor
-import illyan.butler.api_gateway.plugins.opentelemetry.capturedRequestHeaders
-import illyan.butler.api_gateway.plugins.opentelemetry.capturedResponseHeaders
-import illyan.butler.api_gateway.plugins.opentelemetry.knownMethods
-import illyan.butler.api_gateway.plugins.opentelemetry.spanKindExtractor
-import illyan.butler.api_gateway.plugins.opentelemetry.spanStatusExtractor
+import illyan.butler.api_gateway.plugins.opentelemetry.server.attributeExtractor
+import illyan.butler.api_gateway.plugins.opentelemetry.server.capturedRequestHeaders
+import illyan.butler.api_gateway.plugins.opentelemetry.server.capturedResponseHeaders
+import illyan.butler.api_gateway.plugins.opentelemetry.server.knownMethods
+import illyan.butler.api_gateway.plugins.opentelemetry.server.spanKindExtractor
+import illyan.butler.api_gateway.plugins.opentelemetry.server.spanStatusExtractor
 import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -70,6 +70,12 @@ fun Application.configureMonitoring() {
         filter { call -> call.request.path().startsWith("/") }
         callIdMdc(HttpHeaders.XRequestId)
     }
+    install(CallId) {
+        header(HttpHeaders.XRequestId)
+        verify { callId: String ->
+            callId.isNotEmpty()
+        }
+    }
 
     // Configure OpenTelemetry
 
@@ -119,8 +125,8 @@ fun Application.configureMonitoring() {
         setOpenTelemetry(otlp)
 
         knownMethods(HttpMethod.DefaultMethods)
-        capturedRequestHeaders(HttpHeaders.UserAgent)
-        capturedResponseHeaders(HttpHeaders.ContentType)
+        capturedRequestHeaders(HttpHeaders.UserAgent, HttpHeaders.XRequestId)
+        capturedResponseHeaders(HttpHeaders.ContentType, HttpHeaders.XRequestId)
 
         spanStatusExtractor {
             val path = response?.call?.request?.path() ?: ""
@@ -140,6 +146,7 @@ fun Application.configureMonitoring() {
         attributeExtractor {
             onStart {
                 attributes.put("start-time", Clock.System.now().toEpochMilliseconds())
+                attributes.put("http.target", request.path())
             }
             onEnd {
                 attributes.put("end-time", Clock.System.now().toEpochMilliseconds())
@@ -172,13 +179,6 @@ fun Application.configureMonitoring() {
     routing {
         get("/metrics") {
             call.respond(appMicrometerRegistry.scrape())
-        }
-    }
-
-    install(CallId) {
-        header(HttpHeaders.XRequestId)
-        verify { callId: String ->
-            callId.isNotEmpty()
         }
     }
 

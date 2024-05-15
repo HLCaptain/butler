@@ -53,7 +53,6 @@ import io.opentelemetry.instrumentation.resources.OsResource
 import io.opentelemetry.instrumentation.resources.ProcessResource
 import io.opentelemetry.instrumentation.resources.ProcessRuntimeResource
 import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
@@ -78,6 +77,7 @@ fun Application.configureMonitoring() {
             callId.isNotEmpty()
         }
     }
+
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     // Configure OpenTelemetry
@@ -129,8 +129,8 @@ fun Application.configureMonitoring() {
         setOpenTelemetry(otlp)
 
         knownMethods(HttpMethod.DefaultMethods)
-        capturedRequestHeaders(HttpHeaders.UserAgent)
-        capturedResponseHeaders(HttpHeaders.ContentType)
+        capturedRequestHeaders(HttpHeaders.UserAgent, HttpHeaders.XRequestId)
+        capturedResponseHeaders(HttpHeaders.ContentType, HttpHeaders.XRequestId)
 
         spanStatusExtractor {
             val path = response?.call?.request?.path() ?: ""

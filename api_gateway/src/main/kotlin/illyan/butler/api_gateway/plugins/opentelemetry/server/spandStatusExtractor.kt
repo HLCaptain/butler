@@ -1,4 +1,4 @@
-package illyan.butler.api_gateway.plugins.opentelemetry
+package illyan.butler.api_gateway.plugins.opentelemetry.server
 
 import io.ktor.server.request.ApplicationRequest
 import io.ktor.server.response.ApplicationResponse

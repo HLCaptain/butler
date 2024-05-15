@@ -1,4 +1,4 @@
-package illyan.butler.api_gateway.plugins.opentelemetry
+package illyan.butler.api_gateway.plugins.opentelemetry.server
 
 import io.ktor.http.HttpMethod
 import io.opentelemetry.instrumentation.ktor.v2_0.server.KtorServerTracing
