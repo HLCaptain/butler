@@ -12,6 +12,7 @@ data object AppConfig {
      *  - staging
      *  - production
      */
+    val DEPLOYMENT_ENVIRONMENT = System.getenv("DEPLOYMENT_ENVIRONMENT") ?: "development"
     data object Ktor {
         val DEVELOPMENT = System.getenv("DEVELOPMENT").toBoolean()
         val PORT = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8080
