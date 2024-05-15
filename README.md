@@ -37,9 +37,6 @@ eval $(minikube docker-env)
 # Build the Docker images (in the correct minikube docker-env)
 docker-compose build
 
-# Separate namespace for monitoring
-kubectl create namespace monitoring
-
 # Load images
 
 # Deploy the config files to Kubernetes
@@ -59,6 +56,9 @@ kubectl apply -f services/identity_service/deployment.yaml
 kubectl apply -f services/identity_service/service.yaml
 kubectl apply -f services/ai_service/deployment.yaml
 kubectl apply -f services/ai_service/service.yaml
+
+# Separate namespace for monitoring
+kubectl create namespace monitoring
 kubectl apply -f services/prometheus/clusterRole.yaml
 kubectl apply -f services/prometheus/config-map.yaml
 kubectl apply -f services/prometheus/prometheus-deployment.yaml
@@ -66,6 +66,15 @@ kubectl apply -f services/prometheus/prometheus-service.yaml
 kubectl apply -f services/grafana/grafana-datasource-config.yaml
 kubectl apply -f services/grafana/deployment.yaml
 kubectl apply -f services/grafana/service.yaml
+
+# For Jaeger and OpenTelemetry
+# Install cert manager needed for Jaeger
+kubectl create namespace observability
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
+kubectl apply -n observability -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.57.0/jaeger-operator.yaml
+# 5 second delay in PowerShell
+Start-Sleep -Seconds 5.0
+kubectl apply -n observability -f services/jaeger/simplest.yaml
 ```
 
 To expose the API Gateway's and pgAdmin's port, use command
@@ -75,6 +84,7 @@ minikube service butler-api-gateway-service
 minikube service pgadmin
 minikube service prometheus-service --namespace monitoring
 minikube service grafana --namespace monitoring
+minikube service
 ```
 
 #### Monitoring

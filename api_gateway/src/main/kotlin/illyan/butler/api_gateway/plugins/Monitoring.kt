@@ -1,8 +1,15 @@
 package illyan.butler.api_gateway.plugins
 
 import illyan.Butler_API_Gateway.BuildConfig
+import illyan.butler.api_gateway.plugins.opentelemetry.attributeExtractor
+import illyan.butler.api_gateway.plugins.opentelemetry.capturedRequestHeaders
+import illyan.butler.api_gateway.plugins.opentelemetry.capturedResponseHeaders
+import illyan.butler.api_gateway.plugins.opentelemetry.knownMethods
+import illyan.butler.api_gateway.plugins.opentelemetry.spanKindExtractor
+import illyan.butler.api_gateway.plugins.opentelemetry.spanStatusExtractor
 import illyan.butler.api_gateway.utils.AppConfig
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
@@ -13,6 +20,7 @@ import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.plugins.swagger.swaggerUI
+import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -30,6 +38,8 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.exporter.prometheus.PrometheusHttpServer
@@ -39,6 +49,7 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.semconv.ResourceAttributes
+import kotlinx.datetime.Clock
 import org.slf4j.event.Level
 import kotlin.time.Duration.Companion.seconds
 
@@ -79,6 +90,34 @@ fun Application.configureMonitoring() {
 
     install(KtorServerTracing) {
         setOpenTelemetry(GlobalOpenTelemetry.get())
+
+        knownMethods(HttpMethod.DefaultMethods)
+        capturedRequestHeaders(HttpHeaders.UserAgent)
+        capturedResponseHeaders(HttpHeaders.ContentType)
+
+        spanStatusExtractor {
+            val path = response?.call?.request?.path() ?: ""
+            if (path.contains("/span-status-extractor") || error != null) {
+                spanStatusBuilder.setStatus(StatusCode.ERROR)
+            }
+        }
+
+        spanKindExtractor {
+            if (httpMethod == HttpMethod.Post) {
+                SpanKind.PRODUCER
+            } else {
+                SpanKind.CLIENT
+            }
+        }
+
+        attributeExtractor {
+            onStart {
+                attributes.put("start-time", Clock.System.now().toEpochMilliseconds())
+            }
+            onEnd {
+                attributes.put("end-time", Clock.System.now().toEpochMilliseconds())
+            }
+        }
     }
 
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
