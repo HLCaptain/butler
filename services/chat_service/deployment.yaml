@@ -71,3 +71,8 @@ spec:
                 configMapKeyRef:
                   name: butler-configmap
                   key: DEVELOPMENT
+            - name: OTLP_EXPORTER_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: OTLP_EXPORTER_ENDPOINT
