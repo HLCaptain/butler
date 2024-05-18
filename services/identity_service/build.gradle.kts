@@ -54,6 +54,15 @@ dependencies {
     implementation(libs.nanoid)
     implementation(libs.kotlinx.datetime)
 
+    implementation(libs.opentelemetry.api)
+    implementation(libs.opentelemetry.sdk)
+    implementation(libs.opentelemetry.exporter.otlp)
+    implementation(libs.opentelemetry.exporter.prometheus)
+    implementation(libs.opentelemetry.trace)
+    implementation(libs.opentelemetry.autoconfigure)
+    implementation(libs.opentelemetry.ktor)
+    implementation(libs.opentelemetry.resources)
+
     implementation(libs.spring.security.crypto)
     implementation(libs.bouncycastle)
     implementation(libs.napier)

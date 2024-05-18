@@ -35,9 +35,18 @@ ktor-server-compression = { module = "io.ktor:ktor-server-compression", version.
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 nanoid = { module = "com.aventrix.jnanoid:jnanoid", version = "2.0.0" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.3.0" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.5.0" }
 redisson = { module = "org.redisson:redisson", version = "3.27.0" }
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
+
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version = "1.38.0" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version = "1.38.0" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version = "1.38.0" }
+opentelemetry-exporter-prometheus = { module = "io.opentelemetry:opentelemetry-exporter-prometheus", version = "1.38.0-alpha" }
+opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.38.0" }
+opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.38.0" }
+opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0", version = "2.3.0-alpha" }
+opentelemetry-resources = { module = "io.opentelemetry.instrumentation:opentelemetry-resources", version = "2.3.0-alpha" }
 
 ktor-server-tests = { module = "io.ktor:ktor-server-tests", version.ref = "ktor" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

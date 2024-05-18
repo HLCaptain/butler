@@ -12,6 +12,7 @@ data object AppConfig {
      *  - staging
      *  - production
      */
+    val DEPLOYMENT_ENVIRONMENT = System.getenv("DEPLOYMENT_ENVIRONMENT") ?: "development"
     data object Ktor {
         val DEVELOPMENT = System.getenv("DEVELOPMENT")?.toBooleanStrictOrNull() ?: true
         val PORT = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8080
@@ -47,5 +48,8 @@ data object AppConfig {
             ANYSCALE_API_URL to ANYSCALE_API_CREDENTIAL,
             OPEN_AI_API_URL to OPEN_AI_API_KEY
         )
+    }
+    data object Telemetry {
+        val OTEL_EXPORTER_OTLP_ENDPOINT = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4317"
     }
 }
