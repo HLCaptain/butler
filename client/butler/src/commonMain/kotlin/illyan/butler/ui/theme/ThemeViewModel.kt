@@ -18,8 +18,8 @@
 
 package illyan.butler.ui.theme
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.manager.SettingsManager
 import illyan.butler.utils.calculateSunriseSunsetTimes
 import kotlinx.coroutines.delay
@@ -33,18 +33,16 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.koin.core.annotation.Factory
 
-@Factory
-class ThemeScreenModel(
+class ThemeViewModel(
     settingsManager: SettingsManager,
-) : ScreenModel {
+) : ViewModel() {
     private val theme = settingsManager.userPreferences.map { it?.theme }
-        .stateIn(screenModelScope, SharingStarted.Eagerly, null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val dynamicColorEnabled = settingsManager.userPreferences
         .map { it?.dynamicColorEnabled == true }
-        .stateIn(screenModelScope, SharingStarted.Eagerly, false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val isNight = MutableStateFlow(isNight())
 
@@ -59,13 +57,13 @@ class ThemeScreenModel(
             isNight = isNight,
         )
     }.stateIn(
-        screenModelScope,
+        viewModelScope,
         SharingStarted.Eagerly,
         ThemeScreenState()
     )
 
     init {
-        screenModelScope.launch {
+        viewModelScope.launch {
             while (true) {
                 isNight.update { isNight() }
                 delay(1000)

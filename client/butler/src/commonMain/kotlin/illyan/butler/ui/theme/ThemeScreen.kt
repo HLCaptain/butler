@@ -5,40 +5,15 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
 import illyan.butler.domain.model.Theme
-import illyan.butler.ui.home.HomeScreen
 import io.github.aakira.napier.Napier
-
-class ThemeScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<ThemeScreenModel>()
-        val state by screenModel.state.collectAsState()
-        ButlerTheme(
-            theme = state.theme,
-            dynamicColorEnabled = state.dynamicColorEnabled,
-            isNight = state.isNight,
-            content = {
-                Navigator(HomeScreen()) { navigator ->
-                    SlideTransition(navigator)
-                }
-            }
-        )
-    }
-}
 
 @Composable
 fun ButlerTheme(
@@ -98,11 +73,9 @@ fun ButlerTheme(
     ThemeSystemWindow(isDark ?: isSystemInDarkTheme, dynamicColorEnabled && canUseDynamicColors())
 
     val colorScheme by animateColorScheme(targetColorScheme, spring(stiffness = Spring.StiffnessLow))
-    CompositionLocalProvider(LocalTheme provides theme) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = MaterialTheme.typography,
-            content = content
-        )
-    }
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = MaterialTheme.typography,
+        content = content
+    )
 }
