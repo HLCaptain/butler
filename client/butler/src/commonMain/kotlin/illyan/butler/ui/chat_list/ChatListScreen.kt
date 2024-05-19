@@ -19,11 +19,18 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
@@ -31,17 +38,20 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun ChatList(
     chats: List<DomainChat>,
     openChat: (uuid: String) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val hazeState = remember { HazeState() }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
+                modifier = Modifier.hazeChild(hazeState),
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Transparent),
                 title = {
                     Text(
                         stringResource(Res.string.chats),
@@ -54,7 +64,9 @@ fun ChatList(
         },
     ) { insetsPadding ->
         Crossfade(
-            modifier = Modifier.padding(insetsPadding),
+            modifier = Modifier
+                .padding(insetsPadding)
+                .haze(hazeState, HazeMaterials.thin()),
             targetState = chats.isEmpty()
         ) {
             if (it) {

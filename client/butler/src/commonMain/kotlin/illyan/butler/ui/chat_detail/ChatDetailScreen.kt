@@ -151,7 +151,8 @@ fun ChatDetailScreen(
             )
         },
         bottomBar = {
-            val navBarWindowInsets = WindowInsets(bottom = if (LocalNavBarOrientation.current == Orientation.Horizontal) 80.dp else 0.dp)
+            // Bottom Padding is 8.dp for the TextField
+            val navBarWindowInsets = WindowInsets(bottom = if (LocalNavBarOrientation.current == Orientation.Horizontal) 88.dp else 8.dp)
             Column(
                 Modifier.consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
             ) {
@@ -404,7 +405,7 @@ fun MessageField(
 ) {
     Row(
         modifier = modifier
-            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+            .padding(8.dp)
             .animateContentSize(),
         verticalAlignment = Alignment.CenterVertically
     ) {
