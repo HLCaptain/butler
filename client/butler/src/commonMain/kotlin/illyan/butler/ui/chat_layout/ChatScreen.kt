@@ -21,7 +21,6 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -35,7 +34,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
 import illyan.butler.domain.model.DomainChat
@@ -57,9 +55,9 @@ class ChatScreen : Screen {
     @Composable
     override fun Content() {
         val selectedChat = LocalSelectedChat.current
-        val selectChat = LocalChatSelector.current
-        val screenModel = koinScreenModel<ChatScreenModel>()
-        val state by screenModel.state.collectAsState()
+//        val selectChat = LocalChatSelector.current
+//        val screenModel = koinScreenModel<ChatScreenModel>()
+//        val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
         val (height, width) = getWindowSizeInDp()
         var windowWidth by remember { mutableStateOf(width) }
@@ -69,6 +67,8 @@ class ChatScreen : Screen {
         }
         val onSelectChat = remember { { chatId: String? ->
 //            selectChat(chatId)
+            Napier.v("Chat selected: $chatId")
+            currentChat = null
             currentChat = chatId
         } }
         // React properly to list-detail transitions:
@@ -112,76 +112,75 @@ class ChatScreen : Screen {
         val isListOnly by derivedStateOf { currentPaneStrategy == compactPaneStrategy }
         var listNavigator by remember { mutableStateOf<Navigator?>(null) }
         var detailNavigator by remember { mutableStateOf<Navigator?>(null) }
-        val chatDetailScreen = remember(selectedChat) { ChatDetailScreen(selectedChat) }
-        val chatListScreen = remember { ChatListScreen() }
-        LaunchedEffect(isListOnly) {
-            Napier.v { "listNavigator: ${listNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}, detailNavigator: ${detailNavigator?.items?.joinToString { it::class.simpleName ?: "null" }}" }
-            if (isListOnly) {
-                Napier.v("Transitioning from ListDetail to ListOnly")
-                if (selectedChat != null) {
-                    if (listNavigator?.lastItem !is ChatDetailScreen) {
-                        listNavigator?.push(chatDetailScreen)
-                    }
-                    Napier.v("Added chat onto list screen.")
-                } else {
-                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                        detailNavigator?.replaceAll(chatDetailScreen)
-                    }
-                    Napier.v("Placed empty detail screen.")
-                }
-            } else {
-                Napier.v("Transitioning from ListOnly to ListDetail")
-                if (selectedChat != null) {
-                    if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.replaceAll(listNavigator?.items?.first()!!)
-                    }
-                    Napier.v("Removed chat from list screen.")
-                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                        detailNavigator?.replaceAll(chatDetailScreen)
-                    }
-                    Napier.v("Added chat onto detail screen.")
-                } else {
-                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                        detailNavigator?.replaceAll(chatDetailScreen)
-                    }
-                    Napier.v("Placed empty detail screen.")
-                }
-            }
-        }
-        LaunchedEffect(currentChat) {
+        val chatDetailScreen by remember { lazy { ChatDetailScreen() } }
+        val chatListScreen by remember { lazy { ChatListScreen() } }
+        LaunchedEffect(currentChat, isListOnly) {
             Napier.v("currentChat: $currentChat, isListOnly: $isListOnly, listNavigator: $listNavigator, detailNavigator: $detailNavigator")
+            Napier.v("listNavigator: ${listNavigator?.items?.joinToString { it::class.simpleName.toString() }}, detailNavigator: ${detailNavigator?.items?.joinToString { it::class.simpleName.toString() }}")
+            if (listNavigator == null || detailNavigator == null) {
+                Napier.v("listNavigator or detailNavigator is null")
+                return@LaunchedEffect
+            }
             if (currentChat != null) {
                 Napier.v("selectedChat is not null")
                 if (isListOnly) {
                     if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.replaceAll(listNavigator?.items?.first()!!)
+                        listNavigator?.pop()
+                        Napier.v("Removed chat from list screen.")
                     }
                     if (listNavigator?.lastItem !is ChatDetailScreen) {
+                        if (detailNavigator?.lastItem is ChatDetailScreen) {
+                            detailNavigator?.pop()
+                            Napier.v("Popped ChatDetailScreen from detailNavigator")
+                        }
                         listNavigator?.push(chatDetailScreen)
+                        Napier.v("Pushed ChatDetailScreen to listNavigator")
                     }
-                    Napier.v("Pushed ChatDetailScreen to listNavigator")
                 } else {
                     if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                        if (listNavigator?.lastItem is ChatDetailScreen) {
+                            listNavigator?.pop()
+                            Napier.v("Popped screens from listNavigator until ChatListScreen is found")
+                        }
                         detailNavigator?.replaceAll(chatDetailScreen)
+                        Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
                     }
-                    Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
+                    if (listNavigator?.lastItem is ChatDetailScreen) {
+                        listNavigator?.pop()
+                        Napier.v("Removed chat from list screen.")
+                    }
                 }
             } else {
                 Napier.v("selectedChat is null")
                 if (listNavigator?.lastItem is ChatDetailScreen) {
-                    listNavigator?.replaceAll(listNavigator?.items?.first()!!)
+                    listNavigator?.pop()
                     Napier.v("Popped screens from listNavigator until ChatListScreen is found")
                 }
                 if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                    if (listNavigator?.lastItem is ChatDetailScreen) {
+                        listNavigator?.pop()
+                        Napier.v("Popped ChatDetailScreen from listNavigator")
+                    }
                     detailNavigator?.replaceAll(chatDetailScreen)
+                    Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
                 }
             }
         }
         ButlerTwoPane(
             strategy = currentPaneStrategy,
             first = {
-                CompositionLocalProvider(LocalChatSelector provides onSelectChat) {
-                    Navigator(chatListScreen) {
+                CompositionLocalProvider(
+                    LocalChatSelector provides onSelectChat
+                ) {
+                    Navigator(
+                        screen = chatListScreen,
+                        onBackPressed = {
+                            if (it is ChatDetailScreen) {
+                                onSelectChat(null)
+                            }
+                            true
+                        }
+                    ) {
                         LaunchedEffect(Unit) {
                             Napier.v("listNavigator: $it")
                             listNavigator = it
@@ -191,12 +190,14 @@ class ChatScreen : Screen {
                 }
             },
             second = {
-                Navigator(chatDetailScreen) {
-                    LaunchedEffect(Unit) {
-                        Napier.v("detailNavigator: $it")
-                        detailNavigator = it
+                CompositionLocalProvider(LocalSelectedChat provides currentChat) {
+                    Navigator(chatDetailScreen) {
+                        LaunchedEffect(Unit) {
+                            Napier.v("detailNavigator: $it")
+                            detailNavigator = it
+                        }
+                        SlideTransition(it)
                     }
-                    SlideTransition(it)
                 }
             }
         )

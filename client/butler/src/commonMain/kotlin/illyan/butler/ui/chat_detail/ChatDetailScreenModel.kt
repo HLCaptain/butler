@@ -48,17 +48,17 @@ class ChatDetailScreenModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
-        .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(null) }
-        .map { messages -> messages?.sortedBy { it.time }?.reversed() }
+        .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(emptyList()) }
+        .map { messages -> messages.sortedBy { it.time }.reversed() }
         .stateIn(screenModelScope, SharingStarted.Eagerly, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val resources = messages.flatMapLatest { messages ->
-        combine((messages ?: emptyList()).map { message ->
+        combine((messages).map { message ->
             chatManager.getResourcesByMessageFlow(message.id!!)
         }) { flows ->
             val resources = flows.toList().filterNotNull().flatten()
-            Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
+//            Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
             resources
         }
     }.stateIn(
@@ -79,13 +79,13 @@ class ChatDetailScreenModel(
         val chat = flows[0] as? DomainChat
         val messages = flows[1] as? List<DomainMessage>
         val userId = flows[2] as? String
-        Napier.v { "User ID: $userId" }
+//        Napier.v { "User ID: $userId" }
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>
         val galleryPermission = flows[6] as? PermissionStatus
-        Napier.v("Gallery permission: $galleryPermission")
-        Napier.v("Resources: $resources")
+//        Napier.v("Gallery permission: $galleryPermission")
+//        Napier.v("Resources: $resources")
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate { it.id!! to it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } ?: emptyMap()
         val images = resources?.filter { it.type.startsWith("image") }
@@ -108,16 +108,14 @@ class ChatDetailScreenModel(
     )
 
     fun loadChat(chatId: String) {
-        screenModelScope.launch(dispatcherIO) {
-            chatIdStateFlow.update { chatId }
-        }
+        chatIdStateFlow.update { chatId }
     }
 
     val userId = authManager.signedInUserId
 
     fun sendMessage(message: String) {
         screenModelScope.launch(dispatcherIO) {
-            chatIdStateFlow.value?.let { chatManager.sendMessage(it, message) }
+            chat.value?.id?.let { chatManager.sendMessage(it, message) }
         }
     }
 

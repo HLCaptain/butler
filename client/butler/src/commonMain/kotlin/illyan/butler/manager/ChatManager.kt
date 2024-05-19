@@ -129,7 +129,7 @@ class ChatManager(
         message: String? = null,
         resourceIds: List<String> = emptyList()
     ) {
-        authManager.signedInUserId.first()?.let { userId ->
+        authManager.signedInUserId.value?.let { userId ->
             messageRepository.upsert(
                 DomainMessage(
                     chatId = chatId,

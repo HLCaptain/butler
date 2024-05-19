@@ -148,41 +148,43 @@ private fun DialogContent(
         CompositionLocalProvider(
             LocalDialogDismissRequest provides onDismissRequest,
         ) {
-            Navigator(
-                screens = startScreens.ifEmpty { listOf(currentLastScreen!!) },
-                onBackPressed = { onDismissRequest(); true }
-            ) { nav ->
-                // This hack is needed to avoid navigation issues with Voyager
-                // https://github.com/adrielcafe/voyager/issues/378
-                LaunchedEffect(startScreens) {
-                    Napier.d("${nav.items}")
-                    if (startScreens.isNotEmpty()) nav.replaceAll(startScreens) else nav.replaceAll(currentLastScreen!!)
-                    setNavigator(nav)
-                }
-                val animationTime = 200
-                ScreenTransition(
-                    navigator = nav,
-                    enterTransition = {
-                        (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
-                            tween(
-                                animationTime
-                            )
-                        )) togetherWith
-                                (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
-                                    tween(animationTime)
-                                ))
-                    },
-                    exitTransition = {
-                        (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
-                            tween(
-                                animationTime
-                            )
-                        )) togetherWith
-                                (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
-                                    tween(animationTime)
-                                ))
+            if (startScreens.ifEmpty { listOfNotNull(currentLastScreen) }.isNotEmpty()) {
+                Navigator(
+                    screens = startScreens.ifEmpty { listOfNotNull(currentLastScreen) },
+                    onBackPressed = { onDismissRequest(); true }
+                ) { nav ->
+                    // This hack is needed to avoid navigation issues with Voyager
+                    // https://github.com/adrielcafe/voyager/issues/378
+                    LaunchedEffect(startScreens) {
+                        Napier.d("${nav.items}")
+                        if (startScreens.isNotEmpty()) nav.replaceAll(startScreens) else nav.replaceAll(currentLastScreen!!)
+                        setNavigator(nav)
                     }
-                )
+                    val animationTime = 200
+                    ScreenTransition(
+                        navigator = nav,
+                        enterTransition = {
+                            (slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
+                                tween(
+                                    animationTime
+                                )
+                            )) togetherWith
+                                    (slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
+                                        tween(animationTime)
+                                    ))
+                        },
+                        exitTransition = {
+                            (slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
+                                tween(
+                                    animationTime
+                                )
+                            )) togetherWith
+                                    (slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
+                                        tween(animationTime)
+                                    ))
+                        }
+                    )
+                }
             }
         }
     }

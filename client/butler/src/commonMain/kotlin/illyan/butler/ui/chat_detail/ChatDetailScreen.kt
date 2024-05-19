@@ -88,22 +88,21 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class ChatDetailScreen(
-    private val selectedChatId: String?
-) : Screen {
-    @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class,
-        ExperimentalHazeMaterialsApi::class
-    )
+class ChatDetailScreen : Screen {
+
+//    override val key: ScreenKey
+//        get() = uniqueScreenKey
+    @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ChatDetailScreenModel>()
         val state by screenModel.state.collectAsState()
         LaunchedEffect(state.chat) { Napier.d("DomainChat: ${state.chat}") }
-        var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
+//        var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
         val currentSelectedChat = LocalSelectedChat.current
         LaunchedEffect(currentSelectedChat) {
             Napier.d("SelectedChatId: $currentSelectedChat")
-            selectedChatId = currentSelectedChat
+//            selectedChatId = currentSelectedChat
             currentSelectedChat?.let { screenModel.loadChat(it) }
         }
         val navigator = LocalNavigator.current
@@ -138,7 +137,7 @@ class ChatDetailScreen(
                         }
                     },
                     actions = {
-                        if (selectedChatId != null) {
+                        if (currentSelectedChat != null) {
                             IconButton(onClick = { isChatDetailsDialogOpen = true }) {
                                 Icon(
                                     imageVector = Icons.Filled.Menu,
@@ -151,7 +150,7 @@ class ChatDetailScreen(
                 )
             },
             bottomBar = {
-                if (selectedChatId != null) {
+                if (currentSelectedChat != null) {
                     MessageField(
                         modifier = Modifier.hazeChild(hazeState),
                         sendMessage = screenModel::sendMessage,
@@ -172,10 +171,10 @@ class ChatDetailScreen(
                     .imePadding(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                AnimatedVisibility(selectedChatId == null) {
+                AnimatedVisibility(currentSelectedChat == null) {
                     SelectChat()
                 }
-                if (selectedChatId != null) {
+                if (currentSelectedChat != null) {
                     MessageList(
                         modifier = Modifier.weight(1f, fill = true),
                         chat = state.chat,
