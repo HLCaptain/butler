@@ -2,7 +2,6 @@ package illyan.butler.ui.chat_detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
@@ -17,7 +16,6 @@ import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
 import korlibs.audio.sound.AudioData
 import korlibs.time.seconds
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,16 +26,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.android.annotation.KoinViewModel
-import org.koin.core.annotation.Named
 
-@KoinViewModel
 class ChatDetailViewModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
     private val permissionManager: PermissionManager,
-    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ViewModel() {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
 
@@ -114,14 +108,14 @@ class ChatDetailViewModel(
     val userId = authManager.signedInUserId
 
     fun sendMessage(message: String) {
-        viewModelScope.launch(dispatcherIO) {
+        viewModelScope.launch {
             chat.value?.id?.let { chatManager.sendMessage(it, message) }
         }
     }
 
     fun toggleRecording() {
         if (!audioManager.canRecordAudio) return
-        viewModelScope.launch(dispatcherIO) {
+        viewModelScope.launch {
             if (state.value.isRecording) {
                 val audioId = audioManager.stopRecording()
                 chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, audioId) }
@@ -132,7 +126,7 @@ class ChatDetailViewModel(
     }
 
     fun sendImage(path: String) {
-        viewModelScope.launch(dispatcherIO) {
+        viewModelScope.launch {
             chatIdStateFlow.value?.let {
                 chatManager.sendImageMessage(it, path)
                 Napier.d("Image sent: $path")

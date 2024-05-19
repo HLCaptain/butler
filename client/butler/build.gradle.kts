@@ -52,7 +52,6 @@ kotlin {
 
     sourceSets {
         commonMain {
-//            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
