@@ -1,7 +1,7 @@
 package illyan.butler.ui.chat_detail
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
@@ -28,29 +28,29 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
+import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.Named
 
-@Factory
-class ChatDetailScreenModel(
+@KoinViewModel
+class ChatDetailViewModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
     private val permissionManager: PermissionManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
-) : ScreenModel {
+) : ViewModel() {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getChatFlow(chatId) } ?: flowOf(null) }
-        .stateIn(screenModelScope, SharingStarted.Eagerly, null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(emptyList()) }
         .map { messages -> messages.sortedBy { it.time }.reversed() }
-        .stateIn(screenModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val resources = messages.flatMapLatest { messages ->
@@ -62,7 +62,7 @@ class ChatDetailScreenModel(
             resources
         }
     }.stateIn(
-        screenModelScope,
+        viewModelScope,
         SharingStarted.Eagerly,
         emptyList()
     )
@@ -102,7 +102,7 @@ class ChatDetailScreenModel(
             galleryPermission = galleryPermission
         )
     }.stateIn(
-        screenModelScope,
+        viewModelScope,
         SharingStarted.Eagerly,
         ChatDetailState(canRecordAudio = audioManager.canRecordAudio)
     )
@@ -114,14 +114,14 @@ class ChatDetailScreenModel(
     val userId = authManager.signedInUserId
 
     fun sendMessage(message: String) {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(dispatcherIO) {
             chat.value?.id?.let { chatManager.sendMessage(it, message) }
         }
     }
 
     fun toggleRecording() {
         if (!audioManager.canRecordAudio) return
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(dispatcherIO) {
             if (state.value.isRecording) {
                 val audioId = audioManager.stopRecording()
                 chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, audioId) }
@@ -132,7 +132,7 @@ class ChatDetailScreenModel(
     }
 
     fun sendImage(path: String) {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(dispatcherIO) {
             chatIdStateFlow.value?.let {
                 chatManager.sendImageMessage(it, path)
                 Napier.d("Image sent: $path")
@@ -141,19 +141,19 @@ class ChatDetailScreenModel(
     }
 
     fun playAudio(audioId: String) {
-        screenModelScope.launch {
+        viewModelScope.launch {
             audioManager.playAudio(audioId)
         }
     }
 
     fun stopAudio() {
-        screenModelScope.launch {
+        viewModelScope.launch {
             audioManager.stopAudio()
         }
     }
 
     fun requestGalleryPermission() {
-        screenModelScope.launch {
+        viewModelScope.launch {
             permissionManager.preparePermissionRequest(Permission.GALLERY)
         }
     }

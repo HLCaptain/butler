@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -208,7 +210,8 @@ class HomeScreen : Screen {
                 }
                 CompositionLocalProvider(
                     LocalSelectedChat provides selectedChat,
-                    LocalChatSelector provides selectChat
+                    LocalChatSelector provides selectChat,
+                    LocalNavBarOrientation provides navBarOrientation
                 ) {
                     Crossfade(navBarOrientation) { orientation ->
                         when (orientation) {
@@ -313,6 +316,7 @@ class HomeScreen : Screen {
                 ) {
                     Row {
                         NavigationRail(
+                            modifier = Modifier.statusBarsPadding(),
                             containerColor = Color.Transparent,
                             header = {
                                 HamburgerButton { coroutineScope.launch { drawerState.open() } }
@@ -659,6 +663,10 @@ fun RowScope.ProfileNavigationBarItem(
         },
         label = { Text(stringResource(Res.string.profile)) }
     )
+}
+
+val LocalNavBarOrientation = staticCompositionLocalOf<Orientation> {
+    error("No NavBarOrientation provided")
 }
 
 expect fun getNavBarTooltipGestures(): List<GestureType>

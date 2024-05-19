@@ -72,6 +72,9 @@ kotlin {
                 implementation(libs.voyager.transitions)
                 implementation(libs.voyager.koin)
 
+                implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+                implementation(libs.jetbrains.navigation.compose)
+
                 implementation(libs.ktor.core)
                 implementation(libs.ktor.auth)
                 implementation(libs.ktor.client.content.negotiation)
@@ -85,6 +88,7 @@ kotlin {
                 api(libs.koin.core)
                 implementation(libs.koin.annotations)
                 implementation(libs.koin.compose)
+                implementation(libs.koin.compose.viewmodel)
 
                 implementation(libs.kotlinx.atomicfu)
                 implementation(libs.kotlinx.coroutines)

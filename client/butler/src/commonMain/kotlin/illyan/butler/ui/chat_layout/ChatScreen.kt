@@ -1,26 +1,10 @@
 package illyan.butler.ui.chat_layout
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -28,30 +12,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.generated.resources.Res
-import illyan.butler.generated.resources.chats
-import illyan.butler.generated.resources.new_chat
-import illyan.butler.generated.resources.no_chats
 import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.chat_detail.ChatDetailScreen
-import illyan.butler.ui.chat_list.ChatListScreen
+import illyan.butler.ui.chat_detail.ChatDetailViewModel
+import illyan.butler.ui.chat_list.ChatList
+import illyan.butler.ui.chat_list.ChatListViewModel
 import illyan.butler.ui.components.ButlerTwoPane
 import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
 import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
 import io.github.aakira.napier.Napier
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
 class ChatScreen : Screen {
+    @OptIn(KoinExperimentalAPI::class)
     @Composable
     override fun Content() {
         val selectedChat = LocalSelectedChat.current
@@ -65,12 +45,22 @@ class ChatScreen : Screen {
         LaunchedEffect(selectedChat) {
             currentChat = selectedChat
         }
-        val onSelectChat = remember { { chatId: String? ->
+        val onSelectChat = remember {
+            { chatId: String? ->
 //            selectChat(chatId)
-            Napier.v("Chat selected: $chatId")
-            currentChat = null
-            currentChat = chatId
-        } }
+                Napier.v("Chat selected: $chatId")
+                currentChat = null
+                currentChat = chatId
+            }
+        }
+        val chatListNavController = rememberNavController()
+        DisposableEffect(Unit) {
+            val onDestinationChangedListener = NavController.OnDestinationChangedListener { _, destination, _ ->
+                if (destination.route?.contains("chatDetail") == false) onSelectChat(null)
+            }
+            chatListNavController.addOnDestinationChangedListener(onDestinationChangedListener)
+            onDispose { chatListNavController.removeOnDestinationChangedListener(onDestinationChangedListener) }
+        }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
         // - if Chat is opened from List:
@@ -110,164 +100,65 @@ class ChatScreen : Screen {
             Napier.v("Current pane strategy: $strategy")
         }
         val isListOnly by derivedStateOf { currentPaneStrategy == compactPaneStrategy }
-        var listNavigator by remember { mutableStateOf<Navigator?>(null) }
-        var detailNavigator by remember { mutableStateOf<Navigator?>(null) }
-        val chatDetailScreen by remember { lazy { ChatDetailScreen() } }
-        val chatListScreen by remember { lazy { ChatListScreen() } }
         LaunchedEffect(currentChat, isListOnly) {
-            Napier.v("currentChat: $currentChat, isListOnly: $isListOnly, listNavigator: $listNavigator, detailNavigator: $detailNavigator")
-            Napier.v("listNavigator: ${listNavigator?.items?.joinToString { it::class.simpleName.toString() }}, detailNavigator: ${detailNavigator?.items?.joinToString { it::class.simpleName.toString() }}")
-            if (listNavigator == null || detailNavigator == null) {
-                Napier.v("listNavigator or detailNavigator is null")
-                return@LaunchedEffect
-            }
+            Napier.v("currentChat: $currentChat, isListOnly: $isListOnly, listNavigator: $chatListNavController")
+            Napier.v("listNavigator: ${chatListNavController.currentBackStack.value.joinToString { it.destination.route.toString() }}")
             if (currentChat != null) {
                 Napier.v("selectedChat is not null")
                 if (isListOnly) {
-                    if (detailNavigator?.lastItem is ChatDetailScreen) {
-                        detailNavigator?.pop()
-                        Napier.v("Popped ChatDetailScreen from detailNavigator")
-                    }
-                    if (listNavigator?.lastItem !is ChatDetailScreen) {
-                        listNavigator?.push(chatDetailScreen)
+                    if (chatListNavController.currentDestination?.route?.contains("chatDetail") == false) {
+                        chatListNavController.navigate("chatDetail/${currentChat}")
                         Napier.v("Pushed ChatDetailScreen to listNavigator")
                     }
                 } else {
-                    if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.pop()
+                    if (chatListNavController.currentDestination?.route?.contains("chatDetail") == true) {
+                        chatListNavController.popBackStack()
                         Napier.v("Removed chat from list screen.")
-                    }
-                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                        detailNavigator?.replaceAll(chatDetailScreen)
-                        Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
                     }
                 }
             } else {
                 Napier.v("selectedChat is null")
-                if (listNavigator?.lastItem is ChatDetailScreen) {
-                    listNavigator?.pop()
+                if (chatListNavController.currentDestination?.route?.contains("chatDetail") == true) {
+                    chatListNavController.popBackStack()
                     Napier.v("Popped ChatDetailScreen from listNavigator")
                 }
-                if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
-                }
             }
         }
-        ButlerTwoPane(
-            strategy = currentPaneStrategy,
-            first = {
-                CompositionLocalProvider(
-                    LocalChatSelector provides onSelectChat
-                ) {
-                    Navigator(
-                        screen = chatListScreen,
-                        onBackPressed = {
-                            if (it is ChatDetailScreen) {
-                                onSelectChat(null)
-                            }
-                            true
-                        }
+        CompositionLocalProvider(
+            LocalChatSelector provides onSelectChat,
+            LocalSelectedChat provides currentChat
+        ) {
+            ButlerTwoPane(
+                strategy = currentPaneStrategy,
+                first = {
+                    NavHost(
+                        navController = chatListNavController,
+                        startDestination = "chatList"
                     ) {
-                        LaunchedEffect(Unit) {
-                            Napier.v("listNavigator: $it")
-                            listNavigator = it
+                        composable("chatList") {
+                            val viewModel = koinViewModel<ChatListViewModel>()
+                            val chats by viewModel.userChats.collectAsState()
+                            ChatList(
+                                chats = chats,
+                                openChat = onSelectChat
+                            )
                         }
-                        SlideTransition(it)
-                    }
-                }
-            },
-            second = {
-                CompositionLocalProvider(LocalSelectedChat provides currentChat) {
-                    Navigator(chatDetailScreen) {
-                        LaunchedEffect(Unit) {
-                            Napier.v("detailNavigator: $it")
-                            detailNavigator = it
+                        composable("chatDetail/{chatId}") {
+                            val chatId = it.arguments?.getString("chatId")
+                            val viewModel = koinViewModel<ChatDetailViewModel>()
+                            val state by viewModel.state.collectAsState()
+                            ChatDetailScreen(state, viewModel, chatId, isListOnly) {
+                                chatListNavController.popBackStack()
+                            }
                         }
-                        SlideTransition(it)
                     }
-                }
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun ChatList(
-    chats: List<DomainChat>,
-    openChat: (uuid: String) -> Unit,
-) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(Res.string.chats),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 },
-                scrollBehavior = scrollBehavior,
-            )
-        },
-    ) { insetsPadding ->
-        Crossfade(
-            modifier = Modifier.padding(insetsPadding),
-            targetState = chats.isEmpty()
-        ) {
-            if (it) {
-                Text(
-                    modifier = Modifier.padding(8.dp),
-                    text = stringResource(Res.string.no_chats),
-                    style = MaterialTheme.typography.headlineLarge
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.animateContentSize(),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(chats) { chat ->
-                        ChatCard(
-                            chat = chat,
-                            openChat = { openChat(chat.id!!) }
-                        )
-                    }
+                second = {
+                    val viewModel = koinViewModel<ChatDetailViewModel>()
+                    val state by viewModel.state.collectAsState()
+                    ChatDetailScreen(state, viewModel, selectedChat, false)
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-fun ChatCard(
-    chat: DomainChat,
-    openChat: () -> Unit
-) {
-    ElevatedCard(
-        onClick = openChat
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = chat.name ?: stringResource(Res.string.new_chat),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = chat.id!!.take(16),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            )
         }
     }
 }

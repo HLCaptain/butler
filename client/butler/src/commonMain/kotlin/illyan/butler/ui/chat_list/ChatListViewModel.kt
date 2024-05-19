@@ -1,19 +1,19 @@
 package illyan.butler.ui.chat_list
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.manager.ChatManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import org.koin.core.annotation.Factory
+import org.koin.android.annotation.KoinViewModel
 
-@Factory
-class ChatListScreenModel(
+@KoinViewModel
+class ChatListViewModel(
     chatManager: ChatManager,
-) : ScreenModel {
+) : ViewModel() {
     val userChats = chatManager.userChats
         .stateIn(
-            screenModelScope,
+            viewModelScope,
             SharingStarted.Eagerly,
             emptyList()
         )

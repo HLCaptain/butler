@@ -24,14 +24,14 @@ import illyan.butler.ui.components.smallDialogWidth
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class ChatDetailsScreen(private val getChatId: () -> String?) : Screen {
+class ChatDetailsScreen(private val chatId: String?) : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<ChatDetailsScreenModel>()
         val state by screenModel.state.collectAsState()
         LaunchedEffect(Unit) {
-            screenModel.loadChat(getChatId())
+            screenModel.loadChat(chatId)
         }
         ButlerDialogContent(
             modifier = Modifier.smallDialogWidth(),

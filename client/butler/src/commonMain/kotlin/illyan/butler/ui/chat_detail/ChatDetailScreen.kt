@@ -4,16 +4,25 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,7 +48,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,9 +60,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
 import coil3.ImageLoader
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
@@ -82,135 +87,133 @@ import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
 import illyan.butler.ui.chat_layout.LocalChatSelector
-import illyan.butler.ui.chat_layout.LocalSelectedChat
 import illyan.butler.ui.dialog.ButlerDialog
+import illyan.butler.ui.home.LocalNavBarOrientation
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class ChatDetailScreen : Screen {
-    @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<ChatDetailScreenModel>()
-        val state by screenModel.state.collectAsState()
-        LaunchedEffect(state.chat) { Napier.d("DomainChat: ${state.chat}") }
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
+@Composable
+fun ChatDetailScreen(
+    state: ChatDetailState,
+    viewModel: ChatDetailViewModel,
+    currentSelectedChat: String?,
+    canNavigateBack: Boolean = true,
+    onNavigateBack: () -> Unit = {}
+) {
+    LaunchedEffect(state.chat) { Napier.d("DomainChat: ${state.chat}") }
 //        var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
-        val currentSelectedChat = LocalSelectedChat.current
-        LaunchedEffect(currentSelectedChat) {
-            Napier.d("SelectedChatId: $currentSelectedChat")
+    LaunchedEffect(currentSelectedChat) {
+        Napier.d("SelectedChatId: $currentSelectedChat")
 //            selectedChatId = currentSelectedChat
-            currentSelectedChat?.let { screenModel.loadChat(it) }
-        }
-        val navigator = LocalNavigator.current
-        val chatSelector = LocalChatSelector.current
-        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-        var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
-        val hazeState = remember { HazeState() }
-        Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            topBar = {
-                CenterAlignedTopAppBar(
-                    modifier = Modifier.hazeChild(hazeState),
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Transparent),
-                    title = {
-                        Text(
-                            state.chat?.name ?: stringResource(Res.string.new_chat),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = {
-                        if (navigator != null && navigator.size > 1) {
-                            IconButton(onClick = {
-                                chatSelector(null)
-                                navigator.pop()
-                            }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(Res.string.back)
-                                )
-                            }
+        currentSelectedChat?.let { viewModel.loadChat(it) }
+    }
+    val chatSelector = LocalChatSelector.current
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
+    val hazeState = remember { HazeState() }
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            CenterAlignedTopAppBar(
+                modifier = Modifier.hazeChild(hazeState),
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Transparent),
+                title = {
+                    Text(
+                        state.chat?.name ?: stringResource(Res.string.new_chat),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = {
+                    if (canNavigateBack) {
+                        IconButton(onClick = {
+                            onNavigateBack()
+                        }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(Res.string.back)
+                            )
                         }
-                    },
-                    actions = {
-                        if (currentSelectedChat != null) {
-                            IconButton(onClick = { isChatDetailsDialogOpen = true }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Menu,
-                                    contentDescription = "Chat details"
-                                )
-                            }
+                    }
+                },
+                actions = {
+                    if (currentSelectedChat != null) {
+                        IconButton(onClick = { isChatDetailsDialogOpen = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Chat details"
+                            )
                         }
-                    },
-                    scrollBehavior = scrollBehavior,
-                )
-            },
-            bottomBar = {
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+        bottomBar = {
+            val navBarWindowInsets = WindowInsets(bottom = if (LocalNavBarOrientation.current == Orientation.Horizontal) 80.dp else 0.dp)
+            Column(
+                Modifier.consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
+            ) {
                 if (currentSelectedChat != null) {
                     MessageField(
-                        modifier = Modifier
-                            .safeContentPadding()
-                            .hazeChild(hazeState),
-                        sendMessage = screenModel::sendMessage,
+                        modifier = Modifier.hazeChild(hazeState),
+                        sendMessage = viewModel::sendMessage,
                         isRecording = state.isRecording,
                         canRecordAudio = state.canRecordAudio,
-                        toggleRecord = screenModel::toggleRecording,
-                        sendImage = screenModel::sendImage,
+                        toggleRecord = viewModel::toggleRecording,
+                        sendImage = viewModel::sendImage,
                         galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
-                        requestGalleryAccess = screenModel::requestGalleryPermission
+                        requestGalleryAccess = viewModel::requestGalleryPermission
                     )
                 }
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .haze(hazeState, HazeMaterials.thin())
-                    .padding(innerPadding)
-                    .imePadding(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                AnimatedVisibility(currentSelectedChat == null) {
-                    SelectChat()
-                }
-                if (currentSelectedChat != null) {
-                    MessageList(
-                        modifier = Modifier.weight(1f, fill = true),
-                        chat = state.chat,
-                        messages = state.messages ?: emptyList(),
-                        userId = state.userId ?: "",
-                        sounds = state.sounds,
-                        playAudio = screenModel::playAudio,
-                        playingAudio = state.playingAudio,
-                        stopAudio = screenModel::stopAudio,
-                        images = state.images
-                    )
-                }
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
             }
         }
-        val authScreen by remember { lazy { ChatDetailsScreen { state.chat?.id } } }
-        ButlerDialog(
-            isDialogOpen = isChatDetailsDialogOpen,
-            onDismissDialog = { isChatDetailsDialogOpen = false },
-            startScreens = listOf(authScreen)
-        )
-    }
-
-    @Composable
-    private fun SelectChat() {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier.haze(hazeState, HazeMaterials.thin()),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Select a chat!")
+            AnimatedVisibility(currentSelectedChat == null) {
+                SelectChat()
+            }
+            if (currentSelectedChat != null) {
+                MessageList(
+                    modifier = Modifier.weight(1f, fill = true),
+                    chat = state.chat,
+                    messages = state.messages ?: emptyList(),
+                    userId = state.userId ?: "",
+                    sounds = state.sounds,
+                    playAudio = viewModel::playAudio,
+                    playingAudio = state.playingAudio,
+                    stopAudio = viewModel::stopAudio,
+                    images = state.images,
+                    innerPadding = innerPadding
+                )
+            }
         }
+    }
+    val authScreen = remember(currentSelectedChat) { ChatDetailsScreen(state.chat?.id) }
+    ButlerDialog(
+        isDialogOpen = isChatDetailsDialogOpen,
+        onDismissDialog = { isChatDetailsDialogOpen = false },
+        startScreens = listOf(authScreen)
+    )
+}
+
+@Composable
+private fun SelectChat() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Select a chat!")
     }
 }
 
-
-
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
@@ -221,7 +224,8 @@ fun MessageList(
     stopAudio: () -> Unit = {},
     playingAudio: String? = null,
     images: Map<String, ByteArray> = emptyMap(), // URIs of images
-    userId: String
+    userId: String,
+    innerPadding: PaddingValues
 ) {
     Crossfade(
         modifier = modifier,
@@ -233,6 +237,7 @@ fun MessageList(
         ) {
             if (it) {
                 Text(
+                    modifier = Modifier.padding(innerPadding),
                     text = stringResource(Res.string.no_messages),
                     style = MaterialTheme.typography.headlineLarge
                 )
@@ -240,6 +245,7 @@ fun MessageList(
             LazyColumn(
                 reverseLayout = true,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = innerPadding
             ) {
                 items(messages) { message ->
                     MessageItem(
@@ -333,7 +339,6 @@ fun MessageItem(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AudioMessages(
     resources: Map<String, Float>, // Audio to length in seconds
