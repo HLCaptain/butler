@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -89,9 +90,6 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
 class ChatDetailScreen : Screen {
-
-//    override val key: ScreenKey
-//        get() = uniqueScreenKey
     @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
     @Composable
     override fun Content() {
@@ -152,7 +150,9 @@ class ChatDetailScreen : Screen {
             bottomBar = {
                 if (currentSelectedChat != null) {
                     MessageField(
-                        modifier = Modifier.hazeChild(hazeState),
+                        modifier = Modifier
+                            .safeContentPadding()
+                            .hazeChild(hazeState),
                         sendMessage = screenModel::sendMessage,
                         isRecording = state.isRecording,
                         canRecordAudio = state.canRecordAudio,

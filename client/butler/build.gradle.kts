@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
@@ -16,7 +15,7 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
-//    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compose.compiler)
 }
 
 group = "illyan"
@@ -53,7 +52,7 @@ kotlin {
 
     sourceSets {
         commonMain {
-            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+//            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
@@ -175,22 +174,22 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 //        languageVersion = KotlinVersion.KOTLIN_2_0
     }
 }
-tasks.withType<KotlinCompile>().configureEach {
-    dependsOn("kspCommonMainKotlinMetadata")
-}
+//tasks.withType<KotlinCompile>().configureEach {
+//    dependsOn("kspCommonMainKotlinMetadata")
+//}
 
 dependencies {
-    add("kspCommonMainMetadata", libs.koin.ksp)
+    ksp(libs.koin.ksp)
 }
 
-afterEvaluate {
-    tasks.filter {
-        it.name.contains("SourcesJar", true)
-    }.forEach {
-        println("SourceJarTask====>${it.name}")
-        it.dependsOn("kspCommonMainKotlinMetadata")
-    }
-}
+//afterEvaluate {
+//    tasks.filter {
+//        it.name.contains("SourcesJar", true)
+//    }.forEach {
+//        println("SourceJarTask====>${it.name}")
+//        it.dependsOn("kspCommonMainKotlinMetadata")
+//    }
+//}
 
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")

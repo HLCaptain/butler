@@ -124,43 +124,31 @@ class ChatScreen : Screen {
             if (currentChat != null) {
                 Napier.v("selectedChat is not null")
                 if (isListOnly) {
-                    if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.pop()
-                        Napier.v("Removed chat from list screen.")
+                    if (detailNavigator?.lastItem is ChatDetailScreen) {
+                        detailNavigator?.pop()
+                        Napier.v("Popped ChatDetailScreen from detailNavigator")
                     }
                     if (listNavigator?.lastItem !is ChatDetailScreen) {
-                        if (detailNavigator?.lastItem is ChatDetailScreen) {
-                            detailNavigator?.pop()
-                            Napier.v("Popped ChatDetailScreen from detailNavigator")
-                        }
                         listNavigator?.push(chatDetailScreen)
                         Napier.v("Pushed ChatDetailScreen to listNavigator")
                     }
                 } else {
-                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                        if (listNavigator?.lastItem is ChatDetailScreen) {
-                            listNavigator?.pop()
-                            Napier.v("Popped screens from listNavigator until ChatListScreen is found")
-                        }
-                        detailNavigator?.replaceAll(chatDetailScreen)
-                        Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
-                    }
                     if (listNavigator?.lastItem is ChatDetailScreen) {
                         listNavigator?.pop()
                         Napier.v("Removed chat from list screen.")
+                    }
+                    if (detailNavigator?.lastItem !is ChatDetailScreen) {
+                        detailNavigator?.replaceAll(chatDetailScreen)
+                        Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
                     }
                 }
             } else {
                 Napier.v("selectedChat is null")
                 if (listNavigator?.lastItem is ChatDetailScreen) {
                     listNavigator?.pop()
-                    Napier.v("Popped screens from listNavigator until ChatListScreen is found")
+                    Napier.v("Popped ChatDetailScreen from listNavigator")
                 }
                 if (detailNavigator?.lastItem !is ChatDetailScreen) {
-                    if (listNavigator?.lastItem is ChatDetailScreen) {
-                        listNavigator?.pop()
-                        Napier.v("Popped ChatDetailScreen from listNavigator")
-                    }
                     detailNavigator?.replaceAll(chatDetailScreen)
                     Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
                 }
