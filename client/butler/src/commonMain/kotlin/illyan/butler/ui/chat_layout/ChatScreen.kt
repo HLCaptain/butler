@@ -156,7 +156,7 @@ class ChatScreen : Screen {
                 second = {
                     val viewModel = koinViewModel<ChatDetailViewModel>()
                     val state by viewModel.state.collectAsState()
-                    ChatDetailScreen(state, viewModel, selectedChat, false)
+                    ChatDetailScreen(state, viewModel, currentChat, false)
                 }
             )
         }

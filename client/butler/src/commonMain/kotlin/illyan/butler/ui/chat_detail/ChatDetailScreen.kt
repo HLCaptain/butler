@@ -86,7 +86,6 @@ import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
-import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.home.LocalNavBarOrientation
 import io.github.aakira.napier.Napier
@@ -110,7 +109,6 @@ fun ChatDetailScreen(
 //            selectedChatId = currentSelectedChat
         currentSelectedChat?.let { viewModel.loadChat(it) }
     }
-    val chatSelector = LocalChatSelector.current
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
     val hazeState = remember { HazeState() }
@@ -196,11 +194,11 @@ fun ChatDetailScreen(
             }
         }
     }
-    val authScreen = remember(currentSelectedChat) { ChatDetailsScreen(state.chat?.id) }
+    val chatDetailsDialog = remember(currentSelectedChat) { ChatDetailsScreen(currentSelectedChat) }
     ButlerDialog(
         isDialogOpen = isChatDetailsDialogOpen,
         onDismissDialog = { isChatDetailsDialogOpen = false },
-        startScreens = listOf(authScreen)
+        startScreens = listOf(chatDetailsDialog)
     )
 }
 
