@@ -75,22 +75,21 @@ class MessageExposedDatabase(
             // Remove all content urls for the message
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
-            val currentMessageUrls = MessageResources.selectAll().where(MessageResources.messageId eq message.id!!)
-            val newMessageUrls = message.resourceIds
-            val removedMessageUrls = currentMessageUrls.filter { url ->
-                newMessageUrls.contains(url[MessageResources.resourceId].value)
+            val currentMessageResources = MessageResources.selectAll().where(MessageResources.messageId eq message.id!!)
+            val removedResources = currentMessageResources.filter { resource ->
+                !message.resourceIds.contains(resource[MessageResources.resourceId].value)
             }
-            removedMessageUrls.forEach { url ->
-                MessageResources.deleteWhere { (messageId eq message.id) and (resourceId eq url[resourceId]) }
+            removedResources.forEach { resource ->
+                MessageResources.deleteWhere { (messageId eq message.id) and (resourceId eq resource[resourceId]) }
             }
-            val addedMessageUrls = message.resourceIds.filter { url ->
-                currentMessageUrls.none { it[MessageResources.resourceId].value == url }
+            val addedResources = message.resourceIds.filter { id ->
+                currentMessageResources.none { it[MessageResources.resourceId].value == id }
             }
-            addedMessageUrls.forEach { contentUrl ->
-                Resources.insertIgnore { it[type] = contentUrl }
+            addedResources.forEach { id ->
+                val resource = Resources.selectAll().where(Resources.id eq id).first()
                 MessageResources.insertIgnore {
                     it[messageId] = message.id
-                    it[resourceId] = contentUrl
+                    it[resourceId] = resource[Resources.id]
                 }
             }
             message

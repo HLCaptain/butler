@@ -17,6 +17,8 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.encodeURLPath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -54,7 +56,10 @@ class ChatService(
 
     suspend fun getResources(userId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources").body<List<ResourceDto>>()
     suspend fun getResource(userId: String, resourceId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources/$resourceId").body<ResourceDto>()
-    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources") { setBody(resource) }.body<ResourceDto>()
+    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources") {
+        contentType(ContentType.Application.ProtoBuf)
+        setBody(resource.copy(id = resource.id ?: "")) // ProtoBuf does not support null
+    }.body<ResourceDto>()
 
     /**
      * @param fromDate epoch milli

@@ -1,8 +1,10 @@
 package illyan.butler.services.ai.data.service
 
+import com.aallam.openai.api.audio.AudioResponseFormat
 import com.aallam.openai.api.audio.SpeechRequest
 import com.aallam.openai.api.audio.SpeechResponseFormat
 import com.aallam.openai.api.audio.TranscriptionRequest
+import com.aallam.openai.api.audio.Voice
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
@@ -178,22 +180,23 @@ class LlmService(
                             Napier.v("Resource is audio, transcribing and answering with text and audio")
                             val speechToTextContent = transcribeAudio("whisper-1", AppConfig.Api.OPEN_AI_API_URL, resource)
                             val modifiedConversation = conversation.toMutableList()
+                            val lastMessageContent = ((modifiedConversation.lastOrNull()?.content?.let { "$it\n\n" } ?: "") + speechToTextContent).trim('\n', ' ')
                             modifiedConversation.removeLast()
                             modifiedConversation.add(
                                 lastMessage.toChatMessage(
                                     modelIds = listOf(modelId),
-                                    previousMessageContent = "${modifiedConversation.last().content}\n$speechToTextContent",
-                                    resources = resources.filter { it.type.startsWith("image") }
+                                    previousMessageContent = lastMessageContent,
+                                    resources = listOf(resource)
                                 )
                             )
-                            val answer = answerChatWithTextAndContext(modelId, modelEndpoint, modifiedConversation, chatId, listOf(modelId))
-                            val audioResource = generateSpeechFromText("tts-1", AppConfig.Api.OPEN_AI_API_URL, answer)
                             // Append transcription to last message
                             chatService.editMessage(
                                 modelId,
                                 lastMessage.id!!,
-                                lastMessage.copy(message = "${lastMessage.message}\n$speechToTextContent")
+                                lastMessage.copy(message = lastMessageContent)
                             )
+                            val answer = answerChatWithTextAndContext(modelId, modelEndpoint, modifiedConversation, chatId, listOf(modelId))
+                            val audioResource = generateSpeechFromText("tts-1", AppConfig.Api.OPEN_AI_API_URL, answer)
                             // Upload resource
                             // Send message with resourceId
                             val newResourceId = chatService.createResource(modelId, audioResource).id!!
@@ -314,7 +317,7 @@ class LlmService(
                 model = ModelId(modelId),
                 messages = conversation + ChatMessage(
                     role = ChatRole.System,
-                    messageContent = TextContent("Previous chat summaries: ${chatSummaries.joinToString("\n")}")
+                    content = "Previous chat summaries: ${chatSummaries.joinToString("\n")}"
                 )
             )
         ).choices.first().message.content!!
@@ -342,10 +345,12 @@ class LlmService(
         val type = resource.type.split("/").last()
         // Create tmp file for audio
         val audioFilePath = kotlin.io.path.createTempFile("${resource.id}_audio_file", ".$type")
+        audioFilePath.toFile().writeBytes(resource.data)
         return openAI.transcription(
             request = TranscriptionRequest(
-                audio = FileSource(name = resource.id ?: "audio_file.$type", source = audioFilePath.source()),
-                model = ModelId(modelId)
+                audio = FileSource(name = audioFilePath.toFile().name, source = audioFilePath.source()),
+                model = ModelId(modelId),
+                responseFormat = AudioResponseFormat.Text,
             )
         ).text.also { audioFilePath.toFile().delete() }
     }
@@ -355,12 +360,13 @@ class LlmService(
         // return audio resource
         val openAI = openAIClients[endpoint] ?: throw Exception("No OpenAI client found for endpoint $endpoint")
         return ResourceDto(
-            type = "audio/wav",
+            type = "audio/mp3",
             data = openAI.speech(
                 request = SpeechRequest(
                     model = ModelId(modelId),
                     input = text,
-                    responseFormat = SpeechResponseFormat("wav")
+                    responseFormat = SpeechResponseFormat.Mp3,
+                    voice = Voice.Alloy
                 )
             )
         )
@@ -391,18 +397,18 @@ fun MessageDto.toChatMessage(
     previousMessageContent: String? = null,
     resources: List<ResourceDto> = emptyList(),
 ): ChatMessage {
-    val textPart = if (previousMessageContent?.filter { it != '\n' }.isNullOrBlank()) message ?: "" else "$previousMessageContent\n$message"
+    val textPart = if (previousMessageContent?.trim('\n').isNullOrBlank()) message ?: "" else if (message == null) previousMessageContent ?: "" else "$previousMessageContent\n$message"
     val content = mutableListOf<ContentPart>()
     resources.filter { it.type.startsWith("image") && resourceIds.contains(it.id) }.forEach { imageResource ->
         val imageData = "data:${imageResource.type};base64,${Base64.encode(imageResource.data)}"
         content += ImagePart(imageData)
     }
     if (textPart.isNotBlank()) content += TextPart(textPart)
-    return if (resources.isEmpty()) {
+    return if (content.size <= 1) {
         // Only text
         ChatMessage(
             role = if (modelIds.contains(senderId)) ChatRole.Assistant else ChatRole.User,
-            messageContent = TextContent(textPart)
+            content = textPart
         )
     } else {
         // Image with text
