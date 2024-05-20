@@ -156,4 +156,8 @@ class ChatManager(
         )
         sendMessage(chatId, resourceIds = listOf(imageId))
     }
+
+    suspend fun deleteChat(chatId: String) {
+        chatRepository.deleteChat(chatId)
+    }
 }

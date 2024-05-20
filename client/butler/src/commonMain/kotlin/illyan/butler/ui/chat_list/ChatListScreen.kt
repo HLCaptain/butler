@@ -10,8 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +39,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
+import illyan.butler.generated.resources.delete_chat
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
 import org.jetbrains.compose.resources.stringResource
@@ -43,6 +49,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ChatList(
     chats: List<DomainChat>,
     openChat: (uuid: String) -> Unit,
+    deleteChat: (uuid: String) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
@@ -84,7 +91,8 @@ fun ChatList(
                     items(chats) { chat ->
                         ChatCard(
                             chat = chat,
-                            openChat = { openChat(chat.id!!) }
+                            openChat = { openChat(chat.id!!) },
+                            deleteChat = { deleteChat(chat.id!!) }
                         )
                     }
                 }
@@ -96,11 +104,10 @@ fun ChatList(
 @Composable
 fun ChatCard(
     chat: DomainChat,
-    openChat: () -> Unit
+    openChat: () -> Unit,
+    deleteChat: () -> Unit,
 ) {
-    ElevatedCard(
-        onClick = openChat
-    ) {
+    ElevatedCard(onClick = openChat) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -116,6 +123,17 @@ fun ChatCard(
                 Text(
                     text = chat.id!!.take(16),
                     style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            IconButton(
+                onClick = deleteChat,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = stringResource(Res.string.delete_chat)
                 )
             }
         }

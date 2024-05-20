@@ -148,7 +148,8 @@ class ChatScreen : Screen {
                             val chats by viewModel.userChats.collectAsState()
                             ChatList(
                                 chats = chats,
-                                openChat = onSelectChat
+                                openChat = onSelectChat,
+                                deleteChat = viewModel::deleteChat
                             )
                         }
                         composable("chatDetail/{chatId}") {

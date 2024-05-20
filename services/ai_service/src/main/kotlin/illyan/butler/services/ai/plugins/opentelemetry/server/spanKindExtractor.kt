@@ -1,4 +1,4 @@
-package illyan.butler.services.ai.plugins.opentelemetry
+package illyan.butler.services.ai.plugins.opentelemetry.server
 
 import io.ktor.server.request.ApplicationRequest
 import io.opentelemetry.api.trace.SpanKind

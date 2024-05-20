@@ -2,6 +2,11 @@ package illyan.butler.services.ai.di
 
 import illyan.butler.services.ai.AppConfig
 import illyan.butler.services.ai.endpoints.utils.WebsocketContentConverterWithFallback
+import illyan.butler.services.ai.plugins.opentelemetry.client.attributeExtractor
+import illyan.butler.services.ai.plugins.opentelemetry.client.capturedRequestHeaders
+import illyan.butler.services.ai.plugins.opentelemetry.client.capturedResponseHeaders
+import illyan.butler.services.ai.plugins.opentelemetry.client.emitExperimentalHttpClientMetrics
+import illyan.butler.services.ai.plugins.opentelemetry.client.knownMethods
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -25,17 +30,21 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
 import java.security.KeyStore
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
@@ -99,6 +108,25 @@ fun HttpClientConfig<OkHttpConfig>.setupClient() {
 
     install(fallbackPlugin) {
         supportedContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES
+    }
+
+    install(KtorClientTracing) {
+        setOpenTelemetry(GlobalOpenTelemetry.get())
+
+        emitExperimentalHttpClientMetrics()
+
+        knownMethods(HttpMethod.DefaultMethods)
+        capturedRequestHeaders(HttpHeaders.Accept)
+        capturedResponseHeaders(HttpHeaders.ContentType)
+
+        attributeExtractor {
+            onStart {
+                attributes.put("start-time", Clock.System.now().toEpochMilliseconds())
+            }
+            onEnd {
+                attributes.put("end-time", Clock.System.now().toEpochMilliseconds())
+            }
+        }
     }
 
     install(ContentEncoding)

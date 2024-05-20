@@ -2,12 +2,12 @@ package illyan.butler.services.ai.plugins
 
 import illyan.butler.services.ai.AppConfig
 import illyan.butler.services.ai.BuildConfig
-import illyan.butler.services.ai.plugins.opentelemetry.attributeExtractor
-import illyan.butler.services.ai.plugins.opentelemetry.capturedRequestHeaders
-import illyan.butler.services.ai.plugins.opentelemetry.capturedResponseHeaders
-import illyan.butler.services.ai.plugins.opentelemetry.knownMethods
-import illyan.butler.services.ai.plugins.opentelemetry.spanKindExtractor
-import illyan.butler.services.ai.plugins.opentelemetry.spanStatusExtractor
+import illyan.butler.services.ai.plugins.opentelemetry.server.attributeExtractor
+import illyan.butler.services.ai.plugins.opentelemetry.server.capturedRequestHeaders
+import illyan.butler.services.ai.plugins.opentelemetry.server.capturedResponseHeaders
+import illyan.butler.services.ai.plugins.opentelemetry.server.knownMethods
+import illyan.butler.services.ai.plugins.opentelemetry.server.spanKindExtractor
+import illyan.butler.services.ai.plugins.opentelemetry.server.spanStatusExtractor
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.http.HttpHeaders
@@ -53,7 +53,6 @@ import io.opentelemetry.instrumentation.resources.OsResource
 import io.opentelemetry.instrumentation.resources.ProcessResource
 import io.opentelemetry.instrumentation.resources.ProcessRuntimeResource
 import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader

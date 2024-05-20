@@ -1,4 +1,4 @@
-package illyan.butler.services.ai.plugins.opentelemetry
+package illyan.butler.services.ai.plugins.opentelemetry.server
 
 import io.opentelemetry.instrumentation.ktor.v2_0.server.KtorServerTracing
 

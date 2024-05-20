@@ -103,4 +103,8 @@ class ChatStoreRepository(
         )
         return newChat.id
     }
+
+    override suspend fun deleteChat(chatId: String) {
+        chatMutableStore.clear(chatId)
+    }
 }

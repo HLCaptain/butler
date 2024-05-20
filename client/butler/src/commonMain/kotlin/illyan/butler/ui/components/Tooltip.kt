@@ -66,7 +66,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.copied_to_clipboard
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -223,24 +222,31 @@ fun RichTooltipWithContent(
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-    showTooltipOnClick: Boolean = false,
+    enabledGestures: List<GestureType> = emptyList(),
     onShowTooltip: () -> Unit = {},
-    showTooltipDelay: Duration = Duration.ZERO,
     onDismissTooltip: () -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable (gestureAreaModifier: Modifier) -> Unit
 ) {
     val tooltipState = remember { TooltipState() }
-    val coroutineScope = rememberCoroutineScope()
-    val tryShowTooltip = {
-        coroutineScope.launch {
-            if (enabled || disabledTooltip != null) {
-                Napier.v("Showing tooltip")
-                if (showTooltipDelay > Duration.ZERO) {
-                    Napier.v("Delaying tooltip show")
-                    delay(showTooltipDelay.inWholeMilliseconds)
-                }
-                tooltipState.show()
+    var willShowTooltip by rememberSaveable { mutableStateOf(false) }
+    var gestureType by rememberSaveable { mutableStateOf<GestureType?>(null) }
+    val tryToShowTooltip = { gesture: GestureType ->
+        willShowTooltip = true
+        gestureType = gesture
+    }
+    val tryToDismissTooltip = {
+        willShowTooltip = false
+        gestureType = null
+    }
+    LaunchedEffect(willShowTooltip) {
+        if (willShowTooltip && (enabled || disabledTooltip != null)) {
+            if (gestureType is GestureType.Hover && (gestureType as GestureType.Hover).delay > Duration.ZERO) {
+                delay((gestureType as GestureType.Hover).delay.inWholeMilliseconds)
             }
+            tooltipState.show()
+            willShowTooltip = false
+        } else {
+            tooltipState.dismiss()
         }
     }
     RichTooltipWithContent(
@@ -252,28 +258,27 @@ fun RichTooltipWithContent(
         onShowTooltip = onShowTooltip,
         onDismissTooltip = onDismissTooltip
     ) {
-        Surface(
-            modifier = Modifier
-                .animateContentSize()
-                .combinedClickable(
-                    onLongClick = {
-                        onLongClick()
-                        if (!showTooltipOnClick) tryShowTooltip()
-                    },
+        content(Modifier
+            .then(
+                if (GestureType.Click in enabledGestures || GestureType.LongClick in enabledGestures) Modifier.combinedClickable(
                     onClick = {
                         onClick()
-                        if (showTooltipOnClick) tryShowTooltip()
+                        if (GestureType.Click in enabledGestures) tryToShowTooltip(GestureType.Click)
+                    },
+                    onLongClick = {
+                        onLongClick()
+                        if (GestureType.LongClick in enabledGestures) tryToShowTooltip(GestureType.LongClick)
                     }
-                )
-                .handleGestures(
+                ) else Modifier,
+            )
+            .then(
+                if (enabledGestures.any { it is GestureType.Hover }) Modifier.handleGestures(
                     enabled = true,
                     state = tooltipState,
-                    onShow = { priority ->
-                        tryShowTooltip()
-                    },
-                    onDismiss = { tooltipState.dismiss() }
-                ),
-            content = content
+                    onShow = { priority -> tryToShowTooltip(enabledGestures.first { it is GestureType.Hover }) },
+                    onDismiss = { tryToDismissTooltip() }
+                ) else Modifier
+            )
         )
     }
 }
