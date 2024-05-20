@@ -6,12 +6,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import illyan.butler.domain.model.Theme
 import io.github.aakira.napier.Napier
 
@@ -23,9 +19,8 @@ fun ButlerTheme(
     content: @Composable () -> Unit,
 ) {
     val isSystemInDarkTheme = isSystemInDarkTheme()
-    var isDark by rememberSaveable { mutableStateOf<Boolean?>(null) }
-    LaunchedEffect(theme, dynamicColorEnabled, isNight) {
-        isDark = when (theme) {
+    val isDark = remember(theme, isNight, isSystemInDarkTheme) {
+        when (theme) {
             Theme.Light -> false
             Theme.Dark -> true
             Theme.System -> isSystemInDarkTheme
@@ -33,28 +28,24 @@ fun ButlerTheme(
             null -> null
         }
     }
-    val dynamicLightColorScheme = dynamicDarkColorScheme()
-    val dynamicDarkColorScheme = dynamicLightColorScheme()
-    val dynamicLightColorSchemeState by remember { derivedStateOf { dynamicLightColorScheme } }
-    val dynamicDarkColorSchemeState by remember { derivedStateOf { dynamicDarkColorScheme } }
-    val targetColorScheme by remember {
-        derivedStateOf {
-            if (dynamicColorEnabled && canUseDynamicColors()) {
-                when (theme) {
-                    Theme.Dark -> dynamicDarkColorSchemeState
-                    Theme.Light -> dynamicLightColorSchemeState
-                    Theme.System -> if (isSystemInDarkTheme) dynamicDarkColorSchemeState else dynamicLightColorSchemeState
-                    Theme.DayNightCycle -> if (isNight) dynamicDarkColorSchemeState else dynamicLightColorSchemeState
-                    null -> LightColors
-                }
-            } else {
-                when (theme) {
-                    Theme.Dark -> DarkColors
-                    Theme.Light -> LightColors
-                    Theme.System -> if (isSystemInDarkTheme) DarkColors else LightColors
-                    Theme.DayNightCycle -> if (isNight) DarkColors else LightColors
-                    null -> LightColors
-                }
+    val dynamicLightColorScheme = dynamicLightColorScheme()
+    val dynamicDarkColorScheme = dynamicDarkColorScheme()
+    val targetColorScheme = remember(theme, dynamicColorEnabled, isNight, isSystemInDarkTheme, isDark) {
+        if (dynamicColorEnabled && canUseDynamicColors()) {
+            when (theme) {
+                Theme.Dark -> dynamicDarkColorScheme
+                Theme.Light -> dynamicLightColorScheme
+                Theme.System -> if (isSystemInDarkTheme) dynamicDarkColorScheme else dynamicLightColorScheme
+                Theme.DayNightCycle -> if (isNight) dynamicDarkColorScheme else dynamicLightColorScheme
+                null -> LightColors
+            }
+        } else {
+            when (theme) {
+                Theme.Dark -> DarkColors
+                Theme.Light -> LightColors
+                Theme.System -> if (isSystemInDarkTheme) DarkColors else LightColors
+                Theme.DayNightCycle -> if (isNight) DarkColors else LightColors
+                null -> LightColors
             }
         }
     }
@@ -67,10 +58,10 @@ fun ButlerTheme(
             dynamicDarkColorScheme -> "Dynamic Dark"
             else -> "Undefined theme"
         }
-        Napier.d("Theme: $theme, Dynamic colors: ${dynamicColorEnabled && canUseDynamicColors()}, Is night: $isNight, Is system in dark theme: $isSystemInDarkTheme, Is dark: $isDark, Target color scheme: $themeName")
+        Napier.d("Theme: $theme, Dynamic colors: ${dynamicColorEnabled}, Is night: $isNight, Is system in dark theme: $isSystemInDarkTheme, Is dark: $isDark, Target color scheme: $themeName")
     }
 
-    ThemeSystemWindow(isDark ?: isSystemInDarkTheme, dynamicColorEnabled && canUseDynamicColors())
+    ThemeSystemWindow(isDark ?: isSystemInDarkTheme, dynamicColorEnabled)
 
     val colorScheme by animateColorScheme(targetColorScheme, spring(stiffness = Spring.StiffnessLow))
     MaterialTheme(
