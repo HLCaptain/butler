@@ -83,7 +83,6 @@ import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
 import illyan.butler.ui.signup_tutorial.LocalSignInCallback
 import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
-import illyan.butler.ui.usage_tutorial.LocalUsageTutorialDone
 import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
 import illyan.butler.ui.welcome.LocalWelcomeScreenDone
 import illyan.butler.ui.welcome.WelcomeScreen
@@ -121,36 +120,41 @@ class HomeScreen : Screen {
                     if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
                     if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
                 }
-                val usageTutorialScreen by remember { lazy { UsageTutorialScreen() } }
-                val authSuccessScreen by remember { lazy { AuthSuccessScreen(1000) } }
-                val signUpTutorialScreen by remember { lazy { SignUpTutorialScreen() } }
-                val selectHostTutorialScreen by remember { lazy { SelectHostTutorialScreen() } }
-                val welcomeScreen by remember { lazy { WelcomeScreen() } }
+                val usageTutorialScreen = remember { UsageTutorialScreen() }
+                val authSuccessScreen = remember { AuthSuccessScreen(1000) }
+                val signUpTutorialScreen = remember { SignUpTutorialScreen() }
+                val selectHostTutorialScreen = remember { SelectHostTutorialScreen() }
+                val welcomeScreen = remember { WelcomeScreen() }
                 val profileDialogScreen = remember { ProfileDialogScreen() }
                 val authScreen = remember { AuthScreen() }
-                val startScreen by remember {
-                    derivedStateOf {
-                        if (!isDialogOpen) {
-                            null
-                        } else {
-                            if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
-                                if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
-                            } else welcomeScreen
-                        }
+                val startScreen = remember(isDialogOpen, state.isTutorialDone, isDialogClosedAfterTutorial, isAuthFlowEnded, state.isUserSignedIn, isProfileDialogShowing) {
+                    if (!isDialogOpen) {
+                        null
+                    } else {
+                        if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
+                            if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
+                        } else welcomeScreen
                     }
                 }
                 var onBoardingNavigator by remember { mutableStateOf<Navigator?>(null) }
+                val authSuccessDone = remember(state) { {
+                    if (state.isTutorialDone == false) {
+                        onBoardingNavigator?.replaceAll(usageTutorialScreen)
+                    } else {
+                        isAuthFlowEnded = true
+                    }
+                    Unit
+                } }
                 CompositionLocalProvider(
                     LocalWelcomeScreenDone provides { onBoardingNavigator?.push(selectHostTutorialScreen) },
                     LocalSelectHostCallback provides { onBoardingNavigator?.push(signUpTutorialScreen) },
                     LocalSignInCallback provides { onBoardingNavigator?.replaceAll(authSuccessScreen) },
-                    LocalAuthSuccessDone provides { onBoardingNavigator?.replaceAll(usageTutorialScreen) },
-                    LocalUsageTutorialDone provides { screenModel.setTutorialDone() },
+                    LocalAuthSuccessDone provides authSuccessDone,
                 ) {
                     ButlerDialog(
                         startScreens = listOfNotNull(startScreen),
                         isDialogOpen = isDialogOpen,
-                        isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
+                        isDialogFullscreen = state.isUserSignedIn != true,
                         onDismissDialog = {
                             if (state.isUserSignedIn == true) {
                                 isAuthFlowEnded = true
@@ -372,35 +376,6 @@ class HomeScreen : Screen {
                 LaunchedEffect(Unit) { setNavigator(it) }
                 CrossfadeTransition(navigator = it)
             }
-        }
-    }
-
-    @Composable
-    private fun OnboardingContent(
-        navigator: Navigator?,
-        setTutorialDone: () -> Unit
-    ) {
-        // (language selection may be in a corner?)
-        // 1. Show welcome screen
-        // 2. Show host selection tutorial
-        // 3. Show sign up tutorial
-        // 4. Show usage tutorial
-        // 5. If done, set tutorial done.
-
-        val usageTutorialScreen by remember { lazy { UsageTutorialScreen() } }
-        val authSuccessScreen by remember { lazy { AuthSuccessScreen(1000) } }
-        val signUpTutorialScreen by remember { lazy { SignUpTutorialScreen() } }
-        val selectHostTutorialScreen by remember { lazy { SelectHostTutorialScreen() } }
-        val welcomeScreen by remember { lazy { WelcomeScreen() } }
-
-        CompositionLocalProvider(
-            LocalWelcomeScreenDone provides { navigator?.push(selectHostTutorialScreen) },
-            LocalSelectHostCallback provides { navigator?.push(signUpTutorialScreen) },
-            LocalSignInCallback provides { navigator?.replaceAll(authSuccessScreen) },
-            LocalAuthSuccessDone provides { navigator?.replaceAll(usageTutorialScreen) },
-            LocalUsageTutorialDone provides { setTutorialDone() },
-        ) {
-
         }
     }
 }
