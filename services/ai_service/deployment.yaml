@@ -57,3 +57,8 @@ spec:
                   name: butler-secret
                   key: SSL_CERT_PASSWORD
             - name: SSL_CERT_PATH
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: butler-configmap
+                  key: OTEL_EXPORTER_OTLP_ENDPOINT
