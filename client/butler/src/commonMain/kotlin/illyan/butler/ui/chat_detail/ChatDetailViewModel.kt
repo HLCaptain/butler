@@ -79,9 +79,11 @@ class ChatDetailViewModel(
         val resources = flows[5] as? List<DomainResource>
         val galleryPermission = flows[6] as? PermissionStatus
 //        Napier.v("Gallery permission: $galleryPermission")
-//        Napier.v("Resources: $resources")
+        Napier.v("Resources: $resources")
         val sounds = resources?.filter { it.type.startsWith("audio") }
-            ?.associate { it.id!! to it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } ?: emptyMap()
+            ?.associate {
+                it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
+            }?.filter { it.value > 0f } ?: emptyMap()
         val images = resources?.filter { it.type.startsWith("image") }
             ?.associate { it.id!! to it.data } ?: emptyMap()
         ChatDetailState(
