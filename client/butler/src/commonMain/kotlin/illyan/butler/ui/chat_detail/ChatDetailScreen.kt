@@ -232,12 +232,12 @@ fun MessageList(
         targetState = chat == null || messages.isEmpty()
     ) {
         Column(
-            modifier = Modifier.animateContentSize(),
+            modifier = Modifier.animateContentSize().fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (it) {
                 Text(
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(innerPadding),
                     text = stringResource(Res.string.no_messages),
                     style = MaterialTheme.typography.headlineLarge
                 )
