@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromHexString
 import kotlinx.serialization.encodeToHexString
@@ -18,7 +19,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-@OptIn(ExperimentalSettingsApi::class)
+@OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
 @Single
 class AppSettingsRepository(
     val settings: FlowSettings,
@@ -46,6 +47,14 @@ class AppSettingsRepository(
         null
     )
 
+    init {
+        coroutineScopeIO.launch {
+            if (appSettings.value == null) {
+                settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(AppSettings.default))
+            }
+        }
+    }
+
     override val firstSignInHappenedYet = settings.getBooleanOrNullFlow(UserRepository.FIRST_SIGN_IN_HAPPENED_YET).stateIn(
         coroutineScopeIO,
         SharingStarted.Eagerly,
@@ -62,6 +71,6 @@ class AppSettingsRepository(
 
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
-        settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(appSettings.value?.copy(preferences = preferences)))
+        settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString((appSettings.value ?: AppSettings.default).copy(preferences = preferences)))
     }
 }

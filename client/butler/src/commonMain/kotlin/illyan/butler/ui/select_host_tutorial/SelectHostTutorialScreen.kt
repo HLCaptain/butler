@@ -2,6 +2,7 @@ package illyan.butler.ui.select_host_tutorial
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudSync
@@ -42,7 +43,7 @@ class SelectHostTutorialScreen : Screen {
         // Make your Compose Multiplatform UI
 
         Column(
-            modifier = Modifier.largeDialogWidth(),
+            modifier = Modifier.largeDialogWidth().safeContentPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

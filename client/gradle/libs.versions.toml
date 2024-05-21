@@ -68,8 +68,8 @@ androidx-core = { module = "androidx.core:core-ktx", version = "1.13.1" }
 androidx-activity = { module = "androidx.activity:activity-ktx", version = "1.9.0" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.9.0" }
 androidx-crypto = { module = "androidx.security:security-crypto", version = "1.1.0-alpha06" }
-androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core-okio", version.ref = "dataStoreVersion" }
-androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "dataStoreVersion" }
+androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "dataStoreVersion" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "dataStoreVersion" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-android" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-android" }
 
@@ -89,6 +89,7 @@ desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.0.4" }
 settings = { module = "com.russhwolf:multiplatform-settings", version = "1.1.1" }
 settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version = "1.1.1" }
 settings-datastore = { module = "com.russhwolf:multiplatform-settings-datastore", version = "1.1.1" }
+settings-noarg = { module = "com.russhwolf:multiplatform-settings-no-arg", version = "1.1.1" }
 credential-storage-jvm = { module = "com.microsoft:credential-secure-storage", version = "1.0.0" }
 korge-core = { module = "com.soywiz:korlibs-audio", version = "6.0.0-alpha1" }
 filepicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }

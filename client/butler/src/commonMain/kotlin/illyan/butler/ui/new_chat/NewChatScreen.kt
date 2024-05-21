@@ -38,6 +38,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
@@ -76,12 +77,17 @@ class NewChatScreen : Screen {
                 )
             },
         ) { innerPadding ->
-            Crossfade(state.availableModels) { models ->
+            Crossfade(
+                modifier = Modifier.padding(innerPadding),
+                targetState = state.availableModels
+            ) { models ->
                 if (models == null) {
-                    Text("Loading...")
+                    Text(
+                        text = stringResource(Res.string.loading),
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
                 } else if (models.isNotEmpty()) {
                     ModelList(
-                        modifier = Modifier.padding(innerPadding),
                         state = state,
                         selectModel = screenModel::createChatWithModel
                     )

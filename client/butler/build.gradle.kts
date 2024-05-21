@@ -103,6 +103,7 @@ kotlin {
                 implementation(libs.store)
                 implementation(libs.settings)
                 implementation(libs.settings.coroutines)
+                implementation(libs.settings.noarg)
                 implementation(libs.korge.core)
                 implementation(libs.filepicker)
                 implementation(libs.coil)
@@ -134,7 +135,7 @@ kotlin {
             implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
             implementation(libs.settings.datastore)
-            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.ffmpeg.kit)
         }
@@ -150,8 +151,9 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.credential.storage.jvm)
+            implementation(libs.settings)
             implementation(libs.settings.datastore)
-            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
         }
 

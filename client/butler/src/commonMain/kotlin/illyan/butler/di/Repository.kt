@@ -1,6 +1,7 @@
 package illyan.butler.di
 
 import illyan.butler.config.BuildConfig
+import illyan.butler.getPlatformName
 import illyan.butler.getPlatformPermissionRepository
 import illyan.butler.repository.app.AppMemoryRepository
 import illyan.butler.repository.app.AppRepository
@@ -37,7 +38,12 @@ fun provideAppRepository(
 ): AppRepository = if (BuildConfig.USE_MEMORY_DB) {
     appMemoryRepository
 } else {
-    appSettingsRepository
+    // FIXME: Temporary solution to avoid using AppSettingsRepository on Android
+    if (getPlatformName() == "Android") {
+        appMemoryRepository
+    } else {
+        appSettingsRepository
+    }
 }
 
 @Single

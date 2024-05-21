@@ -1,6 +1,5 @@
 package illyan.butler.ui.chat_layout
 
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -138,9 +137,9 @@ class ChatScreen : Screen {
                     NavHost(
                         navController = chatListNavController,
                         startDestination = "chatList",
-                        enterTransition = { slideInHorizontally { it } + fadeIn() },
+                        enterTransition = { slideInHorizontally { it } },
                         exitTransition = { slideOutHorizontally() + fadeOut() },
-                        popEnterTransition = { slideInHorizontally() + fadeIn() },
+                        popEnterTransition = { slideInHorizontally() },
                         popExitTransition = { slideOutHorizontally { it } + fadeOut() }
                     ) {
                         composable("chatList") {

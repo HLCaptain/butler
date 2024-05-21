@@ -3,8 +3,8 @@ package illyan.butler.ui.welcome
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +34,7 @@ class WelcomeScreen : Screen {
         val onDone = LocalWelcomeScreenDone.current
 
         Column(
-            modifier = Modifier.padding(16.dp).fillMaxHeight(),
+            modifier = Modifier.padding(16.dp).safeContentPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -45,7 +45,7 @@ class WelcomeScreen : Screen {
                 contentDescription = "Butler Logo"
             )
             Column(
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.padding(top = 16.dp).safeContentPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
