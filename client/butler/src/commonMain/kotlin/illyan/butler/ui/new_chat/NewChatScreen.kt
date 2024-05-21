@@ -78,7 +78,6 @@ class NewChatScreen : Screen {
             },
         ) { innerPadding ->
             Crossfade(
-                modifier = Modifier.padding(innerPadding),
                 targetState = state.availableModels
             ) { models ->
                 if (models == null) {
@@ -89,7 +88,8 @@ class NewChatScreen : Screen {
                 } else if (models.isNotEmpty()) {
                     ModelList(
                         state = state,
-                        selectModel = screenModel::createChatWithModel
+                        selectModel = screenModel::createChatWithModel,
+                        innerPadding = innerPadding
                     )
                 } else {
                     Text("No models available")
@@ -103,10 +103,11 @@ class NewChatScreen : Screen {
 fun ModelList(
     modifier: Modifier = Modifier,
     state: NewChatState,
-    selectModel: (String, String?) -> Unit
+    selectModel: (String, String?) -> Unit,
+    innerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier.fillMaxHeight().padding(top = innerPadding.calculateTopPadding()),
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
