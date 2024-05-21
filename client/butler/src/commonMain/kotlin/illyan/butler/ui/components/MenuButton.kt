@@ -43,6 +43,9 @@ fun MenuButton(
         onClick = onClick,
         enabled = enabled
     ) {
-        Text(text = text)
+        Text(
+            text = text,
+            maxLines = 1
+        )
     }
 }

@@ -83,7 +83,7 @@ class ChatDetailViewModel(
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate {
                 it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
-            }?.filter { it.value > 0f } ?: emptyMap()
+            } ?: emptyMap()
         val images = resources?.filter { it.type.startsWith("image") }
             ?.associate { it.id!! to it.data } ?: emptyMap()
         ChatDetailState(

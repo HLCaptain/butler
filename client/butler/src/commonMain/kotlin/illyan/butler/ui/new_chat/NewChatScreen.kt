@@ -10,7 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -114,7 +119,8 @@ fun ModelList(
 fun ModelListItem(
     model: DomainModel,
     providers: List<String>,
-    selectModelWithProvider: (String?) -> Unit
+    selectModelWithProvider: (String?) -> Unit,
+    isSelfHostAvailable: Boolean = true
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     ExpandableCard(
@@ -122,7 +128,7 @@ fun ModelListItem(
         isExpanded = isExpanded,
         expandedContent = {
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(start = 56.dp)
             ) {
                 providers.forEach { provider ->
                     Row(
@@ -131,6 +137,7 @@ fun ModelListItem(
                         Text(
                             text = provider,
                             style = MaterialTheme.typography.bodyMedium,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         MenuButton(
                             onClick = { selectModelWithProvider(provider) },
@@ -148,13 +155,35 @@ fun ModelListItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = model.name ?: model.id,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { isExpanded = !isExpanded }) {
+                    if (isExpanded) {
+                        Icon(
+                            imageVector = Icons.Rounded.ExpandLess,
+                            contentDescription = "Collapse"
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.ExpandMore,
+                            contentDescription = "Expand"
+                        )
+                    }
+                }
+                Text(
+                    text = model.name ?: model.id,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.headlineMedium,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
             MenuButton(
                 onClick = { selectModelWithProvider(null) },
-                text = stringResource(Res.string.select_self_hosted)
+                text = stringResource(Res.string.select_self_hosted),
+                enabled = isSelfHostAvailable
             )
         }
     }

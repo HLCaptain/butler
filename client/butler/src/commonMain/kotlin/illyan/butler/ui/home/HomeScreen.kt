@@ -154,7 +154,7 @@ class HomeScreen : Screen {
                     ButlerDialog(
                         startScreens = listOfNotNull(startScreen),
                         isDialogOpen = isDialogOpen,
-                        isDialogFullscreen = state.isUserSignedIn != true,
+                        isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
                         onDismissDialog = {
                             if (state.isUserSignedIn == true) {
                                 isAuthFlowEnded = true

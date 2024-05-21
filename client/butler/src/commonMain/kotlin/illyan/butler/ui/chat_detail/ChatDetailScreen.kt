@@ -3,7 +3,6 @@ package illyan.butler.ui.chat_detail
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +31,8 @@ import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -345,7 +346,9 @@ fun AudioMessages(
     onStop: () -> Unit = {},
     isPlaying: String? = null
 ) {
-    Column {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         resources.forEach { (resourceId, length) ->
             var progress by remember { mutableStateOf(0f) }
             val isActive = isPlaying == resourceId
@@ -358,34 +361,23 @@ fun AudioMessages(
                         onStop()
                         progress = 0f
                     }
-                } else if (!isActive && progress > 0f) {
-                    progress = 0f
-                }
+                } else if (!isActive && progress > 0f) progress = 0f
             }
 
-            Button(
-                onClick = {
-                    if (isActive) {
-                        onStop()
-                    } else {
-                        onPlay(resourceId)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = progress),
-                        shape = RoundedCornerShape(8.dp)
+            Button(onClick = { if (isActive) onStop() else onPlay(resourceId) },) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isActive) Icons.Rounded.Stop else Icons.Rounded.PlayArrow,
+                        contentDescription = stringResource(if (isActive) Res.string.stop else Res.string.play),
                     )
-            ) {
-                Text(
-                    text = stringResource(if (isActive) Res.string.stop else Res.string.play),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.CenterVertically)
-                )
+                    Text(
+                        text = stringResource(if (isActive) Res.string.stop else Res.string.play),
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
+                }
             }
         }
     }

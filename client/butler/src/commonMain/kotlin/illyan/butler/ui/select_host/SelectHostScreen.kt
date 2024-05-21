@@ -76,7 +76,6 @@ class SelectHostScreen : Screen {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun SelectHostDialogContent(
     modifier: Modifier = Modifier,
