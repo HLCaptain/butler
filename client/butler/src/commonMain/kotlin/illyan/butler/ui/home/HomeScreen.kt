@@ -3,6 +3,7 @@ package illyan.butler.ui.home
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -504,7 +505,10 @@ fun NavigationDrawerItem(
                 contentDescription = stringResource(stringResource)
             )
         },
-        label = { Text(stringResource(stringResource)) }
+        label = { Text(stringResource(stringResource)) },
+        colors = NavigationDrawerItemDefaults.colors(
+            unselectedContainerColor = Color.Transparent
+        )
     )
 }
 
@@ -572,17 +576,21 @@ private fun NavigationDrawerContent(
         drawerShape = DrawerDefaults.shape,
         modifier = Modifier.widthIn(max = 280.dp),
     ) {
-        AnimatedVisibility(!isDrawerPermanent) {
-            CloseButton { closeDrawer() }
-        }
-        ChatsNavigationDrawerItem(selected = currentScreen is ChatScreen && !isProfileShown) {
-            navigateToChats()
-        }
-        NewChatNavigationDrawerItem(selected = currentScreen is NewChatScreen && !isProfileShown) {
-            navigateToNewChat()
-        }
-        ProfileNavigationDrawerItem(selected = isProfileShown) {
-            onProfileClick()
+        Column(
+            modifier = Modifier.padding(vertical = 12.dp)
+        ) {
+            AnimatedVisibility(!isDrawerPermanent) {
+                CloseButton { closeDrawer() }
+            }
+            ChatsNavigationDrawerItem(selected = currentScreen is ChatScreen && !isProfileShown) {
+                navigateToChats()
+            }
+            NewChatNavigationDrawerItem(selected = currentScreen is NewChatScreen && !isProfileShown) {
+                navigateToNewChat()
+            }
+            ProfileNavigationDrawerItem(selected = isProfileShown) {
+                onProfileClick()
+            }
         }
     }
 }

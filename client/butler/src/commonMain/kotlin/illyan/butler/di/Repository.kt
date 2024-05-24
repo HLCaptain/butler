@@ -38,12 +38,8 @@ fun provideAppRepository(
 ): AppRepository = if (BuildConfig.USE_MEMORY_DB) {
     appMemoryRepository
 } else {
-    // FIXME: Temporary solution to avoid using AppSettingsRepository on Android
-    if (getPlatformName() == "Android") {
-        appMemoryRepository
-    } else {
-        appSettingsRepository
-    }
+    // FIXME: Temporary solution to avoid using AppSettingsRepository
+    appMemoryRepository
 }
 
 @Single

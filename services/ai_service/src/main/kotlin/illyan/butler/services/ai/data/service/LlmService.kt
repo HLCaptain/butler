@@ -167,7 +167,8 @@ class LlmService(
             } else {
                 // Describe image
                 // For audio, reply with text and audio
-                resources.forEach { resource ->
+                val lastMessageResources = lastMessage.resourceIds.mapNotNull { id -> resources.find { it.id == id } }
+                lastMessageResources.forEach { resource ->
                     when (resource.type.split("/").first()) {
                         "image" -> {
                             Napier.v("Resource is an image, answering with text")
@@ -308,8 +309,8 @@ class LlmService(
         // get all chats with user
         val userId = chatsByUsers.values.flatten().first { it.id == chatId }.members.first { !modelIds.contains(it) }
         // get last 10 chats with user
-        val userChats = chatsByUsers[userId]?.sortedByDescending { chat -> chat.lastFewMessages.maxOf { it.time ?: 0L } }?.take(10) ?: emptyList()
-        val chatSummaries = userChats.mapNotNull { it.summary }
+        val userChats = chatsByUsers[userId]?.sortedByDescending { chat -> chat.lastFewMessages.maxOfOrNull { it.time ?: 0L } ?: 0L }?.take(10) ?: emptyList()
+        val chatSummaries = userChats.mapNotNull { chat -> chat.summary?.takeIf { it.length > 50 } } // Take summaries longer than 100 characters
         // generate response text
         val openAI = openAIClients[endpoint] ?: throw Exception("No OpenAI client found for endpoint $endpoint")
         return openAI.chatCompletion(
@@ -404,7 +405,7 @@ fun MessageDto.toChatMessage(
         content += ImagePart(imageData)
     }
     if (textPart.isNotBlank()) content += TextPart(textPart)
-    return if (content.size <= 1) {
+    return if (content.size <= 1 && content[0] is TextPart) {
         // Only text
         ChatMessage(
             role = if (modelIds.contains(senderId)) ChatRole.Assistant else ChatRole.User,

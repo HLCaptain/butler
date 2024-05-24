@@ -56,13 +56,13 @@ class WelcomeScreen : Screen {
                 Button(onClick = onDone) {
                     Text(text = stringResource(Res.string.next))
                 }
-                if (BuildConfig.DEBUG) {
-                    Button(onClick = {
-                        screenModel.skipTutorialAndLogin()
-                    }) {
-                        Text(text = "Skip Tutorial and Login")
-                    }
-                }
+//                if (BuildConfig.DEBUG) {
+//                    Button(onClick = {
+//                        screenModel.skipTutorialAndLogin()
+//                    }) {
+//                        Text(text = "Skip Tutorial and Login")
+//                    }
+//                }
             }
         }
     }

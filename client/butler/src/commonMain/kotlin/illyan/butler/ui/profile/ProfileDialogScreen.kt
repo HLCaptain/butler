@@ -198,13 +198,13 @@ fun ProfileButtons(
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
                 }
-                if (BuildConfig.DEBUG) {
-                    Button(
-                        onClick = resetTutorialAndSignOut
-                    ) {
-                        Text(text = "Reset tutorial and sign out")
-                    }
-                }
+//                if (BuildConfig.DEBUG) {
+//                    Button(
+//                        onClick = resetTutorialAndSignOut
+//                    ) {
+//                        Text(text = "Reset tutorial and sign out")
+//                    }
+//                }
             } else if (isUserSignedIn == false) {
                 Button(
                     onClick = onLogin

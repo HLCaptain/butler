@@ -303,7 +303,7 @@ fun MessageItem(
         images.forEach { image ->
             SubcomposeAsyncImage(
                 modifier = Modifier
-                    .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+                    .sizeIn(maxHeight = 400.dp, maxWidth = 400.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 model = image,
                 imageLoader = ImageLoader(LocalPlatformContext.current),
