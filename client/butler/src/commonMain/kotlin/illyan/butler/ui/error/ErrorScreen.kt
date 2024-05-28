@@ -18,13 +18,17 @@ class ErrorScreen : Screen {
     override fun Content() {
         val screenModel = koinScreenModel<ErrorScreenModel>()
         val state by screenModel.state.collectAsState()
-        ErrorScreen(screenModel, state.appErrors, state.serverErrors)
+        ErrorScreen(
+            cleanError = screenModel::clearError,
+            appErrors = state.appErrors,
+            serverErrors = state.serverErrors
+        )
     }
 }
 
 @Composable
 private fun ErrorScreen(
-    screenModel: ErrorScreenModel,
+    cleanError: (String) -> Unit,
     appErrors: List<DomainErrorEvent>,
     serverErrors: List<Pair<String, DomainErrorResponse>>
 ) {
@@ -36,14 +40,14 @@ private fun ErrorScreen(
         val latestServerError = serverErrors.maxByOrNull { it.second.timestamp }
         if (latestAppError != null && latestServerError != null) {
             if (latestAppError.timestamp > latestServerError.second.timestamp) {
-                AppErrorContent(appErrors, screenModel::clearError)
+                AppErrorContent(appErrors, cleanError)
             } else {
-                ServerErrorContent(serverErrors, screenModel::clearError)
+                ServerErrorContent(serverErrors, cleanError)
             }
         } else if (latestAppError != null) {
-            AppErrorContent(appErrors, screenModel::clearError)
+            AppErrorContent(appErrors, cleanError)
         } else if (latestServerError != null) {
-            ServerErrorContent(serverErrors, screenModel::clearError)
+            ServerErrorContent(serverErrors, cleanError)
         }
     }
 }
