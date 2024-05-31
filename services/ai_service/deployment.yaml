@@ -24,7 +24,7 @@ spec:
               memory: "200Mi"
             limits:
               cpu: "1"
-              memory: "2Gi"
+              memory: "512Mi"
           env:
             - name: LOCAL_AI_API_URL
               valueFrom:
