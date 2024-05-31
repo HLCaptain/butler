@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: local-ai
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: models-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-ai
+  labels:
+    app: local-ai
+spec:
+  selector:
+    matchLabels:
+      app: local-ai
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: local-ai
+      name: local-ai
+    spec:
+      containers:
+        - args: []
+          env:
+          - name: DEBUG
+            value: "true"
+          - name: GALLERIES
+            value: '[{"name":"model-gallery", "url":"github:go-skynet/model-gallery/index.yaml"}, {"url": "github:go-skynet/model-gallery/huggingface.yaml","name":"huggingface"}]'
+          - name: THREADS
+            value: "16"
+          name: local-ai
+          image: localai/localai:latest-aio-cpu #localai/localai:latest-aio-gpu-nvidia-cuda-12 for GPU
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: models-volume
+              mountPath: /build/models
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1600m"
+            limits:
+              memory: "32Gi"
+              cpu: "1600m"
+      volumes:
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: models-pvc
+      # deploy:
+      #   resources:
+      #     reservations:
+      #       devices:
+      #         - driver: nvidia
+      #           count: 1
+      #           capabilities: [gpu]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: local-ai
+spec:
+  selector:
+    app: local-ai
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

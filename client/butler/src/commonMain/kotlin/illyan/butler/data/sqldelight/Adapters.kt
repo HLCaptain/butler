@@ -1,6 +1,9 @@
 package illyan.butler.data.sqldelight
 
 import app.cash.sqldelight.ColumnAdapter
+import illyan.butler.domain.model.ErrorState
+import io.ktor.util.decodeBase64Bytes
+import io.ktor.util.encodeBase64
 
 val mapAdapter = object : ColumnAdapter<Map<String, String>, String> {
     override fun decode(databaseValue: String): Map<String, String> {
@@ -37,5 +40,25 @@ val listAdapter = object : ColumnAdapter<List<String>, String> {
 
     override fun encode(value: List<String>): String {
         return value.joinToString(",")
+    }
+}
+
+val errorStateAdapter = object : ColumnAdapter<ErrorState, String> {
+    override fun decode(databaseValue: String): ErrorState {
+        return ErrorState.valueOf(databaseValue)
+    }
+
+    override fun encode(value: ErrorState): String {
+        return value.name
+    }
+}
+
+val byteArrayToTextAdapter = object : ColumnAdapter<ByteArray, String> {
+    override fun decode(databaseValue: String): ByteArray {
+        return databaseValue.decodeBase64Bytes()
+    }
+
+    override fun encode(value: ByteArray): String {
+        return value.encodeBase64()
     }
 }

@@ -24,7 +24,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.ExperimentalSerializationApi
-import org.koin.ktor.ext.get
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -49,7 +48,7 @@ class ApplicationTest {
             configureDependencyInjection()
             configureAuthentication()
             configureSerialization()
-            configureWebSockets(get())
+            configureWebSockets()
             configureStatusPages()
             configureCompression()
             configureRouting(tokenConfig)

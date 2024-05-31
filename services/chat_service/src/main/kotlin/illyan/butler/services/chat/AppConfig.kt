@@ -12,8 +12,9 @@ data object AppConfig {
      *  - staging
      *  - production
      */
+    val DEPLOYMENT_ENVIRONMENT = System.getenv("DEPLOYMENT_ENVIRONMENT") ?: "development"
     data object Ktor {
-        val DEVELOPMENT = System.getenv("KTOR_DEVELOPMENT").toBoolean()
+        val DEVELOPMENT = System.getenv("DEVELOPMENT").toBoolean()
         val PORT = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8080
         val DEBUG_CONTENT_TYPE = ContentType.Application.Json
         val BINARY_CONTENT_TYPE = ContentType.Application.ProtoBuf
@@ -21,7 +22,8 @@ data object AppConfig {
         val FALLBACK_CONTENT_TYPE = ContentType.parse(System.getenv("KTOR_FALLBACK_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
         val SUPPORTED_CONTENT_TYPES =  listOf(
             DEFAULT_CONTENT_TYPE, // First is used as default
-            FALLBACK_CONTENT_TYPE // Second is used as fallback
+            FALLBACK_CONTENT_TYPE, // Second is used as fallback
+            BINARY_CONTENT_TYPE // Supporting binary either way
         ).distinct()
         @OptIn(ExperimentalSerializationApi::class)
         val SERIALIZATION_FORMATS = SUPPORTED_CONTENT_TYPES.map { contentType ->
@@ -38,7 +40,7 @@ data object AppConfig {
         val NOTIFICATION_API_URL = System.getenv("NOTIFICATION_API_URL") ?: "http://localhost:8083"
     }
     data object Telemetry {
-        val OTLP_EXPORTER_ENDPOINT = System.getenv("OTLP_EXPORTER_ENDPOINT") ?: "http://localhost:4317"
+        val OTEL_EXPORTER_OTLP_ENDPOINT = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4317"
     }
     data object Database {
         val DATABASE_URL = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432"

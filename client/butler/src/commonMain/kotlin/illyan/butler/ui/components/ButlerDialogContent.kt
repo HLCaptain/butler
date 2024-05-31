@@ -1,11 +1,9 @@
 package illyan.butler.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -30,10 +28,10 @@ import androidx.compose.ui.unit.dp
 fun ButlerDialogContent(
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier.heightIn(max = 350.dp),
-    icon: @Composable (BoxScope.() -> Unit)? = null,
-    title: @Composable (BoxScope.() -> Unit)? = null,
-    text: @Composable (BoxScope.() -> Unit)? = null,
-    buttons: @Composable (BoxScope.() -> Unit)? = null,
+    icon: @Composable (ColumnScope.() -> Unit)? = null,
+    title: @Composable (ColumnScope.() -> Unit)? = null,
+    text: @Composable (ColumnScope.() -> Unit)? = null,
+    buttons: @Composable (ColumnScope.() -> Unit)? = null,
     dialogPaddingValues: PaddingValues = ButlerDialogContentPadding,
     iconPaddingValues: PaddingValues = ButlerDialogIconPadding,
     titlePaddingValues: PaddingValues = ButlerDialogTitlePadding,
@@ -46,8 +44,7 @@ fun ButlerDialogContent(
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     buttonContentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
-    ButlerDialogContent(
-        modifier = modifier,
+    ButlerDialogContentHolder(
         surface = {
             ButlerDialogSurface(
                 modifier = modifier,
@@ -59,76 +56,61 @@ fun ButlerDialogContent(
         }
     ) {
         Column(
-            modifier = Modifier.padding(dialogPaddingValues)
+            modifier = modifier.padding(dialogPaddingValues),
         ) {
-            AnimatedVisibility(visible = icon != null) {
+            AnimatedVisibility(
+                modifier = Modifier
+                    .padding(iconPaddingValues)
+                    .align(Alignment.CenterHorizontally),
+                visible = icon != null
+            ) {
                 icon?.let {
                     CompositionLocalProvider(LocalContentColor provides iconContentColor) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(iconPaddingValues)
-                                .align(Alignment.CenterHorizontally)
-                        ) {
-                            icon()
-                        }
+                        icon()
                     }
                 }
             }
-            AnimatedVisibility(visible = title != null) {
+            AnimatedVisibility(
+                modifier = textModifier
+                    .align(if (icon == null) {
+                        Alignment.Start
+                    } else {
+                        Alignment.CenterHorizontally
+                    })
+                    .padding(titlePaddingValues),
+                visible = title != null
+            ) {
                 title?.let {
                     CompositionLocalProvider(LocalContentColor provides titleContentColor) {
                         val textStyle = MaterialTheme.typography.headlineSmall
                         ProvideTextStyle(textStyle) {
-                            Box(
-                                // Align the title to the center when an icon is present.
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(titlePaddingValues)
-                                    .align(
-                                        if (icon == null) {
-                                            Alignment.Start
-                                        } else {
-                                            Alignment.CenterHorizontally
-                                        }
-                                    )
-                            ) {
-                                title()
-                            }
+                            title()
                         }
                     }
                 }
             }
-            AnimatedVisibility(visible = text != null) {
+            AnimatedVisibility(
+                modifier = Modifier.padding(textPaddingValues),
+                visible = text != null
+            ) {
                 text?.let {
                     CompositionLocalProvider(LocalContentColor provides textContentColor) {
                         val textStyle = MaterialTheme.typography.bodyMedium
                         ProvideTextStyle(textStyle) {
-                            Box(
-                                textModifier
-                                    .fillMaxWidth()
-                                    .weight(weight = 1f, fill = false)
-                                    .padding(textPaddingValues)
-                                    .align(Alignment.Start)
-                            ) {
-                                text()
-                            }
+                            text()
                         }
                     }
                 }
             }
-            AnimatedVisibility(visible = buttons != null) {
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.End),
+                visible = buttons != null
+            ) {
                 buttons?.let {
                     CompositionLocalProvider(LocalContentColor provides buttonContentColor) {
                         val textStyle = MaterialTheme.typography.labelLarge
                         ProvideTextStyle(value = textStyle) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .align(Alignment.End)
-                            ) {
-                                buttons()
-                            }
+                            buttons()
                         }
                     }
                 }
@@ -147,7 +129,7 @@ fun ButlerDialogSurface(
 ) {
     // Increase width to edge of the screen until reaching DialogMaxWidth
     Surface(
-        modifier = modifier.dialogWidth(),
+        modifier = modifier,
         shape = shape,
         color = color,
         tonalElevation = tonalElevation,
@@ -156,7 +138,7 @@ fun ButlerDialogSurface(
 }
 
 @Composable
-fun ButlerDialogContent(
+fun ButlerDialogContentHolder(
     modifier: Modifier = Modifier,
     surface: @Composable (@Composable () -> Unit) -> Unit = {
         ButlerDialogSurface(
@@ -168,13 +150,53 @@ fun ButlerDialogContent(
 ) = surface(content)
 
 val DialogMinWidth = 280.dp
-val DialogMaxWidth = 420.dp
+val DialogMaxWidth = 800.dp
 val DialogMargin = 64.dp
 
-fun Modifier.dialogWidth(screenWidthDp: Dp = 400.dp) = widthIn(
-    min = DialogMinWidth,
-    max = minOf(maxOf(DialogMinWidth, screenWidthDp - DialogMargin), DialogMaxWidth),
+fun Modifier.dialogWidth(
+    screenWidthDp: Dp = 400.dp,
+    min: Dp = DialogMinWidth,
+    max: Dp = DialogMaxWidth,
+    margin: Dp = DialogMargin,
+) = widthIn(
+    min = min,
+    max = minOf(maxOf(min, screenWidthDp - margin), max)
 )
+
+fun Modifier.smallDialogWidth() = dialogWidth(max = 320.dp)
+fun Modifier.mediumDialogWidth() = dialogWidth(max = 360.dp)
+fun Modifier.largeDialogWidth() = dialogWidth(max = DialogMaxWidth)
+
+val DialogMinHeight = 200.dp
+val DialogMaxHeight = 800.dp
+
+fun Modifier.dialogHeight(
+    screenHeightDp: Dp = 400.dp,
+    min: Dp = DialogMinHeight,
+    max: Dp = DialogMaxHeight,
+    margin: Dp = DialogMargin,
+) = heightIn(
+    min = min,
+    max = minOf(maxOf(min, screenHeightDp - margin), max)
+)
+
+fun Modifier.smallDialogHeight() = dialogHeight(max = 280.dp)
+fun Modifier.mediumDialogHeight() = dialogHeight(max = 400.dp)
+fun Modifier.largeDialogHeight() = dialogHeight(max = DialogMaxHeight)
+
+fun Modifier.dialogSize(
+    screenWidthDp: Dp = 400.dp,
+    screenHeightDp: Dp = 400.dp,
+    minWidth: Dp = DialogMinWidth,
+    maxWidth: Dp = DialogMaxWidth,
+    minHeight: Dp = DialogMinHeight,
+    maxHeight: Dp = DialogMaxHeight,
+    margin: Dp = DialogMargin,
+) = dialogWidth(screenWidthDp, minWidth, maxWidth, margin).dialogHeight(screenHeightDp, minHeight, maxHeight, margin)
+
+fun Modifier.smallDialogSize() = smallDialogWidth().smallDialogHeight()
+fun Modifier.mediumDialogSize() = mediumDialogWidth().mediumDialogHeight()
+fun Modifier.largeDialogSize() = largeDialogWidth().largeDialogHeight()
 
 // Paddings for each of the dialog's parts.
 val ButlerDialogContentPadding = PaddingValues(all = 24.dp)

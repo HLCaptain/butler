@@ -8,12 +8,12 @@ import illyan.butler.api_gateway.data.model.authenticate.UserLoginResponseDto
 import illyan.butler.api_gateway.data.model.identity.UserDto
 import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
 import illyan.butler.api_gateway.data.model.response.UserTokensResponse
-import illyan.butler.api_gateway.data.utils.tryToExecute
+import illyan.butler.api_gateway.data.utils.getOrPutWebSocketFlow
+import illyan.butler.api_gateway.endpoints.utils.WebSocketSessionManager
 import illyan.butler.api_gateway.utils.AppConfig
 import illyan.butler.api_gateway.utils.Claim
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.receiveDeserialized
-import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
@@ -23,17 +23,23 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import org.koin.core.annotation.Single
 
 @Single
-class IdentityService(private val client: HttpClient) {
-    suspend fun createUser(newUser: UserRegistrationDto) = client.tryToExecute<UserDto> {
-        post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }
+class IdentityService(
+    private val client: HttpClient,
+    private val webSocketSessionManager: WebSocketSessionManager,
+) {
+    suspend fun createUser(
+        newUser: UserRegistrationDto,
+        tokenConfiguration: TokenConfiguration
+    ): UserLoginResponseDto {
+        val user = client.post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }.body<UserDto>()
+        return UserLoginResponseDto(user, generateUserTokens(user.id, tokenConfiguration))
     }
 
     suspend fun loginUser(
@@ -41,32 +47,26 @@ class IdentityService(private val client: HttpClient) {
         password: String,
         tokenConfiguration: TokenConfiguration,
     ): UserLoginResponseDto {
-        val user = client.tryToExecute<UserDto> {
-            post("${AppConfig.Api.IDENTITY_API_URL}/users/login") {
-                formData {
-                    parameter("email", email)
-                    parameter("password", password)
-                }
+        val user = client.post("${AppConfig.Api.IDENTITY_API_URL}/users/login") {
+            formData {
+                parameter("email", email)
+                parameter("password", password)
             }
-        }
+        }.body<UserDto>()
         return UserLoginResponseDto(user, generateUserTokens(user.id, tokenConfiguration))
     }
 
-    suspend fun getUserById(id: String) = client.tryToExecute<UserDto> {
-        get("${AppConfig.Api.IDENTITY_API_URL}/users/$id")
+    suspend fun getUserById(id: String) = client.get("${AppConfig.Api.IDENTITY_API_URL}/users/$id").body<UserDto>()
+
+    private val userDataFlows = mutableMapOf<String, Flow<UserDto?>>()
+    fun getUserChangesById(id: String) = flow {
+        val url = "${AppConfig.Api.IDENTITY_API_URL}/users/$id/changes"
+        userDataFlows.getOrPutWebSocketFlow(url) {
+            webSocketSessionManager.createSession(url)
+        }.let { emitAll(it) }
     }
 
-    fun getUserChangesById(id: String): Flow<UserDto> {
-        return flow {
-            client.webSocket("/users/$id") {
-                incoming.receiveAsFlow().collectLatest { emit(receiveDeserialized()) }
-            }
-        }
-    }
-
-    suspend fun updateUserProfile(user: UserDto) = client.tryToExecute<UserDto> {
-        put("${AppConfig.Api.IDENTITY_API_URL}/users/${user.id}") { setBody(user) }
-    }
+    suspend fun updateUserProfile(user: UserDto) = client.put("${AppConfig.Api.IDENTITY_API_URL}/users/${user.id}") { setBody(user) }.body<UserDto>()
 
     suspend fun deleteUser(userId: String) = client.delete("${AppConfig.Api.IDENTITY_API_URL}/users/$userId").status.isSuccess()
 

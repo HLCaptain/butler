@@ -11,6 +11,8 @@ interface MessageCache {
      */
     fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>>
     fun getChangedMessagesByChat(chatId: String): Flow<List<MessageDto>>
-    suspend fun setMessage(message: MessageDto): MessageDto
+    suspend fun setMessage(message: MessageDto): MessageDto = setMessages(listOf(message)).first()
+    suspend fun setMessages(messages: List<MessageDto>): List<MessageDto>
     suspend fun deleteMessage(messageId: String): Boolean
+    suspend fun getMessagesByChat(chatId: String): List<MessageDto>
 }

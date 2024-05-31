@@ -1,26 +1,28 @@
 package illyan.butler
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
 import illyan.butler.ui.home.HomeScreen
 import illyan.butler.ui.theme.ButlerTheme
+import illyan.butler.ui.theme.ThemeViewModel
 import org.koin.compose.KoinContext
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 fun App() {
     KoinContext {
-        ButlerTheme {
-            Surface(modifier = Modifier.fillMaxSize()) {
-                Navigator(HomeScreen()) { navigator ->
-                    SlideTransition(navigator) {
-                        it.Content()
-                    }
-                }
-            }
+        val themeViewModel = koinViewModel<ThemeViewModel>()
+        val state by themeViewModel.state.collectAsState()
+        ButlerTheme(
+            theme = state.theme,
+            dynamicColorEnabled = state.dynamicColorEnabled,
+            isNight = state.isNight,
+        ) {
+            Navigator(HomeScreen())
         }
     }
 }

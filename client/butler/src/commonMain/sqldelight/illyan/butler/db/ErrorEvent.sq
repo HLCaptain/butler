@@ -1,0 +1,31 @@
+import illyan.butler.domain.model.ErrorState;
+import kotlin.String;
+import kotlin.collections.Map;
+
+CREATE TABLE ErrorEvent (
+    id TEXT PRIMARY KEY NOT NULL UNIQUE,
+    platform TEXT NOT NULL,
+    exception TEXT NOT NULL,
+    message TEXT NOT NULL,
+    stackTrace TEXT NOT NULL,
+    os TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    metadata TEXT AS Map<String, String> NOT NULL,
+    state TEXT AS ErrorState NOT NULL -- NEW, REPORTED
+);
+
+select:
+SELECT * FROM ErrorEvent WHERE id = ?;
+
+selectAll:
+SELECT * FROM ErrorEvent;
+
+upsert:
+INSERT OR REPLACE INTO ErrorEvent
+VALUES ?;
+
+delete:
+DELETE FROM ErrorEvent WHERE id = ?;
+
+deleteAll:
+DELETE FROM ErrorEvent;

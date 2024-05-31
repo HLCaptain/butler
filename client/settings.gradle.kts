@@ -18,6 +18,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = "ButlerClientApp"
+rootProject.name = "Butler_Client_App"
 
 include(":butler")

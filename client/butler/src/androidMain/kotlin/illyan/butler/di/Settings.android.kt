@@ -9,8 +9,10 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.russhwolf.settings.coroutines.FlowSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.koin.core.context.GlobalContext
 
@@ -20,9 +22,11 @@ actual fun provideSettings(): Settings {
 }
 
 fun provideEncryptedSettings(context: Context): ObservableSettings {
+    Napier.v("Creating encrypted settings")
     val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
+    Napier.v("Master key created")
     val sharedPreferences = EncryptedSharedPreferences.create(
         context,
         "secret_shared_prefs",
@@ -30,14 +34,19 @@ fun provideEncryptedSettings(context: Context): ObservableSettings {
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
+    Napier.v("Encrypted shared preferences created")
     return SharedPreferencesSettings(sharedPreferences)
 }
 
 @OptIn(ExperimentalSettingsApi::class)
 @Single
 actual fun provideFlowSettings(
-    @NamedCoroutineDispatcherIO scope: CoroutineScope,
-    @NamedCoroutineScopeIO dispatcher: CoroutineDispatcher
+    @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
+    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings {
     return provideEncryptedSettings(GlobalContext.get().get()).toFlowSettings(dispatcher)
+//    val context: Context = GlobalContext.get().get()
+//    return DataStoreSettings(context.dataStore)
 }
+
+//val Context.dataStore by preferencesDataStore(name = "settings")

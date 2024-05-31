@@ -20,40 +20,38 @@ package illyan.butler.ui.login
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.NamedCoroutineDispatcherIO
+import illyan.butler.di.KoinNames
 import illyan.butler.manager.AuthManager
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Named
 
 @Factory
 class LoginScreenModel(
     private val authManager: AuthManager,
-    @NamedCoroutineDispatcherIO private val dispatcherIO: CoroutineDispatcher,
+    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
 ): ScreenModel {
-    private val _isSigningIn = MutableStateFlow(false)
-    val isSigningIn = _isSigningIn.asStateFlow()
-
-    val isUserSignedIn = authManager.isUserSignedIn
-        .stateIn(
-            scope = screenModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = false
+    val state = combine(
+        authManager.isUserSigningIn,
+        authManager.isUserSignedIn
+    ) { signingIn, signedIn ->
+        LoginScreenState(
+            isSignedIn = signedIn,
+            isSigningIn = signingIn
         )
+    }.stateIn(
+        scope = screenModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = LoginScreenState()
+    )
 
     fun signInWithEmailAndPassword(email: String, password: String) {
         screenModelScope.launch(dispatcherIO) {
             authManager.signInWithEmailAndPassword(email, password)
-        }
-    }
-
-    fun signUpWithEmailAndPassword(email: String, userName: String, password: String) {
-        screenModelScope.launch(dispatcherIO) {
-            authManager.createUserWithEmailAndPassword(email, userName, password)
         }
     }
 }

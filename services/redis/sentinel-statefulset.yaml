@@ -51,6 +51,8 @@ spec:
             sentinel auth-pass mymaster $REDIS_PASSWORD
             " > /etc/redis/sentinel.conf
             cat /etc/redis/sentinel.conf
+            sed -i "s/\$REDIS_PASSWORD/$REDIS_PASSWORD/g" /etc/redis/sentinel.conf
+            sleep 5 # wait for redis to start
         volumeMounts:
         - name: redis-config
           mountPath: /etc/redis/

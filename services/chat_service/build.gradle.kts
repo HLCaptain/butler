@@ -50,9 +50,19 @@ dependencies {
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.ktor.server.compression)
     implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.cio)
     implementation(libs.logback.classic)
     implementation(libs.nanoid)
     implementation(libs.kotlinx.datetime)
+
+    implementation(libs.opentelemetry.api)
+    implementation(libs.opentelemetry.sdk)
+    implementation(libs.opentelemetry.exporter.otlp)
+    implementation(libs.opentelemetry.exporter.prometheus)
+    implementation(libs.opentelemetry.trace)
+    implementation(libs.opentelemetry.autoconfigure)
+    implementation(libs.opentelemetry.ktor)
+    implementation(libs.opentelemetry.resources)
 
     // Database
     implementation(libs.postgresql)
@@ -60,6 +70,7 @@ dependencies {
     implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.crypt)
     implementation(libs.exposed.dao)
+    implementation(libs.exposed.json)
 
     implementation(libs.napier)
 

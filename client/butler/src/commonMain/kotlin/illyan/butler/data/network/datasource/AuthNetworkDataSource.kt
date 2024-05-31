@@ -12,7 +12,7 @@ interface AuthNetworkDataSource {
      * Signs up a new user based on [UserRegistrationDto].
      * @return details of the new user.
      */
-    suspend fun signup(credentials: UserRegistrationDto): UserDto
+    suspend fun signup(credentials: UserRegistrationDto): UserLoginResponseDto
 
     /**
      * Logs in the user.

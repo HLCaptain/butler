@@ -25,8 +25,9 @@ data:
 Run the following commands to build the Docker images and deploy them to Kubernetes:
 
 ```sh
+docker context use default
 # Start minikube (should set kubectl to use minikube's context)
-minikube start
+minikube start --listen-address=0.0.0.0
 minikube addons enable ingress
 
 minikube docker-env
@@ -37,11 +38,14 @@ eval $(minikube docker-env)
 # Build the Docker images (in the correct minikube docker-env)
 docker-compose build
 
+# Load images
+
 # Deploy the config files to Kubernetes
 kubectl apply -f butler-configmap.yaml
 kubectl apply -f butler-secret.yaml # You have to create this file
 kubectl apply -f api_gateway/deployment.yaml
 kubectl apply -f api_gateway/service.yaml
+# kubectl apply -f services/localai/deployment.yaml # Uncomment if you want self-hosted AI
 kubectl apply -f services/postgresql/postgresql-statefulset.yaml
 kubectl apply -f services/postgresql/pgadmin-deployment.yaml
 kubectl apply -f services/redis/redis-configmap.yaml
@@ -51,6 +55,27 @@ kubectl apply -f services/chat_service/deployment.yaml
 kubectl apply -f services/chat_service/service.yaml
 kubectl apply -f services/identity_service/deployment.yaml
 kubectl apply -f services/identity_service/service.yaml
+kubectl apply -f services/ai_service/deployment.yaml
+kubectl apply -f services/ai_service/service.yaml
+
+# Separate namespace for monitoring
+kubectl create namespace monitoring
+kubectl apply -f services/prometheus/clusterRole.yaml
+kubectl apply -f services/prometheus/config-map.yaml
+kubectl apply -f services/prometheus/prometheus-deployment.yaml
+kubectl apply -f services/prometheus/prometheus-service.yaml
+kubectl apply -f services/grafana/grafana-datasource-config.yaml
+kubectl apply -f services/grafana/deployment.yaml
+kubectl apply -f services/grafana/service.yaml
+
+# For Jaeger and OpenTelemetry
+# Install cert manager needed for Jaeger
+kubectl create namespace observability
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
+kubectl apply -n observability -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.57.0/jaeger-operator.yaml
+# 5 second delay in PowerShell
+Start-Sleep -Seconds 5.0
+kubectl apply -n observability -f services/jaeger/simplest.yaml
 ```
 
 To expose the API Gateway's and pgAdmin's port, use command
@@ -58,7 +83,20 @@ To expose the API Gateway's and pgAdmin's port, use command
 ```sh
 minikube service butler-api-gateway-service
 minikube service pgadmin
+minikube service prometheus-service --namespace monitoring
+minikube service grafana --namespace monitoring
+minikube service jaeger-spm-query --namespace observability
 ```
+
+#### Exposing services
+
+To expose the API Gateway's port, use the following command:
+
+```sh
+kubectl port-forward --address 0.0.0.0 service/butler-api-gateway-service 8080:8080 # Exposing the API Gateway's port
+```
+
+Now, port `8080` is exposed to the host machine. You can access the API Gateway at `http://<your_host_ip_address>:8080` on LAN. With port-forwarding enabled on your router, you can access the API Gateway from anywhere.
 
 #### Monitoring
 
@@ -68,6 +106,24 @@ To monitor PostgreSQL, check the exposed url got from running `minikube service 
 psql -U postgres
 \password postgres
 # Enter the new password
+```
+
+### Frontend
+
+To build and run the Compose Multiplatform app, you should have a `local.properties` file in the `client` directory with the following content:
+
+```properties
+RELEASE_KEYSTORE_PASSWORD=your_release_keystore_password
+RELEASE_KEY_PASSWORD=your_release_key_password
+RELEASE_KEY_ALIAS=your_release_key_alias
+RELEASE_KEY_PATH=path/to/release.keystore
+
+DEBUG_KEYSTORE_PASSWORD=your_debug_keystore_password
+DEBUG_KEY_PASSWORD=your_debug_key_password
+DEBUG_KEY_ALIAS=your_debug_key_alias
+DEBUG_KEY_PATH=path/to/debug.keystore
+
+API_GATEWAY_URL=http://127.0.0.1:12345
 ```
 
 ## Usage
@@ -83,11 +139,13 @@ To reset deployments and images, the following commands should help:
 kubectl delete -n default deployment butler-api-gateway
 kubectl delete -n default deployment butler-chat-service
 kubectl delete -n default deployment butler-identity-service
+kubectl delete -n default deployment butler-ai-service
 
 # Delete the images
 minikube image rm illyan1337/butler-api-gateway:latest
 minikube image rm illyan1337/butler-chat-service:latest
 minikube image rm illyan1337/butler-identity-service:latest
+minikube image rm illyan1337/butler-ai-service:latest
 
 # Build the images again
 docker-compose build
@@ -96,6 +154,7 @@ docker-compose build
 kubectl apply -f api_gateway/deployment.yaml
 kubectl apply -f services/chat_service/deployment.yaml
 kubectl apply -f services/identity_service/deployment.yaml
+kubectl apply -f services/ai_service/deployment.yaml
 ```
 
 ## License
