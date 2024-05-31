@@ -22,7 +22,8 @@ data object AppConfig {
         val FALLBACK_CONTENT_TYPE = ContentType.parse(System.getenv("KTOR_FALLBACK_CONTENT_TYPE") ?: DEBUG_CONTENT_TYPE.toString())
         val SUPPORTED_CONTENT_TYPES =  listOf(
             DEFAULT_CONTENT_TYPE, // First is used as default
-            FALLBACK_CONTENT_TYPE // Second is used as fallback
+            FALLBACK_CONTENT_TYPE, // Second is used as fallback
+            BINARY_CONTENT_TYPE // Supporting binary either way
         ).distinct()
         @OptIn(ExperimentalSerializationApi::class)
         val SERIALIZATION_FORMATS = SUPPORTED_CONTENT_TYPES.map { contentType ->

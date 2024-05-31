@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <string name="app_name">Butler</string>
+    <string name="welcome_to_butler">Welcome to Butler!</string>
     <string name="hello_world">Hello world!</string>
     <string name="hello_x">Hello %s!</string>
     <string name="sign_in_anonymously">Sign in anonymously</string>
@@ -9,6 +10,7 @@
     <string name="sign_out">Sign out</string>
     <string name="login">Login</string>
     <string name="sign_up">Sign Up</string>
+    <string name="sign_up_tutorial">Sign Up to chat with AIs and access your conversations on any device!</string>
     <string name="loading">Loading</string>
     <string name="name">Name</string>
     <string name="email">Email</string>
@@ -24,9 +26,13 @@
     <string name="copied_to_clipboard">Copied to Clipboard!</string>
     <string name="description">Description</string>
     <string name="type">Type</string>
+    <string name="next">Next</string>
     <string name="no_chats">No chats</string>
     <string name="chats">Chats</string>
     <string name="new_chat">New chat</string>
+    <string name="new_chat_tutorial">Expand the AI model's card to reveal multiple AI providers and select one to start a New Chat! Have fun!</string>
+    <string name="create_new_chat">Create new chat</string>
+    <string name="delete_chat">Delete chat</string>
     <string name="chat_details">Chat details</string>
     <string name="chat_name_is_x">Chat name: %s</string>
     <string name="chat_id_is_x">Chat ID: %s</string>
@@ -37,6 +43,7 @@
     <string name="send_message">Send message</string>
     <string name="username">Username</string>
     <string name="select_host">Select Host</string>
+    <string name="select_host_description">Input the URL of your self-hosted service to access your account and chats!</string>
     <string name="self_hosted">Self-hosted</string>
     <string name="select_self_hosted">Select self-hosted</string>
     <string name="test_connection">Test Connection</string>

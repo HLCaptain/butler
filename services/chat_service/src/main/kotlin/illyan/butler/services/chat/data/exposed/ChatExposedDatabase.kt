@@ -73,7 +73,7 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun editChat(userId: String, chat: ChatDto) {
+    override suspend fun editChat(userId: String, chat: ChatDto): ChatDto {
         return newSuspendedTransaction(dispatcher, database) {
             val userChat = (ChatMembers.memberId eq userId) and (ChatMembers.chatId eq chat.id!!)
             val isUserInChat = ChatMembers.selectAll().where(userChat).count() > 0
@@ -87,7 +87,7 @@ class ChatExposedDatabase(
                 val removedMembers = currentMembers.filter { !newMembers.contains(it) }
                 val addedMembers = newMembers.filter { !currentMembers.contains(it) }
                 removedMembers.forEach { member ->
-                    ChatMembers.deleteWhere { (chatId eq chat.id) and (ChatMembers.memberId eq member) }
+                    ChatMembers.deleteWhere { (chatId eq chat.id) and (memberId eq member) }
                 }
                 addedMembers.forEach { member ->
                     ChatMembers.insertIgnore {
@@ -98,6 +98,7 @@ class ChatExposedDatabase(
             } else {
                 throw Exception("User is not in chat")
             }
+            chat
         }
     }
 

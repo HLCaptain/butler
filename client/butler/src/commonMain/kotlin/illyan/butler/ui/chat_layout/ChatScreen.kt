@@ -1,8 +1,14 @@
 package illyan.butler.ui.chat_layout
 
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,33 +16,53 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.CurrentScreen
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
 import illyan.butler.getWindowSizeInDp
 import illyan.butler.ui.chat_detail.ChatDetailScreen
-import illyan.butler.ui.chat_list.ChatListScreen
+import illyan.butler.ui.chat_detail.ChatDetailViewModel
+import illyan.butler.ui.chat_list.ChatList
+import illyan.butler.ui.chat_list.ChatListViewModel
 import illyan.butler.ui.components.ButlerTwoPane
 import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
 import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.flow.MutableStateFlow
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class ChatScreen(selectedChat: String? = null) : Screen {
-    val selectedChat = MutableStateFlow(selectedChat)
+class ChatScreen : Screen {
+    @OptIn(KoinExperimentalAPI::class)
     @Composable
     override fun Content() {
-        val screenModel = koinScreenModel<ChatScreenModel>()
-        val state by screenModel.state.collectAsState()
+        val selectedChat = LocalSelectedChat.current
+//        val selectChat = LocalChatSelector.current
+//        val screenModel = koinScreenModel<ChatScreenModel>()
+//        val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
         val (height, width) = getWindowSizeInDp()
         var windowWidth by remember { mutableStateOf(width) }
         var currentChat by rememberSaveable { mutableStateOf<String?>(null) }
-        val selected by selectedChat.collectAsState()
-        LaunchedEffect(selected) {
-            currentChat = selected
+        LaunchedEffect(selectedChat) {
+            currentChat = selectedChat
+        }
+        val onSelectChat = remember {
+            { chatId: String? ->
+//            selectChat(chatId)
+                Napier.v("Chat selected: $chatId")
+                currentChat = null
+                currentChat = chatId
+            }
+        }
+        val chatListNavController = rememberNavController()
+        DisposableEffect(Unit) {
+            val onDestinationChangedListener = NavController.OnDestinationChangedListener { _, destination, _ ->
+                if (destination.route?.contains("chatDetail") == false) onSelectChat(null)
+            }
+            chatListNavController.addOnDestinationChangedListener(onDestinationChangedListener)
+            onDispose { chatListNavController.removeOnDestinationChangedListener(onDestinationChangedListener) }
         }
         // React properly to list-detail transitions:
         // ListOnly -> ListDetail:
@@ -76,77 +102,75 @@ class ChatScreen(selectedChat: String? = null) : Screen {
             }
             Napier.v("Current pane strategy: $strategy")
         }
-        val isListOnly by remember { derivedStateOf { currentPaneStrategy == compactPaneStrategy } }
-        var listNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
-        var detailNavigator by rememberSaveable { mutableStateOf<Navigator?>(null) }
-        val onChatDetailBack = {
-            currentChat = null
-            if (isListOnly) {
-                listNavigator?.popUntil { it is ChatListScreen }
-            }
-        }
-        val chatDetailScreen by remember { lazy { ChatDetailScreen({ currentChat }) { onChatDetailBack() } } }
-        LaunchedEffect(isListOnly) {
-            if (isListOnly) {
-                Napier.v("Transitioning from ListDetail to ListOnly")
-                if (currentChat != null) {
-                    listNavigator?.push(chatDetailScreen)
-                    Napier.v("Added chat onto list screen.")
-                } else {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Placed empty detail screen.")
-                }
-            } else {
-                Napier.v("Transitioning from ListOnly to ListDetail")
-                if (currentChat != null) {
-                    if (listNavigator?.lastItem !is ChatListScreen) {
-                        listNavigator?.popUntil { it is ChatListScreen }
-                    }
-                    Napier.v("Removed chat from list screen.")
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Added chat onto detail screen.")
-                } else {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Placed empty detail screen.")
-                }
-            }
-        }
-        LaunchedEffect(currentChat) {
+        val isListOnly by derivedStateOf { currentPaneStrategy == compactPaneStrategy }
+        LaunchedEffect(currentChat, isListOnly) {
+            Napier.v("currentChat: $currentChat, isListOnly: $isListOnly, listNavigator: $chatListNavController")
+            Napier.v("listNavigator: ${chatListNavController.currentBackStack.value.joinToString { it.destination.route.toString() }}")
             if (currentChat != null) {
                 Napier.v("selectedChat is not null")
                 if (isListOnly) {
-                    if (listNavigator?.lastItem !is ChatListScreen) {
-                        listNavigator?.popUntil { it is ChatListScreen }
+                    if (chatListNavController.currentDestination?.route?.contains("chatDetail") == false) {
+                        chatListNavController.navigate("chatDetail/${currentChat}")
+                        Napier.v("Pushed ChatDetailScreen to listNavigator")
                     }
-                    listNavigator?.push(chatDetailScreen)
-                    Napier.v("Pushed ChatDetailScreen to listNavigator")
                 } else {
-                    detailNavigator?.replaceAll(chatDetailScreen)
-                    Napier.v("Replaced all screens in detailNavigator with ChatDetailScreen")
+                    if (chatListNavController.currentDestination?.route?.contains("chatDetail") == true) {
+                        chatListNavController.popBackStack()
+                        Napier.v("Removed chat from list screen.")
+                    }
                 }
             } else {
                 Napier.v("selectedChat is null")
-                if (listNavigator?.lastItem !is ChatListScreen) {
-                    listNavigator?.popUntil { it is ChatListScreen }
+                if (chatListNavController.currentDestination?.route?.contains("chatDetail") == true) {
+                    chatListNavController.popBackStack()
+                    Napier.v("Popped ChatDetailScreen from listNavigator")
                 }
-                detailNavigator?.replaceAll(chatDetailScreen)
-                Napier.v("Popped screens from listNavigator until ChatListScreen is found")
             }
         }
-        ButlerTwoPane(
-            strategy = currentPaneStrategy,
-            first = {
-                Navigator(ChatListScreen { currentChat = it; Napier.v { "Selected chat ID: $it" } }) {
-                    LaunchedEffect(Unit) { listNavigator = it }
-                    SlideTransition(it)
+        CompositionLocalProvider(
+            LocalChatSelector provides onSelectChat,
+            LocalSelectedChat provides currentChat
+        ) {
+            ButlerTwoPane(
+                strategy = currentPaneStrategy,
+                first = {
+                    NavHost(
+                        navController = chatListNavController,
+                        startDestination = "chatList",
+                        enterTransition = { slideInHorizontally { it } },
+                        exitTransition = { slideOutHorizontally() + fadeOut() },
+                        popEnterTransition = { slideInHorizontally() },
+                        popExitTransition = { slideOutHorizontally { it } + fadeOut() }
+                    ) {
+                        composable("chatList") {
+                            val viewModel = koinViewModel<ChatListViewModel>()
+                            val chats by viewModel.userChats.collectAsState()
+                            ChatList(
+                                chats = chats,
+                                openChat = onSelectChat,
+                                deleteChat = viewModel::deleteChat
+                            )
+                        }
+                        composable("chatDetail/{chatId}") {
+                            val chatId = it.arguments?.getString("chatId")
+                            val viewModel = koinViewModel<ChatDetailViewModel>()
+                            val state by viewModel.state.collectAsState()
+                            ChatDetailScreen(state, viewModel, chatId, isListOnly) {
+                                chatListNavController.popBackStack()
+                            }
+                        }
+                    }
+                },
+                second = {
+                    val viewModel = koinViewModel<ChatDetailViewModel>()
+                    val state by viewModel.state.collectAsState()
+                    ChatDetailScreen(state, viewModel, currentChat, false)
                 }
-            },
-            second = {
-                Navigator(chatDetailScreen) {
-                    LaunchedEffect(Unit) { detailNavigator = it }
-                    SlideTransition(it)
-                }
-            }
-        )
+            )
+        }
     }
 }
+
+val LocalChatSelector = compositionLocalOf<((String?) -> Unit)> { {} }
+val LocalChatBackHandler = compositionLocalOf { {} }
+val LocalSelectedChat = compositionLocalOf<String?> { null }

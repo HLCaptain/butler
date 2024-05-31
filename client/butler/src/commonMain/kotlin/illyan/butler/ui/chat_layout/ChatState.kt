@@ -1,6 +1,7 @@
 package illyan.butler.ui.chat_layout
 
+import illyan.butler.domain.model.DomainChat
+
 data class ChatState(
-    val dataFlow1: Boolean,
-    val dataFlow2: Boolean
+    val chats: List<DomainChat> = emptyList()
 )

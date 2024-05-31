@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import illyan.butler.config.BuildConfig
+import illyan.butler.di.JvmPermissionRepository
 import illyan.butler.repository.permission.PermissionRepository
 import illyan.butler.utils.audio.AudioRecorder
 import illyan.butler.utils.sound.JvmAudioRecorder
@@ -46,5 +47,5 @@ actual fun getAudioRecorder(): AudioRecorder? {
 }
 
 actual fun getPlatformPermissionRepository(): PermissionRepository {
-    TODO("Not yet implemented")
+    return JvmPermissionRepository()
 }

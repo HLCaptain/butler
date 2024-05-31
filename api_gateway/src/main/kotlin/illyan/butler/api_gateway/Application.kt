@@ -13,8 +13,8 @@ import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.server.application.Application
+import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
 import kotlin.time.Duration.Companion.days
 
 fun main() {
@@ -22,9 +22,9 @@ fun main() {
     System.setProperty("io.ktor.development", AppConfig.Ktor.DEVELOPMENT.toString())
 
     embeddedServer(
-        factory = Netty,
+        factory = CIO,
         port = AppConfig.Ktor.PORT,
-        module = Application::module
+        module = Application::module,
     ).start(wait = true)
 }
 

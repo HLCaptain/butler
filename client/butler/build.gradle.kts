@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
@@ -16,7 +15,7 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
-//    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compose.compiler)
 }
 
 group = "illyan"
@@ -53,7 +52,6 @@ kotlin {
 
     sourceSets {
         commonMain {
-            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
@@ -73,6 +71,9 @@ kotlin {
                 implementation(libs.voyager.transitions)
                 implementation(libs.voyager.koin)
 
+                implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+                implementation(libs.jetbrains.navigation.compose)
+
                 implementation(libs.ktor.core)
                 implementation(libs.ktor.auth)
                 implementation(libs.ktor.client.content.negotiation)
@@ -86,6 +87,7 @@ kotlin {
                 api(libs.koin.core)
                 implementation(libs.koin.annotations)
                 implementation(libs.koin.compose)
+                implementation(libs.koin.compose.viewmodel)
 
                 implementation(libs.kotlinx.atomicfu)
                 implementation(libs.kotlinx.coroutines)
@@ -101,10 +103,12 @@ kotlin {
                 implementation(libs.store)
                 implementation(libs.settings)
                 implementation(libs.settings.coroutines)
+                implementation(libs.settings.noarg)
                 implementation(libs.korge.core)
                 implementation(libs.filepicker)
                 implementation(libs.coil)
                 implementation(libs.coil.compose)
+                implementation(libs.haze)
 
                 api(libs.napier)
             }
@@ -131,7 +135,7 @@ kotlin {
             implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
             implementation(libs.settings.datastore)
-            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.ffmpeg.kit)
         }
@@ -147,8 +151,9 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.credential.storage.jvm)
+            implementation(libs.settings)
             implementation(libs.settings.datastore)
-            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
         }
 
@@ -174,22 +179,22 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 //        languageVersion = KotlinVersion.KOTLIN_2_0
     }
 }
-tasks.withType<KotlinCompile>().configureEach {
-    dependsOn("kspCommonMainKotlinMetadata")
-}
+//tasks.withType<KotlinCompile>().configureEach {
+//    dependsOn("kspCommonMainKotlinMetadata")
+//}
 
 dependencies {
-    add("kspCommonMainMetadata", libs.koin.ksp)
+    ksp(libs.koin.ksp)
 }
 
-afterEvaluate {
-    tasks.filter {
-        it.name.contains("SourcesJar", true)
-    }.forEach {
-        println("SourceJarTask====>${it.name}")
-        it.dependsOn("kspCommonMainKotlinMetadata")
-    }
-}
+//afterEvaluate {
+//    tasks.filter {
+//        it.name.contains("SourcesJar", true)
+//    }.forEach {
+//        println("SourceJarTask====>${it.name}")
+//        it.dependsOn("kspCommonMainKotlinMetadata")
+//    }
+//}
 
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")

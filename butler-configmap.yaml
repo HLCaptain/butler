@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: butler-configmap
 data:
-  DEVELOPMENT: "true"
+  DEVELOPMENT: "false"
   IDENTITY_API_URL: "http://butler-identity-service-service:8080"
   CHAT_API_URL: "http://butler-chat-service-service:8080"
   AI_API_URL: "http://butler-ai-service-service:8080"

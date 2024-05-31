@@ -26,9 +26,9 @@ import org.koin.core.annotation.Named
 @Factory
 class HomeScreenModel(
     authManager: AuthManager,
-    appManager: AppManager,
+    private val appManager: AppManager,
     errorManager: ErrorManager,
-    permissionManager: PermissionManager,
+    private val permissionManager: PermissionManager,
     @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
 ) : ScreenModel {
     private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
@@ -99,6 +99,18 @@ class HomeScreenModel(
             } else if (latestAppErrorId != null) {
                 clearError(latestAppErrorId)
             }
+        }
+    }
+
+    fun removeLastPermissionRequest() {
+        screenModelScope.launch(dispatcherIO) {
+            permissionManager.removePermissionToRequest(state.value.preparedPermissionsToRequest.first())
+        }
+    }
+
+    fun setTutorialDone() {
+        screenModelScope.launch(dispatcherIO) {
+            appManager.setTutorialDone()
         }
     }
 }

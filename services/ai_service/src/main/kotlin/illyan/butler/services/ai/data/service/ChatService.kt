@@ -16,6 +16,8 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.encodeURLPath
 import io.ktor.http.encodeURLPathPart
 import kotlinx.datetime.Clock
@@ -38,7 +40,10 @@ class ChatService(private val client: HttpClient) {
     fun getChangedChatsAffectingUser(userId: String) = client.tryToExecuteWebSocket<List<ChatDto>>("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/chats")
 
     suspend fun getResource(userId: String, resourceId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/resources/$resourceId").body<ResourceDto>()
-    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/resources") { setBody(resource) }.body<ResourceDto>()
+    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPathPart()}/resources") {
+        contentType(ContentType.Application.ProtoBuf)
+        setBody(resource.copy(id = resource.id ?: "")) // ProtoBuf does not support null
+    }.body<ResourceDto>()
 
     /**
      * @param fromDate epoch milli

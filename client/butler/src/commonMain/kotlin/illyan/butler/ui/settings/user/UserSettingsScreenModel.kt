@@ -16,9 +16,7 @@ class UserSettingsScreenModel(
 ) : ScreenModel {
 
     val state = settingsManager.userPreferences.map { userPreferences ->
-        UserSettingsScreenState(
-            userPreferences = userPreferences
-        )
+        UserSettingsScreenState(userPreferences = userPreferences)
     }.stateIn(
         scope = screenModelScope,
         started = SharingStarted.Eagerly,

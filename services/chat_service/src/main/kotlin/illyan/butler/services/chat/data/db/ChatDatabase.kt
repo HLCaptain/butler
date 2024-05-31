@@ -9,7 +9,7 @@ import kotlinx.datetime.Clock
 interface ChatDatabase {
     suspend fun getChat(userId: String, chatId: String): ChatDto
     suspend fun createChat(userId: String, chat: ChatDto): ChatDto
-    suspend fun editChat(userId: String, chat: ChatDto)
+    suspend fun editChat(userId: String, chat: ChatDto): ChatDto
     suspend fun deleteChat(userId: String, chatId: String): Boolean
     suspend fun getChatsLastMonth(userId: String) = getChats(
         userId = userId,

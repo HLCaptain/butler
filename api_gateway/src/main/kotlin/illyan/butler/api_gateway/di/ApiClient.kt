@@ -10,7 +10,7 @@ import illyan.butler.api_gateway.utils.AppConfig
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -106,7 +106,7 @@ fun provideWebSocketClientProvider(): () -> HttpClient = { provideWebSocketClien
 
 @Named("WebSocket")
 @Single
-fun provideWebSocketClient() = HttpClient(OkHttp) {
+fun provideWebSocketClient() = HttpClient(CIO) {
     setupClient()
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
@@ -117,7 +117,7 @@ fun provideWebSocketClient() = HttpClient(OkHttp) {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Single
-fun provideHttpClient() = HttpClient(OkHttp) {
+fun provideHttpClient() = HttpClient(CIO) {
     setupClient()
 
     install(ContentNegotiation) {

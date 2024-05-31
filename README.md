@@ -25,8 +25,9 @@ data:
 Run the following commands to build the Docker images and deploy them to Kubernetes:
 
 ```sh
+docker context use default
 # Start minikube (should set kubectl to use minikube's context)
-minikube start
+minikube start --listen-address=0.0.0.0
 minikube addons enable ingress
 
 minikube docker-env
@@ -86,6 +87,16 @@ minikube service prometheus-service --namespace monitoring
 minikube service grafana --namespace monitoring
 minikube service jaeger-spm-query --namespace observability
 ```
+
+#### Exposing services
+
+To expose the API Gateway's port, use the following command:
+
+```sh
+kubectl port-forward --address 0.0.0.0 service/butler-api-gateway-service 8080:8080 # Exposing the API Gateway's port
+```
+
+Now, port `8080` is exposed to the host machine. You can access the API Gateway at `http://<your_host_ip_address>:8080` on LAN. With port-forwarding enabled on your router, you can access the API Gateway from anywhere.
 
 #### Monitoring
 

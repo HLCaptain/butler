@@ -63,6 +63,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -118,6 +119,7 @@ import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.ui.theme.canUseDynamicColors
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
@@ -127,6 +129,9 @@ class UserSettingsScreen : Screen {
     override fun Content() {
         val screenModel = koinScreenModel<UserSettingsScreenModel>()
         val state by screenModel.state.collectAsState()
+        LaunchedEffect(state) {
+            Napier.d("UserSettingsScreen: $state")
+        }
         UserSettingsDialogContent(
             preferences = state.userPreferences,
 //        arePreferencesSynced = arePreferencesSynced,

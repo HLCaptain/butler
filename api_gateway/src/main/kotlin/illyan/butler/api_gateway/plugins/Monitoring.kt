@@ -18,8 +18,6 @@ import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.server.plugins.openapi.openAPI
-import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
@@ -100,7 +98,8 @@ fun Application.configureMonitoring() {
     val spanProcessor = BatchSpanProcessor.builder(spanExporter).build()
     val tracerProvider = SdkTracerProvider.builder()
         .setResource(Resource.getDefault().merge(resource))
-        .setSampler(if (AppConfig.Ktor.DEVELOPMENT) Sampler.alwaysOn() else Sampler.alwaysOff())
+//        .setSampler(if (AppConfig.Ktor.DEVELOPMENT) Sampler.alwaysOn() else Sampler.alwaysOff())
+        .setSampler(Sampler.alwaysOn())
         .addSpanProcessor(spanProcessor)
         .build()
     val meterProvider = SdkMeterProvider.builder()
@@ -176,11 +175,6 @@ fun Application.configureMonitoring() {
             JvmHeapPressureMetrics(),
         )
     }
-    routing {
-        get("/metrics") {
-            call.respond(appMicrometerRegistry.scrape())
-        }
-    }
 
     install(CORS) {
         anyHost()
@@ -188,7 +182,10 @@ fun Application.configureMonitoring() {
     }
 
     routing {
-        openAPI(path = "openapi")
-        swaggerUI(path = "openapi")
+//        openAPI(path = "openapi")
+//        swaggerUI(path = "openapi")
+        get("/metrics") {
+            call.respond(appMicrometerRegistry.scrape())
+        }
     }
 }

@@ -9,4 +9,5 @@ object KoinNames {
     const val DispatcherMain = "DispatcherMain"
     const val DispatcherDefault = "DispatcherDefault"
     const val WebSocketClient = "WebSocketClient"
+    const val PlatformPermissionRepository = "PlatformPermissionRepository"
 }

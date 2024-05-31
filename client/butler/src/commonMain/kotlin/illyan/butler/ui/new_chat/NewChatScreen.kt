@@ -10,7 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,24 +38,27 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
+import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.components.ExpandableCard
 import illyan.butler.ui.components.MenuButton
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class NewChatScreen(private val createdNewChat: (String) -> Unit) : Screen {
+class NewChatScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         val screenModel = koinScreenModel<NewChatScreenModel>()
         val state by screenModel.state.collectAsState()
         // Make your Compose Multiplatform UI
+        val selectNewChat = LocalChatSelector.current
         LaunchedEffect(state.newChatId) {
             if (state.newChatId != null) {
-                createdNewChat(state.newChatId!!)
+                selectNewChat(state.newChatId!!)
             }
         }
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -69,14 +77,19 @@ class NewChatScreen(private val createdNewChat: (String) -> Unit) : Screen {
                 )
             },
         ) { innerPadding ->
-            Crossfade(state.availableModels) { models ->
+            Crossfade(
+                targetState = state.availableModels
+            ) { models ->
                 if (models == null) {
-                    Text("Loading...")
+                    Text(
+                        text = stringResource(Res.string.loading),
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
                 } else if (models.isNotEmpty()) {
                     ModelList(
-                        modifier = Modifier.padding(innerPadding),
                         state = state,
-                        selectModel = screenModel::createChatWithModel
+                        selectModel = screenModel::createChatWithModel,
+                        innerPadding = innerPadding
                     )
                 } else {
                     Text("No models available")
@@ -90,10 +103,11 @@ class NewChatScreen(private val createdNewChat: (String) -> Unit) : Screen {
 fun ModelList(
     modifier: Modifier = Modifier,
     state: NewChatState,
-    selectModel: (String, String?) -> Unit
+    selectModel: (String, String?) -> Unit,
+    innerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier.fillMaxHeight().padding(top = innerPadding.calculateTopPadding()),
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -112,7 +126,8 @@ fun ModelList(
 fun ModelListItem(
     model: DomainModel,
     providers: List<String>,
-    selectModelWithProvider: (String?) -> Unit
+    selectModelWithProvider: (String?) -> Unit,
+    isSelfHostAvailable: Boolean = true
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     ExpandableCard(
@@ -120,7 +135,7 @@ fun ModelListItem(
         isExpanded = isExpanded,
         expandedContent = {
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(start = 56.dp)
             ) {
                 providers.forEach { provider ->
                     Row(
@@ -129,6 +144,7 @@ fun ModelListItem(
                         Text(
                             text = provider,
                             style = MaterialTheme.typography.bodyMedium,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         MenuButton(
                             onClick = { selectModelWithProvider(provider) },
@@ -146,13 +162,35 @@ fun ModelListItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = model.name ?: model.id,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { isExpanded = !isExpanded }) {
+                    if (isExpanded) {
+                        Icon(
+                            imageVector = Icons.Rounded.ExpandLess,
+                            contentDescription = "Collapse"
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.ExpandMore,
+                            contentDescription = "Expand"
+                        )
+                    }
+                }
+                Text(
+                    text = model.name ?: model.id,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.headlineMedium,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
             MenuButton(
                 onClick = { selectModelWithProvider(null) },
-                text = stringResource(Res.string.select_self_hosted)
+                text = stringResource(Res.string.select_self_hosted),
+                enabled = isSelfHostAvailable
             )
         }
     }

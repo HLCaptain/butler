@@ -7,6 +7,7 @@ import illyan.butler.services.ai.plugins.configureRouting
 import illyan.butler.services.ai.plugins.configureSerialization
 import illyan.butler.services.ai.plugins.configureWebSockets
 import io.ktor.server.application.Application
+import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
@@ -15,7 +16,7 @@ fun main() {
     System.setProperty("io.ktor.development", AppConfig.Ktor.DEVELOPMENT.toString())
 
     embeddedServer(
-        factory = Netty,
+        factory = CIO,
         port = AppConfig.Ktor.PORT,
         module = Application::module
     ).start(wait = true)

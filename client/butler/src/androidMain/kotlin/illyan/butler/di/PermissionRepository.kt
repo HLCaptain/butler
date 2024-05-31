@@ -20,9 +20,7 @@ import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
 @Single
-class AndroidPermissionRepository(
-    private val context: Context
-) : PermissionRepository {
+class AndroidPermissionRepository : PermissionRepository {
     companion object {
         private val ANDROID_PERMISSIONS = mapOf(
             Permission.CAMERA to android.Manifest.permission.CAMERA,
@@ -31,35 +29,40 @@ class AndroidPermissionRepository(
             Permission.WRITE_EXTERNAL_STORAGE to android.Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
     }
-
-    private val activity = context.findActivity() as ComponentActivity
+    var activity: ComponentActivity? = null
+        set(value) {
+            field = value
+            launcher = value?.registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) {
+                refreshPermissionStatus(value, requestingPermission!!)
+                requestingPermission = null
+            }
+        }
     private var requestingPermission: Permission? = null
-    private val launcher: ActivityResultLauncher<String> = activity.registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        refreshPermissionStatus(requestingPermission!!)
-        requestingPermission = null
-    }
+    private var launcher: ActivityResultLauncher<String>? = null
     override val cachedPermissionFlows = MutableStateFlow(mapOf<Permission, PermissionStatus>())
 
     override fun getPermissionStatus(permission: Permission): Flow<PermissionStatus?> {
-        refreshPermissionStatus(permission)
+        activity?.let { refreshPermissionStatus(it, permission) }
         return cachedPermissionFlows.map { it[permission] }
     }
 
-    private fun refreshPermissionStatus(permission: Permission) {
+    private fun refreshPermissionStatus(context: Context, permission: Permission) {
         val hasPermission = context.checkPermission(ANDROID_PERMISSIONS[permission]!!)
         val status = if (hasPermission) {
             PermissionStatus.Granted
         } else {
-            PermissionStatus.Denied(activity.shouldShowRationale(ANDROID_PERMISSIONS[permission]!!))
+            PermissionStatus.Denied(context.findActivity().shouldShowRationale(ANDROID_PERMISSIONS[permission]!!))
         }
         cachedPermissionFlows.update { it + (permission to status) }
     }
 
     override fun launchPermissionRequest(permission: Permission) {
-        requestingPermission = permission
-        launcher.launch(ANDROID_PERMISSIONS[permission]!!)
+        launcher?.let {
+            requestingPermission = permission
+            it.launch(ANDROID_PERMISSIONS[permission]!!)
+        }
     }
 }
 

@@ -51,4 +51,6 @@ class PermissionManager(
     fun launchPermissionRequest(permission: Permission) = permissionRepository.launchPermissionRequest(permission).also {
         Napier.d("launchPermissionRequest($permission)")
     }
+
+    fun removePermissionToRequest(permission: Permission) = _preparedPermissionsToRequest.update { it - permission }
 }

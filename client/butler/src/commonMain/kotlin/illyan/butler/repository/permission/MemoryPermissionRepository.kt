@@ -19,11 +19,12 @@ class MemoryPermissionRepository(
     override val cachedPermissionFlows = MutableStateFlow(mapOf<Permission, PermissionStatus>())
 
     override fun getPermissionStatus(permission: Permission): Flow<PermissionStatus?> {
-        return cachedPermissionFlows.map { it[permission] }.also {
+        if (!cachedPermissionFlows.value.containsKey(permission)) {
             coroutineScopeIO.launch {
                 cachedPermissionFlows.update { it + (permission to PermissionStatus.Denied(true)) }
             }
         }
+        return cachedPermissionFlows.map { it[permission] }
     }
 
     override fun launchPermissionRequest(permission: Permission) {

@@ -35,7 +35,11 @@ class UserExposedDatabase(
 
     override suspend fun createUser(user: UserDto): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val userId = Users.insertAndGetId { setUser(it, user) }
+            val userId = try {
+                Users.insertAndGetId { setUser(it, user) }
+            } catch (e: Exception) {
+                throw Exception("User already exists")
+            }
             user.copy(id = userId.value)
         }
     }

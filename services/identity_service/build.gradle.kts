@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.ktor.server.compression)
     implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.cio)
     implementation(libs.logback.classic)
     implementation(libs.nanoid)
     implementation(libs.kotlinx.datetime)

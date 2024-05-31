@@ -4,6 +4,7 @@ import illyan.butler.api_gateway.data.service.AIService
 import illyan.butler.api_gateway.endpoints.utils.WebSocketServerHandler
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -14,19 +15,19 @@ fun Route.aiRoute() {
     val aiService: AIService by inject()
     val webSocketServerHandler: WebSocketServerHandler by inject()
 
-    route("/models") {
-        get {
-            call.respond(HttpStatusCode.OK, aiService.getAIModels())
+    authenticate("auth-jwt") {
+        route("/models") {
+            get {
+                call.respond(HttpStatusCode.OK, aiService.getAIModels())
+            }
+
+            get("/{modelId}") {
+                val modelId = call.parameters["modelId"]?.trim().orEmpty()
+                call.respond(HttpStatusCode.OK, aiService.getAIModel(modelId))
+            }
         }
 
-        get("/{modelId}") {
-            val modelId = call.parameters["modelId"]?.trim().orEmpty()
-            call.respond(HttpStatusCode.OK, aiService.getAIModel(modelId))
-        }
-    }
-
-    route("/providers") {
-        get {
+        get("/providers") {
             call.respond(HttpStatusCode.OK, aiService.getAIModelProviders())
         }
     }
