@@ -9,11 +9,11 @@ import illyan.butler.api_gateway.data.model.identity.UserDto
 import illyan.butler.api_gateway.data.model.identity.UserRegistrationDto
 import illyan.butler.api_gateway.data.model.response.UserTokensResponse
 import illyan.butler.api_gateway.data.utils.getOrPutWebSocketFlow
-import illyan.butler.api_gateway.data.utils.tryToExecute
 import illyan.butler.api_gateway.endpoints.utils.WebSocketSessionManager
 import illyan.butler.api_gateway.utils.AppConfig
 import illyan.butler.api_gateway.utils.Claim
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
@@ -38,9 +38,7 @@ class IdentityService(
         newUser: UserRegistrationDto,
         tokenConfiguration: TokenConfiguration
     ): UserLoginResponseDto {
-        val user = client.tryToExecute<UserDto> {
-            post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }
-        }
+        val user = client.post("${AppConfig.Api.IDENTITY_API_URL}/users") { setBody(newUser) }.body<UserDto>()
         return UserLoginResponseDto(user, generateUserTokens(user.id, tokenConfiguration))
     }
 
@@ -49,20 +47,16 @@ class IdentityService(
         password: String,
         tokenConfiguration: TokenConfiguration,
     ): UserLoginResponseDto {
-        val user = client.tryToExecute<UserDto> {
-            post("${AppConfig.Api.IDENTITY_API_URL}/users/login") {
-                formData {
-                    parameter("email", email)
-                    parameter("password", password)
-                }
+        val user = client.post("${AppConfig.Api.IDENTITY_API_URL}/users/login") {
+            formData {
+                parameter("email", email)
+                parameter("password", password)
             }
-        }
+        }.body<UserDto>()
         return UserLoginResponseDto(user, generateUserTokens(user.id, tokenConfiguration))
     }
 
-    suspend fun getUserById(id: String) = client.tryToExecute<UserDto> {
-        get("${AppConfig.Api.IDENTITY_API_URL}/users/$id")
-    }
+    suspend fun getUserById(id: String) = client.get("${AppConfig.Api.IDENTITY_API_URL}/users/$id").body<UserDto>()
 
     private val userDataFlows = mutableMapOf<String, Flow<UserDto?>>()
     fun getUserChangesById(id: String) = flow {
@@ -72,9 +66,7 @@ class IdentityService(
         }.let { emitAll(it) }
     }
 
-    suspend fun updateUserProfile(user: UserDto) = client.tryToExecute<UserDto> {
-        put("${AppConfig.Api.IDENTITY_API_URL}/users/${user.id}") { setBody(user) }
-    }
+    suspend fun updateUserProfile(user: UserDto) = client.put("${AppConfig.Api.IDENTITY_API_URL}/users/${user.id}") { setBody(user) }.body<UserDto>()
 
     suspend fun deleteUser(userId: String) = client.delete("${AppConfig.Api.IDENTITY_API_URL}/users/$userId").status.isSuccess()
 

@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.ksp)
     alias(libs.plugins.buildconfig)
-    application
 }
 
 group = "illyan"

@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -35,6 +36,9 @@ class UserExposedDatabase(
 
     override suspend fun createUser(user: UserDto): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
+            if (Users.selectAll().where { (Users.email eq user.email) and (Users.username eq user.username) }.count() > 0) throw Exception("User with email ${user.email} and username ${user.username} already exists")
+            if (Users.selectAll().where { (Users.email eq user.email) }.count() > 0) throw Exception("User with email ${user.email} already exists")
+            if (Users.selectAll().where { (Users.username eq user.username) }.count() > 0) throw Exception("User with username ${user.username} already exists")
             val userId = Users.insertAndGetId { setUser(it, user) }
             user.copy(id = userId.value)
         }
