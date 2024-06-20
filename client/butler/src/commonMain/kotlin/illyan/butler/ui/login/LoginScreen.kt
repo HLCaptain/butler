@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -45,28 +46,25 @@ import illyan.butler.ui.signup_tutorial.LocalSignInCallback
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-class LoginScreen : Screen {
-    // TODO: Implement LoginScreen with member composable methods and class variables
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<LoginScreenModel>()
-        val state by screenModel.state.collectAsState()
+@Composable
+fun LoginScreen() {
+    val screenModel = viewModel<LoginViewModel>()
+    val state by screenModel.state.collectAsState()
 
-        val onSignIn = LocalSignInCallback.current
-        LaunchedEffect(state.isSignedIn) {
-            if (state.isSignedIn == true) onSignIn()
-        }
-        val navigator = LocalNavigator.currentOrThrow
-        // TODO: implement oath authentication
-        CompositionLocalProvider(LocalSelectHostCallback provides { navigator.pop() }) {
-            LoginDialogContent(
-                isUserSigningIn = state.isSigningIn,
-                signInAnonymously = {}, // TODO: Implement sign in anonymously
-                signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
-                navigateToSignUp = { email, password -> navigator.push(SignUpScreen(email, password) { navigator.pop() }) },
-                selectHost = { navigator.push(SelectHostScreen()) }
-            )
-        }
+    val onSignIn = LocalSignInCallback.current
+    LaunchedEffect(state.isSignedIn) {
+        if (state.isSignedIn == true) onSignIn()
+    }
+    val navigator = LocalNavigator.currentOrThrow
+    // TODO: implement oath authentication
+    CompositionLocalProvider(LocalSelectHostCallback provides { navigator.pop() }) {
+        LoginDialogContent(
+            isUserSigningIn = state.isSigningIn,
+            signInAnonymously = {}, // TODO: Implement sign in anonymously
+            signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
+            navigateToSignUp = { email, password -> navigator.push(SignUpScreen(email, password) { navigator.pop() }) },
+            selectHost = { navigator.push(SelectHostScreen()) }
+        )
     }
 }
 
