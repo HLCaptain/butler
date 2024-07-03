@@ -1,7 +1,7 @@
 package illyan.butler.ui.error
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.manager.ErrorManager
@@ -13,12 +13,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
 
-@Factory
-class ErrorScreenModel(
+class ErrorViewModel(
     private val errorManager: ErrorManager,
-) : ScreenModel {
+) : ViewModel() {
     private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
     private val _appErrors = MutableStateFlow<List<DomainErrorEvent>>(listOf())
     val state = combine(
@@ -27,18 +25,18 @@ class ErrorScreenModel(
     ) { serverErrors, appErrors ->
         ErrorScreenState(serverErrors, appErrors)
     }.stateIn(
-        screenModelScope,
+        viewModelScope,
         SharingStarted.Eagerly,
         ErrorScreenState()
     )
 
     init {
-        screenModelScope.launch {
+        viewModelScope.launch {
             errorManager.serverErrors.collectLatest { response ->
                 _serverErrors.update { it + (randomUUID() to  response) }
             }
         }
-        screenModelScope.launch {
+        viewModelScope.launch {
             errorManager.appErrors.collectLatest { error ->
                 _appErrors.update { it + error }
             }

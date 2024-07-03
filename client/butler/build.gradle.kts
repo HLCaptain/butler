@@ -64,13 +64,6 @@ kotlin {
                 implementation(compose.uiTooling)
                 implementation(compose.uiUtil)
 
-                implementation(libs.voyager.navigator)
-                implementation(libs.voyager.screenModel)
-                implementation(libs.voyager.bottomSheetNavigator)
-                implementation(libs.voyager.tabNavigator)
-                implementation(libs.voyager.transitions)
-                implementation(libs.voyager.koin)
-
                 implementation(libs.jetbrains.lifecycle.viewmodel.compose)
                 implementation(libs.jetbrains.navigation.compose)
 
@@ -238,7 +231,7 @@ buildConfig {
 
         val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
-        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString()) //
+        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString())
     }
 
     // GOOGLE_CLIENT_ID from local.properties

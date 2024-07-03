@@ -1,33 +1,28 @@
 package illyan.butler.ui.new_chat
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.KoinNames
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.manager.ChatManager
 import illyan.butler.manager.ModelManager
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
-import org.koin.core.annotation.Named
 
-@Factory
-class NewChatScreenModel(
+class NewChatViewModel(
     private val modelManager: ModelManager,
-    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
     private val chatManager: ChatManager
-) : ScreenModel {
+) : ViewModel() {
     private val availableModels = MutableStateFlow(emptyMap<DomainModel, List<String>>())
     private val creatingNewChat = MutableStateFlow(false)
     private val newChatId = MutableStateFlow<String?>(null)
 
     init {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             availableModels.update { modelManager.getAvailableModels() }
         }
     }
@@ -43,13 +38,13 @@ class NewChatScreenModel(
             newChatId = id
         )
     }.stateIn(
-        scope = screenModelScope,
+        scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = NewChatState()
     )
 
     fun createChatWithModel(modelId: String, endpoint: String? = null) {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             creatingNewChat.update { true }
             val id = chatManager.startNewChat(modelId, endpoint)
             creatingNewChat.update { false }

@@ -10,12 +10,12 @@ import com.russhwolf.settings.coroutines.toFlowSettings
 import illyan.butler.EncryptedPreferences
 import io.github.aakira.napier.Napier
 import io.ktor.util.toCharArray
-import javax.crypto.KeyGenerator
-import javax.crypto.spec.SecretKeySpec
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
+import javax.crypto.KeyGenerator
+import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -51,9 +51,8 @@ fun provideEncryptedPreferencesSettings(): PreferencesSettings {
 @Single
 actual fun provideFlowSettings(
     @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
-    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings {
 //    val dataStore = PreferenceDataStoreFactory.createWithPath(scope = scope) { "preferences_datastore.json".toPath() }
 //    return DataStoreSettings(dataStore)
-    return provideEncryptedPreferencesSettings().toFlowSettings(dispatcher)
+    return provideEncryptedPreferencesSettings().toFlowSettings(Dispatchers.IO)
 }

@@ -37,11 +37,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import illyan.butler.config.BuildConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.email
@@ -62,39 +57,31 @@ import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
-import illyan.butler.ui.settings.user.UserSettingsScreen
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.utils.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class ProfileDialogScreen : Screen {
-    @Composable
-    override fun Content() {
-        ProfileDialogScreen(
-            screenModel = koinScreenModel<ProfileScreenModel>()
-        )
-    }
-}
-
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 fun ProfileDialogScreen(
-    screenModel: ProfileScreenModel
+    onShowSettingsScreen: () -> Unit = {},
 ) {
-    val userUUID by screenModel.userUUID.collectAsState()
-    val isUserSignedIn by screenModel.isUserSignedIn.collectAsState()
-    val isUserSigningOut by screenModel.isUserSigningOut.collectAsState()
-    val userPhotoUrl by screenModel.userPhotoUrl.collectAsState()
-    val email by screenModel.userEmail.collectAsState()
-    val phone by screenModel.userPhoneNumber.collectAsState()
-    val name by screenModel.userName.collectAsState()
+    val viewModel = koinViewModel<ProfileViewModel>()
+    val userUUID by viewModel.userUUID.collectAsState()
+    val isUserSignedIn by viewModel.isUserSignedIn.collectAsState()
+    val isUserSigningOut by viewModel.isUserSigningOut.collectAsState()
+    val userPhotoUrl by viewModel.userPhotoUrl.collectAsState()
+    val email by viewModel.userEmail.collectAsState()
+    val phone by viewModel.userPhoneNumber.collectAsState()
+    val name by viewModel.userName.collectAsState()
     val confidentialInfo = listOf(
         stringResource(Res.string.name) to name,
         stringResource(Res.string.email) to email,
         stringResource(Res.string.phone) to phone
     )
-    val navigator = LocalNavigator.currentOrThrow
     ProfileDialogContent(
         userUUID = userUUID,
         isUserSignedIn = isUserSignedIn,
@@ -102,11 +89,11 @@ fun ProfileDialogScreen(
         userPhotoUrl = userPhotoUrl,
         confidentialInfo = confidentialInfo,
         showConfidentialInfoInitially = false,
-        onSignOut = screenModel::signOut,
+        onSignOut = viewModel::signOut,
 //        onShowLoginScreen = { navigator.push(LoginScreen()) },
 //        onShowAboutScreen = { navigator.push(AboutDialogScreen) },
-        onShowSettingsScreen = { navigator.push(UserSettingsScreen()) },
-        resetTutorialAndSignOut = screenModel::resetTutorialAndSignOut
+        onShowSettingsScreen = onShowSettingsScreen,
+        resetTutorialAndSignOut = viewModel::resetTutorialAndSignOut
     )
 }
 

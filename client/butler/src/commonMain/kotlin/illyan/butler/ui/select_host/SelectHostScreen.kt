@@ -1,7 +1,7 @@
 package illyan.butler.ui.select_host
 
-import androidx.compose.animation.Crossfade
 //import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.viewmodel.compose.viewModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
@@ -31,14 +30,16 @@ import illyan.butler.ui.SmallCircularProgressIndicator
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
-import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 fun SelectHostScreen(selectedHost: () -> Unit) {
-    val viewModel = viewModel<SelectHostViewModel>()
+    val viewModel = koinViewModel<SelectHostViewModel>()
     val state by viewModel.state.collectAsState()
 
     var triedToConnect by rememberSaveable { mutableStateOf(false) }

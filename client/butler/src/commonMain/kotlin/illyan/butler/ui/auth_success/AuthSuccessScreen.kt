@@ -6,12 +6,8 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import kotlinx.coroutines.delay
 
 @Composable
 fun AuthSuccessIcon() {
@@ -22,5 +18,3 @@ fun AuthSuccessIcon() {
         tint = MaterialTheme.colorScheme.primary
     )
 }
-
-val LocalAuthSuccessDone = compositionLocalOf { {} }

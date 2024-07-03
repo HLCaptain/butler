@@ -10,8 +10,8 @@ import com.russhwolf.settings.SharedPreferencesSettings
 import com.russhwolf.settings.coroutines.FlowSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.koin.core.context.GlobalContext
@@ -42,9 +42,8 @@ fun provideEncryptedSettings(context: Context): ObservableSettings {
 @Single
 actual fun provideFlowSettings(
     @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
-    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings {
-    return provideEncryptedSettings(GlobalContext.get().get()).toFlowSettings(dispatcher)
+    return provideEncryptedSettings(GlobalContext.get().get()).toFlowSettings(Dispatchers.IO)
 //    val context: Context = GlobalContext.get().get()
 //    return DataStoreSettings(context.dataStore)
 }

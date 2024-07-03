@@ -20,22 +20,15 @@ package illyan.butler.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.KoinNames
 import illyan.butler.manager.AuthManager
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
-import org.koin.core.annotation.Named
 
-@Factory
 class LoginViewModel(
     private val authManager: AuthManager,
-    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher,
 ): ViewModel() {
     val state = combine(
         authManager.isUserSigningIn,
@@ -52,7 +45,7 @@ class LoginViewModel(
     )
 
     fun signInWithEmailAndPassword(email: String, password: String) {
-        viewModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             authManager.signInWithEmailAndPassword(email, password)
         }
     }

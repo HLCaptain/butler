@@ -1,6 +1,5 @@
 package illyan.butler.ui.login
 
-//import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +11,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,11 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
@@ -39,36 +32,34 @@ import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
-import illyan.butler.ui.select_host.SelectHostScreen
-import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
-import illyan.butler.ui.signup.SignUpScreen
-import illyan.butler.ui.signup_tutorial.LocalSignInCallback
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
-fun LoginScreen() {
-    val screenModel = viewModel<LoginViewModel>()
+fun LoginScreen(
+    onSignUp: (String, String) -> Unit,
+    onSelectHost: () -> Unit,
+    onAuthenticated: () -> Unit
+) {
+    val screenModel = koinViewModel<LoginViewModel>()
     val state by screenModel.state.collectAsState()
 
-    val onSignIn = LocalSignInCallback.current
     LaunchedEffect(state.isSignedIn) {
-        if (state.isSignedIn == true) onSignIn()
+        if (state.isSignedIn == true) onAuthenticated()
     }
-    val navigator = LocalNavigator.currentOrThrow
     // TODO: implement oath authentication
-    CompositionLocalProvider(LocalSelectHostCallback provides { navigator.pop() }) {
-        LoginDialogContent(
-            isUserSigningIn = state.isSigningIn,
-            signInAnonymously = {}, // TODO: Implement sign in anonymously
-            signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
-            navigateToSignUp = { email, password -> navigator.push(SignUpScreen(email, password) { navigator.pop() }) },
-            selectHost = { navigator.push(SelectHostScreen()) }
-        )
-    }
+    LoginDialogContent(
+        isUserSigningIn = state.isSigningIn,
+        signInAnonymously = {}, // TODO: Implement sign in anonymously
+        signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
+        navigateToSignUp = onSignUp,
+        selectHost = onSelectHost
+    )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoginDialogContent(
     modifier: Modifier = Modifier,
