@@ -7,23 +7,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.ui.components.ButlerErrorDialogContent
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class ErrorScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<ErrorScreenModel>()
-        val state by screenModel.state.collectAsState()
-        ErrorScreen(
-            cleanError = screenModel::clearError,
-            appErrors = state.appErrors,
-            serverErrors = state.serverErrors
-        )
-    }
+@OptIn(KoinExperimentalAPI::class)
+@Composable
+fun ErrorScreen() {
+    val screenModel = koinViewModel<ErrorViewModel>()
+    val state by screenModel.state.collectAsState()
+    ErrorScreen(
+        cleanError = screenModel::clearError,
+        appErrors = state.appErrors,
+        serverErrors = state.serverErrors
+    )
 }
 
 @Composable

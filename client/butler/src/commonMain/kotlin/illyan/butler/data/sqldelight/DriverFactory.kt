@@ -8,19 +8,11 @@ import illyan.butler.db.Database
 import illyan.butler.db.ErrorEvent
 import illyan.butler.db.Message
 import illyan.butler.db.Resource
-import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import org.koin.core.annotation.Named
-import org.koin.core.annotation.Single
 
 expect suspend fun provideSqlDriver(schema: SqlSchema<QueryResult.AsyncValue<Unit>>): SqlDriver
 
-private suspend fun createDatabase(): Database {
+suspend fun createDatabase(): Database {
     val driver = provideSqlDriver(Database.Schema)
 
     val database = Database(
@@ -43,15 +35,4 @@ private suspend fun createDatabase(): Database {
 
     Napier.d("Database created")
     return database
-}
-
-@Single
-fun provideDatabaseFlow(
-    @Named(KoinNames.CoroutineScopeIOWithoutHandler) coroutineScopeIO: CoroutineScope
-): StateFlow<Database?> {
-    val stateFlow = MutableStateFlow<Database?>(null)
-    coroutineScopeIO.launch {
-        createDatabase().apply { stateFlow.update { this } }
-    }
-    return stateFlow
 }

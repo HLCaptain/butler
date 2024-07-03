@@ -1,24 +1,19 @@
 package illyan.butler.ui.select_host
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.KoinNames
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.manager.HostManager
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
-import org.koin.core.annotation.Named
 
-@Factory
-class SelectHostScreenModel(
+class SelectHostViewModel(
     private val hostManager: HostManager,
-    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
-) : ScreenModel {
+) : ViewModel() {
     private val isConnectedToHost = MutableStateFlow<Boolean?>(null)
     val state = combine(
         hostManager.isConnectingToHost,
@@ -31,19 +26,19 @@ class SelectHostScreenModel(
             currentHost = currentHost
         )
     }.stateIn(
-        scope = screenModelScope,
+        scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = SelectHostState()
     )
 
     fun testAndSelectHost(url: String) {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             isConnectedToHost.update { hostManager.testAndSelectHost(url) }
         }
     }
 
     fun testHost(url: String) {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             isConnectedToHost.update { hostManager.testHost(url) }
         }
     }

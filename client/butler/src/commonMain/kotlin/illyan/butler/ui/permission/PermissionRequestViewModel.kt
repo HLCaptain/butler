@@ -1,19 +1,17 @@
 package illyan.butler.ui.permission
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.domain.model.Permission
 import illyan.butler.manager.PermissionManager
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
 
-@Factory
-class PermissionRequestScreenModel(
+class PermissionRequestViewModel(
     private val permissionManager: PermissionManager
-) : ScreenModel {
+) : ViewModel() {
     val state = permissionManager.preparedPermissionsToRequest
     fun launchPermissionRequest(permission: Permission) {
-        screenModelScope.launch {
+        viewModelScope.launch {
             permissionManager.launchPermissionRequest(permission)
         }
     }

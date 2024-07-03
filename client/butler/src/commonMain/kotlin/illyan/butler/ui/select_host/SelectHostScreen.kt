@@ -1,7 +1,7 @@
 package illyan.butler.ui.select_host
 
-import androidx.compose.animation.Crossfade
 //import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,8 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
@@ -32,48 +30,47 @@ import illyan.butler.ui.SmallCircularProgressIndicator
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.smallDialogWidth
-import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class SelectHostScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<SelectHostScreenModel>()
-        val state by screenModel.state.collectAsState()
+@OptIn(KoinExperimentalAPI::class)
+@Composable
+fun SelectHostScreen(selectedHost: () -> Unit) {
+    val viewModel = koinViewModel<SelectHostViewModel>()
+    val state by viewModel.state.collectAsState()
 
-        var triedToConnect by rememberSaveable { mutableStateOf(false) }
-        LaunchedEffect(state.isConnecting) {
-            Napier.d("isConnecting: ${state.isConnecting}")
-            if (state.isConnecting) {
-                triedToConnect = true
-            }
+    var triedToConnect by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.isConnecting) {
+        Napier.d("isConnecting: ${state.isConnecting}")
+        if (state.isConnecting) {
+            triedToConnect = true
         }
-
-        var isTestingOnly by rememberSaveable { mutableStateOf(false) }
-
-        val selectedHost = LocalSelectHostCallback.current
-        LaunchedEffect(state) {
-            if (state.isConnected == true && triedToConnect) {
-                triedToConnect = false // Tried to connect from last successful connection
-                Napier.d("Connected to host: ${state.currentHost}")
-                if (!isTestingOnly) selectedHost()
-            }
-        }
-
-        SelectHostDialogContent(
-            state = state,
-            testAndSelectHost = {
-                isTestingOnly = false
-                screenModel.testAndSelectHost(it)
-            },
-            testHost = {
-                isTestingOnly = true
-                screenModel.testHost(it)
-            }
-        )
     }
+
+    var isTestingOnly by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(state) {
+        if (state.isConnected == true && triedToConnect) {
+            triedToConnect = false // Tried to connect from last successful connection
+            Napier.d("Connected to host: ${state.currentHost}")
+            if (!isTestingOnly) selectedHost()
+        }
+    }
+
+    SelectHostDialogContent(
+        state = state,
+        testAndSelectHost = {
+            isTestingOnly = false
+            viewModel.testAndSelectHost(it)
+        },
+        testHost = {
+            isTestingOnly = true
+            viewModel.testHost(it)
+        }
+    )
 }
 
 @Composable

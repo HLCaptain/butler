@@ -1,21 +1,19 @@
 package illyan.butler.ui.select_host_tutorial
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.manager.HostManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.koin.core.annotation.Factory
 
-@Factory
-class SelectHostTutorialScreenModel(
+class SelectHostTutorialViewModel(
     hostManager: HostManager
-) : ScreenModel {
+) : ViewModel() {
     val state = hostManager.currentHost.map {
         SelectHostTutorialState(it != null)
     }.stateIn(
-        scope = screenModelScope,
+        scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = SelectHostTutorialState()
     )

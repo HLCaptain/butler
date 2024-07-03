@@ -3,7 +3,6 @@ package illyan.butler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import cafe.adriel.voyager.navigator.Navigator
 import illyan.butler.ui.home.HomeScreen
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.ui.theme.ThemeViewModel
@@ -22,7 +21,7 @@ fun App() {
             dynamicColorEnabled = state.dynamicColorEnabled,
             isNight = state.isNight,
         ) {
-            Navigator(HomeScreen())
+            HomeScreen()
         }
     }
 }

@@ -1,8 +1,7 @@
 package illyan.butler.ui.home
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
-import illyan.butler.di.KoinNames
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.domain.model.Permission
@@ -11,7 +10,7 @@ import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ErrorManager
 import illyan.butler.manager.PermissionManager
 import illyan.butler.utils.randomUUID
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -20,17 +19,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Factory
-import org.koin.core.annotation.Named
 
-@Factory
-class HomeScreenModel(
+class HomeViewModel(
     authManager: AuthManager,
     private val appManager: AppManager,
     errorManager: ErrorManager,
     private val permissionManager: PermissionManager,
-    @Named(KoinNames.DispatcherIO) private val dispatcherIO: CoroutineDispatcher
-) : ScreenModel {
+) : ViewModel() {
     private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
     private val _appErrors = MutableStateFlow<List<DomainErrorEvent>>(listOf())
 
@@ -57,18 +52,18 @@ class HomeScreenModel(
             preparedPermissionsToRequest = preparedPermissionsToRequest,
         )
     }.stateIn(
-        screenModelScope,
+        viewModelScope,
         SharingStarted.Eagerly,
         HomeScreenState()
     )
 
     init {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             errorManager.serverErrors.collectLatest { response ->
                 _serverErrors.update { it + (randomUUID() to  response) }
             }
         }
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             errorManager.appErrors.collectLatest { error ->
                 _appErrors.update { it + error }
             }
@@ -85,7 +80,7 @@ class HomeScreenModel(
     }
 
     fun removeLastError() {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             val latestServerErrorId = _serverErrors.first().maxByOrNull { it.second.timestamp }?.first
             val latestAppErrorId = _appErrors.first().maxByOrNull { it.timestamp }?.id
             if (latestServerErrorId != null && latestAppErrorId != null) {
@@ -103,13 +98,13 @@ class HomeScreenModel(
     }
 
     fun removeLastPermissionRequest() {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             permissionManager.removePermissionToRequest(state.value.preparedPermissionsToRequest.first())
         }
     }
 
     fun setTutorialDone() {
-        screenModelScope.launch(dispatcherIO) {
+        viewModelScope.launch(Dispatchers.IO) {
             appManager.setTutorialDone()
         }
     }

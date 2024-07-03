@@ -6,31 +6,15 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import kotlinx.coroutines.delay
 
-class AuthSuccessScreen(
-    private val delayMillis: Long = 1000,
-) : Screen {
-    @Composable
-    override fun Content() {
-        val authSuccessDone = LocalAuthSuccessDone.current
-        // Big checkmark for 1 second, then close
-        LaunchedEffect(Unit) {
-            delay(delayMillis)
-            authSuccessDone()
-        }
-        Icon(
-            modifier = Modifier.size(128.dp),
-            imageVector = Icons.Rounded.CheckCircle,
-            contentDescription = "Success",
-            tint = MaterialTheme.colorScheme.primary
-        )
-    }
+@Composable
+fun AuthSuccessIcon() {
+    Icon(
+        modifier = Modifier.size(128.dp),
+        imageVector = Icons.Rounded.CheckCircle,
+        contentDescription = "Success",
+        tint = MaterialTheme.colorScheme.primary
+    )
 }
-
-val LocalAuthSuccessDone = compositionLocalOf { {} }

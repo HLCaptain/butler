@@ -3,7 +3,6 @@ package illyan.butler.di
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.FlowSettings
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -15,5 +14,4 @@ expect fun provideSettings(): Settings
 @Single
 expect fun provideFlowSettings(
     @Named(KoinNames.CoroutineScopeIO) scope: CoroutineScope,
-    @Named(KoinNames.DispatcherIO) dispatcher: CoroutineDispatcher
 ): FlowSettings

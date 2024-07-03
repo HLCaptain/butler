@@ -2,8 +2,12 @@ package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -56,10 +60,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.CrossfadeTransition
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.close
@@ -67,9 +72,7 @@ import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
 import illyan.butler.getWindowSizeInDp
-import illyan.butler.ui.auth.AuthScreen
-import illyan.butler.ui.auth_success.AuthSuccessScreen
-import illyan.butler.ui.auth_success.LocalAuthSuccessDone
+import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.chat_layout.LocalSelectedChat
@@ -77,311 +80,405 @@ import illyan.butler.ui.components.GestureType
 import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.error.ErrorScreen
+import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
-import illyan.butler.ui.select_host_tutorial.LocalSelectHostCallback
+import illyan.butler.ui.select_host.SelectHostScreen
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
-import illyan.butler.ui.signup_tutorial.LocalSignInCallback
+import illyan.butler.ui.settings.user.UserSettingsScreen
+import illyan.butler.ui.signup.SignUpScreen
 import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
 import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
-import illyan.butler.ui.welcome.LocalWelcomeScreenDone
 import illyan.butler.ui.welcome.WelcomeScreen
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class HomeScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<HomeScreenModel>()
-        val state by screenModel.state.collectAsState()
-        Surface(
+@OptIn(KoinExperimentalAPI::class)
+@Composable
+fun HomeScreen() {
+    val screenModel = koinViewModel<HomeViewModel>()
+    val state by screenModel.state.collectAsState()
+    Surface(
 //            modifier = Modifier.safeContentPadding(),
-            color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-        ) {
-            Column {
-                var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
-                var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
-                LaunchedEffect(state.isUserSignedIn) {
-                    if (isAuthFlowEnded == null) isAuthFlowEnded = state.isUserSignedIn
-                    if (state.isUserSignedIn != true) isAuthFlowEnded = false
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+    ) {
+        Column {
+            var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
+            var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
+            LaunchedEffect(state.isUserSignedIn) {
+                if (isAuthFlowEnded == null) isAuthFlowEnded = state.isUserSignedIn
+                if (state.isUserSignedIn != true) isAuthFlowEnded = false
+                isProfileDialogShowing = false
+            }
+            var isDialogOpen by rememberSaveable { mutableStateOf(isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing) }
+            LaunchedEffect(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) {
+                isDialogOpen = isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing
+            }
+            var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
+            LaunchedEffect(state.isTutorialDone) {
+                if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
+                if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
+                if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
+            }
+            val onBoardingNavController = rememberNavController()
+            val profileNavController = rememberNavController()
+            val authNavController = rememberNavController()
+            val userFlow = remember(isDialogOpen, state.isTutorialDone, isDialogClosedAfterTutorial, isAuthFlowEnded, state.isUserSignedIn, isProfileDialogShowing) {
+                if (!isDialogOpen) null
+                else if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
+                    if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) DialogUserFlow.Profile else DialogUserFlow.Auth
+                } else DialogUserFlow.OnBoarding
+            }
+
+            val currentNavController = remember(userFlow) {
+                when (userFlow) {
+                    DialogUserFlow.Auth -> authNavController
+                    DialogUserFlow.OnBoarding -> onBoardingNavController
+                    DialogUserFlow.Profile -> profileNavController
+                    null -> null
+                }
+            }
+
+            ButlerDialog(
+                isDialogOpen = isDialogOpen,
+                isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
+                onDismissDialog = {
+                    if (state.isUserSignedIn == true) isAuthFlowEnded = true
                     isProfileDialogShowing = false
-                }
-                var isDialogOpen by rememberSaveable { mutableStateOf(isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing) }
-                LaunchedEffect(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) {
-                    isDialogOpen = isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing
-                }
-                var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
-                LaunchedEffect(state.isTutorialDone) {
-                    if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
-                    if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
-                    if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
-                }
-                val usageTutorialScreen = remember { UsageTutorialScreen() }
-                val authSuccessScreen = remember { AuthSuccessScreen(1000) }
-                val signUpTutorialScreen = remember { SignUpTutorialScreen() }
-                val selectHostTutorialScreen = remember { SelectHostTutorialScreen() }
-                val welcomeScreen = remember { WelcomeScreen() }
-                val profileDialogScreen = remember { ProfileDialogScreen() }
-                val authScreen = remember { AuthScreen() }
-                val startScreen = remember(isDialogOpen, state.isTutorialDone, isDialogClosedAfterTutorial, isAuthFlowEnded, state.isUserSignedIn, isProfileDialogShowing) {
-                    if (!isDialogOpen) {
-                        null
-                    } else {
-                        if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
-                            if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) profileDialogScreen else authScreen
-                        } else welcomeScreen
-                    }
-                }
-                var onBoardingNavigator by remember { mutableStateOf<Navigator?>(null) }
-                val authSuccessDone = remember(state) { {
-                    if (state.isTutorialDone == false) {
-                        onBoardingNavigator?.replaceAll(usageTutorialScreen)
-                    } else {
-                        isAuthFlowEnded = true
-                    }
-                    Unit
-                } }
-                CompositionLocalProvider(
-                    LocalWelcomeScreenDone provides { onBoardingNavigator?.push(selectHostTutorialScreen) },
-                    LocalSelectHostCallback provides { onBoardingNavigator?.push(signUpTutorialScreen) },
-                    LocalSignInCallback provides { onBoardingNavigator?.replaceAll(authSuccessScreen) },
-                    LocalAuthSuccessDone provides authSuccessDone,
-                ) {
-                    ButlerDialog(
-                        startScreens = listOfNotNull(startScreen),
-                        isDialogOpen = isDialogOpen,
-                        isDialogFullscreen = state.isUserSignedIn != true || state.isTutorialDone == false,
-                        onDismissDialog = {
-                            if (state.isUserSignedIn == true) {
-                                isAuthFlowEnded = true
-                            }
-                            isProfileDialogShowing = false
-                        },
-                        onDialogClosed = {
-                            if (state.isTutorialDone == true) {
-                                isDialogClosedAfterTutorial = true
-                            }
-                        },
-                        onNavigatorSet = { onBoardingNavigator = it }
-                    )
-                }
-
-                val numberOfErrors = state.appErrors.size + state.serverErrors.size
-                val errorScreen by remember { lazy { ErrorScreen() } }
-                ButlerDialog(
-                    modifier = Modifier.zIndex(1f),
-                    startScreens = listOf(errorScreen),
-                    isDialogOpen = numberOfErrors > 0,
-                    isDialogFullscreen = false,
-                    onDismissDialog = screenModel::removeLastError
-                )
-                val permissionRequestScreen by remember { lazy { PermissionRequestScreen() } }
-                ButlerDialog(
-                    modifier = Modifier.zIndex(2f),
-                    startScreens = listOf(permissionRequestScreen),
-                    isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
-                    isDialogFullscreen = false,
-                    onDismissDialog = screenModel::removeLastPermissionRequest
-                )
-                var currentScreenIndex by rememberSaveable { mutableStateOf(0) }
-                var navigator by remember { mutableStateOf<Navigator?>(null) }
-                val chatScreen by remember { lazy { ChatScreen() } }
-                val newChatScreen by remember { lazy { NewChatScreen() } }
-                val screens by remember { mutableStateOf(listOf(chatScreen, newChatScreen)) }
-                // Index is rememberSaveable, Screen is probably not.
-                val currentScreen = screens[currentScreenIndex]
-                LaunchedEffect(currentScreen) { navigator?.replaceAll(currentScreen) }
-                val (height, width) = getWindowSizeInDp()
-                var windowWidth by remember { mutableStateOf(width) }
-                val navBarOrientation by remember {
-                    derivedStateOf {
-                        if (windowWidth < 600.dp) Orientation.Horizontal
-                        else if (windowWidth < 1200.dp) Orientation.Vertical
-                        else Orientation.Vertical
-                    }
-                }
-                val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
-                LaunchedEffect(width, height) { windowWidth = width }
-                val coroutineScope = rememberCoroutineScope()
-                var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
-                val selectChat = { chat: String? ->
-                    Napier.d("Selected chat: $chat")
-                    currentScreenIndex = 0
-                    selectedChat = chat
-                }
-                CompositionLocalProvider(
-                    LocalSelectedChat provides selectedChat,
-                    LocalChatSelector provides selectChat,
-                    LocalNavBarOrientation provides navBarOrientation
-                ) {
-                    Crossfade(navBarOrientation) { orientation ->
-                        when (orientation) {
-                            Orientation.Vertical -> HomeContentWithVerticalNavBar(
-                                isNavBarCompact,
-                                currentScreen,
-                                isProfileDialogShowing,
-                                coroutineScope,
-                                currentScreenIndex,
-                                screens,
-                                chatScreen,
-                                newChatScreen,
-                                navBarOrientation,
-                                setCurrentDialogShowing = { isProfileDialogShowing = it },
-                                setCurrentScreenIndex = { currentScreenIndex = it },
-                                setNavigator = { navigator = it }
-                            )
-
-                            Orientation.Horizontal -> Column {
-                                Row(Modifier.weight(1f)) {
-                                    HomeContent(navBarOrientation, currentScreen) { navigator = it }
+                },
+                onDialogClosed = { if (state.isTutorialDone == true) isDialogClosedAfterTutorial = true },
+                navController = currentNavController
+            ) {
+                Crossfade(userFlow) {
+                    val animationTime = 200
+                    when (userFlow) {
+                        DialogUserFlow.Auth -> {
+                            NavHost(
+                                navController = authNavController,
+                                startDestination = "login",
+                                enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+                                popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+                                exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+                                popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+                            ) {
+                                composable("login") {
+                                    LoginScreen(
+                                        onSignUp = { email, password -> authNavController.navigate("signUp") },
+                                        onSelectHost = { authNavController.navigate("selectHost") },
+                                        onAuthenticated = { authNavController.navigate("authSuccess") { launchSingleTop = true } }
+                                    )
                                 }
-                                HorizontalNavBar(
-                                    currentScreen,
-                                    chatScreen,
-                                    isProfileDialogShowing,
-                                    setProfileDialogShowing = { isProfileDialogShowing = it },
-                                    setCurrentScreenIndex = { currentScreenIndex = it },
-                                    screens,
-                                    newChatScreen
-                                )
+                                composable("selectHost") {
+                                    SelectHostScreen { authNavController.navigate("signUpTutorial") }
+                                }
+                                composable("signUp") {
+                                    SignUpScreen(signedUp = { authNavController.navigate("authSuccess") { launchSingleTop = true } })
+                                }
+                                composable("authSuccess") {
+                                    AuthSuccessIcon()
+                                    LaunchedEffect(Unit) {
+                                        delay(1000L)
+                                        isAuthFlowEnded = true
+                                    }
+                                }
                             }
                         }
+
+                        DialogUserFlow.OnBoarding -> {
+                            NavHost(
+                                navController = onBoardingNavController,
+                                startDestination = "welcome",
+                                enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+                                popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+                                exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+                                popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+                            ) {
+                                composable("welcome") {
+                                    WelcomeScreen {
+                                        onBoardingNavController.navigate("selectHostTutorial")
+                                    }
+                                }
+                                composable("selectHostTutorial") {
+                                    SelectHostTutorialScreen {
+                                        onBoardingNavController.navigate("selectHost")
+                                    }
+                                }
+                                composable("selectHost") {
+                                    SelectHostScreen {
+                                        onBoardingNavController.navigate("signUpTutorial")
+                                    }
+                                }
+                                composable("signUpTutorial") {
+                                    SignUpTutorialScreen {
+                                        onBoardingNavController.navigate("signUp")
+                                    }
+                                }
+                                composable("signUp") {
+                                    SignUpScreen(
+                                        signedUp = {
+                                            onBoardingNavController.navigate("authSuccess") { launchSingleTop = true }
+                                        }
+                                    )
+                                }
+                                composable("authSuccess") {
+                                    AuthSuccessIcon()
+                                    LaunchedEffect(Unit) {
+                                        delay(1000L)
+                                        onBoardingNavController.navigate("usageTutorial") { launchSingleTop = true }
+                                    }
+                                }
+                                composable("usageTutorial") {
+                                    UsageTutorialScreen {
+                                        screenModel.setTutorialDone()
+                                        isDialogClosedAfterTutorial = true
+                                    }
+                                }
+                            }
+                        }
+
+                        DialogUserFlow.Profile -> {
+                            NavHost(
+                                navController = profileNavController,
+                                startDestination = "profile",
+                                enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+                                popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+                                exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+                                popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+                            ) {
+                                composable("profile") {
+                                    ProfileDialogScreen {
+                                        profileNavController.navigate("settings")
+                                    }
+                                }
+                                composable("settings") {
+                                    UserSettingsScreen()
+                                }
+                            }
+                        }
+
+                        null -> {}
                     }
                 }
             }
-        }
-    }
 
-    @Composable
-    private fun HorizontalNavBar(
-        currentScreen: Screen,
-        chatScreen: ChatScreen,
-        isProfileDialogShowing: Boolean,
-        setProfileDialogShowing: (Boolean) -> Unit,
-        setCurrentScreenIndex: (Int) -> Unit,
-        screens: List<Screen>,
-        newChatScreen: NewChatScreen
-    ) {
-        NavigationBar {
-            ChatsNavigationBarItem(selected = currentScreen == chatScreen && !isProfileDialogShowing) {
-                setCurrentScreenIndex(screens.indexOf(chatScreen))
+            val numberOfErrors = state.appErrors.size + state.serverErrors.size
+            ButlerDialog(
+                modifier = Modifier.zIndex(1f),
+                isDialogOpen = numberOfErrors > 0,
+                isDialogFullscreen = false,
+                onDismissDialog = screenModel::removeLastError
+            ) { ErrorScreen() }
+            ButlerDialog(
+                modifier = Modifier.zIndex(2f),
+                isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
+                isDialogFullscreen = false,
+                onDismissDialog = screenModel::removeLastPermissionRequest
+            ) { PermissionRequestScreen() }
+            // Index is rememberSaveable, Screen is probably not.
+            val (height, width) = getWindowSizeInDp()
+            var windowWidth by remember { mutableStateOf(width) }
+            val navBarOrientation by remember {
+                derivedStateOf {
+                    if (windowWidth < 600.dp) Orientation.Horizontal
+                    else if (windowWidth < 1200.dp) Orientation.Vertical
+                    else Orientation.Vertical
+                }
             }
-            NewChatNavigationBarItem(selected = currentScreen == newChatScreen && !isProfileDialogShowing) {
-                setCurrentScreenIndex(screens.indexOf(newChatScreen))
+            val isNavBarCompact by remember { derivedStateOf { windowWidth < 1200.dp } }
+            LaunchedEffect(width, height) { windowWidth = width }
+            val coroutineScope = rememberCoroutineScope()
+            var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
+            val homeNavController = rememberNavController()
+            val selectChat = { chat: String? ->
+                Napier.d("Selected chat: $chat")
+                homeNavController.navigate("chat", ) { launchSingleTop = true }
+                selectedChat = chat
             }
-            ProfileNavigationBarItem(selected = isProfileDialogShowing) {
-                setProfileDialogShowing(true)
-            }
-        }
-    }
-
-    @Composable
-    private fun HomeContentWithVerticalNavBar(
-        isNavBarCompact: Boolean,
-        currentScreen: Screen,
-        isProfileDialogShowing: Boolean,
-        coroutineScope: CoroutineScope,
-        currentScreenIndex: Int,
-        screens: List<Screen>,
-        chatScreen: ChatScreen,
-        newChatScreen: NewChatScreen,
-        navBarOrientation: Orientation,
-        setCurrentDialogShowing: (Boolean) -> Unit,
-        setCurrentScreenIndex: (Int) -> Unit,
-        setNavigator: (Navigator) -> Unit
-    ) {
-        Crossfade(isNavBarCompact) { isCompact ->
-            if (isCompact) {
-                val drawerState = rememberDrawerState(DrawerValue.Closed)
-                ModalNavigationDrawer(
-                    drawerState = drawerState,
-                    drawerContent = {
-                        NavigationDrawerContent(
-                            currentScreen = currentScreen,
-                            isProfileShown = isProfileDialogShowing,
-                            onProfileClick = {
-                                setCurrentDialogShowing(true)
-                                coroutineScope.launch { drawerState.close() }
-                            },
-                            closeDrawer = { coroutineScope.launch { drawerState.close() } },
-                            navigateToChats = {
-                                setCurrentScreenIndex(screens.indexOf(chatScreen))
-                                coroutineScope.launch { drawerState.close() }
-                            },
-                            navigateToNewChat = {
-                                setCurrentScreenIndex(screens.indexOf(newChatScreen))
-                                coroutineScope.launch { drawerState.close() }
-                            }
-                        )
-                    }
-                ) {
-                    Row {
-                        NavigationRail(
-                            modifier = Modifier.statusBarsPadding(),
-                            containerColor = Color.Transparent,
-                            header = {
-                                HamburgerButton { coroutineScope.launch { drawerState.open() } }
-                                NewChatFAB { setCurrentScreenIndex(screens.indexOf(newChatScreen)) }
-                            }
+            CompositionLocalProvider(
+                LocalSelectedChat provides selectedChat,
+                LocalChatSelector provides selectChat,
+                LocalNavBarOrientation provides navBarOrientation
+            ) {
+                Crossfade(navBarOrientation) { orientation ->
+                    when (orientation) {
+                        Orientation.Vertical -> HomeContentWithVerticalNavBar(
+                            isNavBarCompact,
+                            isProfileDialogShowing,
+                            coroutineScope,
+                            homeNavController,
+                            navBarOrientation,
+                            setDialogVisibility = { isProfileDialogShowing = it },
+                            navigateToChats = { homeNavController.navigate("chat") { launchSingleTop = true } },
+                            navigateToNewChat = { homeNavController.navigate("newChat") { launchSingleTop = true } }
                         ) {
-                            Spacer(Modifier.weight(0.5f))
-                            ChatsNavigationRailItem(selected = screens[currentScreenIndex] == chatScreen && !isProfileDialogShowing) {
-                                setCurrentScreenIndex(screens.indexOf(chatScreen))
+                            NavHost(
+                                navController = homeNavController,
+                                startDestination = "chat"
+                            ) {
+                                composable("chat") {
+                                    ChatScreen()
+                                }
+                                composable("newChat") {
+                                    NewChatScreen()
+                                }
                             }
-                            NewChatNavigationRailItem(selected = screens[currentScreenIndex] == newChatScreen && !isProfileDialogShowing) {
-                                setCurrentScreenIndex(screens.indexOf(newChatScreen))
-                            }
-                            ProfileNavigationRailItem(selected = isProfileDialogShowing) {
-                                setCurrentDialogShowing(true)
-                            }
-                            Spacer(Modifier.weight(1f))
                         }
-                        HomeContent(navBarOrientation, currentScreen, setNavigator)
-                    }
-                }
-            } else {
-                PermanentNavigationDrawer(
-                    drawerContent = {
-                        NavigationDrawerContent(
-                            currentScreen = currentScreen,
-                            isProfileShown = isProfileDialogShowing,
-                            onProfileClick = { setCurrentDialogShowing(true) },
-                            navigateToChats = { setCurrentScreenIndex(screens.indexOf(chatScreen)) },
-                            navigateToNewChat = { setCurrentScreenIndex(screens.indexOf(newChatScreen)) },
-                            isDrawerPermanent = true
-                        )
-                    }
-                ) {
-                    HomeContent(navBarOrientation, currentScreen, setNavigator)
-                }
-            }
-        }
-    }
 
-    @Composable
-    private fun HomeContent(
-        navBarOrientation: Orientation,
-        currentScreen: Screen,
-        setNavigator: (Navigator) -> Unit
-    ) {
-        Surface(
-            tonalElevation = 0.dp,
-            shape = RoundedCornerShape(topStart = if (navBarOrientation == Orientation.Vertical) 24.dp else 0.dp)
-        ) {
-            Navigator(currentScreen) {
-                LaunchedEffect(Unit) { setNavigator(it) }
-                CrossfadeTransition(navigator = it)
+                        Orientation.Horizontal -> Column {
+                            Row(Modifier.weight(1f)) {
+                                HomeContent(navBarOrientation) {
+                                    NavHost(
+                                        navController = homeNavController,
+                                        startDestination = "chat"
+                                    ) {
+                                        composable("chat") {
+                                            ChatScreen()
+                                        }
+                                        composable("newChat") {
+                                            NewChatScreen()
+                                        }
+                                    }
+                                }
+                            }
+                            HorizontalNavBar(
+                                homeNavController,
+                                isProfileDialogShowing,
+                                setProfileDialogShowing = { isProfileDialogShowing = it },
+                                navigateToChats = { homeNavController.navigate("chat") { launchSingleTop = true } },
+                                navigateToNewChat = { homeNavController.navigate("newChat") { launchSingleTop = true } }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun HorizontalNavBar(
+    navController: NavController,
+    isProfileDialogShowing: Boolean,
+    setProfileDialogShowing: (Boolean) -> Unit,
+    navigateToChats: () -> Unit,
+    navigateToNewChat: () -> Unit,
+) {
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    NavigationBar {
+        ChatsNavigationBarItem(selected = backStackEntry?.destination?.route == "chat" && !isProfileDialogShowing) {
+            navigateToChats()
+        }
+        NewChatNavigationBarItem(selected =  backStackEntry?.destination?.route == "newChat" && !isProfileDialogShowing) {
+            navigateToNewChat()
+        }
+        ProfileNavigationBarItem(selected = isProfileDialogShowing) {
+            setProfileDialogShowing(true)
+        }
+    }
+}
+
+@Composable
+private fun HomeContentWithVerticalNavBar(
+    isNavBarCompact: Boolean,
+    isProfileDialogShowing: Boolean,
+    coroutineScope: CoroutineScope,
+    navController: NavController,
+    navBarOrientation: Orientation,
+    setDialogVisibility: (Boolean) -> Unit,
+    navigateToChats: () -> Unit,
+    navigateToNewChat: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Crossfade(isNavBarCompact) { isCompact ->
+        if (isCompact) {
+            val drawerState = rememberDrawerState(DrawerValue.Closed)
+            ModalNavigationDrawer(
+                drawerState = drawerState,
+                drawerContent = {
+                    NavigationDrawerContent(
+                        navController = navController,
+                        isProfileShown = isProfileDialogShowing,
+                        onProfileClick = {
+                            setDialogVisibility(true)
+                            coroutineScope.launch { drawerState.close() }
+                        },
+                        closeDrawer = { coroutineScope.launch { drawerState.close() } },
+                        navigateToChats = {
+                            navigateToChats()
+                            coroutineScope.launch { drawerState.close() }
+                        },
+                        navigateToNewChat = {
+                            navigateToNewChat()
+                            coroutineScope.launch { drawerState.close() }
+                        }
+                    )
+                }
+            ) {
+                Row {
+                    NavigationRail(
+                        modifier = Modifier.statusBarsPadding(),
+                        containerColor = Color.Transparent,
+                        header = {
+                            HamburgerButton { coroutineScope.launch { drawerState.open() } }
+                            NewChatFAB { navigateToNewChat() }
+                        }
+                    ) {
+                        val backStackEntry by navController.currentBackStackEntryAsState()
+                        Spacer(Modifier.weight(0.5f))
+                        ChatsNavigationRailItem(selected = backStackEntry?.destination?.route == "chat" && !isProfileDialogShowing) {
+                            navigateToChats()
+                        }
+                        NewChatNavigationRailItem(selected = backStackEntry?.destination?.route == "newChat" && !isProfileDialogShowing) {
+                            navigateToNewChat()
+                        }
+                        ProfileNavigationRailItem(selected = isProfileDialogShowing) {
+                            setDialogVisibility(true)
+                        }
+                        Spacer(Modifier.weight(1f))
+                    }
+                    HomeContent(navBarOrientation, content)
+                }
+            }
+        } else {
+            PermanentNavigationDrawer(
+                drawerContent = {
+                    NavigationDrawerContent(
+                        navController = navController,
+                        isProfileShown = isProfileDialogShowing,
+                        onProfileClick = { setDialogVisibility(true) },
+                        navigateToChats = navigateToChats,
+                        navigateToNewChat = navigateToNewChat,
+                        isDrawerPermanent = true
+                    )
+                }
+            ) {
+                HomeContent(navBarOrientation, content)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeContent(
+    navBarOrientation: Orientation,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        tonalElevation = 0.dp,
+        shape = RoundedCornerShape(topStart = if (navBarOrientation == Orientation.Vertical) 24.dp else 0.dp)
+    ) {
+        content()
+    }
+}
+
 @Composable
 private fun ChatsNavigationRailItem(
     selected: Boolean = false,
@@ -395,7 +492,6 @@ private fun ChatsNavigationRailItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun NewChatNavigationRailItem(
     selected: Boolean = false,
@@ -409,7 +505,6 @@ private fun NewChatNavigationRailItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun ProfileNavigationRailItem(
     selected: Boolean = false,
@@ -423,7 +518,6 @@ private fun ProfileNavigationRailItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun NavigationRailItem(
     selected: Boolean = false,
@@ -444,7 +538,6 @@ fun NavigationRailItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ChatsNavigationDrawerItem(
     selected: Boolean = false,
@@ -458,7 +551,6 @@ fun ChatsNavigationDrawerItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun NewChatNavigationDrawerItem(
     selected: Boolean = false,
@@ -472,7 +564,6 @@ fun NewChatNavigationDrawerItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileNavigationDrawerItem(
     selected: Boolean = false,
@@ -486,7 +577,6 @@ fun ProfileNavigationDrawerItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun NavigationDrawerItem(
     modifier: Modifier = Modifier,
@@ -512,7 +602,6 @@ fun NavigationDrawerItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun NewChatFAB(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
@@ -531,7 +620,6 @@ fun NewChatFAB(onClick: () -> Unit = {}) {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun HamburgerButton(onClick: () -> Unit = {}) {
     IconButton(
@@ -547,7 +635,6 @@ fun HamburgerButton(onClick: () -> Unit = {}) {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CloseButton(onClick: () -> Unit = {}) {
     IconButton(
@@ -563,7 +650,7 @@ fun CloseButton(onClick: () -> Unit = {}) {
 
 @Composable
 private fun NavigationDrawerContent(
-    currentScreen: Screen? = null,
+    navController: NavController,
     isProfileShown: Boolean = false,
     onProfileClick: () -> Unit = {},
     closeDrawer: () -> Unit = {},
@@ -582,10 +669,10 @@ private fun NavigationDrawerContent(
             AnimatedVisibility(!isDrawerPermanent) {
                 CloseButton { closeDrawer() }
             }
-            ChatsNavigationDrawerItem(selected = currentScreen is ChatScreen && !isProfileShown) {
+            ChatsNavigationDrawerItem(selected = navController.currentDestination?.route == "chat" && !isProfileShown) {
                 navigateToChats()
             }
-            NewChatNavigationDrawerItem(selected = currentScreen is NewChatScreen && !isProfileShown) {
+            NewChatNavigationDrawerItem(selected = navController.currentDestination?.route == "newChat" && !isProfileShown) {
                 navigateToNewChat()
             }
             ProfileNavigationDrawerItem(selected = isProfileShown) {
@@ -595,7 +682,6 @@ private fun NavigationDrawerContent(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun RowScope.ChatsNavigationBarItem(
     selected: Boolean = false,
@@ -614,7 +700,6 @@ fun RowScope.ChatsNavigationBarItem(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun RowScope.NewChatNavigationBarItem(
     selected: Boolean = false,

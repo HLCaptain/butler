@@ -196,12 +196,12 @@ fun ChatDetailScreen(
             }
         }
     }
-    val chatDetailsDialog = remember(currentSelectedChat) { ChatDetailsScreen(currentSelectedChat) }
     ButlerDialog(
         isDialogOpen = isChatDetailsDialogOpen,
         onDismissDialog = { isChatDetailsDialogOpen = false },
-        startScreens = listOf(chatDetailsDialog)
-    )
+    ) {
+        ChatDetailsScreen(currentSelectedChat)
+    }
 }
 
 @Composable
