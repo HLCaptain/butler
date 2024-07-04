@@ -20,6 +20,9 @@ interface ChatDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertChat(chat: RoomChat): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertChats(chats: List<RoomChat>): List<Long>
+
     @Update
     suspend fun updateChat(chat: RoomChat): Int
 
@@ -27,22 +30,28 @@ interface ChatDao {
     suspend fun updateChats(chats: List<RoomChat>): Int
 
     @Delete
-    suspend fun deleteChat(chat: RoomChat)
+    suspend fun deleteChatById(chat: RoomChat)
 
     @Delete
-    suspend fun deleteChats(chats: List<RoomChat>)
+    suspend fun deleteAllChats(chats: List<RoomChat>)
 
     @Query("DELETE FROM chats")
-    suspend fun deleteChats()
+    suspend fun deleteAllChats()
 
     @Query("DELETE FROM chats WHERE id = :id")
-    suspend fun deleteChat(id: String)
+    suspend fun deleteChatById(id: String)
 
     @Query("DELETE FROM chats WHERE id IN(:ids)")
     suspend fun deleteChatsWithIds(ids: List<String>)
 
+    @Query("DELETE FROM chats WHERE id IN (SELECT chatId FROM chat_members WHERE userId = :userId)")
+    suspend fun deleteChatsByUserId(userId: String)
+
     @Query("SELECT * FROM chats WHERE id = :id")
     fun getChatById(id: String): Flow<RoomChat>
+
+    @Query("SELECT chats.* FROM chats JOIN chat_members ON chats.id = chat_members.chatId WHERE chat_members.userId = :userId")
+    fun getChatsByUser(userId: String): Flow<List<RoomChat>>
 
     @Query("SELECT * FROM chats WHERE id IN(:ids)")
     fun getChatsById(ids: List<String>): Flow<List<RoomChat>>

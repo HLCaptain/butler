@@ -1,20 +1,17 @@
 package illyan.butler.data.store
 
+import illyan.butler.data.local.datasource.ChatLocalDataSource
 import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
+import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.chat.ChatDto
-import illyan.butler.data.sqldelight.DatabaseHelper
-import illyan.butler.db.Chat
-import illyan.butler.db.ChatMember
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
@@ -27,17 +24,19 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 
 @Single
 class UserChatMutableStoreBuilder(
-    databaseHelper: DatabaseHelper,
+    chatLocalDataSource: ChatLocalDataSource,
+    messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideUserChatMutableStore(databaseHelper, chatNetworkDataSource, dataHistoryLocalDataSource)
+    val store = provideUserChatMutableStore(chatLocalDataSource, messageLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideUserChatMutableStore(
-    databaseHelper: DatabaseHelper,
+    chatLocalDataSource: ChatLocalDataSource,
+    messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
@@ -53,58 +52,32 @@ fun provideUserChatMutableStore(
                 .filter { it.members.contains(key) }
                 .distinctBy { it.id }
                 .also { chats ->
-                    databaseHelper.withDatabase { db ->
-                        chats
-                            .filter { it.members.contains(key) }
-                            .flatMap { chat -> chat.lastFewMessages.map { it.toLocalModel() } }
-                            .forEach { db.messageQueries.upsert(it) }
-                    }
+                    val newMessages = chats.flatMap { chat -> chat.lastFewMessages.map { it.toDomainModel() } }
+                    messageLocalDataSource.upsertMessages(newMessages)
                 }
         }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
-            databaseHelper.queryAsListFlow {
-                Napier.d("Reading chats for user $key")
-                it.chatQueries.selectAll()
-            }.map { chats ->
-                Napier.v { "Chats: ${chats.map { it.id }}" }
-                chats // FIXME: all chat is exposed this way, think about security when we have more users on a single device, accessing each other's chats
-                    .filter { it.members.contains(key) }
-                    .map { it.toDomainModel() }
-            }
+            Napier.d("Reading chats for user $key")
+            chatLocalDataSource.getChatsByUser(key)
         },
         writer = { key, local ->
-            databaseHelper.withDatabase { db ->
-                Napier.d("Writing chat for user $key with $local")
-                local.forEach { chat ->
-                    val currentMembers = chat.members.map { ChatMember("${key};${chat.id}", it, chat.id) }
-                    db.chatMemberQueries.deleteAllChatMembers(chat.id)
-                    currentMembers.forEach { db.chatMemberQueries.upsert(it) }
-                    db.chatQueries.upsert(chat)
-                }
-            }
+            Napier.d("Writing chat for user $key with $local")
+            chatLocalDataSource.upsertChats(local)
         },
         delete = { key ->
-            databaseHelper.withDatabase {
-                Napier.d("Deleting chat for user $key")
-                it.chatMemberQueries.selectAllUserChats(key).executeAsList().forEach { chat ->
-                    it.chatMemberQueries.deleteAllChatMembers(chat.id)
-                    it.chatQueries.delete(chat.id)
-                }
-            }
+            Napier.d("Deleting chat for user $key")
+            chatLocalDataSource.deleteChatByUserId(key)
         },
         deleteAll = {
-            databaseHelper.withDatabase {
-                Napier.d("Deleting all chats")
-                it.chatMemberQueries.deleteAll()
-                it.chatQueries.deleteAll()
-            }
+            Napier.d("Deleting all chats")
+            chatLocalDataSource.deleteAllChats()
         }
     ),
-    converter = Converter.Builder<List<ChatDto>, List<Chat>, List<DomainChat>>()
-        .fromOutputToLocal { chats -> chats.map { it.toLocalModel() } }
-        .fromNetworkToLocal { chats -> chats.map { it.toLocalModel() } }
+    converter = Converter.Builder<List<ChatDto>, List<DomainChat>, List<DomainChat>>()
+        .fromOutputToLocal { it }
+        .fromNetworkToLocal { chats -> chats.map { it.toDomainModel() } }
         .build(),
 ).build(
     updater = Updater.by(

@@ -20,6 +20,9 @@ interface MessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertMessage(message: RoomMessage): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMessages(messages: List<RoomMessage>): List<Long>
+
     @Update
     suspend fun updateMessage(message: RoomMessage): Int
 

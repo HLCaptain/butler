@@ -23,7 +23,7 @@ class MessageSqlDelightDataSource(private val databaseHelper: DatabaseHelper) : 
         }
     }
 
-    override suspend fun updateMessage(message: DomainMessage) {
+    override suspend fun upsertMessage(message: DomainMessage) {
         insertMessage(message) // Since upsert is used for both insert and update
     }
 
@@ -51,5 +51,9 @@ class MessageSqlDelightDataSource(private val databaseHelper: DatabaseHelper) : 
         }.map { messages ->
             messages.map { it.toDomainModel() }
         }
+    }
+
+    override suspend fun upsertMessages(newMessages: List<DomainMessage>) {
+        insertMessages(newMessages)
     }
 }

@@ -21,7 +21,7 @@ class MessageRoomDataSource(
         messageDao.insertMessages(messages.map { it.toRoomModel() })
     }
 
-    override suspend fun updateMessage(message: DomainMessage) {
+    override suspend fun upsertMessage(message: DomainMessage) {
         messageDao.upsertMessage(message.toRoomModel())
     }
 
@@ -35,6 +35,10 @@ class MessageRoomDataSource(
 
     override suspend fun deleteAllMessagesForChat(chatId: String) {
         messageDao.deleteAllChatMessagesForChat(chatId)
+    }
+
+    override suspend fun upsertMessages(newMessages: List<DomainMessage>) {
+        messageDao.upsertMessages(newMessages.map { it.toRoomModel() })
     }
 
     override fun getAllMessagesForChat(chatId: String): Flow<List<DomainMessage>> {

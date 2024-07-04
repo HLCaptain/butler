@@ -28,3 +28,9 @@ fun getMessageDao(database: ButlerDatabase) = database.messageDao()
 
 @Single
 fun getDataHistoryDao(database: ButlerDatabase) = database.dataHistoryDao()
+
+@Single
+fun getResourceDao(database: ButlerDatabase) = database.resourceDao()
+
+@Single
+fun getChatMemberDao(database: ButlerDatabase) = database.chatMemberDao()
