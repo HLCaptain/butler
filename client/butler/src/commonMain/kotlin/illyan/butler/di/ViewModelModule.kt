@@ -4,6 +4,7 @@ import illyan.butler.ui.auth.AuthViewModel
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_details.ChatDetailsViewModel
 import illyan.butler.ui.chat_list.ChatListViewModel
+import illyan.butler.ui.error.ErrorViewModel
 import illyan.butler.ui.home.HomeViewModel
 import illyan.butler.ui.login.LoginViewModel
 import illyan.butler.ui.new_chat.NewChatViewModel
@@ -32,4 +33,5 @@ fun getViewModelModule() = module {
     viewModelOf(::ChatDetailsViewModel)
     viewModelOf(::PermissionRequestViewModel)
     viewModelOf(::NewChatViewModel)
+    viewModelOf(::ErrorViewModel)
 }

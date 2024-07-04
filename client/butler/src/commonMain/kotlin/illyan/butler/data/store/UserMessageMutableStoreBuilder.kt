@@ -1,5 +1,6 @@
 package illyan.butler.data.store
 
+import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
@@ -26,16 +27,18 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 @Single
 class UserMessageMutableStoreBuilder(
     databaseHelper: DatabaseHelper,
-    messageNetworkDataSource: MessageNetworkDataSource
+    messageNetworkDataSource: MessageNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideUserMessageMutableStore(databaseHelper, messageNetworkDataSource)
+    val store = provideUserMessageMutableStore(databaseHelper, messageNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideUserMessageMutableStore(
     databaseHelper: DatabaseHelper,
-    messageNetworkDataSource: MessageNetworkDataSource
+    messageNetworkDataSource: MessageNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key: String ->
         Napier.d("Fetching messages for user $key")
@@ -132,7 +135,7 @@ fun provideUserMessageMutableStore(
         )
     ),
     bookkeeper = provideBookkeeper(
-        databaseHelper,
+        dataHistoryLocalDataSource,
         MessageDto::class.simpleName.toString() + "UserList"
     ) { it }
 )

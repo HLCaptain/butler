@@ -1,5 +1,6 @@
 package illyan.butler.data.store
 
+import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
@@ -27,16 +28,18 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 @Single
 class ChatMutableStoreBuilder(
     databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: ChatNetworkDataSource
+    chatNetworkDataSource: ChatNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideChatMutableStore(databaseHelper, chatNetworkDataSource)
+    val store = provideChatMutableStore(databaseHelper, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideChatMutableStore(
     databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: ChatNetworkDataSource
+    chatNetworkDataSource: ChatNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chat $key")
@@ -95,7 +98,7 @@ fun provideChatMutableStore(
         )
     ),
     bookkeeper = provideBookkeeper(
-        databaseHelper,
+        dataHistoryLocalDataSource,
         DomainChat::class.simpleName.toString()
     ) { it }
 )

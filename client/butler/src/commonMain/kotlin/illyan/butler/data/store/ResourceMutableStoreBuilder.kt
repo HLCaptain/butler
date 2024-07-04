@@ -1,5 +1,6 @@
 package illyan.butler.data.store
 
+import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
@@ -27,16 +28,18 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 @Single
 class ResourceMutableStoreBuilder(
     databaseHelper: DatabaseHelper,
-    resourceNetworkDataSource: ResourceNetworkDataSource
+    resourceNetworkDataSource: ResourceNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideResourceMutableStore(databaseHelper, resourceNetworkDataSource)
+    val store = provideResourceMutableStore(databaseHelper, resourceNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideResourceMutableStore(
     databaseHelper: DatabaseHelper,
-    resourceNetworkDataSource: ResourceNetworkDataSource
+    resourceNetworkDataSource: ResourceNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching resource $key")
@@ -95,7 +98,7 @@ fun provideResourceMutableStore(
         )
     ),
     bookkeeper = provideBookkeeper(
-        databaseHelper,
+        dataHistoryLocalDataSource,
         Resource::class.simpleName.toString()
     ) { it }
 )

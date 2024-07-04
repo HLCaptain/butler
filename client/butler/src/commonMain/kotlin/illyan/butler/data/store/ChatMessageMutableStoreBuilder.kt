@@ -1,18 +1,16 @@
 package illyan.butler.data.store
 
+import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
+import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
-import illyan.butler.data.sqldelight.DatabaseHelper
-import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
@@ -25,17 +23,19 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 
 @Single
 class ChatMessageMutableStoreBuilder(
-    databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: MessageNetworkDataSource
+    messageLocalDataSource: MessageLocalDataSource,
+    chatNetworkDataSource: MessageNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideChatMessageMutableStore(databaseHelper, chatNetworkDataSource)
+    val store = provideChatMessageMutableStore(messageLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideChatMessageMutableStore(
-    databaseHelper: DatabaseHelper,
-    messageNetworkDataSource: MessageNetworkDataSource
+    messageLocalDataSource: MessageLocalDataSource,
+    messageNetworkDataSource: MessageNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key: String ->
         Napier.d("Fetching messages $key")
@@ -51,35 +51,25 @@ fun provideChatMessageMutableStore(
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
-            databaseHelper.queryAsListFlow {
-                Napier.d("Reading messages at $key")
-                it.messageQueries.selectByChat(key)
-            }.map { messages ->
-                messages.map { it.toDomainModel() }
-            }
+            Napier.d("Reading messages at $key")
+            messageLocalDataSource.getAllMessagesForChat(key)
         },
         writer = { key, local ->
-            databaseHelper.withDatabase { db ->
-                Napier.d("Writing messages for user $key with ${local.size} messages")
-                local.forEach { db.messageQueries.upsert(it) }
-            }
+            Napier.d("Writing messages for user $key with ${local.size} messages")
+            messageLocalDataSource.insertMessages(local)
         },
         delete = { key ->
-            databaseHelper.withDatabase {
-                Napier.d("Deleting messages at $key")
-                it.messageQueries.deleteAllChatMessagesForChat(key)
-            }
+            Napier.d("Deleting messages at $key")
+            messageLocalDataSource.deleteAllMessagesForChat(key)
         },
         deleteAll = {
-            databaseHelper.withDatabase {
-                Napier.d("Deleting all messages")
-                it.messageQueries.deleteAll()
-            }
+            Napier.d("Deleting all messages")
+            messageLocalDataSource.deleteAllMessages()
         }
     ),
-    converter = Converter.Builder<List<MessageDto>, List<Message>, List<DomainMessage>>()
-        .fromOutputToLocal { messages -> messages.map { it.toLocalModel() } }
-        .fromNetworkToLocal { messages -> messages.map { it.toLocalModel() } }
+    converter = Converter.Builder<List<MessageDto>, List<DomainMessage>, List<DomainMessage>>()
+        .fromOutputToLocal { it }
+        .fromNetworkToLocal { messages -> messages.map { it.toDomainModel() } }
         .build(),
 ).build(
     updater = Updater.by(
@@ -97,7 +87,7 @@ fun provideChatMessageMutableStore(
         )
     ),
     bookkeeper = provideBookkeeper(
-        databaseHelper,
+        dataHistoryLocalDataSource,
         DomainMessage::class.simpleName.toString()
     ) { it }
 )

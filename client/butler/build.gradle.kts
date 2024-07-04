@@ -16,6 +16,7 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.androidx.room)
 }
 
 group = "illyan"
@@ -63,6 +64,10 @@ kotlin {
                 implementation(compose.preview)
                 implementation(compose.uiTooling)
                 implementation(compose.uiUtil)
+
+                implementation(libs.androidx.room.common)
+                implementation(libs.androidx.room)
+                implementation(libs.androidx.sqlite.bundled)
 
                 implementation(libs.jetbrains.lifecycle.viewmodel.compose)
                 implementation(libs.jetbrains.navigation.compose)
@@ -177,6 +182,8 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 //}
 
 dependencies {
+    annotationProcessor(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     ksp(libs.koin.ksp)
 }
 
@@ -232,6 +239,9 @@ buildConfig {
         val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
         buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString())
+
+        val useRoomDb = localProperties["USE_ROOM_DB"].toBoolean() // True: use Room for local data persistency wherever possible, otherwise fallback to SQLDelight
+        buildConfigField("Boolean", "USE_ROOM_DB", useRoomDb.toString())
     }
 
     // GOOGLE_CLIENT_ID from local.properties
@@ -345,4 +355,8 @@ rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlu
     rootProject.the<YarnRootExtension>().yarnLockMismatchReport = YarnLockMismatchReport.WARNING
     rootProject.the<YarnRootExtension>().reportNewYarnLock = true
     rootProject.the<YarnRootExtension>().yarnLockAutoReplace = true
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
