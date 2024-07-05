@@ -610,9 +610,12 @@ fun HamburgerButton(onClick: () -> Unit = {}) {
 }
 
 @Composable
-fun CloseButton(onClick: () -> Unit = {}) {
+fun CloseButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
     IconButton(
-        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+        modifier = modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
         onClick = onClick
     ) {
         Icon(
@@ -638,10 +641,10 @@ private fun NavigationDrawerContent(
         modifier = Modifier.widthIn(max = 280.dp),
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp)
+            modifier = Modifier.padding(vertical = 4.dp)
         ) {
             AnimatedVisibility(!isDrawerPermanent) {
-                CloseButton { closeDrawer() }
+                CloseButton(modifier = Modifier.padding(start = 2.dp)) { closeDrawer() }
             }
             ChatsNavigationDrawerItem(selected = navController.currentDestination?.route == "chat" && !isProfileShown) {
                 navigateToChats()
