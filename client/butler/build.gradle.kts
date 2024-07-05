@@ -1,9 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -23,6 +21,8 @@ version = libs.versions.butler.get()
 kotlin {
     androidTarget()
     jvm()
+
+    jvmToolchain(17)
 
     sourceSets {
         commonMain {
@@ -109,13 +109,6 @@ kotlin {
     }
 }
 
-tasks.withType<KotlinJvmCompile>().configureEach {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_1_8
-//        languageVersion = KotlinVersion.KOTLIN_2_0
-    }
-}
-
 dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
@@ -160,10 +153,6 @@ buildConfig {
 }
 
 android {
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
     namespace = "illyan.butler"
 //    compileSdk = 34
     compileSdkPreview = "VanillaIceCream"
@@ -210,19 +199,17 @@ android {
         buildConfig = true
     }
 
-    applicationVariants.all {
-        val variantName = name
-        sourceSets {
-            getByName("main") {
-                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
-            }
-        }
-    }
+//    applicationVariants.all {
+//        val variantName = name
+//        sourceSets {
+//            getByName("main") {
+//                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
+//            }
+//        }
+//    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     packaging {
@@ -237,10 +224,6 @@ android {
         ksp(libs.koin.ksp)
     }
 }
-
-//compose.experimental {
-//    web.application {}
-//}
 
 compose.desktop.application {
     mainClass = "illyan.butler.MainKt"
