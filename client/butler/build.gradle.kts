@@ -1,6 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
@@ -22,32 +21,7 @@ group = "illyan"
 version = libs.versions.butler.get()
 
 kotlin {
-//    js {
-//        moduleName = rootProject.name
-//        browser {
-//            commonWebpackConfig {
-//                outputFileName = "web.js"
-//            }
-//        }
-//        binaries.executable()
-//    }
-
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    compilerOptions {
-//        apiVersion = KotlinVersion.KOTLIN_2_0
-//        languageVersion = KotlinVersion.KOTLIN_2_0
-    }
-
-//    androidTarget {
-//        compilations.all {
-//            kotlinOptions {
-//                jvmTarget = "1.8"
-//            }
-//        }
-//    }
-
     androidTarget()
-
     jvm()
 
     sourceSets {
@@ -73,6 +47,7 @@ kotlin {
 
                 implementation(libs.ktor.core)
                 implementation(libs.ktor.auth)
+                implementation(libs.ktor.client.cio)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.logging)
@@ -112,49 +87,25 @@ kotlin {
             implementation(kotlin("test-annotations-common"))
         }
 
-//        jsTest
         jvmTest
 
         androidMain.dependencies {
             implementation(libs.androidx.core)
-            implementation(libs.androidx.crypto)
             implementation(libs.koin.android)
-            implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.datastore)
-            implementation(libs.androidx.datastore.preferences)
             implementation(libs.ffmpeg.kit)
         }
 
         jvmMain.dependencies {
             implementation(compose.preview)
             implementation(compose.desktop.common)
-            implementation(libs.androidx.crypto)
-            implementation(libs.koin.ktor)
-            implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.androidx.datastore)
-            implementation(libs.androidx.datastore.preferences)
         }
-
-//        jsMain.dependencies {
-//            implementation(libs.ktor.client.js)
-//            implementation(compose.material)
-//            implementation(compose.html.core)
-//            implementation(libs.kotlinx.coroutines.js)
-//            implementation(libs.sqldelight.js)
-//            implementation(npm("kotlinx-coroutines-core", "1.7.3"))
-//            implementation(npm("sql.js", "1.10.2"))
-//            implementation(npm("dateformat", "5.0.3"))
-//            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.1"))
-//            implementation(devNpm("copy-webpack-plugin", "12.0.2"))
-//            implementation(devNpm("localstorage-slim", "2.7.0"))
-//        }
     }
 }
 
@@ -164,24 +115,12 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 //        languageVersion = KotlinVersion.KOTLIN_2_0
     }
 }
-//tasks.withType<KotlinCompile>().configureEach {
-//    dependsOn("kspCommonMainKotlinMetadata")
-//}
 
 dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
     ksp(libs.koin.ksp)
 }
-
-//afterEvaluate {
-//    tasks.filter {
-//        it.name.contains("SourcesJar", true)
-//    }.forEach {
-//        println("SourceJarTask====>${it.name}")
-//        it.dependsOn("kspCommonMainKotlinMetadata")
-//    }
-//}
 
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")
