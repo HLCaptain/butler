@@ -10,7 +10,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class AppMemoryRepository : AppRepository {
-    private val _appSettings = MutableStateFlow(AppSettings.default)
+    private val _appSettings = MutableStateFlow(AppSettings.Default)
     override val appSettings = _appSettings.asStateFlow()
 
     private val _firstSignInHappenedYet = MutableStateFlow(false)
@@ -18,6 +18,7 @@ class AppMemoryRepository : AppRepository {
 
     private val _isTutorialDone = MutableStateFlow(false)
     override val isTutorialDone = _isTutorialDone.asStateFlow()
+    override val currentHost = MutableStateFlow<String?>(null).asStateFlow()
 
     override suspend fun setTutorialDone(isTutorialDone: Boolean) {
         _isTutorialDone.update { isTutorialDone }

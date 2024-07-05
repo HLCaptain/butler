@@ -1,13 +1,13 @@
 package illyan.butler.data.mapping
 
 import illyan.butler.data.network.model.chat.ResourceDto
-import illyan.butler.db.Resource
+import illyan.butler.data.room.model.RoomResource
 import illyan.butler.domain.model.DomainResource
 
-fun Resource.toDomainModel() = DomainResource(
+fun RoomResource.toDomainModel() = DomainResource(
     id = id,
-    type = type,
-    data = data_,
+    type = mimeType,
+    data = data,
 )
 
 fun DomainResource.toNetworkModel() = ResourceDto(
@@ -16,12 +16,12 @@ fun DomainResource.toNetworkModel() = ResourceDto(
     data = data,
 )
 
-fun ResourceDto.toLocalModel() = Resource(
+fun ResourceDto.toRoomModel() = RoomResource(
     id = id!!,
-    type = type,
-    data_ = data,
+    mimeType = type,
+    data = data,
 )
 
-fun Resource.toNetworkModel() = toDomainModel().toNetworkModel()
-fun DomainResource.toLocalModel() = toNetworkModel().toLocalModel()
-fun ResourceDto.toDomainModel() = toLocalModel().toDomainModel()
+fun ResourceDto.toDomainModel() = toRoomModel().toDomainModel()
+fun RoomResource.toNetworkModel() = toDomainModel().toNetworkModel()
+fun DomainResource.toRoomModel() = toNetworkModel().toRoomModel()

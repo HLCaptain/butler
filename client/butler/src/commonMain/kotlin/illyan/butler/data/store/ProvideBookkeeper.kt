@@ -1,42 +1,33 @@
 package illyan.butler.data.store
 
-import illyan.butler.data.sqldelight.DatabaseHelper
-import illyan.butler.db.DataHistory
+import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
+import illyan.butler.data.local.model.DataHistory
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import org.mobilenativefoundation.store.store5.Bookkeeper
 
 fun<Key> provideBookkeeper(
-    databaseHelper: DatabaseHelper,
-    originTable: String,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource,
+    group: String,
     keyToUUID: (Key) -> String
 ) = Bookkeeper.by(
     getLastFailedSync = { key: Key ->
-        databaseHelper.queryAsOneOrNullFlow { it.dataHistoryQueries.select(keyToUUID(key)) }.map {
-            Napier.d("Get last failed sync for $key is ${it?.timestamp}")
-            it?.timestamp
-        }.firstOrNull()
+        dataHistoryLocalDataSource.getLastFailedTimestamp(keyToUUID(key))?.also {
+            Napier.d("Get last failed sync for $key is $it")
+        }
     },
     setLastFailedSync = { key, timestamp ->
-        databaseHelper.withDatabase {
-            Napier.d("Setting last failed sync for $key to $timestamp")
-            it.dataHistoryQueries.upsert(DataHistory(keyToUUID(key), timestamp, originTable))
-        }
+        Napier.d("Setting last failed sync for $key to $timestamp")
+        dataHistoryLocalDataSource.insertDataHistory(DataHistory(keyToUUID(key), timestamp, group))
         true
     },
     clear = { key ->
-        databaseHelper.withDatabase {
-            Napier.d("Clearing last failed sync for $key")
-            it.dataHistoryQueries.delete(keyToUUID(key))
-        }
+        Napier.d("Clearing last failed sync for $key")
+        dataHistoryLocalDataSource.deleteDataHistory(keyToUUID(key))
         true
     },
     clearAll = {
-        databaseHelper.withDatabase {
-            Napier.d("Clearing all last failed syncs")
-            it.dataHistoryQueries.deleteAllFromTable(originTable)
-        }
+        Napier.d("Clearing all last failed syncs for group $group")
+        dataHistoryLocalDataSource.deleteDataHistoryByGroup(group)
         true
     }
 )

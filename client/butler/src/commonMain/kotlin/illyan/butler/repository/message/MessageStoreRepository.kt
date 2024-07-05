@@ -3,9 +3,9 @@ package illyan.butler.repository.message
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
-import illyan.butler.data.store.ChatMessageMutableStoreBuilder
+import illyan.butler.data.store.ChatMessageStoreBuilder
 import illyan.butler.data.store.MessageMutableStoreBuilder
-import illyan.butler.data.store.UserMessageMutableStoreBuilder
+import illyan.butler.data.store.UserMessageStoreBuilder
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.manager.HostManager
@@ -26,8 +26,8 @@ import org.mobilenativefoundation.store.store5.StoreWriteRequest
 @Single
 class MessageStoreRepository(
     messageMutableStoreBuilder: MessageMutableStoreBuilder,
-    chatMessageMutableStoreBuilder: ChatMessageMutableStoreBuilder,
-    userMessageMutableStoreBuilder: UserMessageMutableStoreBuilder,
+    chatMessageStoreBuilder: ChatMessageStoreBuilder,
+    userMessageStoreBuilder: UserMessageStoreBuilder,
     private val messageNetworkDataSource: MessageNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
     private val hostManager: HostManager
@@ -35,13 +35,8 @@ class MessageStoreRepository(
     @OptIn(ExperimentalStoreApi::class)
     val messageMutableStore = messageMutableStoreBuilder.store
     @OptIn(ExperimentalStoreApi::class)
-    val chatMessageMutableStore = chatMessageMutableStoreBuilder.store
-    @OptIn(ExperimentalStoreApi::class)
-    val userMessageMutableStore = userMessageMutableStoreBuilder.store
-    @OptIn(ExperimentalStoreApi::class)
-    override suspend fun deleteAllMessages(userId: String) {
-        userMessageMutableStore.clear(userId)
-    }
+    val chatMessageMutableStore = chatMessageStoreBuilder.store
+    private val userMessageStore = userMessageStoreBuilder.store
 
     init {
         coroutineScopeIO.launch {
@@ -108,10 +103,9 @@ class MessageStoreRepository(
     }
 
     private val userMessageStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    @OptIn(ExperimentalStoreApi::class)
     override fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return userMessageStateFlows.getOrPut(userId) {
-            userMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
+            userMessageStore.stream(
                 StoreReadRequest.cached(userId, true)
             ).map {
                 it.throwIfError()

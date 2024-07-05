@@ -4,9 +4,10 @@ import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.store.ChatMutableStoreBuilder
-import illyan.butler.data.store.UserChatMutableStoreBuilder
+import illyan.butler.data.store.UserChatStoreBuilder
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
+import illyan.butler.manager.AuthManager
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -26,26 +27,33 @@ import org.mobilenativefoundation.store.store5.StoreWriteRequest
 @Single
 class ChatStoreRepository(
     chatMutableStoreBuilder: ChatMutableStoreBuilder,
-    userChatMutableStoreBuilder: UserChatMutableStoreBuilder,
+    userChatStoreBuilder: UserChatStoreBuilder,
     private val chatNetworkDataSource: ChatNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
-    private val hostManager: HostManager
+    private val hostManager: HostManager,
+    private val authManager: AuthManager
 ) : ChatRepository {
     @OptIn(ExperimentalStoreApi::class)
     val chatMutableStore = chatMutableStoreBuilder.store
 
-    @OptIn(ExperimentalStoreApi::class)
-    val userChatMutableStore = userChatMutableStoreBuilder.store
+    val userChatStore = userChatStoreBuilder.store
     override suspend fun deleteAllChats(userId: String) {
-        userChatMutableStore.clear(userId)
+        userChatStore.clear(userId)
     }
 
     init {
         coroutineScopeIO.launch {
             hostManager.currentHost.collect {
                 Napier.d("Host changed, clearing chat state flows")
-                chatStateFlows.clear()
-                userChatStateFlows.clear()
+                if (chatStateFlows.isNotEmpty()) chatStateFlows.clear()
+                if (userChatStateFlows.isNotEmpty()) userChatStateFlows.clear()
+            }
+        }
+        coroutineScopeIO.launch {
+            authManager.isUserSignedIn.collect {
+                Napier.d("User signed in status changed, clearing chat state flows")
+                if (chatStateFlows.isNotEmpty()) chatStateFlows.clear()
+                if (userChatStateFlows.isNotEmpty()) userChatStateFlows.clear()
             }
         }
     }
@@ -71,10 +79,9 @@ class ChatStoreRepository(
     }
 
     private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
-    @OptIn(ExperimentalStoreApi::class)
     override fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStateFlows.getOrPut(userId) {
-            userChatMutableStore.stream<StoreReadResponse<List<DomainChat>>>(
+            userChatStore.stream(
                 StoreReadRequest.cached(userId, true)
             ).map {
                 it.throwIfError()

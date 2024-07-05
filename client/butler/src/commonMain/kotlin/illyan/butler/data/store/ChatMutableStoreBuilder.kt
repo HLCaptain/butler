@@ -1,19 +1,17 @@
 package illyan.butler.data.store
 
+import illyan.butler.data.local.datasource.ChatLocalDataSource
+import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.chat.ChatDto
-import illyan.butler.data.sqldelight.DatabaseHelper
-import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
@@ -26,17 +24,19 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 
 @Single
 class ChatMutableStoreBuilder(
-    databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: ChatNetworkDataSource
+    chatLocalDataSource: ChatLocalDataSource,
+    chatNetworkDataSource: ChatNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideChatMutableStore(databaseHelper, chatNetworkDataSource)
+    val store = provideChatMutableStore(chatLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideChatMutableStore(
-    databaseHelper: DatabaseHelper,
-    chatNetworkDataSource: ChatNetworkDataSource
+    chatLocalDataSource: ChatLocalDataSource,
+    chatNetworkDataSource: ChatNetworkDataSource,
+    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chat $key")
@@ -50,34 +50,26 @@ fun provideChatMutableStore(
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
-            databaseHelper.queryAsOneOrNullFlow {
-                Napier.d("Reading chat at $key")
-                it.chatQueries.select(key)
-            }.map { it?.toDomainModel() }
+            Napier.d("Reading chat at $key")
+            chatLocalDataSource.getChat(key)
         },
         writer = { key, local ->
-            databaseHelper.withDatabase { db ->
-                Napier.d("Writing chat at $key with $local")
-                db.chatQueries.upsert(local)
-            }
+            Napier.d("Writing chat at $key with $local")
+            chatLocalDataSource.upsertChat(local)
         },
         delete = { key ->
-            databaseHelper.withDatabase {
-                Napier.d("Deleting chat at $key")
-                it.chatQueries.delete(key)
-            }
+            Napier.d("Deleting chat at $key")
+            chatLocalDataSource.deleteChatById(key)
             chatNetworkDataSource.delete(key)
         },
         deleteAll = {
-            databaseHelper.withDatabase {
-                Napier.d("Deleting all chats")
-                it.chatQueries.deleteAll()
-            }
+            Napier.d("Deleting all chats")
+            chatLocalDataSource.deleteAllChats()
         }
     ),
-    converter = Converter.Builder<ChatDto, Chat, DomainChat>()
-        .fromOutputToLocal { it.toLocalModel() }
-        .fromNetworkToLocal { it.toLocalModel() }
+    converter = Converter.Builder<ChatDto, DomainChat, DomainChat>()
+        .fromOutputToLocal { it }
+        .fromNetworkToLocal { it.toDomainModel() }
         .build(),
 ).build(
     updater = Updater.by(
@@ -95,7 +87,7 @@ fun provideChatMutableStore(
         )
     ),
     bookkeeper = provideBookkeeper(
-        databaseHelper,
+        dataHistoryLocalDataSource,
         DomainChat::class.simpleName.toString()
     ) { it }
 )

@@ -1,6 +1,5 @@
 package illyan.butler.repository.host
 
-import com.russhwolf.settings.ExperimentalSettingsApi
 import illyan.butler.di.KoinNames
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -11,7 +10,6 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-@OptIn(ExperimentalSettingsApi::class)
 @Single
 class HostMemoryRepository(
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
@@ -44,5 +42,9 @@ class HostMemoryRepository(
         } catch (e: Exception) {
             false
         }.also { _isConnectingToHost.update { false } }
+    }
+
+    override suspend fun selectHostWithoutTest(url: String) {
+        _currentHost.update { url }
     }
 }

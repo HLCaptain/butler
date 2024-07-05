@@ -8,6 +8,7 @@ interface AppRepository {
     val appSettings: StateFlow<AppSettings?>
     val firstSignInHappenedYet: StateFlow<Boolean?>
     val isTutorialDone: StateFlow<Boolean?>
+    val currentHost: StateFlow<String?>
 
     suspend fun setTutorialDone(isTutorialDone: Boolean)
     suspend fun setUserPreferences(preferences: DomainPreferences)
