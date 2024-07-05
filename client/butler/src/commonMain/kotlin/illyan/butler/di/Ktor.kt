@@ -1,12 +1,11 @@
 package illyan.butler.di
 
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.UserTokensResponse
+import illyan.butler.data.room.dao.UserDao
+import illyan.butler.domain.model.DomainToken
 import illyan.butler.manager.ErrorManager
-import illyan.butler.repository.host.HostRepository
-import illyan.butler.repository.user.UserRepository
+import illyan.butler.repository.app.AppRepository
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -37,6 +36,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -45,24 +45,27 @@ import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-@OptIn(ExperimentalSettingsApi::class)
+@ExperimentalSerializationApi
 @Single
 fun provideWebSocketClientProvider(
-    settings: FlowSettings,
+    userDao: UserDao,
+    appRepository: AppRepository,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
-): () -> HttpClient = { provideWebSocketClient(settings, coroutineScopeIO, errorManager) }
+): () -> HttpClient = { provideWebSocketClient(userDao, appRepository, coroutineScopeIO, errorManager) }
 
-@OptIn(ExperimentalSettingsApi::class, ExperimentalSerializationApi::class)
+@ExperimentalSerializationApi
 @Named(KoinNames.WebSocketClient)
 @Factory
 fun provideWebSocketClient(
-    settings: FlowSettings,
+    userDao: UserDao,
+    appRepository: AppRepository,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) = HttpClient {
     setupClient(
-        settings = settings,
+        userDao = userDao,
+        appRepository = appRepository,
         coroutineScopeIO = coroutineScopeIO,
         errorManager = errorManager
     )
@@ -76,15 +79,17 @@ fun provideWebSocketClient(
     }
 }
 
-@OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
+@ExperimentalSerializationApi
 @Single
 fun provideHttpClient(
-    settings: FlowSettings,
+    userDao: UserDao,
+    appRepository: AppRepository,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) = HttpClient {
     setupClient(
-        settings = settings,
+        userDao = userDao,
+        appRepository = appRepository,
         coroutineScopeIO = coroutineScopeIO,
         errorManager = errorManager
     )
@@ -95,9 +100,9 @@ fun provideHttpClient(
     }
 }
 
-@OptIn(ExperimentalSettingsApi::class)
 fun HttpClientConfig<*>.setupClient(
-    settings: FlowSettings,
+    userDao: UserDao,
+    appRepository: AppRepository,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) {
@@ -128,22 +133,26 @@ fun HttpClientConfig<*>.setupClient(
             // DON'T USE HTTP REQUESTS IN `loadTokens`. Only use local storage.
             // loadTokens run every time a request is made.
             loadTokens {
-                val accessToken = settings.getString(UserRepository.KEY_ACCESS_TOKEN, "")
-                val refreshToken = settings.getString(UserRepository.KEY_REFRESH_TOKEN, "")
-                if (accessToken.isBlank() || refreshToken.isBlank()) {
-                    Napier.d { "No access or refresh token found in settings" }
+                val currentUser =  userDao.getCurrentUser().first()
+                val accessToken = currentUser?.accessToken?.token
+                val refreshToken = currentUser?.refreshToken?.token
+                if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
+                    Napier.d { "No access or refresh token found in app settings" }
                     return@loadTokens null
+                } else {
+                    Napier.d { "Access and refresh tokens found in app settings" }
+                    BearerTokens(accessToken, refreshToken)
                 }
-                BearerTokens(accessToken, refreshToken)
             }
             refreshTokens {
-                val refreshTokenInfo = client.post("/refresh-access-token").body<UserTokensResponse>()
-                val newToken = BearerTokens(refreshTokenInfo.accessToken, refreshTokenInfo.refreshToken)
-                settings.putString(UserRepository.KEY_ACCESS_TOKEN, refreshTokenInfo.accessToken)
-                settings.putString(UserRepository.KEY_REFRESH_TOKEN, refreshTokenInfo.refreshToken)
-                settings.putLong(UserRepository.KEY_ACCESS_TOKEN_EXPIRATION, refreshTokenInfo.accessTokenExpirationMillis)
-                settings.putLong(UserRepository.KEY_REFRESH_TOKEN_EXPIRATION, refreshTokenInfo.refreshTokenExpirationMillis)
-                newToken
+                Napier.d { "Refreshing tokens" }
+                client.post("/refresh-access-token").body<UserTokensResponse>().run {
+                    userDao.updateTokens(
+                        DomainToken(accessToken, accessTokenExpirationMillis),
+                        DomainToken(refreshToken, refreshTokenExpirationMillis)
+                    )
+                    BearerTokens(accessToken, refreshToken)
+                }
             }
         }
     }
@@ -196,7 +205,7 @@ fun HttpClientConfig<*>.setupClient(
 
     var currentApiUrl: String? = null
     coroutineScopeIO.launch {
-        settings.getStringOrNullFlow(HostRepository.KEY_API_URL).collectLatest {
+        appRepository.currentHost.collectLatest {
             Napier.d { "API URL changed to $it" }
             currentApiUrl = it
         }

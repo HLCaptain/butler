@@ -644,7 +644,7 @@ private fun NavigationDrawerContent(
             modifier = Modifier.padding(vertical = 4.dp)
         ) {
             AnimatedVisibility(!isDrawerPermanent) {
-                CloseButton(modifier = Modifier.padding(start = 2.dp)) { closeDrawer() }
+                CloseButton(modifier = Modifier.padding(start = 4.dp)) { closeDrawer() }
             }
             ChatsNavigationDrawerItem(selected = navController.currentDestination?.route == "chat" && !isProfileShown) {
                 navigateToChats()

@@ -6,7 +6,6 @@ import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ResourceNetworkDataSource
 import illyan.butler.data.network.model.chat.ResourceDto
-import illyan.butler.db.Resource
 import illyan.butler.domain.model.DomainResource
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
@@ -88,6 +87,6 @@ fun provideResourceMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        Resource::class.simpleName.toString()
+        DomainResource::class.simpleName.toString()
     ) { it }
 )

@@ -18,6 +18,7 @@ class AppMemoryRepository : AppRepository {
 
     private val _isTutorialDone = MutableStateFlow(false)
     override val isTutorialDone = _isTutorialDone.asStateFlow()
+    override val currentHost = MutableStateFlow<String?>(null).asStateFlow()
 
     override suspend fun setTutorialDone(isTutorialDone: Boolean) {
         _isTutorialDone.update { isTutorialDone }

@@ -4,18 +4,15 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.getPlatformPermissionRepository
 import illyan.butler.repository.app.AppMemoryRepository
 import illyan.butler.repository.app.AppRepository
-import illyan.butler.repository.app.AppSettingsRepository
 import illyan.butler.repository.app.AppSettingsRoomRepository
 import illyan.butler.repository.chat.ChatMemoryRepository
 import illyan.butler.repository.chat.ChatRepository
 import illyan.butler.repository.chat.ChatStoreRepository
-import illyan.butler.repository.error.ErrorLocalRepository
 import illyan.butler.repository.error.ErrorMemoryRepository
 import illyan.butler.repository.error.ErrorRepository
 import illyan.butler.repository.host.HostMemoryRepository
 import illyan.butler.repository.host.HostRepository
 import illyan.butler.repository.host.HostRoomRepository
-import illyan.butler.repository.host.HostSettingsRepository
 import illyan.butler.repository.message.MessageMemoryRepository
 import illyan.butler.repository.message.MessageRepository
 import illyan.butler.repository.message.MessageStoreRepository
@@ -30,21 +27,16 @@ import illyan.butler.repository.resource.ResourceStoreRepository
 import illyan.butler.repository.user.UserMemoryRepository
 import illyan.butler.repository.user.UserRepository
 import illyan.butler.repository.user.UserRoomRepository
-import illyan.butler.repository.user.UserSettingsRepository
 import org.koin.core.annotation.Single
 
 @Single
 fun provideAppRepository(
     appMemoryRepository: AppMemoryRepository,
-    appSettingsRepository: AppSettingsRepository,
     roomAppSettingsRepository: AppSettingsRoomRepository
 ): AppRepository = if (BuildConfig.USE_MEMORY_DB) {
     appMemoryRepository
-} else if (BuildConfig.USE_ROOM_DB) {
-    roomAppSettingsRepository
 } else {
-    // FIXME: Temporary solution to avoid using AppSettingsRepository
-    appMemoryRepository
+    roomAppSettingsRepository
 }
 
 @Single
@@ -80,37 +72,30 @@ fun provideModelRepository(
 @Single
 fun provideHostRepository(
     hostMemoryRepository: HostMemoryRepository,
-    hostSettingsRepository: HostSettingsRepository,
     hostRoomRepository: HostRoomRepository
 ): HostRepository = if (BuildConfig.USE_MEMORY_DB) {
     hostMemoryRepository
-} else if (BuildConfig.USE_ROOM_DB) {
-    hostRoomRepository
 } else {
-    hostSettingsRepository
+    hostRoomRepository
 }
 
 @Single
 fun provideErrorRepository(
     errorMemoryRepository: ErrorMemoryRepository,
-    errorLocalRepository: ErrorLocalRepository
 ): ErrorRepository = if (BuildConfig.USE_MEMORY_DB) {
     errorMemoryRepository
 } else {
-    errorMemoryRepository // FIXME: Temporary solution to avoid using ErrorLocalRepository
+    errorMemoryRepository // TODO: use local persistency, like Room to log errors, then upload to server
 }
 
 @Single
 fun provideUserRepository(
     userMemoryRepository: UserMemoryRepository,
-    userSettingsRepository: UserSettingsRepository,
     userRoomRepository: UserRoomRepository
 ): UserRepository = if (BuildConfig.USE_MEMORY_DB) {
     userMemoryRepository
-} else if (BuildConfig.USE_ROOM_DB) {
-    userRoomRepository
 } else {
-    userSettingsRepository
+    userRoomRepository
 }
 
 @Single

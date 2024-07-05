@@ -2,17 +2,7 @@ package illyan.butler.data.mapping
 
 import illyan.butler.data.network.model.chat.ChatDto
 import illyan.butler.data.room.model.RoomChat
-import illyan.butler.db.Chat
 import illyan.butler.domain.model.DomainChat
-
-fun Chat.toDomainModel() = DomainChat(
-    id = id,
-    created = created,
-    name = name,
-    members = members,
-    aiEndpoints = aiEndpoints,
-    summary = summary
-)
 
 fun RoomChat.toDomainModel() = DomainChat(
     id = id,
@@ -32,15 +22,6 @@ fun DomainChat.toNetworkModel() = ChatDto(
     summary = summary
 )
 
-fun ChatDto.toLocalModel() = Chat(
-    id = id!!,
-    created = created!!,
-    name = name,
-    members = members,
-    aiEndpoints = aiEndpoints,
-    summary = summary
-)
-
 fun ChatDto.toRoomModel() = RoomChat(
     id = id!!,
     created = created!!,
@@ -50,8 +31,6 @@ fun ChatDto.toRoomModel() = RoomChat(
     summary = summary
 )
 
-fun Chat.toNetworkModel() = toDomainModel().toNetworkModel()
-fun DomainChat.toLocalModel() = toNetworkModel().toLocalModel()
-fun ChatDto.toDomainModel() = toLocalModel().toDomainModel()
+fun ChatDto.toDomainModel() = toRoomModel().toDomainModel()
 fun RoomChat.toNetworkModel() = toDomainModel().toNetworkModel()
 fun DomainChat.toRoomModel() = toNetworkModel().toRoomModel()

@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
-    alias(libs.plugins.sqldelight)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
@@ -93,15 +92,9 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.io)
 
-                implementation(libs.sqldelight.coroutines)
-                implementation(libs.sqldelight.adapters)
-
                 implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
                 implementation(libs.store)
-                implementation(libs.settings)
-                implementation(libs.settings.coroutines)
-                implementation(libs.settings.noarg)
                 implementation(libs.korge.core)
                 implementation(libs.filepicker)
                 implementation(libs.coil)
@@ -128,11 +121,9 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
-            implementation(libs.sqldelight.android)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.settings.datastore)
             implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.ffmpeg.kit)
@@ -145,12 +136,8 @@ kotlin {
             implementation(libs.koin.ktor)
             implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
-            implementation(libs.sqldelight.jvm)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.credential.storage.jvm)
-            implementation(libs.settings)
-            implementation(libs.settings.datastore)
             implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
         }
@@ -200,15 +187,6 @@ ksp {
     arg("KOIN_CONFIG_CHECK", "true")
 }
 
-sqldelight {
-    databases {
-        create("Database") {
-            packageName = "illyan.butler.db"
-            generateAsync = true
-        }
-    }
-}
-
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
 }
@@ -235,25 +213,11 @@ buildConfig {
             prodIndicatorNames.any { taskName.contains(it, ignoreCase = true) }
 
         println("Task [$taskName] isProd=$isProd")
-
-        val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
+
+        val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use Room database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString())
-
-        val useRoomDb = localProperties["USE_ROOM_DB"].toBoolean() // True: use Room for local data persistency wherever possible, otherwise fallback to SQLDelight
-        buildConfigField("Boolean", "USE_ROOM_DB", useRoomDb.toString())
     }
-
-    // GOOGLE_CLIENT_ID from local.properties
-    val properties = localPropertiesFile.readLines().associate {
-        if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
-        val (key, value) = it.split("=", limit = 2)
-        key to value
-    }
-    val googleClientId = if (properties["GOOGLE_CLIENT_ID"] == null) null else "\"${properties["GOOGLE_CLIENT_ID"]}\""
-    buildConfigField("String?", "GOOGLE_CLIENT_ID", "$googleClientId")
-    val apiGatewayUrl = if (properties["API_GATEWAY_URL"] == null) null else "\"${properties["API_GATEWAY_URL"]}\""
-    buildConfigField("String?", "API_GATEWAY_URL", "$apiGatewayUrl")
 }
 
 android {

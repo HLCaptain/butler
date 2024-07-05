@@ -27,6 +27,11 @@ class AppSettingsRoomRepository(
         SharingStarted.Eagerly,
         null
     )
+    override val currentHost = roomAppSettings.map { it?.hostUrl }.stateIn(
+        coroutineScopeIO,
+        SharingStarted.Eagerly,
+        null
+    )
 
     init {
         coroutineScopeIO.launch {

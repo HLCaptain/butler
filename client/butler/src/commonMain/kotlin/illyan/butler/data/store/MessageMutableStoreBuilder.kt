@@ -3,11 +3,9 @@ package illyan.butler.data.store
 import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
-import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
@@ -57,7 +55,7 @@ fun provideMessageMutableStore(
         },
         writer = { key, local ->
             Napier.d("Writing message at $key with $local")
-            messageLocalDataSource.upsertMessage(local.toDomainModel())
+            messageLocalDataSource.upsertMessage(local)
         },
         delete = { key ->
             Napier.d("Deleting message at $key")
@@ -71,9 +69,9 @@ fun provideMessageMutableStore(
             messageLocalDataSource.deleteAllMessages()
         }
     ),
-    converter = Converter.Builder<MessageDto, Message, DomainMessage>()
-        .fromOutputToLocal { it.toLocalModel() }
-        .fromNetworkToLocal { it.toLocalModel() }
+    converter = Converter.Builder<MessageDto, DomainMessage, DomainMessage>()
+        .fromOutputToLocal { it }
+        .fromNetworkToLocal { it.toDomainModel() }
         .build(),
 ).build(
     updater = Updater.by(
@@ -92,6 +90,6 @@ fun provideMessageMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        Message::class.simpleName.toString()
+        DomainMessage::class.simpleName.toString()
     ) { it }
 )

@@ -1,7 +1,7 @@
 package illyan.butler.repository.user
 
-import com.russhwolf.settings.ExperimentalSettingsApi
 import illyan.butler.di.KoinNames
+import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-@OptIn(ExperimentalSettingsApi::class)
 @Single
 class UserMemoryRepository(
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
@@ -76,5 +75,11 @@ class UserMemoryRepository(
 
     override suspend fun deleteUserData() {
         _userData.update { null }
+    }
+
+    override suspend fun refreshUserTokens(accessToken: DomainToken?, refreshToken: DomainToken?) {
+        _userData.update {
+            it?.copy(accessToken = accessToken, refreshToken = refreshToken)
+        }
     }
 }

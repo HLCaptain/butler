@@ -1,7 +1,5 @@
 package illyan.butler.repository.error
 
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.db.ErrorEvent
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.domain.model.ErrorState
@@ -28,7 +26,7 @@ class ErrorMemoryRepository : ErrorRepository {
 
     override suspend fun reportError(throwable: Throwable) {
         Napier.e(throwable) { "Error reported" }
-        val localErrorEvent = ErrorEvent(
+        val newErrorEvent = DomainErrorEvent(
             id = randomUUID(),
             platform = getPlatformName(),
             exception = throwable.toString().split(":").first(),
@@ -39,7 +37,6 @@ class ErrorMemoryRepository : ErrorRepository {
             timestamp = System.currentTimeMillis(),
             state = ErrorState.NEW
         )
-        val newErrorEvent = localErrorEvent.toDomainModel()
         _appErrorEventFlow.emit(newErrorEvent)
     }
 

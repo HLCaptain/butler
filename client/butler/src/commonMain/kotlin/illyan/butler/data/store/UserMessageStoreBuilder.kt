@@ -2,10 +2,8 @@ package illyan.butler.data.store
 
 import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
-import illyan.butler.db.Message
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
@@ -45,11 +43,11 @@ fun provideUserMessageStore(
         },
         writer = { key, local ->
             Napier.d("Writing messages for user $key")
-            messageLocalDataSource.upsertMessages(local.map { it.toDomainModel() })
+            messageLocalDataSource.upsertMessages(local)
         }
     ),
-    converter = Converter.Builder<List<MessageDto>, List<Message>, List<DomainMessage>>()
-        .fromOutputToLocal { messages -> messages.map { it.toLocalModel() } }
-        .fromNetworkToLocal { messages -> messages.map { it.toLocalModel() } }
+    converter = Converter.Builder<List<MessageDto>, List<DomainMessage>, List<DomainMessage>>()
+        .fromOutputToLocal { it }
+        .fromNetworkToLocal { messages -> messages.map { it.toDomainModel() } }
         .build(),
 ).build()

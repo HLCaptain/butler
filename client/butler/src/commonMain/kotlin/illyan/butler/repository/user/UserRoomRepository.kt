@@ -10,6 +10,7 @@ import illyan.butler.data.network.model.auth.UserRegistrationDto
 import illyan.butler.data.room.dao.AppSettingsDao
 import illyan.butler.data.room.dao.UserDao
 import illyan.butler.di.KoinNames
+import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -81,5 +82,9 @@ class UserRoomRepository(
 
     override suspend fun deleteUserData() {
         userDao.deleteAllUsers()
+    }
+
+    override suspend fun refreshUserTokens(accessToken: DomainToken?, refreshToken: DomainToken?) {
+        userDao.updateTokens(accessToken, refreshToken)
     }
 }

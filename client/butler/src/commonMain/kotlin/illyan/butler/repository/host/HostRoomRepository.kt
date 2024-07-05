@@ -48,4 +48,8 @@ class HostRoomRepository(
             false
         }.also { _isConnectingToHost.update { false } }
     }
+
+    override suspend fun selectHostWithoutTest(url: String) {
+        appSettingsDao.updateHostUrl(url)
+    }
 }
