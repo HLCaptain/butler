@@ -5,7 +5,9 @@ import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toLocalModel
 import illyan.butler.data.sqldelight.DatabaseHelper
 import illyan.butler.domain.model.DomainMessage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
@@ -45,7 +47,13 @@ class MessageSqlDelightDataSource(private val databaseHelper: DatabaseHelper) : 
         }
     }
 
-    override fun getAllMessagesForChat(chatId: String): Flow<List<DomainMessage>> {
+    override fun getMessageById(messageId: String): Flow<DomainMessage?> {
+        return databaseHelper.queryAsOneFlow {
+            it.messageQueries.select(messageId)
+        }.map { it.toDomainModel() }
+    }
+
+    override fun getMessagesByChatId(chatId: String): Flow<List<DomainMessage>> {
         return databaseHelper.queryAsListFlow {
             it.messageQueries.selectByChat(chatId)
         }.map { messages ->
@@ -55,5 +63,25 @@ class MessageSqlDelightDataSource(private val databaseHelper: DatabaseHelper) : 
 
     override suspend fun upsertMessages(newMessages: List<DomainMessage>) {
         insertMessages(newMessages)
+    }
+
+    override fun getAccessibleMessagesForUser(userId: String): Flow<List<DomainMessage>> {
+        return flow {
+            while (true) {
+                val newMessages = databaseHelper.withDatabase { database ->
+//                        Napier.d("Reading chat at $key")
+                    // TODO: could use ChatMembership table to get all chats for user, but this is simpler and probably faster
+                    val chats = database.chatQueries.selectAll().executeAsList()
+                    val userChats = chats.filter { it.members.contains(userId) }
+//                        Napier.v { "Chats the user is member of: ${userChats.size} out of ${chats.size}" }
+                    val messages = userChats.map { chat ->
+                        database.messageQueries.selectByChat(chat.id).executeAsList()
+                    }.flatten()
+                    messages
+                }.map { it.toDomainModel() }
+                emit(newMessages)
+                delay(1000)
+            }
+        }
     }
 }

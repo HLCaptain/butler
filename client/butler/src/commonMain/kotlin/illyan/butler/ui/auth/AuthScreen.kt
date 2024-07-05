@@ -1,5 +1,10 @@
 package illyan.butler.ui.auth
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,7 +22,10 @@ import org.koin.core.annotation.KoinExperimentalAPI
 
 @OptIn(KoinExperimentalAPI::class)
 @Composable
-fun AuthScreen() {
+fun AuthScreen(
+    authSuccess: () -> Unit = {},
+    authSuccessEnded: () -> Unit
+) {
     val viewModel = koinViewModel<AuthViewModel>()
     val state by viewModel.state.collectAsState()
     // Make your Compose Multiplatform UI
@@ -28,22 +36,25 @@ fun AuthScreen() {
     // 3. Close if user is authenticated
 
     val authNavController = rememberNavController()
+    val animationTime = 200
     NavHost(
         navController = authNavController,
-        startDestination = "login"
+        startDestination = "login",
+        enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+        popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+        exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+        popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
     ) {
         composable("login") {
             LoginScreen(
                 onSignUp = { email, password -> authNavController.navigate("signUp") },
                 onSelectHost = { authNavController.navigate("selectHost") },
-                onAuthenticated = {
-                    authNavController.navigate("authSuccess") { launchSingleTop = true }
-                }
+                onAuthenticated = { authNavController.navigate("authSuccess") { launchSingleTop = true } }
             )
         }
         composable("selectHost") {
             SelectHostScreen {
-                authNavController.navigate("signUpTutorial")
+                authNavController.navigateUp()
             }
         }
         composable("signUp") {
@@ -56,7 +67,9 @@ fun AuthScreen() {
         composable("authSuccess") {
             AuthSuccessIcon()
             LaunchedEffect(Unit) {
+                authSuccess()
                 delay(1000L)
+                authSuccessEnded()
             }
         }
     }

@@ -72,6 +72,7 @@ import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
 import illyan.butler.getWindowSizeInDp
+import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.chat_layout.LocalChatSelector
@@ -80,14 +81,12 @@ import illyan.butler.ui.components.GestureType
 import illyan.butler.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.error.ErrorScreen
-import illyan.butler.ui.login.LoginScreen
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
 import illyan.butler.ui.profile.ProfileDialogScreen
 import illyan.butler.ui.select_host.SelectHostScreen
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
 import illyan.butler.ui.settings.user.UserSettingsScreen
-import illyan.butler.ui.signup.SignUpScreen
 import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
 import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
 import illyan.butler.ui.welcome.WelcomeScreen
@@ -104,8 +103,8 @@ import org.koin.core.annotation.KoinExperimentalAPI
 @OptIn(KoinExperimentalAPI::class)
 @Composable
 fun HomeScreen() {
-    val screenModel = koinViewModel<HomeViewModel>()
-    val state by screenModel.state.collectAsState()
+    val viewModel = koinViewModel<HomeViewModel>()
+    val state by viewModel.state.collectAsState()
     Surface(
 //            modifier = Modifier.safeContentPadding(),
         color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
@@ -139,6 +138,7 @@ fun HomeScreen() {
             }
 
             val currentNavController = remember(userFlow) {
+                Napier.d("Current user flow: $userFlow")
                 when (userFlow) {
                     DialogUserFlow.Auth -> authNavController
                     DialogUserFlow.OnBoarding -> onBoardingNavController
@@ -161,35 +161,7 @@ fun HomeScreen() {
                     val animationTime = 200
                     when (userFlow) {
                         DialogUserFlow.Auth -> {
-                            NavHost(
-                                navController = authNavController,
-                                startDestination = "login",
-                                enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-                                popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-                                exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-                                popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
-                            ) {
-                                composable("login") {
-                                    LoginScreen(
-                                        onSignUp = { email, password -> authNavController.navigate("signUp") },
-                                        onSelectHost = { authNavController.navigate("selectHost") },
-                                        onAuthenticated = { authNavController.navigate("authSuccess") { launchSingleTop = true } }
-                                    )
-                                }
-                                composable("selectHost") {
-                                    SelectHostScreen { authNavController.navigate("signUpTutorial") }
-                                }
-                                composable("signUp") {
-                                    SignUpScreen(signedUp = { authNavController.navigate("authSuccess") { launchSingleTop = true } })
-                                }
-                                composable("authSuccess") {
-                                    AuthSuccessIcon()
-                                    LaunchedEffect(Unit) {
-                                        delay(1000L)
-                                        isAuthFlowEnded = true
-                                    }
-                                }
-                            }
+                            AuthScreen(authSuccessEnded = { isAuthFlowEnded = true })
                         }
 
                         DialogUserFlow.OnBoarding -> {
@@ -218,13 +190,15 @@ fun HomeScreen() {
                                 }
                                 composable("signUpTutorial") {
                                     SignUpTutorialScreen {
-                                        onBoardingNavController.navigate("signUp")
+                                        onBoardingNavController.navigate("auth")
                                     }
                                 }
-                                composable("signUp") {
-                                    SignUpScreen(
-                                        signedUp = {
-                                            onBoardingNavController.navigate("authSuccess") { launchSingleTop = true }
+                                composable("auth") {
+                                    AuthScreen(
+                                        authSuccessEnded = {
+                                            // FIXME: launch single on top does not work right now
+                                            //  due to bug in androidx.navigation, update dependencies
+                                            onBoardingNavController.navigate("usageTutorial") { launchSingleTop = true }
                                         }
                                     )
                                 }
@@ -232,12 +206,12 @@ fun HomeScreen() {
                                     AuthSuccessIcon()
                                     LaunchedEffect(Unit) {
                                         delay(1000L)
-                                        onBoardingNavController.navigate("usageTutorial") { launchSingleTop = true }
+
                                     }
                                 }
                                 composable("usageTutorial") {
                                     UsageTutorialScreen {
-                                        screenModel.setTutorialDone()
+                                        viewModel.setTutorialDone()
                                         isDialogClosedAfterTutorial = true
                                     }
                                 }
@@ -274,13 +248,13 @@ fun HomeScreen() {
                 modifier = Modifier.zIndex(1f),
                 isDialogOpen = numberOfErrors > 0,
                 isDialogFullscreen = false,
-                onDismissDialog = screenModel::removeLastError
+                onDismissDialog = viewModel::removeLastError
             ) { ErrorScreen() }
             ButlerDialog(
                 modifier = Modifier.zIndex(2f),
                 isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
                 isDialogFullscreen = false,
-                onDismissDialog = screenModel::removeLastPermissionRequest
+                onDismissDialog = viewModel::removeLastPermissionRequest
             ) { PermissionRequestScreen() }
             // Index is rememberSaveable, Screen is probably not.
             val (height, width) = getWindowSizeInDp()

@@ -22,7 +22,7 @@ import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
 
 @Single
-class ChatMessageMutableStoreBuilder(
+class ChatMessageStoreBuilder(
     messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: MessageNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
@@ -52,7 +52,7 @@ fun provideChatMessageMutableStore(
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
             Napier.d("Reading messages at $key")
-            messageLocalDataSource.getAllMessagesForChat(key)
+            messageLocalDataSource.getMessagesByChatId(key)
         },
         writer = { key, local ->
             Napier.d("Writing messages for user $key with ${local.size} messages")

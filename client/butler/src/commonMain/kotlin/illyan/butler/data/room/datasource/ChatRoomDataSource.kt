@@ -18,7 +18,7 @@ class ChatRoomDataSource(
     private val chatMemberDao: ChatMemberDao
 ) : ChatLocalDataSource {
     override fun getChat(key: String): Flow<DomainChat?> {
-        return chatDao.getChatById(key).map { it.toDomainModel() }
+        return chatDao.getChatById(key).map { it?.toDomainModel() }
     }
 
     override suspend fun upsertChat(chat: DomainChat) {
@@ -31,10 +31,10 @@ class ChatRoomDataSource(
         chatMemberDao.deleteChatMembersByChatId(chatId)
     }
 
-    override suspend fun deleteChatByUserId(userId: String) {
+    override suspend fun deleteChatsForUser(userId: String) {
         val chatIds = chatMemberDao.getUserChatIds(userId).first()
         chatDao.deleteChatsByUserId(userId)
-        chatMemberDao.deleteChatMembersByChatIds(chatIds)
+        chatMemberDao.deleteChatMembersForChat(chatIds)
     }
 
     override suspend fun deleteAllChats() {

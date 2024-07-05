@@ -23,10 +23,6 @@ class MessageMemoryRepository(
     }
 
     private val chatMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    override suspend fun deleteAllMessages(userId: String) {
-        userMessages.remove(userId)
-        userMessageStateFlows[userId]?.update { null to false }
-    }
 
     override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatMessageStateFlows.getOrPut(chatId) {

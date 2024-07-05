@@ -10,7 +10,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class AppMemoryRepository : AppRepository {
-    private val _appSettings = MutableStateFlow(AppSettings.default)
+    private val _appSettings = MutableStateFlow(AppSettings.Default)
     override val appSettings = _appSettings.asStateFlow()
 
     private val _firstSignInHappenedYet = MutableStateFlow(false)

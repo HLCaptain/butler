@@ -30,7 +30,7 @@ class AppSettingsRepository(
         try {
             if (it.isNullOrBlank()) {
                 Napier.d { "No app settings found, creating one" }
-                settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(AppSettings.default))
+                settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(AppSettings.Default))
                 null
             } else {
                 ProtoBuf.decodeFromHexString<AppSettings?>(it).also {
@@ -50,7 +50,7 @@ class AppSettingsRepository(
     init {
         coroutineScopeIO.launch {
             if (appSettings.value == null) {
-                settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(AppSettings.default))
+                settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString(AppSettings.Default))
             }
         }
     }
@@ -71,6 +71,6 @@ class AppSettingsRepository(
 
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
-        settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString((appSettings.value ?: AppSettings.default).copy(preferences = preferences)))
+        settings.putString("APP_SETTINGS", ProtoBuf.encodeToHexString((appSettings.value ?: AppSettings.Default).copy(preferences = preferences)))
     }
 }

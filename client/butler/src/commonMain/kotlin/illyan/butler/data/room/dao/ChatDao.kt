@@ -48,7 +48,7 @@ interface ChatDao {
     suspend fun deleteChatsByUserId(userId: String)
 
     @Query("SELECT * FROM chats WHERE id = :id")
-    fun getChatById(id: String): Flow<RoomChat>
+    fun getChatById(id: String): Flow<RoomChat?>
 
     @Query("SELECT chats.* FROM chats JOIN chat_members ON chats.id = chat_members.chatId WHERE chat_members.userId = :userId")
     fun getChatsByUser(userId: String): Flow<List<RoomChat>>

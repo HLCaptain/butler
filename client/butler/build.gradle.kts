@@ -331,6 +331,7 @@ android {
     dependencies {
         implementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
+        ksp(libs.koin.ksp)
     }
 }
 

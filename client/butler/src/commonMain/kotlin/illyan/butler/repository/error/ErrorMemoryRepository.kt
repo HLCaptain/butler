@@ -27,7 +27,7 @@ class ErrorMemoryRepository : ErrorRepository {
     override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
 
     override suspend fun reportError(throwable: Throwable) {
-        Napier.e { "Error reported" }
+        Napier.e(throwable) { "Error reported" }
         val localErrorEvent = ErrorEvent(
             id = randomUUID(),
             platform = getPlatformName(),

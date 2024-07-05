@@ -1,7 +1,6 @@
 package illyan.butler.data.store
 
 import illyan.butler.data.local.datasource.ChatLocalDataSource
-import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
@@ -12,34 +11,27 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
-import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Converter
 import org.mobilenativefoundation.store.store5.Fetcher
-import org.mobilenativefoundation.store.store5.MutableStoreBuilder
-import org.mobilenativefoundation.store.store5.OnUpdaterCompletion
 import org.mobilenativefoundation.store.store5.SourceOfTruth
-import org.mobilenativefoundation.store.store5.Updater
-import org.mobilenativefoundation.store.store5.UpdaterResult
+import org.mobilenativefoundation.store.store5.StoreBuilder
 
 @Single
-class UserChatMutableStoreBuilder(
+class UserChatStoreBuilder(
     chatLocalDataSource: ChatLocalDataSource,
     messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
-    dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
-    @OptIn(ExperimentalStoreApi::class)
-    val store = provideUserChatMutableStore(chatLocalDataSource, messageLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
+    val store = provideUserChatStore(chatLocalDataSource, messageLocalDataSource, chatNetworkDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class)
-fun provideUserChatMutableStore(
+fun provideUserChatStore(
     chatLocalDataSource: ChatLocalDataSource,
     messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
-    dataHistoryLocalDataSource: DataHistoryLocalDataSource
-) = MutableStoreBuilder.from(
+) = StoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         Napier.d("Fetching chats for user $key")
         combine(
@@ -60,42 +52,34 @@ fun provideUserChatMutableStore(
     sourceOfTruth = SourceOfTruth.of(
         reader = { key: String ->
             Napier.d("Reading chats for user $key")
-            chatLocalDataSource.getChatsByUser(key)
+            combine(
+                flow { emit(chatNetworkDataSource.fetch()) },
+                flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) },
+                chatLocalDataSource.getChatsByUser(key).map { it ?: emptyList() }
+            ) { userChats, newChats, localChats ->
+                Napier.d("Fetched ${(userChats + newChats).distinct().size} chats")
+
+                (userChats + newChats + localChats.map { it.toNetworkModel() })
+                    .filter { it.members.contains(key) }
+                    .distinctBy { it.id }
+                    .also { chats ->
+                        val newMessages = chats.flatMap { chat -> chat.lastFewMessages.map { it.toDomainModel() } }
+                        messageLocalDataSource.upsertMessages(newMessages)
+                    }
+                    .map { it.toDomainModel() }
+                    .also { allChats ->
+                        val updatedAndNewChats = allChats.filter { chat -> localChats.find { it.id == chat.id } != chat }
+                        if (updatedAndNewChats.isNotEmpty()) chatLocalDataSource.upsertChats(updatedAndNewChats)
+                    }
+            }
         },
         writer = { key, local ->
             Napier.d("Writing chat for user $key with $local")
             chatLocalDataSource.upsertChats(local)
         },
-        delete = { key ->
-            Napier.d("Deleting chat for user $key")
-            chatLocalDataSource.deleteChatByUserId(key)
-        },
-        deleteAll = {
-            Napier.d("Deleting all chats")
-            chatLocalDataSource.deleteAllChats()
-        }
     ),
     converter = Converter.Builder<List<ChatDto>, List<DomainChat>, List<DomainChat>>()
         .fromOutputToLocal { it }
         .fromNetworkToLocal { chats -> chats.map { it.toDomainModel() } }
         .build(),
-).build(
-    updater = Updater.by(
-        post = { key, output ->
-            val response = output.map { chatNetworkDataSource.upsert(it.toNetworkModel()).toDomainModel() }
-            UpdaterResult.Success.Typed(response)
-        },
-        onCompletion = OnUpdaterCompletion(
-            onSuccess = { _ ->
-                Napier.d("Successfully updated chats")
-            },
-            onFailure = { _ ->
-                Napier.d("Failed to update chats")
-            }
-        )
-    ),
-    bookkeeper = provideBookkeeper(
-        dataHistoryLocalDataSource,
-        DomainChat::class.simpleName.toString() + "UserList"
-    ) { it.toString() }
-)
+).build()

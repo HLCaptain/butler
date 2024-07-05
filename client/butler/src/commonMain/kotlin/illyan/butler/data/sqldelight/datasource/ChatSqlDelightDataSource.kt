@@ -40,7 +40,7 @@ class ChatSqlDelightDataSource(private val databaseHelper: DatabaseHelper) : Cha
         }
     }
 
-    override suspend fun deleteChatByUserId(userId: String) {
+    override suspend fun deleteChatsForUser(userId: String) {
         databaseHelper.withDatabase {
             it.chatMemberQueries.selectAllUserChats(userId).executeAsList().forEach { chat ->
                 it.chatMemberQueries.deleteAllChatMembers(chat.id)

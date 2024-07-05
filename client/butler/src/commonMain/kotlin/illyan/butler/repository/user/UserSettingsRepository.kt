@@ -7,12 +7,13 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
-import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.di.KoinNames
+import illyan.butler.domain.model.DomainUser
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -35,9 +36,9 @@ class UserSettingsRepository(
      * User data and auth state listed by property
      */
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override val userData = settings.getStringOrNullFlow(UserRepository.KEY_USER_ID).map { encodedUser ->
+    override val userData: StateFlow<DomainUser?> = settings.getStringOrNullFlow(UserRepository.KEY_USER_ID).map { encodedUser ->
         encodedUser?.let {
-            ProtoBuf.decodeFromHexString<UserDto>(encodedUser).also { Napier.d("User data: $it") }
+            ProtoBuf.decodeFromHexString<DomainUser>(encodedUser).also { Napier.d("User data: $it") }
         }
     }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
     override val isUserSignedIn = settings.getStringOrNullFlow(UserRepository.KEY_USER_ID).map { it != null }

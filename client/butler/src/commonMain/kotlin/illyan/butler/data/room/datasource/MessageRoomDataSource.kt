@@ -37,11 +37,21 @@ class MessageRoomDataSource(
         messageDao.deleteAllChatMessagesForChat(chatId)
     }
 
+    override fun getMessageById(messageId: String): Flow<DomainMessage?> {
+        return messageDao.getMessageById(messageId).map { it?.toDomainModel() }
+    }
+
     override suspend fun upsertMessages(newMessages: List<DomainMessage>) {
         messageDao.upsertMessages(newMessages.map { it.toRoomModel() })
     }
 
-    override fun getAllMessagesForChat(chatId: String): Flow<List<DomainMessage>> {
+    override fun getAccessibleMessagesForUser(userId: String): Flow<List<DomainMessage>> {
+        return messageDao.getAccessibleMessagesForUser(userId).map { messages ->
+            messages.map { it.toDomainModel() }
+        }
+    }
+
+    override fun getMessagesByChatId(chatId: String): Flow<List<DomainMessage>> {
         return messageDao.getMessagesByChatId(chatId).map { messages ->
             messages.map { it.toDomainModel() }
         }

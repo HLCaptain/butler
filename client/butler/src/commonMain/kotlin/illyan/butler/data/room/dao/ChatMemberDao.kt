@@ -32,7 +32,10 @@ interface ChatMemberDao {
     suspend fun deleteChatMembersByChatId(chatId: String)
 
     @Query("DELETE FROM chat_members WHERE chatId IN(:chatIds)")
-    suspend fun deleteChatMembersByChatIds(chatIds: List<String>)
+    suspend fun deleteChatMembersForChat(chatIds: List<String>)
+
+    @Query("DELETE FROM chat_members")
+    suspend fun deleteAllChatMembers()
 
     @Query("SELECT * FROM chat_members WHERE chatId = :chatId")
     fun getChatMembersByChatId(chatId: String): Flow<List<RoomChatMember>>

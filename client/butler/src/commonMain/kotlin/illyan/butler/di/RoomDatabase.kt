@@ -11,7 +11,8 @@ fun getRoomDatabase(
     builder: RoomDatabase.Builder<ButlerDatabase>
 ): ButlerDatabase {
     return builder
-        .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
+        .fallbackToDestructiveMigration(dropAllTables = true)
+//        .apply { if (BuildConfig.DEBUG) /* TODO: make migrations as default, fallback to destructive only in debug */ }
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
@@ -34,3 +35,9 @@ fun getResourceDao(database: ButlerDatabase) = database.resourceDao()
 
 @Single
 fun getChatMemberDao(database: ButlerDatabase) = database.chatMemberDao()
+
+@Single
+fun getAppSettingsDao(database: ButlerDatabase) = database.appSettingsDao()
+
+@Single
+fun getUserDao(database: ButlerDatabase) = database.userDao()

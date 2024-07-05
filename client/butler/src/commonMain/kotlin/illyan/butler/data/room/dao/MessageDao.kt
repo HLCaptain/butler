@@ -48,11 +48,14 @@ interface MessageDao {
     suspend fun deleteAllMessages()
 
     @Query("SELECT * FROM messages WHERE id = :id")
-    fun getMessageById(id: String): Flow<RoomMessage>
+    fun getMessageById(id: String): Flow<RoomMessage?>
 
     @Query("SELECT * FROM messages WHERE chatId = :chatId")
     fun getMessagesByChatId(chatId: String): Flow<List<RoomMessage>>
 
     @Query("SELECT * FROM messages WHERE senderId = :senderId")
     fun getMessagesBySenderId(senderId: String): Flow<List<RoomMessage>>
+
+    @Query("SELECT messages.* FROM messages JOIN chat_members ON messages.chatId = chat_members.chatId WHERE chat_members.userId = :userId")
+    fun getAccessibleMessagesForUser(userId: String): Flow<List<RoomMessage>>
 }

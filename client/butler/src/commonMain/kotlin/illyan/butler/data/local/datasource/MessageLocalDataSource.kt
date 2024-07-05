@@ -10,6 +10,8 @@ interface MessageLocalDataSource {
     suspend fun deleteMessage(messageId: String)
     suspend fun deleteAllMessages()
     suspend fun deleteAllMessagesForChat(chatId: String)
-    fun getAllMessagesForChat(chatId: String): Flow<List<DomainMessage>>
+    fun getMessageById(messageId: String): Flow<DomainMessage?>
+    fun getMessagesByChatId(chatId: String): Flow<List<DomainMessage>>
+    fun getAccessibleMessagesForUser(userId: String): Flow<List<DomainMessage>>
     suspend fun upsertMessages(newMessages: List<DomainMessage>)
 }
