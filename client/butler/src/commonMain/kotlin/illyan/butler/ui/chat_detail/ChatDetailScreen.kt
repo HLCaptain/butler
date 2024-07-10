@@ -72,7 +72,6 @@ import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
-import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
@@ -81,6 +80,7 @@ import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.play
+import illyan.butler.generated.resources.select_chat
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
 import illyan.butler.generated.resources.stop
@@ -128,9 +128,7 @@ fun ChatDetailScreen(
                 },
                 navigationIcon = {
                     if (canNavigateBack) {
-                        IconButton(onClick = {
-                            onNavigateBack()
-                        }) {
+                        IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(Res.string.back)
@@ -175,7 +173,6 @@ fun ChatDetailScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier.haze(hazeState, HazeMaterials.thin()),
-            verticalArrangement = Arrangement.SpaceBetween
         ) {
             AnimatedVisibility(currentSelectedChat == null) {
                 SelectChat()
@@ -183,7 +180,6 @@ fun ChatDetailScreen(
             if (currentSelectedChat != null) {
                 MessageList(
                     modifier = Modifier.weight(1f, fill = true),
-                    chat = state.chat,
                     messages = state.messages ?: emptyList(),
                     userId = state.userId ?: "",
                     sounds = state.sounds,
@@ -210,14 +206,13 @@ private fun SelectChat() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text("Select a chat!")
+        Text(stringResource(Res.string.select_chat))
     }
 }
 
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
-    chat: DomainChat?,
     messages: List<DomainMessage> = emptyList(),
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
@@ -227,43 +222,37 @@ fun MessageList(
     userId: String,
     innerPadding: PaddingValues
 ) {
-    Crossfade(
-        modifier = modifier,
-        targetState = chat == null || messages.isEmpty()
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier.animateContentSize().fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        if (messages.isEmpty()) {
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(innerPadding),
+                text = stringResource(Res.string.no_messages),
+                style = MaterialTheme.typography.headlineLarge
+            )
+        }
+        LazyColumn(
+            reverseLayout = true,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = innerPadding
         ) {
-            if (it) {
-                Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(innerPadding),
-                    text = stringResource(Res.string.no_messages),
-                    style = MaterialTheme.typography.headlineLarge
+            items(messages) { message ->
+                MessageItem(
+                    message = message,
+                    userId = userId,
+                    sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                    playAudio = playAudio,
+                    playingAudio = playingAudio,
+                    stopAudio = stopAudio,
+                    images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
                 )
-            }
-            LazyColumn(
-                reverseLayout = true,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = innerPadding
-            ) {
-                items(messages) { message ->
-                    MessageItem(
-                        message = message,
-                        userId = userId,
-                        sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                        playAudio = playAudio,
-                        playingAudio = playingAudio,
-                        stopAudio = stopAudio,
-                        images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                    )
-                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MessageItem(
     message: DomainMessage,

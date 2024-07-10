@@ -1,7 +1,5 @@
 package illyan.butler.repository.chat
 
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.store.ChatMutableStoreBuilder
 import illyan.butler.data.store.UserChatStoreBuilder
@@ -9,6 +7,7 @@ import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.HostManager
+import illyan.butler.utils.randomUUID
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +21,7 @@ import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
+import org.mobilenativefoundation.store.store5.StoreWriteResponse
 
 @OptIn(ExperimentalStoreApi::class)
 @Single
@@ -99,16 +99,13 @@ class ChatStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun upsert(chat: DomainChat): String {
-        val newChat = if (chat.id == null) {
-            chatNetworkDataSource.upsert(chat.toNetworkModel()).toDomainModel()
-        } else chat
-        chatMutableStore.write(
+        val newChatId = (chatMutableStore.write(
             StoreWriteRequest.of(
-                key = newChat.id!!,
-                value = newChat,
+                key = randomUUID(),
+                value = chat,
             )
-        )
-        return newChat.id
+        ) as? StoreWriteResponse.Success.Typed<DomainChat>)?.value?.id
+        return newChatId!!
     }
 
     override suspend fun deleteChat(chatId: String) {

@@ -3,7 +3,6 @@ package illyan.butler.data.store
 import illyan.butler.data.local.datasource.ChatLocalDataSource
 import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.chat.ChatDto
 import illyan.butler.domain.model.DomainChat
@@ -39,10 +38,10 @@ fun provideUserChatStore(
             flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) }
         ) { userChats, newChats ->
             Napier.d("Fetched ${(userChats + newChats).distinct().size} chats")
-
-            (userChats + newChats)
+            val modifiedChats = newChats.filter { chat -> userChats.any { it.id == chat.id } }
+            val chatsNeedingUpdate = (userChats + newChats).filter { chat -> modifiedChats.any { it.id != chat.id } } + modifiedChats
+            chatsNeedingUpdate
                 .filter { it.members.contains(key) }
-                .distinctBy { it.id }
                 .also { chats ->
                     val newMessages = chats.flatMap { chat -> chat.lastFewMessages.map { it.toDomainModel() } }
                     messageLocalDataSource.upsertMessages(newMessages)
@@ -57,11 +56,10 @@ fun provideUserChatStore(
                 flow { emit(emptyList<ChatDto>()); emitAll(chatNetworkDataSource.fetchNewChats()) },
                 chatLocalDataSource.getChatsByUser(key).map { it ?: emptyList() }
             ) { userChats, newChats, localChats ->
-                Napier.d("Fetched ${(userChats + newChats).distinct().size} chats")
-
-                (userChats + newChats + localChats.map { it.toNetworkModel() })
+                Napier.d("Fetched ${(userChats + newChats).distinctBy { it.id }.size} chats")
+                val chatsNeedingUpdate = newChats.filterNot { chat -> localChats.contains(chat.toDomainModel()) }
+                chatsNeedingUpdate
                     .filter { it.members.contains(key) }
-                    .distinctBy { it.id }
                     .also { chats ->
                         val newMessages = chats.flatMap { chat -> chat.lastFewMessages.map { it.toDomainModel() } }
                         messageLocalDataSource.upsertMessages(newMessages)
@@ -70,7 +68,7 @@ fun provideUserChatStore(
                     .also { allChats ->
                         val updatedAndNewChats = allChats.filter { chat -> localChats.find { it.id == chat.id } != chat }
                         if (updatedAndNewChats.isNotEmpty()) chatLocalDataSource.upsertChats(updatedAndNewChats)
-                    }
+                    } + localChats.filterNot { chat -> chatsNeedingUpdate.any { chat.id == it.id } }
             }
         },
         writer = { key, local ->

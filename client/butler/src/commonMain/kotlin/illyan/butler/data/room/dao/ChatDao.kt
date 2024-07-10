@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import illyan.butler.data.room.model.RoomChat
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,12 @@ interface ChatDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertChats(chats: List<RoomChat>): List<Long>
+
+    @Transaction
+    suspend fun replaceChat(oldChatId: String, newChat: RoomChat) {
+        deleteChatById(oldChatId)
+        insertChat(newChat)
+    }
 
     @Update
     suspend fun updateChat(chat: RoomChat): Int
