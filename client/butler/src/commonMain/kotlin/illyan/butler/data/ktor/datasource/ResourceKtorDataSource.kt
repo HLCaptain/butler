@@ -7,7 +7,6 @@ import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.websocket.receiveDeserialized
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -21,7 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
@@ -50,8 +49,8 @@ class ResourceKtorDataSource(
         // TODO: remove when websockets are fixed
         coroutineScopeIO.launch {
             while (true) {
-                val allMessages = fetchByUser()
-                newResourcesStateFlow.update { allMessages }
+                val allResources = fetchByUserOnce()
+                newResourcesStateFlow.update { allResources }
                 delay(10000)
             }
         }
@@ -75,8 +74,8 @@ class ResourceKtorDataSource(
             newResourcesStateFlow
         }.filterNotNull()
     }
-    override suspend fun fetchResource(resourceId: String): ResourceDto? {
-        return client.get("/resources/$resourceId").body<ResourceDto?>()
+    override fun fetchResourceById(resourceId: String): Flow<ResourceDto> {
+        return fetchNewResources().map { resources -> resources.first { it.id == resourceId } }
     }
 
     // To avoid needless updates to resources right after they are created
@@ -94,7 +93,11 @@ class ResourceKtorDataSource(
         }
     }
 
-    override suspend fun fetchByUser(): List<ResourceDto> {
+    override fun fetchByUser(): Flow<List<ResourceDto>> {
+        return fetchNewResources()
+    }
+
+    private suspend fun fetchByUserOnce(): List<ResourceDto> {
         return client.get("/resources").body()
     }
 }

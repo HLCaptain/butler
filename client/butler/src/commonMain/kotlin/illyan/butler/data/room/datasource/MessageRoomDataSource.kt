@@ -25,7 +25,11 @@ class MessageRoomDataSource(
         messageDao.upsertMessage(message.toRoomModel())
     }
 
-    override suspend fun deleteMessage(messageId: String) {
+    override suspend fun replaceMessage(oldMessageId: String, newMessage: DomainMessage) {
+        messageDao.replaceMessage(oldMessageId, newMessage.toRoomModel())
+    }
+
+    override suspend fun deleteMessageById(messageId: String) {
         messageDao.deleteMessageById(messageId)
     }
 

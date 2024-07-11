@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import illyan.butler.data.room.model.RoomMessage
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,12 @@ interface MessageDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertMessages(messages: List<RoomMessage>): List<Long>
+
+    @Transaction
+    suspend fun replaceMessage(oldMessageId: String, newMessage: RoomMessage) {
+        deleteMessageById(oldMessageId)
+        insertMessage(newMessage)
+    }
 
     @Update
     suspend fun updateMessage(message: RoomMessage): Int

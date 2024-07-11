@@ -7,7 +7,6 @@ import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.websocket.receiveDeserialized
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
@@ -22,7 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
@@ -54,6 +53,18 @@ class ChatKtorDataSource(
                 newChatsStateFlow.update { allChats }
                 delay(5000)
             }
+        }
+    }
+
+    override fun fetchByChatId(chatId: String): Flow<ChatDto> {
+        return fetchNewChats().map { chats ->
+            chats.first { it.id == chatId }
+        }
+    }
+
+    override fun fetchByUserId(userId: String): Flow<List<ChatDto>> {
+        return fetchNewChats().map { chats ->
+            chats.filter { it.members.contains(userId) }
         }
     }
 
@@ -102,7 +113,7 @@ class ChatKtorDataSource(
         }. also { newChatsStateFlow.update { _ -> listOf(it) } }
     }
 
-    override suspend fun delete(uuid: String): Boolean {
-        return client.delete("/chats/$uuid").status.isSuccess()
+    override suspend fun delete(id: String): Boolean {
+        return client.delete("/chats/$id").status.isSuccess()
     }
 }

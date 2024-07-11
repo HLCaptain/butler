@@ -8,21 +8,21 @@ import org.mobilenativefoundation.store.store5.Bookkeeper
 fun<Key> provideBookkeeper(
     dataHistoryLocalDataSource: DataHistoryLocalDataSource,
     group: String,
-    keyToUUID: (Key) -> String
+    keyToId: (Key) -> String
 ) = Bookkeeper.by(
     getLastFailedSync = { key: Key ->
-        dataHistoryLocalDataSource.getLastFailedTimestamp(keyToUUID(key))?.also {
+        dataHistoryLocalDataSource.getLastFailedTimestamp(keyToId(key))?.also {
             Napier.d("Get last failed sync for $key is $it")
         }
     },
     setLastFailedSync = { key, timestamp ->
         Napier.d("Setting last failed sync for $key to $timestamp")
-        dataHistoryLocalDataSource.insertDataHistory(DataHistory(keyToUUID(key), timestamp, group))
+        dataHistoryLocalDataSource.insertDataHistory(DataHistory(keyToId(key), timestamp, group))
         true
     },
     clear = { key ->
         Napier.d("Clearing last failed sync for $key")
-        dataHistoryLocalDataSource.deleteDataHistory(keyToUUID(key))
+        dataHistoryLocalDataSource.deleteDataHistory(keyToId(key))
         true
     },
     clearAll = {

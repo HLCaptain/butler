@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import illyan.butler.data.room.model.RoomResource
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,12 @@ interface ResourceDao {
 
     @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
     suspend fun upsertResources(resources: List<RoomResource>)
+
+    @Transaction
+    suspend fun replaceResource(oldResourceId: String, newResource: RoomResource) {
+        deleteResourceById(oldResourceId)
+        insertResource(newResource)
+    }
 
     @Update
     suspend fun updateResource(resource: RoomResource)

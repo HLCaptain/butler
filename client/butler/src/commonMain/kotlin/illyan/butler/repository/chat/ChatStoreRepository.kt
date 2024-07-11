@@ -1,13 +1,12 @@
 package illyan.butler.repository.chat
 
-import illyan.butler.data.network.datasource.ChatNetworkDataSource
-import illyan.butler.data.store.ChatMutableStoreBuilder
-import illyan.butler.data.store.UserChatStoreBuilder
+import illyan.butler.data.store.builder.ChatMutableStoreBuilder
+import illyan.butler.data.store.builder.UserChatStoreBuilder
+import illyan.butler.data.store.key.ChatKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.HostManager
-import illyan.butler.utils.randomUUID
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +27,6 @@ import org.mobilenativefoundation.store.store5.StoreWriteResponse
 class ChatStoreRepository(
     chatMutableStoreBuilder: ChatMutableStoreBuilder,
     userChatStoreBuilder: UserChatStoreBuilder,
-    private val chatNetworkDataSource: ChatNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
     private val hostManager: HostManager,
     private val authManager: AuthManager
@@ -38,7 +36,7 @@ class ChatStoreRepository(
 
     val userChatStore = userChatStoreBuilder.store
     override suspend fun deleteAllChats(userId: String) {
-        userChatStore.clear(userId)
+        userChatStore.clear(ChatKey.Delete.ByUserId(userId))
     }
 
     init {
@@ -63,7 +61,7 @@ class ChatStoreRepository(
     override fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>> {
         return chatStateFlows.getOrPut(chatId) {
             chatMutableStore.stream<StoreReadResponse<DomainChat>>(
-                StoreReadRequest.cached(chatId, true)
+                StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: ${it::class.simpleName}")
@@ -82,7 +80,7 @@ class ChatStoreRepository(
     override fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStateFlows.getOrPut(userId) {
             userChatStore.stream(
-                StoreReadRequest.cached(userId, true)
+                StoreReadRequest.cached(ChatKey.Read.ByUserId(userId), true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: ${it::class.simpleName}")
@@ -99,16 +97,15 @@ class ChatStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun upsert(chat: DomainChat): String {
-        val newChatId = (chatMutableStore.write(
+        return (chatMutableStore.write(
             StoreWriteRequest.of(
-                key = randomUUID(),
+                key = if (chat.id == null) ChatKey.Write.Create else ChatKey.Write.Upsert,
                 value = chat,
             )
-        ) as? StoreWriteResponse.Success.Typed<DomainChat>)?.value?.id
-        return newChatId!!
+        ) as? StoreWriteResponse.Success.Typed<DomainChat>)?.value?.id!!
     }
 
     override suspend fun deleteChat(chatId: String) {
-        chatMutableStore.clear(chatId)
+        chatMutableStore.clear(ChatKey.Delete.ByChatId(chatId))
     }
 }

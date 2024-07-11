@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface ResourceNetworkDataSource {
     fun fetchNewResources(): Flow<List<ResourceDto>>
-    suspend fun fetchResource(resourceId: String): ResourceDto?
+    fun fetchResourceById(resourceId: String): Flow<ResourceDto>
     suspend fun upsert(resource: ResourceDto): ResourceDto
-    suspend fun fetchByUser(): List<ResourceDto>
+    fun fetchByUser(): Flow<List<ResourceDto>>
     suspend fun delete(resourceId: String): Boolean
 }

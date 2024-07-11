@@ -1,9 +1,8 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ResourceNetworkDataSource
-import illyan.butler.data.store.ResourceMutableStoreBuilder
+import illyan.butler.data.store.builder.ResourceMutableStoreBuilder
+import illyan.butler.data.store.key.ResourceKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainResource
 import illyan.butler.manager.HostManager
@@ -20,6 +19,7 @@ import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
+import org.mobilenativefoundation.store.store5.StoreWriteResponse
 
 @Single
 class ResourceStoreRepository(
@@ -49,7 +49,7 @@ class ResourceStoreRepository(
     override fun getResourceFlow(resourceId: String): StateFlow<Pair<DomainResource?, Boolean>> {
         return resourceStateFlows.getOrPut(resourceId) {
             resourceMutableStore.stream<StoreReadResponse<DomainResource>>(
-                StoreReadRequest.cached(resourceId, true)
+                StoreReadRequest.cached(ResourceKey.Read.ByResourceId(resourceId), true)
             ).map {
                 it.throwIfError()
                 Napier.d("Read Response: ${it::class.simpleName}")
@@ -66,21 +66,18 @@ class ResourceStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun upsert(resource: DomainResource): String {
-        val newResource = if (resource.id == null) {
-            resourceNetworkDataSource.upsert(resource.toNetworkModel()).toDomainModel()
-        } else resource
-        resourceMutableStore.write(
+        val newResource = (resourceMutableStore.write(
             StoreWriteRequest.of(
-                key = newResource.id!!,
-                value = newResource,
+                key = if (resource.id == null) ResourceKey.Write.Create else ResourceKey.Write.Upsert,
+                value = resource,
             )
-        )
-        return newResource.id
+        ) as? StoreWriteResponse.Success.Typed<DomainResource>)?.value
+        return newResource?.id!!
     }
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun deleteResource(resourceId: String): Boolean {
-        resourceMutableStore.clear(resourceId)
+        resourceMutableStore.clear(ResourceKey.Delete.ByResourceId(resourceId))
         return true
     }
 }

@@ -6,13 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface MessageNetworkDataSource {
     fun fetchNewMessages(): Flow<List<MessageDto>>
 
-    /**
-     * Fetch messages from a chat.
-     * @return messages in the chat.
-     */
-    suspend fun fetchByChat(chatUUID: String, limit: Int, timestamp: Long): List<MessageDto>
-
-    suspend fun fetchByChat(chatUUID: String): List<MessageDto>
+    fun fetchByChatId(chatId: String): Flow<List<MessageDto>>
 
     /**
      * Update a message.
@@ -24,7 +18,7 @@ interface MessageNetworkDataSource {
      * Delete a message.
      * @return true if the message is deleted.
      */
-    suspend fun delete(id: String, chatId: String): Boolean
-    suspend fun fetch(key: String): MessageDto?
-    suspend fun fetchByUser(): List<MessageDto>
+    suspend fun delete(messageId: String, chatId: String): Boolean
+    fun fetchById(messageId: String): Flow<MessageDto>
+    fun fetchAvailableToUser(): Flow<List<MessageDto>>
 }

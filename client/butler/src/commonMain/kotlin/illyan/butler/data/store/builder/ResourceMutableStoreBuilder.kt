@@ -1,23 +1,19 @@
-package illyan.butler.data.store
+package illyan.butler.data.store.builder
 
 import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.data.local.datasource.ResourceLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ResourceNetworkDataSource
-import illyan.butler.data.network.model.chat.ResourceDto
+import illyan.butler.data.store.key.ResourceKey
+import illyan.butler.data.store.provideBookkeeper
 import illyan.butler.domain.model.DomainResource
-import io.github.aakira.napier.Napier
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
+import illyan.butler.utils.randomUUID
+import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
-import org.mobilenativefoundation.store.store5.Converter
 import org.mobilenativefoundation.store.store5.Fetcher
 import org.mobilenativefoundation.store.store5.MutableStoreBuilder
-import org.mobilenativefoundation.store.store5.OnUpdaterCompletion
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
@@ -39,54 +35,47 @@ fun provideResourceMutableStore(
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
-        Napier.d("Fetching resource $key")
-        combine(
-            flow { emit(listOf(resourceNetworkDataSource.fetchResource(key))) },
-            flow { emit(emptyList<ResourceDto>()); emitAll(resourceNetworkDataSource.fetchNewResources()) }
-        ) { resource, newResources ->
-            (newResources + resource).distinctBy { it?.id }.firstOrNull { it?.id == key }
-        }.filterNotNull()
+        require(key is ResourceKey.Read.ByResourceId)
+        resourceNetworkDataSource.fetchResourceById(key.resourceId).map { it.toDomainModel() }
     },
     sourceOfTruth = SourceOfTruth.of(
-        reader = { key: String ->
-            Napier.d("Reading resource at $key")
-            resourceLocalDataSource.getResource(key)
+        reader = { key ->
+            require(key is ResourceKey.Read.ByResourceId)
+            resourceLocalDataSource.getResource(key.resourceId)
         },
         writer = { key, local ->
-            Napier.d("Writing resource at $key")
-            resourceLocalDataSource.upsertResource(local)
+            require(key is ResourceKey.Write)
+            when (key) {
+                is ResourceKey.Write.Create -> resourceLocalDataSource.upsertResource(local.copy(id = randomUUID()))
+                is ResourceKey.Write.Upsert -> resourceLocalDataSource.upsertResource(local)
+            }
         },
         delete = { key ->
-            Napier.d("Deleting resource at $key")
-            resourceLocalDataSource.deleteResource(key)
-            resourceNetworkDataSource.delete(key)
+            require(key is ResourceKey.Delete.ByResourceId)
+            resourceLocalDataSource.deleteResourceById(key.resourceId)
         },
         deleteAll = {
-            Napier.d("Deleting all resources")
             resourceLocalDataSource.deleteAllResources()
         }
     ),
-    converter = Converter.Builder<ResourceDto, DomainResource, DomainResource>()
-        .fromOutputToLocal { it }
-        .fromNetworkToLocal { it.toDomainModel() }
-        .build(),
+    converter = NoopConverter(),
 ).build(
     updater = Updater.by(
         post = { key, output ->
-            val response = resourceNetworkDataSource.upsert(output.toNetworkModel()).toDomainModel()
-            UpdaterResult.Success.Typed(response)
-        },
-        onCompletion = OnUpdaterCompletion(
-            onSuccess = { success ->
-                Napier.d("Successfully updated resource")
-            },
-            onFailure = { _ ->
-                Napier.d("Failed to update resource")
+            require(key is ResourceKey.Write)
+            val resource = output.toNetworkModel()
+            val newResource = when (key) {
+                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(resource).also {
+                    resourceLocalDataSource.replaceResource(output.id!!, it.toDomainModel())
+                }
+                is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(resource)
             }
-        )
+            UpdaterResult.Success.Typed(newResource.toDomainModel())
+        },
+        onCompletion = null
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
         DomainResource::class.simpleName.toString()
-    ) { it }
+    ) { it.toString() }
 )
