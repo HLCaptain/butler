@@ -103,11 +103,7 @@ fun ChatDetailScreen(
     canNavigateBack: Boolean = true,
     onNavigateBack: () -> Unit = {}
 ) {
-    LaunchedEffect(state.chat) { Napier.d("DomainChat: ${state.chat}") }
-//        var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
     LaunchedEffect(currentSelectedChat) {
-        Napier.d("SelectedChatId: $currentSelectedChat")
-//            selectedChatId = currentSelectedChat
         currentSelectedChat?.let { viewModel.loadChat(it) }
     }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())

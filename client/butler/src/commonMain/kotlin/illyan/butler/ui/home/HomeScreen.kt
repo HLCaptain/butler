@@ -299,7 +299,6 @@ fun HomeScreen() {
                             ) {
                                 composable("chat") {
                                     ChatScreen(selectedChat) {
-                                        selectedChat = null // always reset the chat to trigger an update
                                         selectedChat = it
                                     }
                                 }
@@ -318,7 +317,6 @@ fun HomeScreen() {
                                     ) {
                                         composable("chat") {
                                             ChatScreen(selectedChat) {
-                                                selectedChat = null // always reset the chat to trigger an update
                                                 selectedChat = it
                                             }
                                         }
