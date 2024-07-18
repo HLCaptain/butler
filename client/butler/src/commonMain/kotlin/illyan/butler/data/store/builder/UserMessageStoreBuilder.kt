@@ -28,12 +28,17 @@ fun provideUserMessageStore(
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
-            require(key is MessageKey.Read.ByUserId)
+            require(key is MessageKey.Read.ByUserId) {
+                "Expected key to be of type MessageKey.Read.ByUserId, but was ${key::class.simpleName}"
+            }
             messageLocalDataSource.getAccessibleMessagesForUser(key.userId)
         },
         writer = { key, local ->
-            require(key is MessageKey.Write.Upsert)
-            messageLocalDataSource.upsertMessages(local)
+            when (key) {
+                is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessages(local)
+                is MessageKey.Read.ByUserId -> messageLocalDataSource.upsertMessages(local) // From fetcher
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
+            }
         }
     ),
     converter = NoopConverter(),

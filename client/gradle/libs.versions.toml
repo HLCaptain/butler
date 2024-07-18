@@ -1,8 +1,8 @@
 [versions]
 butler = "2.0.0-alpha"
-kotlin = "2.0.20-Beta1"
-ksp = "2.0.20-Beta1-1.0.22"
-agp = "8.5.0"
+kotlin = "2.0.20-Beta2"
+ksp = "2.0.20-Beta2-1.0.23"
+agp = "8.5.1"
 compose = "1.6.11"
 compose-android = "1.6.8"
 ktor = "2.3.12"

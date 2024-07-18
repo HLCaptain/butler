@@ -44,10 +44,11 @@ fun provideMessageMutableStore(
             messageLocalDataSource.getMessageById(key.messageId)
         },
         writer = { key, local ->
-            require(key is MessageKey.Write)
             when (key) {
                 is MessageKey.Write.Create -> messageLocalDataSource.upsertMessage(local.copy(id = randomUUID()))
                 is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessage(local)
+                is MessageKey.Read.ByMessageId -> messageLocalDataSource.upsertMessage(local) // From fetcher
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
             }
         },
         delete = { key ->
@@ -66,7 +67,7 @@ fun provideMessageMutableStore(
             val message = output.toNetworkModel()
             val newMessage = when (key) {
                 is MessageKey.Write.Create -> messageNetworkDataSource.upsert(message).also {
-                    messageLocalDataSource.replaceMessage(output.id!!, it.toDomainModel())
+                    messageLocalDataSource.replaceMessage(it.id!!, it.toDomainModel())
                 }
                 is MessageKey.Write.Upsert -> messageNetworkDataSource.upsert(message)
             }

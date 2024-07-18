@@ -35,8 +35,11 @@ fun provideUserChatStore(
             chatLocalDataSource.getChatsByUser(key.userId)
         },
         writer = { key, local ->
-            require(key is ChatKey.Write.Upsert)
-            chatLocalDataSource.upsertChats(local)
+            when (key) {
+                is ChatKey.Write.Upsert -> chatLocalDataSource.upsertChats(local)
+                is ChatKey.Read.ByUserId -> chatLocalDataSource.upsertChats(local) // From fetcher
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
+            }
         },
         delete = { key ->
             require(key is ChatKey.Delete.ByUserId)

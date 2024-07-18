@@ -2,7 +2,6 @@ package illyan.butler.data.store.builder
 
 import illyan.butler.data.local.datasource.ChatLocalDataSource
 import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
-import illyan.butler.data.local.datasource.MessageLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
@@ -22,18 +21,16 @@ import org.mobilenativefoundation.store.store5.UpdaterResult
 @Single
 class ChatMutableStoreBuilder(
     chatLocalDataSource: ChatLocalDataSource,
-    messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) {
     @OptIn(ExperimentalStoreApi::class)
-    val store = provideChatMutableStore(chatLocalDataSource, messageLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
+    val store = provideChatMutableStore(chatLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
 @OptIn(ExperimentalStoreApi::class)
 fun provideChatMutableStore(
     chatLocalDataSource: ChatLocalDataSource,
-    messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
@@ -47,10 +44,11 @@ fun provideChatMutableStore(
             chatLocalDataSource.getChat(key.chatId)
         },
         writer = { key, local ->
-            require(key is ChatKey.Write)
             when (key) {
                 is ChatKey.Write.Create -> chatLocalDataSource.upsertChat(local.copy(id = randomUUID()))
                 is ChatKey.Write.Upsert -> chatLocalDataSource.upsertChat(local)
+                is ChatKey.Read.ByChatId -> chatLocalDataSource.upsertChat(local) // From fetcher
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
             }
         },
         delete = { key ->
@@ -70,7 +68,7 @@ fun provideChatMutableStore(
             val chat = output.toNetworkModel()
             val newChat = when (key) {
                 is ChatKey.Write.Create -> chatNetworkDataSource.upsert(chat.copy(id = null)).also {
-                    chatLocalDataSource.replaceChat(output.id!!, it.toDomainModel())
+                    chatLocalDataSource.replaceChat(it.id!!, it.toDomainModel())
                 }
                 is ChatKey.Write.Upsert -> chatNetworkDataSource.upsert(chat)
             }

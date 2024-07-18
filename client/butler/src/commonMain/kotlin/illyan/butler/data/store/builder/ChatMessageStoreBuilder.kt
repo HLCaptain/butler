@@ -32,8 +32,12 @@ fun provideChatMessageMutableStore(
             messageLocalDataSource.getMessagesByChatId(key.chatId)
         },
         writer = { key, local ->
-            require(key is MessageKey.Write.Upsert)
-            messageLocalDataSource.upsertMessages(local)
+            when (key) {
+                is MessageKey.Write.Create -> messageLocalDataSource.upsertMessages(local)
+                is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessages(local)
+                is MessageKey.Read.ByChatId -> messageLocalDataSource.upsertMessages(local) // From fetcher
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
+            }
         },
         delete = { key ->
             require(key is MessageKey.Delete.ByChatId)

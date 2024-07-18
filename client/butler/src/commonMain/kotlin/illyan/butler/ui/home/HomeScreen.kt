@@ -298,7 +298,10 @@ fun HomeScreen() {
                                 startDestination = "chat"
                             ) {
                                 composable("chat") {
-                                    ChatScreen()
+                                    ChatScreen(selectedChat) {
+                                        selectedChat = null // always reset the chat to trigger an update
+                                        selectedChat = it
+                                    }
                                 }
                                 composable("newChat") {
                                     NewChatScreen()
@@ -314,7 +317,10 @@ fun HomeScreen() {
                                         startDestination = "chat"
                                     ) {
                                         composable("chat") {
-                                            ChatScreen()
+                                            ChatScreen(selectedChat) {
+                                                selectedChat = null // always reset the chat to trigger an update
+                                                selectedChat = it
+                                            }
                                         }
                                         composable("newChat") {
                                             NewChatScreen()

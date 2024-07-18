@@ -137,7 +137,7 @@ fun ChatDetailScreen(
                     }
                 },
                 actions = {
-                    if (currentSelectedChat != null) {
+                    if (state.chat != null) {
                         IconButton(onClick = { isChatDetailsDialogOpen = true }) {
                             Icon(
                                 imageVector = Icons.Filled.Menu,
@@ -155,7 +155,7 @@ fun ChatDetailScreen(
             Column(
                 Modifier.consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
             ) {
-                if (currentSelectedChat != null) {
+                if (state.chat?.id != null) {
                     MessageField(
                         modifier = Modifier.hazeChild(hazeState),
                         sendMessage = viewModel::sendMessage,
@@ -174,10 +174,10 @@ fun ChatDetailScreen(
         Column(
             modifier = Modifier.haze(hazeState, HazeMaterials.thin()),
         ) {
-            AnimatedVisibility(currentSelectedChat == null) {
+            AnimatedVisibility(state.chat?.id == null) {
                 SelectChat()
             }
-            if (currentSelectedChat != null) {
+            if (state.chat?.id != null) {
                 MessageList(
                     modifier = Modifier.weight(1f, fill = true),
                     messages = state.messages ?: emptyList(),
@@ -196,7 +196,7 @@ fun ChatDetailScreen(
         isDialogOpen = isChatDetailsDialogOpen,
         onDismissDialog = { isChatDetailsDialogOpen = false },
     ) {
-        ChatDetailsScreen(currentSelectedChat)
+        ChatDetailsScreen(state.chat, state.userId)
     }
 }
 

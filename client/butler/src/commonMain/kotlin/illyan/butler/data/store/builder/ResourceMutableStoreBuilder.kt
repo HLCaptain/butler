@@ -44,10 +44,11 @@ fun provideResourceMutableStore(
             resourceLocalDataSource.getResource(key.resourceId)
         },
         writer = { key, local ->
-            require(key is ResourceKey.Write)
             when (key) {
                 is ResourceKey.Write.Create -> resourceLocalDataSource.upsertResource(local.copy(id = randomUUID()))
                 is ResourceKey.Write.Upsert -> resourceLocalDataSource.upsertResource(local)
+                is ResourceKey.Read.ByResourceId -> resourceLocalDataSource.upsertResource(local) // From fetcher
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
             }
         },
         delete = { key ->
@@ -66,7 +67,7 @@ fun provideResourceMutableStore(
             val resource = output.toNetworkModel()
             val newResource = when (key) {
                 is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(resource).also {
-                    resourceLocalDataSource.replaceResource(output.id!!, it.toDomainModel())
+                    resourceLocalDataSource.replaceResource(it.id!!, it.toDomainModel())
                 }
                 is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(resource)
             }

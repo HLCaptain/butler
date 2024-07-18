@@ -97,12 +97,19 @@ class ChatStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun upsert(chat: DomainChat): String {
-        return (chatMutableStore.write(
+        val writtenChat = chatMutableStore.write(
             StoreWriteRequest.of(
                 key = if (chat.id == null) ChatKey.Write.Create else ChatKey.Write.Upsert,
                 value = chat,
             )
-        ) as? StoreWriteResponse.Success.Typed<DomainChat>)?.value?.id!!
+        )
+        Napier.d("Chat upserted: $writtenChat")
+        if (writtenChat is StoreWriteResponse.Success.Typed<*>) {
+            val domainChat = (writtenChat as? StoreWriteResponse.Success.Typed<DomainChat>)?.value
+            return domainChat?.id!!
+        } else {
+            throw IllegalStateException("Chat upsert failed")
+        }
     }
 
     override suspend fun deleteChat(chatId: String) {
