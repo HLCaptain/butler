@@ -48,7 +48,7 @@ fun provideChatMutableStore(
                 is ChatKey.Write.Create -> chatLocalDataSource.upsertChat(local.copy(id = randomUUID()))
                 is ChatKey.Write.Upsert -> chatLocalDataSource.upsertChat(local)
                 is ChatKey.Read.ByChatId -> chatLocalDataSource.upsertChat(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
@@ -78,6 +78,6 @@ fun provideChatMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        DomainChat::class.simpleName.toString()
+        DomainChat::class.qualifiedName.toString()
     ) { it.toString() }
 )

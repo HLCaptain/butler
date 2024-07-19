@@ -38,7 +38,7 @@ fun provideUserChatStore(
             when (key) {
                 is ChatKey.Write.Upsert -> chatLocalDataSource.upsertChats(local)
                 is ChatKey.Read.ByUserId -> chatLocalDataSource.upsertChats(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->

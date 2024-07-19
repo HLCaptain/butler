@@ -48,7 +48,7 @@ fun provideResourceMutableStore(
                 is ResourceKey.Write.Create -> resourceLocalDataSource.upsertResource(local.copy(id = randomUUID()))
                 is ResourceKey.Write.Upsert -> resourceLocalDataSource.upsertResource(local)
                 is ResourceKey.Read.ByResourceId -> resourceLocalDataSource.upsertResource(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.simpleName}")
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
@@ -77,6 +77,6 @@ fun provideResourceMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        DomainResource::class.simpleName.toString()
+        DomainResource::class.qualifiedName.toString()
     ) { it.toString() }
 )

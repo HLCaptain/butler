@@ -1,6 +1,5 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.data.network.datasource.ResourceNetworkDataSource
 import illyan.butler.data.store.builder.ResourceMutableStoreBuilder
 import illyan.butler.data.store.key.ResourceKey
 import illyan.butler.di.KoinNames
@@ -24,7 +23,6 @@ import org.mobilenativefoundation.store.store5.StoreWriteResponse
 @Single
 class ResourceStoreRepository(
     resourceMutableStoreBuilder: ResourceMutableStoreBuilder,
-    private val resourceNetworkDataSource: ResourceNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
     private val hostManager: HostManager
 ) : ResourceRepository {
@@ -52,7 +50,7 @@ class ResourceStoreRepository(
                 StoreReadRequest.cached(ResourceKey.Read.ByResourceId(resourceId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Resource id: ${data?.id}")
                 data to (it is StoreReadResponse.Loading)

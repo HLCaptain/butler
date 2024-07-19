@@ -64,7 +64,7 @@ class ChatStoreRepository(
                 StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Chat is $data")
                 data to (it is StoreReadResponse.Loading)
@@ -83,7 +83,7 @@ class ChatStoreRepository(
                 StoreReadRequest.cached(ChatKey.Read.ByUserId(userId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Chats are $data")
                 data to (it is StoreReadResponse.Loading)

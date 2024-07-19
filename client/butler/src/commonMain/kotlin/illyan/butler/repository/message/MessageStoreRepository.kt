@@ -53,7 +53,7 @@ class MessageStoreRepository(
                 StoreReadRequest.cached(MessageKey.Read.ByMessageId(messageId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Message: $data")
                 data to (it is StoreReadResponse.Loading)
@@ -72,7 +72,7 @@ class MessageStoreRepository(
                 StoreReadRequest.cached(MessageKey.Read.ByChatId(chatId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
@@ -101,7 +101,7 @@ class MessageStoreRepository(
                 StoreReadRequest.cached(MessageKey.Read.ByUserId(userId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
