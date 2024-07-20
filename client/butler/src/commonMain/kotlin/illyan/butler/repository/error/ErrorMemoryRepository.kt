@@ -43,7 +43,9 @@ class ErrorMemoryRepository : ErrorRepository {
     override suspend fun reportError(response: HttpResponse) {
         val errorResponse = DomainErrorResponse(
             httpStatusCode = response.status,
-            customErrorCode = if ((response.contentLength() ?: 0) > 0) response.body() else null, // Checking if anything is returned in the body
+            customErrorCode = try {
+                if ((response.contentLength()?.toInt() ?: 0) > 0) response.body() else null
+            } catch (t: Throwable) { null }, // Checking if anything is returned in the body
             timestamp = response.responseTime.timestamp
         )
         _serverErrorEventFlow.emit(errorResponse)

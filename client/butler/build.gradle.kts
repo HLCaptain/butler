@@ -149,18 +149,19 @@ buildConfig {
 
         val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use Room database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString())
+
+        val resetRoomDb = localProperties["RESET_ROOM_DB"].toBoolean() // Set to true to reset Room database on app start
+        buildConfigField("Boolean", "RESET_ROOM_DB", resetRoomDb.toString())
     }
 }
 
 android {
     namespace = "illyan.butler"
-//    compileSdk = 34
-    compileSdkPreview = "VanillaIceCream"
+    compileSdk = 35
     defaultConfig {
         applicationId = "illyan.butler"
         minSdk = 26
-//        targetSdk = 34
-        targetSdkPreview = "VanillaIceCream"
+        targetSdk = 35
         versionCode = 4
         versionName = libs.versions.butler.get()
     }

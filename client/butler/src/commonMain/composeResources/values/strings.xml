@@ -38,9 +38,12 @@
     <string name="chat_id_is_x">Chat ID: %s</string>
     <string name="ai_members">AI members: %s</string>
     <string name="no_messages">No messages</string>
+    <string name="message_id">Message ID</string>
+    <string name="timestamp">Timestamp</string>
     <string name="select">Select</string>
     <string name="select_chat">Select chat!</string>
     <string name="send">Send</string>
+    <string name="sender_id">Sender ID</string>
     <string name="send_message">Send message</string>
     <string name="username">Username</string>
     <string name="select_host">Select Host</string>

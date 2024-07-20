@@ -113,23 +113,20 @@ fun HomeScreen() {
             var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
             var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
             LaunchedEffect(state.isUserSignedIn) {
-                if (isAuthFlowEnded == null) isAuthFlowEnded = state.isUserSignedIn
-                if (state.isUserSignedIn != true) isAuthFlowEnded = false
+                state.isUserSignedIn?.let { isSignedIn ->
+                    if (isAuthFlowEnded == null) isAuthFlowEnded = isSignedIn
+                    if (!isSignedIn) isAuthFlowEnded = false
+                }
                 isProfileDialogShowing = false
             }
-            var isDialogOpen by rememberSaveable { mutableStateOf(isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing) }
-            LaunchedEffect(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) {
-                isDialogOpen = isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing
-            }
+            val isDialogOpen = rememberSaveable(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
+
             var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
             LaunchedEffect(state.isTutorialDone) {
                 if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
                 if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
-                if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
+                if (state.isUserSignedIn == true && state.isTutorialDone == true) isAuthFlowEnded = true
             }
-            val onBoardingNavController = rememberNavController()
-            val profileNavController = rememberNavController()
-            val authNavController = rememberNavController()
             val userFlow = remember(isDialogOpen, state.isTutorialDone, isDialogClosedAfterTutorial, isAuthFlowEnded, state.isUserSignedIn, isProfileDialogShowing) {
                 if (!isDialogOpen) null
                 else if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
@@ -137,8 +134,11 @@ fun HomeScreen() {
                 } else DialogUserFlow.OnBoarding
             }
 
+            val onBoardingNavController = rememberNavController()
+            val profileNavController = rememberNavController()
+            val authNavController = rememberNavController()
             val currentNavController = remember(userFlow) {
-                Napier.d("Current user flow: $userFlow")
+                Napier.d("Current dialog flow: $userFlow")
                 when (userFlow) {
                     DialogUserFlow.Auth -> authNavController
                     DialogUserFlow.OnBoarding -> onBoardingNavController

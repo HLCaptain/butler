@@ -77,20 +77,30 @@ import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back
+import illyan.butler.generated.resources.message_id
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.play
 import illyan.butler.generated.resources.select_chat
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
+import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
+import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
+import illyan.butler.ui.components.RichTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.home.LocalNavBarOrientation
+import illyan.butler.ui.home.getNavBarTooltipGestures
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -235,15 +245,39 @@ fun MessageList(
             contentPadding = innerPadding
         ) {
             items(messages) { message ->
-                MessageItem(
-                    message = message,
-                    userId = userId,
-                    sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                    playAudio = playAudio,
-                    playingAudio = playingAudio,
-                    stopAudio = stopAudio,
-                    images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                )
+                RichTooltipWithContent(
+                    enabledGestures = getNavBarTooltipGestures(),
+                    tooltip = {
+                        val keyValueList = listOf(
+                            Res.string.message_id to message.id,
+                            Res.string.timestamp to message.time?.let {
+                                Instant.fromEpochMilliseconds(it)
+                                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                                    .format(LocalDateTime.Formats.ISO)
+                            },
+                            Res.string.sender_id to message.senderId,
+                        ).filter { it.second != null }
+                        LazyColumn {
+                            items(keyValueList, key = { it.first }) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(text = stringResource(it.first))
+                                    Text(text = it.second!!)
+                                }
+                            }
+                        }
+                    },
+                ) { gestureAreaModifier ->
+                    MessageItem(
+                        modifier = gestureAreaModifier,
+                        message = message,
+                        userId = userId,
+                        sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                        playAudio = playAudio,
+                        playingAudio = playingAudio,
+                        stopAudio = stopAudio,
+                        images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                    )
+                }
             }
         }
     }
@@ -251,6 +285,7 @@ fun MessageList(
 
 @Composable
 fun MessageItem(
+    modifier: Modifier = Modifier,
     message: DomainMessage,
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
@@ -267,7 +302,7 @@ fun MessageItem(
         Napier.d("Message ${message.id} sent by user: $sentByUser, senderId: ${message.senderId}, userId: $userId")
     }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
