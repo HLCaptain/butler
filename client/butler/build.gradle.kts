@@ -111,12 +111,16 @@ kotlin {
 
 dependencies {
     annotationProcessor(libs.androidx.room.compiler)
+    // TODO: use KSP in Common Code because ksp(...) is deprecated
+//    kspCommonMainMetadata(libs.androidx.room.compiler)
+//    kspCommonMainMetadata(libs.koin.ksp)
     ksp(libs.androidx.room.compiler)
     ksp(libs.koin.ksp)
 }
 
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")
+    arg("USE_COMPOSE_VIEWMODEL", "true") // TODO: Remove when Koin 4.0 comes out with common viewmodel support
 }
 
 kotlin.sourceSets.all {
