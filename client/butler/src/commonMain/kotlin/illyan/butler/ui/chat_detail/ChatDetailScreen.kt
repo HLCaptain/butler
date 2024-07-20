@@ -49,6 +49,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -329,11 +330,12 @@ fun MessageItem(
                 imageLoader = ImageLoader(LocalPlatformContext.current),
                 contentDescription = "Image"
             ) {
-                when (val state = painter.state) {
+                val state by painter.state.collectAsState()
+                when (state) {
                     AsyncImagePainter.State.Empty -> Text("Empty")
                     is AsyncImagePainter.State.Error -> {
                         Text("Error loading image")
-                        Napier.e("Error loading image with size ${image.size} and painter.state: ${painter.state}", state.result.throwable)
+                        Napier.e("Error loading image with size ${image.size} and painter.state: $state", (state as AsyncImagePainter.State.Error).result.throwable)
                     }
                     is AsyncImagePainter.State.Loading -> MediumCircularProgressIndicator()
                     is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
