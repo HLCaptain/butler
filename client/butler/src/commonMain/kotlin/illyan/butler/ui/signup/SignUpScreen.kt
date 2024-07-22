@@ -18,8 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
@@ -29,37 +27,36 @@ import illyan.butler.generated.resources.username
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.LoadingIndicator
 import illyan.butler.ui.components.smallDialogWidth
-import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class SignUpScreen(
-    private val initialEmail: String = "",
-    private val initialPassword: String = "",
-    private val signedUp: () -> Unit
-) : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<SignUpScreenModel>()
-        val state by screenModel.state.collectAsState()
-        // Make your Compose Multiplatform UI
-        val onDialogClosed = LocalDialogDismissRequest.current
+@OptIn(KoinExperimentalAPI::class)
+@Composable
+fun SignUpScreen(
+    initialEmail: String = "",
+    initialPassword: String = "",
+    signedUp: () -> Unit
+) {
+    val screenModel = koinViewModel<SignUpViewModel>()
+    val state by screenModel.state.collectAsState()
+    // Make your Compose Multiplatform UI
 
-        // TODO: implement oath authentication
-        // TODO: implement email/password authentication
-        // Go back when user is authenticated
-        // Login button should navigate to LoginScreen. Go back if it is already on the stack.
-        LaunchedEffect(state.isSignedIn) {
-            if (state.isSignedIn == true) signedUp()
-        }
-
-        SignUpDialogContent(
-            state = state,
-            initialEmail = initialEmail,
-            initialPassword = initialPassword,
-            signUp = screenModel::signUpAndLogin
-        )
+    // TODO: implement oath authentication
+    // TODO: implement email/password authentication
+    // Go back when user is authenticated
+    // Login button should navigate to LoginScreen. Go back if it is already on the stack.
+    LaunchedEffect(state.isSignedIn) {
+        if (state.isSignedIn == true) signedUp()
     }
+
+    SignUpDialogContent(
+        state = state,
+        initialEmail = initialEmail,
+        initialPassword = initialPassword,
+        signUp = screenModel::signUpAndLogin
+    )
 }
 
 @OptIn(ExperimentalResourceApi::class)

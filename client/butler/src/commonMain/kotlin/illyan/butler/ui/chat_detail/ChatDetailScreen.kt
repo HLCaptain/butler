@@ -49,6 +49,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,25 +73,35 @@ import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
-import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back
+import illyan.butler.generated.resources.message_id
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.play
+import illyan.butler.generated.resources.select_chat
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
+import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
+import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
+import illyan.butler.ui.components.RichTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog
 import illyan.butler.ui.home.LocalNavBarOrientation
+import illyan.butler.ui.home.getNavBarTooltipGestures
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
@@ -103,11 +114,7 @@ fun ChatDetailScreen(
     canNavigateBack: Boolean = true,
     onNavigateBack: () -> Unit = {}
 ) {
-    LaunchedEffect(state.chat) { Napier.d("DomainChat: ${state.chat}") }
-//        var selectedChatId by rememberSaveable { mutableStateOf(selectedChatId) }
     LaunchedEffect(currentSelectedChat) {
-        Napier.d("SelectedChatId: $currentSelectedChat")
-//            selectedChatId = currentSelectedChat
         currentSelectedChat?.let { viewModel.loadChat(it) }
     }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -128,9 +135,7 @@ fun ChatDetailScreen(
                 },
                 navigationIcon = {
                     if (canNavigateBack) {
-                        IconButton(onClick = {
-                            onNavigateBack()
-                        }) {
+                        IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(Res.string.back)
@@ -139,7 +144,7 @@ fun ChatDetailScreen(
                     }
                 },
                 actions = {
-                    if (currentSelectedChat != null) {
+                    if (state.chat != null) {
                         IconButton(onClick = { isChatDetailsDialogOpen = true }) {
                             Icon(
                                 imageVector = Icons.Filled.Menu,
@@ -157,7 +162,7 @@ fun ChatDetailScreen(
             Column(
                 Modifier.consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
             ) {
-                if (currentSelectedChat != null) {
+                if (state.chat?.id != null) {
                     MessageField(
                         modifier = Modifier.hazeChild(hazeState),
                         sendMessage = viewModel::sendMessage,
@@ -175,15 +180,13 @@ fun ChatDetailScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier.haze(hazeState, HazeMaterials.thin()),
-            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            AnimatedVisibility(currentSelectedChat == null) {
+            AnimatedVisibility(state.chat?.id == null) {
                 SelectChat()
             }
-            if (currentSelectedChat != null) {
+            if (state.chat?.id != null) {
                 MessageList(
                     modifier = Modifier.weight(1f, fill = true),
-                    chat = state.chat,
                     messages = state.messages ?: emptyList(),
                     userId = state.userId ?: "",
                     sounds = state.sounds,
@@ -196,12 +199,12 @@ fun ChatDetailScreen(
             }
         }
     }
-    val chatDetailsDialog = remember(currentSelectedChat) { ChatDetailsScreen(currentSelectedChat) }
     ButlerDialog(
         isDialogOpen = isChatDetailsDialogOpen,
         onDismissDialog = { isChatDetailsDialogOpen = false },
-        startScreens = listOf(chatDetailsDialog)
-    )
+    ) {
+        ChatDetailsScreen(state.chat, state.userId)
+    }
 }
 
 @Composable
@@ -210,14 +213,13 @@ private fun SelectChat() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text("Select a chat!")
+        Text(stringResource(Res.string.select_chat))
     }
 }
 
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
-    chat: DomainChat?,
     messages: List<DomainMessage> = emptyList(),
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
@@ -227,28 +229,47 @@ fun MessageList(
     userId: String,
     innerPadding: PaddingValues
 ) {
-    Crossfade(
-        modifier = modifier,
-        targetState = chat == null || messages.isEmpty()
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier.animateContentSize().fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        if (messages.isEmpty()) {
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(innerPadding),
+                text = stringResource(Res.string.no_messages),
+                style = MaterialTheme.typography.headlineLarge
+            )
+        }
+        LazyColumn(
+            reverseLayout = true,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = innerPadding
         ) {
-            if (it) {
-                Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(innerPadding),
-                    text = stringResource(Res.string.no_messages),
-                    style = MaterialTheme.typography.headlineLarge
-                )
-            }
-            LazyColumn(
-                reverseLayout = true,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = innerPadding
-            ) {
-                items(messages) { message ->
+            items(messages) { message ->
+                RichTooltipWithContent(
+                    enabledGestures = getNavBarTooltipGestures(),
+                    tooltip = {
+                        val keyValueList = listOf(
+                            Res.string.message_id to message.id,
+                            Res.string.timestamp to message.time?.let {
+                                Instant.fromEpochMilliseconds(it)
+                                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                                    .format(LocalDateTime.Formats.ISO)
+                            },
+                            Res.string.sender_id to message.senderId,
+                        ).filter { it.second != null }
+                        LazyColumn {
+                            items(keyValueList, key = { it.first }) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(text = stringResource(it.first))
+                                    Text(text = it.second!!)
+                                }
+                            }
+                        }
+                    },
+                ) { gestureAreaModifier ->
                     MessageItem(
+                        modifier = gestureAreaModifier,
                         message = message,
                         userId = userId,
                         sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
@@ -263,9 +284,9 @@ fun MessageList(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MessageItem(
+    modifier: Modifier = Modifier,
     message: DomainMessage,
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
@@ -282,7 +303,7 @@ fun MessageItem(
         Napier.d("Message ${message.id} sent by user: $sentByUser, senderId: ${message.senderId}, userId: $userId")
     }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -309,11 +330,12 @@ fun MessageItem(
                 imageLoader = ImageLoader(LocalPlatformContext.current),
                 contentDescription = "Image"
             ) {
-                when (val state = painter.state) {
+                val state by painter.state.collectAsState()
+                when (state) {
                     AsyncImagePainter.State.Empty -> Text("Empty")
                     is AsyncImagePainter.State.Error -> {
                         Text("Error loading image")
-                        Napier.e("Error loading image with size ${image.size} and painter.state: ${painter.state}", state.result.throwable)
+                        Napier.e("Error loading image with size ${image.size} and painter.state: $state", (state as AsyncImagePainter.State.Error).result.throwable)
                     }
                     is AsyncImagePainter.State.Loading -> MediumCircularProgressIndicator()
                     is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()

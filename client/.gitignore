@@ -50,3 +50,9 @@ local.properties
 ### Configuration files ###
 **/google-services.json
 **/*.keystore
+
+### Kotlin K2
+.kotlin
+
+### Room
+/butler/schemas/

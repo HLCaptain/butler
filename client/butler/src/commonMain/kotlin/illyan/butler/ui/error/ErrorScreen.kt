@@ -4,30 +4,13 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.ui.components.ButlerErrorDialogContent
 
-class ErrorScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<ErrorScreenModel>()
-        val state by screenModel.state.collectAsState()
-        ErrorScreen(
-            cleanError = screenModel::clearError,
-            appErrors = state.appErrors,
-            serverErrors = state.serverErrors
-        )
-    }
-}
-
 @Composable
-private fun ErrorScreen(
+fun ErrorScreen(
     cleanError: (String) -> Unit,
     appErrors: List<DomainErrorEvent>,
     serverErrors: List<Pair<String, DomainErrorResponse>>

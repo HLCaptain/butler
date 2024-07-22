@@ -1,7 +1,5 @@
 package illyan.butler.repository.error
 
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.db.ErrorEvent
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.domain.model.ErrorState
@@ -27,8 +25,8 @@ class ErrorMemoryRepository : ErrorRepository {
     override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
 
     override suspend fun reportError(throwable: Throwable) {
-        Napier.e { "Error reported" }
-        val localErrorEvent = ErrorEvent(
+        Napier.e(throwable) { "Error reported" }
+        val newErrorEvent = DomainErrorEvent(
             id = randomUUID(),
             platform = getPlatformName(),
             exception = throwable.toString().split(":").first(),
@@ -39,14 +37,15 @@ class ErrorMemoryRepository : ErrorRepository {
             timestamp = System.currentTimeMillis(),
             state = ErrorState.NEW
         )
-        val newErrorEvent = localErrorEvent.toDomainModel()
         _appErrorEventFlow.emit(newErrorEvent)
     }
 
     override suspend fun reportError(response: HttpResponse) {
         val errorResponse = DomainErrorResponse(
             httpStatusCode = response.status,
-            customErrorCode = if ((response.contentLength() ?: 0) > 0) response.body() else null, // Checking if anything is returned in the body
+            customErrorCode = try {
+                if ((response.contentLength()?.toInt() ?: 0) > 0) response.body() else null
+            } catch (t: Throwable) { null }, // Checking if anything is returned in the body
             timestamp = response.responseTime.timestamp
         )
         _serverErrorEventFlow.emit(errorResponse)

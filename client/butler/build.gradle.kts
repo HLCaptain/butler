@@ -1,54 +1,28 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
-    alias(libs.plugins.sqldelight)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.androidx.room)
 }
 
 group = "illyan"
 version = libs.versions.butler.get()
 
 kotlin {
-//    js {
-//        moduleName = rootProject.name
-//        browser {
-//            commonWebpackConfig {
-//                outputFileName = "web.js"
-//            }
-//        }
-//        binaries.executable()
-//    }
-
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    compilerOptions {
-//        apiVersion = KotlinVersion.KOTLIN_2_0
-//        languageVersion = KotlinVersion.KOTLIN_2_0
-    }
-
-//    androidTarget {
-//        compilations.all {
-//            kotlinOptions {
-//                jvmTarget = "1.8"
-//            }
-//        }
-//    }
-
     androidTarget()
-
     jvm()
+
+    jvmToolchain(17)
 
     sourceSets {
         commonMain {
@@ -64,18 +38,16 @@ kotlin {
                 implementation(compose.uiTooling)
                 implementation(compose.uiUtil)
 
-                implementation(libs.voyager.navigator)
-                implementation(libs.voyager.screenModel)
-                implementation(libs.voyager.bottomSheetNavigator)
-                implementation(libs.voyager.tabNavigator)
-                implementation(libs.voyager.transitions)
-                implementation(libs.voyager.koin)
+                implementation(libs.androidx.room.common)
+                implementation(libs.androidx.room)
+                implementation(libs.androidx.sqlite.bundled)
 
                 implementation(libs.jetbrains.lifecycle.viewmodel.compose)
                 implementation(libs.jetbrains.navigation.compose)
 
                 implementation(libs.ktor.core)
                 implementation(libs.ktor.auth)
+                implementation(libs.ktor.client.cio)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.logging)
@@ -95,15 +67,9 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.io)
 
-                implementation(libs.sqldelight.coroutines)
-                implementation(libs.sqldelight.adapters)
-
                 implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
                 implementation(libs.store)
-                implementation(libs.settings)
-                implementation(libs.settings.coroutines)
-                implementation(libs.settings.noarg)
                 implementation(libs.korge.core)
                 implementation(libs.filepicker)
                 implementation(libs.coil)
@@ -121,92 +87,40 @@ kotlin {
             implementation(kotlin("test-annotations-common"))
         }
 
-//        jsTest
         jvmTest
 
         androidMain.dependencies {
             implementation(libs.androidx.core)
-            implementation(libs.androidx.crypto)
             implementation(libs.koin.android)
-            implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
-            implementation(libs.sqldelight.android)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.settings.datastore)
-            implementation(libs.androidx.datastore)
-            implementation(libs.androidx.datastore.preferences)
             implementation(libs.ffmpeg.kit)
         }
 
         jvmMain.dependencies {
             implementation(compose.preview)
             implementation(compose.desktop.common)
-            implementation(libs.androidx.crypto)
-            implementation(libs.koin.ktor)
-            implementation(libs.ktor.client.cio)
             implementation(libs.koin.logger.slf4j)
-            implementation(libs.sqldelight.jvm)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.credential.storage.jvm)
-            implementation(libs.settings)
-            implementation(libs.settings.datastore)
-            implementation(libs.androidx.datastore)
-            implementation(libs.androidx.datastore.preferences)
         }
-
-//        jsMain.dependencies {
-//            implementation(libs.ktor.client.js)
-//            implementation(compose.material)
-//            implementation(compose.html.core)
-//            implementation(libs.kotlinx.coroutines.js)
-//            implementation(libs.sqldelight.js)
-//            implementation(npm("kotlinx-coroutines-core", "1.7.3"))
-//            implementation(npm("sql.js", "1.10.2"))
-//            implementation(npm("dateformat", "5.0.3"))
-//            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.1"))
-//            implementation(devNpm("copy-webpack-plugin", "12.0.2"))
-//            implementation(devNpm("localstorage-slim", "2.7.0"))
-//        }
     }
 }
-
-tasks.withType<KotlinJvmCompile>().configureEach {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_1_8
-//        languageVersion = KotlinVersion.KOTLIN_2_0
-    }
-}
-//tasks.withType<KotlinCompile>().configureEach {
-//    dependsOn("kspCommonMainKotlinMetadata")
-//}
 
 dependencies {
+    annotationProcessor(libs.androidx.room.compiler)
+    // TODO: use KSP in Common Code because ksp(...) is deprecated
+//    kspCommonMainMetadata(libs.androidx.room.compiler)
+//    kspCommonMainMetadata(libs.koin.ksp)
+    ksp(libs.androidx.room.compiler)
     ksp(libs.koin.ksp)
 }
 
-//afterEvaluate {
-//    tasks.filter {
-//        it.name.contains("SourcesJar", true)
-//    }.forEach {
-//        println("SourceJarTask====>${it.name}")
-//        it.dependsOn("kspCommonMainKotlinMetadata")
-//    }
-//}
-
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")
-}
-
-sqldelight {
-    databases {
-        create("Database") {
-            packageName = "illyan.butler.db"
-            generateAsync = true
-        }
-    }
+    arg("USE_COMPOSE_VIEWMODEL", "true") // TODO: Remove when Koin 4.0 comes out with common viewmodel support
 }
 
 kotlin.sourceSets.all {
@@ -235,37 +149,23 @@ buildConfig {
             prodIndicatorNames.any { taskName.contains(it, ignoreCase = true) }
 
         println("Task [$taskName] isProd=$isProd")
-
-        val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use SQLDelight database and Ktor, else memory based DB will be used without networking
         buildConfigField("Boolean", "DEBUG", (!isProd).toString())
-        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString()) //
-    }
 
-    // GOOGLE_CLIENT_ID from local.properties
-    val properties = localPropertiesFile.readLines().associate {
-        if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
-        val (key, value) = it.split("=", limit = 2)
-        key to value
+        val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use Room database and Ktor, else memory based DB will be used without networking
+        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString())
+
+        val resetRoomDb = localProperties["RESET_ROOM_DB"].toBoolean() // Set to true to reset Room database on app start
+        buildConfigField("Boolean", "RESET_ROOM_DB", resetRoomDb.toString())
     }
-    val googleClientId = if (properties["GOOGLE_CLIENT_ID"] == null) null else "\"${properties["GOOGLE_CLIENT_ID"]}\""
-    buildConfigField("String?", "GOOGLE_CLIENT_ID", "$googleClientId")
-    val apiGatewayUrl = if (properties["API_GATEWAY_URL"] == null) null else "\"${properties["API_GATEWAY_URL"]}\""
-    buildConfigField("String?", "API_GATEWAY_URL", "$apiGatewayUrl")
 }
 
 android {
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
     namespace = "illyan.butler"
-//    compileSdk = 34
-    compileSdkPreview = "VanillaIceCream"
+    compileSdk = 35
     defaultConfig {
         applicationId = "illyan.butler"
         minSdk = 26
-//        targetSdk = 34
-        targetSdkPreview = "VanillaIceCream"
+        targetSdk = 35
         versionCode = 4
         versionName = libs.versions.butler.get()
     }
@@ -304,19 +204,17 @@ android {
         buildConfig = true
     }
 
-    applicationVariants.all {
-        val variantName = name
-        sourceSets {
-            getByName("main") {
-                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
-            }
-        }
-    }
+//    applicationVariants.all {
+//        val variantName = name
+//        sourceSets {
+//            getByName("main") {
+//                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
+//            }
+//        }
+//    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     packaging {
@@ -328,12 +226,9 @@ android {
     dependencies {
         implementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
+        ksp(libs.koin.ksp)
     }
 }
-
-//compose.experimental {
-//    web.application {}
-//}
 
 compose.desktop.application {
     mainClass = "illyan.butler.MainKt"
@@ -352,4 +247,8 @@ rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlu
     rootProject.the<YarnRootExtension>().yarnLockMismatchReport = YarnLockMismatchReport.WARNING
     rootProject.the<YarnRootExtension>().reportNewYarnLock = true
     rootProject.the<YarnRootExtension>().yarnLockAutoReplace = true
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }

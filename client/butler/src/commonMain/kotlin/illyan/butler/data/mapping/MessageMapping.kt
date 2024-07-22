@@ -1,10 +1,10 @@
 package illyan.butler.data.mapping
 
 import illyan.butler.data.network.model.chat.MessageDto
-import illyan.butler.db.Message
+import illyan.butler.data.room.model.RoomMessage
 import illyan.butler.domain.model.DomainMessage
 
-fun Message.toDomainModel() = DomainMessage(
+fun RoomMessage.toDomainModel() = DomainMessage(
     id = id,
     senderId = senderId,
     message = message,
@@ -22,15 +22,15 @@ fun DomainMessage.toNetworkModel() = MessageDto(
     resourceIds = resourceIds,
 )
 
-fun MessageDto.toLocalModel() = Message(
+fun MessageDto.toRoomModel() = RoomMessage(
     id = id!!,
     senderId = senderId,
     message = message,
-    time = time,
+    time = time!!,
     chatId = chatId,
     resourceIds = resourceIds,
 )
 
-fun Message.toNetworkModel() = toDomainModel().toNetworkModel()
-fun DomainMessage.toLocalModel() = toNetworkModel().toLocalModel()
-fun MessageDto.toDomainModel() = toLocalModel().toDomainModel()
+fun RoomMessage.toNetworkModel() = toDomainModel().toNetworkModel()
+fun DomainMessage.toRoomModel() = toNetworkModel().toRoomModel()
+fun MessageDto.toDomainModel() = toRoomModel().toDomainModel()

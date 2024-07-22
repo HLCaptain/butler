@@ -81,8 +81,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.Theme
 import illyan.butler.generated.resources.Res
@@ -122,32 +120,33 @@ import illyan.butler.ui.theme.canUseDynamicColors
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 import kotlin.random.Random
 
-class UserSettingsScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<UserSettingsScreenModel>()
-        val state by screenModel.state.collectAsState()
-        LaunchedEffect(state) {
-            Napier.d("UserSettingsScreen: $state")
-        }
-        UserSettingsDialogContent(
-            preferences = state.userPreferences,
+@OptIn(KoinExperimentalAPI::class)
+@Composable
+fun UserSettingsScreen() {
+    val screenModel = koinViewModel<UserSettingsViewModel>()
+    val state by screenModel.state.collectAsState()
+    LaunchedEffect(state) {
+        Napier.d("UserSettingsScreen: $state")
+    }
+    UserSettingsDialogContent(
+        preferences = state.userPreferences,
 //        arePreferencesSynced = arePreferencesSynced,
 //        canSyncPreferences = canSyncPreferences,
 //        shouldSyncPreferences = shouldSyncPreferences,
 //        showAnalyticsRequestDialog = showAnalyticsRequestDialog,
 //        onShouldSyncChanged = screenModel::setPreferencesSync,
-            onThemeChange = screenModel::setTheme,
+        onThemeChange = screenModel::setTheme,
 //        setAnalytics = screenModel::setAnalytics,
 //        setFreeDriveAutoStart = screenModel::setFreeDriveAutoStart,
 //        setAdVisibility = screenModel::setAdVisibility,
-            setDynamicColorEnabled = screenModel::setDynamicColorEnabled,
+        setDynamicColorEnabled = screenModel::setDynamicColorEnabled,
 //        navigateToDataSettings = { destinationsNavigator.navigate(DataSettingsDialogScreenDestination) },
 //        navigateToMLSettings = { destinationsNavigator.navigate(MLSettingsDialogScreenDestination) },
-        )
-    }
+    )
 }
 
 @Composable

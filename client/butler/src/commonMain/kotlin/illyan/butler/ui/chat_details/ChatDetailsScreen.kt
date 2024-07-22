@@ -11,8 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
+import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.ai_members
 import illyan.butler.generated.resources.chat_details
@@ -23,43 +22,47 @@ import illyan.butler.generated.resources.none
 import illyan.butler.generated.resources.unknown
 import illyan.butler.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.mediumDialogSize
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class ChatDetailsScreen(private val chatId: String?) : Screen {
-    @OptIn(ExperimentalResourceApi::class)
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<ChatDetailsScreenModel>()
-        val state by screenModel.state.collectAsState()
-        LaunchedEffect(Unit) {
-            screenModel.loadChat(chatId)
-        }
-        ButlerDialogContent(
-            modifier = Modifier.mediumDialogSize(),
-            title = {
-                Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = stringResource(Res.string.chat_details)
-                )
-            },
-            text = {
-                val aiMembers = state.chat?.members?.filter { it != state.userId } ?: emptyList()
-                val aiMembersString = if (aiMembers.isEmpty()) {
-                    stringResource(Res.string.none)
-                } else {
-                    aiMembers.joinToString(", ")
-                }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(stringResource(Res.string.chat_name_is_x).format(state.chat?.name ?: stringResource(Res.string.new_chat)))
-                    Text(stringResource(Res.string.chat_id_is_x).format(state.chat?.id ?: stringResource(Res.string.unknown)))
-                    Text(stringResource(Res.string.ai_members).format(aiMembersString))
-                    state.chat?.summary?.let { Text(it) }
-                }
-            },
-            containerColor = Color.Transparent
-        )
+@OptIn(KoinExperimentalAPI::class)
+@Composable
+fun ChatDetailsScreen(chatId: String?) {
+    val screenModel = koinViewModel<ChatDetailsViewModel>()
+    val state by screenModel.state.collectAsState()
+    LaunchedEffect(Unit) {
+        screenModel.loadChat(chatId)
     }
+    ChatDetailsScreen(state.chat, state.userId)
+}
+
+@Composable
+fun ChatDetailsScreen(chat: DomainChat?, currentUserId: String?) {
+    ButlerDialogContent(
+        modifier = Modifier.mediumDialogSize(),
+        title = {
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = stringResource(Res.string.chat_details)
+            )
+        },
+        text = {
+            val aiMembers = chat?.members?.filter { it != currentUserId } ?: emptyList()
+            val aiMembersString = if (aiMembers.isEmpty()) {
+                stringResource(Res.string.none)
+            } else {
+                aiMembers.joinToString(", ")
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(stringResource(Res.string.chat_name_is_x).format(chat?.name ?: stringResource(Res.string.new_chat)))
+                Text(stringResource(Res.string.chat_id_is_x).format(chat?.id ?: stringResource(Res.string.unknown)))
+                Text(stringResource(Res.string.ai_members).format(aiMembersString))
+                chat?.summary?.let { Text(it) }
+            }
+        },
+        containerColor = Color.Transparent
+    )
 }

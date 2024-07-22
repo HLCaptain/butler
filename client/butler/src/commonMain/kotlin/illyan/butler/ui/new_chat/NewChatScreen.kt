@@ -34,8 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.loading
@@ -45,55 +43,53 @@ import illyan.butler.generated.resources.select_self_hosted
 import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.components.ExpandableCard
 import illyan.butler.ui.components.MenuButton
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-class NewChatScreen : Screen {
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<NewChatScreenModel>()
-        val state by screenModel.state.collectAsState()
-        // Make your Compose Multiplatform UI
-        val selectNewChat = LocalChatSelector.current
-        LaunchedEffect(state.newChatId) {
-            if (state.newChatId != null) {
-                selectNewChat(state.newChatId!!)
-            }
+@OptIn(KoinExperimentalAPI::class, ExperimentalMaterial3Api::class)
+@Composable
+fun NewChatScreen() {
+    val screenModel = koinViewModel<NewChatViewModel>()
+    val state by screenModel.state.collectAsState()
+    val selectNewChat = LocalChatSelector.current
+    LaunchedEffect(state.newChatId) {
+        if (state.newChatId != null) {
+            selectNewChat(state.newChatId!!)
         }
-        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-        Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            stringResource(Res.string.new_chat),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    scrollBehavior = scrollBehavior,
-                )
-            },
-        ) { innerPadding ->
-            Crossfade(
-                targetState = state.availableModels
-            ) { models ->
-                if (models == null) {
+    }
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = {
                     Text(
-                        text = stringResource(Res.string.loading),
-                        style = MaterialTheme.typography.headlineSmall,
+                        stringResource(Res.string.new_chat),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                } else if (models.isNotEmpty()) {
-                    ModelList(
-                        state = state,
-                        selectModel = screenModel::createChatWithModel,
-                        innerPadding = innerPadding
-                    )
-                } else {
-                    Text("No models available")
-                }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+    ) { innerPadding ->
+        Crossfade(
+            targetState = state.availableModels
+        ) { models ->
+            if (models == null) {
+                Text(
+                    text = stringResource(Res.string.loading),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            } else if (models.isNotEmpty()) {
+                ModelList(
+                    state = state,
+                    selectModel = screenModel::createChatWithModel,
+                    innerPadding = innerPadding
+                )
+            } else {
+                Text("No models available")
             }
         }
     }
@@ -121,7 +117,6 @@ fun ModelList(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ModelListItem(
     model: DomainModel,
