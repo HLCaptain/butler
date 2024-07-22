@@ -65,8 +65,8 @@ private fun DialogContent(
             }
             AnimatedVisibility(
                 visible = isDialogVisible,
-                enter = fadeIn(tween(200)) + scaleIn(tween(200), 0.8f),
-                exit = fadeOut(tween(100)) + scaleOut(tween(100), 0.8f),
+                enter = fadeIn(tween(200)) + scaleIn(tween(200), if (isDialogFullscreen) 0.4f else 0.8f),
+                exit = fadeOut(tween(100)) + scaleOut(tween(100), if (isDialogFullscreen) 0.4f else 0.8f),
             ) {
                 ButlerDialogSurface(shape = RoundedCornerShape(animatedRoundedCornerShape)) {
                     Box(

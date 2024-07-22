@@ -17,7 +17,6 @@ import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.hello_x
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
 // Error dialog should contain a button copying the stacktrace to clipboard
@@ -87,7 +86,6 @@ fun ButlerErrorDialogContent(
     buttons = buttons
 )
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ButlerErrorDialogContent(
     modifier: Modifier = Modifier,

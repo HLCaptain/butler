@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -137,13 +138,14 @@ fun HomeScreen() {
             val onBoardingNavController = rememberNavController()
             val profileNavController = rememberNavController()
             val authNavController = rememberNavController()
-            val currentNavController = remember(userFlow) {
+            var currentNavController by remember { mutableStateOf<NavHostController?>(null) }
+            LaunchedEffect(userFlow) {
                 Napier.d("Current dialog flow: $userFlow")
-                when (userFlow) {
+                currentNavController = when (userFlow) {
                     DialogUserFlow.Auth -> authNavController
                     DialogUserFlow.OnBoarding -> onBoardingNavController
                     DialogUserFlow.Profile -> profileNavController
-                    null -> null
+                    null -> currentNavController
                 }
             }
 
@@ -243,13 +245,19 @@ fun HomeScreen() {
                 }
             }
 
-            val numberOfErrors = state.appErrors.size + state.serverErrors.size
+            val numberOfErrors = remember(state.appErrors, state.serverErrors) { state.appErrors.size + state.serverErrors.size }
             ButlerDialog(
                 modifier = Modifier.zIndex(1f),
                 isDialogOpen = numberOfErrors > 0,
                 isDialogFullscreen = false,
-                onDismissDialog = viewModel::removeLastError
-            ) { ErrorScreen() }
+                onDismissDialog = viewModel::removeLastError,
+            ) {
+                ErrorScreen(
+                    cleanError = viewModel::clearError,
+                    appErrors = state.appErrors,
+                    serverErrors = state.serverErrors
+                )
+            }
             ButlerDialog(
                 modifier = Modifier.zIndex(2f),
                 isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
