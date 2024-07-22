@@ -13,7 +13,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -34,23 +33,13 @@ import org.koin.core.annotation.KoinExperimentalAPI
 
 @OptIn(KoinExperimentalAPI::class)
 @Composable
-fun ChatScreen() {
-    val selectedChat = LocalSelectedChat.current
+fun ChatScreen(
+    currentChat: String?,
+    onSelectChat: (String?) -> Unit
+) {
     // Make your Compose Multiplatform UI
     val (height, width) = getWindowSizeInDp()
     var windowWidth by remember { mutableStateOf(width) }
-    var currentChat by rememberSaveable { mutableStateOf<String?>(null) }
-    LaunchedEffect(selectedChat) {
-        currentChat = selectedChat
-    }
-    val onSelectChat = remember {
-        { chatId: String? ->
-//            selectChat(chatId)
-            Napier.v("Chat selected: $chatId")
-            currentChat = null
-            currentChat = chatId
-        }
-    }
     val chatListNavController = rememberNavController()
     DisposableEffect(Unit) {
         val onDestinationChangedListener = NavController.OnDestinationChangedListener { _, destination, _ ->

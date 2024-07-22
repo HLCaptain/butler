@@ -7,7 +7,8 @@ interface MessageLocalDataSource {
     suspend fun insertMessage(message: DomainMessage)
     suspend fun insertMessages(messages: List<DomainMessage>)
     suspend fun upsertMessage(message: DomainMessage)
-    suspend fun deleteMessage(messageId: String)
+    suspend fun replaceMessage(oldMessageId: String, newMessage: DomainMessage)
+    suspend fun deleteMessageById(messageId: String)
     suspend fun deleteAllMessages()
     suspend fun deleteAllMessagesForChat(chatId: String)
     fun getMessageById(messageId: String): Flow<DomainMessage?>

@@ -1,10 +1,8 @@
 package illyan.butler.repository.chat
 
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
-import illyan.butler.data.network.datasource.ChatNetworkDataSource
-import illyan.butler.data.store.ChatMutableStoreBuilder
-import illyan.butler.data.store.UserChatStoreBuilder
+import illyan.butler.data.store.builder.ChatMutableStoreBuilder
+import illyan.butler.data.store.builder.UserChatStoreBuilder
+import illyan.butler.data.store.key.ChatKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.manager.AuthManager
@@ -22,13 +20,13 @@ import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
+import org.mobilenativefoundation.store.store5.StoreWriteResponse
 
 @OptIn(ExperimentalStoreApi::class)
 @Single
 class ChatStoreRepository(
     chatMutableStoreBuilder: ChatMutableStoreBuilder,
     userChatStoreBuilder: UserChatStoreBuilder,
-    private val chatNetworkDataSource: ChatNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
     private val hostManager: HostManager,
     private val authManager: AuthManager
@@ -38,7 +36,7 @@ class ChatStoreRepository(
 
     val userChatStore = userChatStoreBuilder.store
     override suspend fun deleteAllChats(userId: String) {
-        userChatStore.clear(userId)
+        userChatStore.clear(ChatKey.Delete.ByUserId(userId))
     }
 
     init {
@@ -63,10 +61,10 @@ class ChatStoreRepository(
     override fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>> {
         return chatStateFlows.getOrPut(chatId) {
             chatMutableStore.stream<StoreReadResponse<DomainChat>>(
-                StoreReadRequest.cached(chatId, true)
+                StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Chat is $data")
                 data to (it is StoreReadResponse.Loading)
@@ -82,10 +80,10 @@ class ChatStoreRepository(
     override fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStateFlows.getOrPut(userId) {
             userChatStore.stream(
-                StoreReadRequest.cached(userId, true)
+                StoreReadRequest.cached(ChatKey.Read.ByUserId(userId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Chats are $data")
                 data to (it is StoreReadResponse.Loading)
@@ -99,19 +97,22 @@ class ChatStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun upsert(chat: DomainChat): String {
-        val newChat = if (chat.id == null) {
-            chatNetworkDataSource.upsert(chat.toNetworkModel()).toDomainModel()
-        } else chat
-        chatMutableStore.write(
+        val writtenChat = chatMutableStore.write(
             StoreWriteRequest.of(
-                key = newChat.id!!,
-                value = newChat,
+                key = if (chat.id == null) ChatKey.Write.Create else ChatKey.Write.Upsert,
+                value = chat,
             )
         )
-        return newChat.id
+        Napier.d("Chat upserted: $writtenChat")
+        if (writtenChat is StoreWriteResponse.Success.Typed<*>) {
+            val domainChat = (writtenChat as? StoreWriteResponse.Success.Typed<DomainChat>)?.value
+            return domainChat?.id!!
+        } else {
+            throw IllegalStateException("Chat upsert failed")
+        }
     }
 
     override suspend fun deleteChat(chatId: String) {
-        chatMutableStore.clear(chatId)
+        chatMutableStore.clear(ChatKey.Delete.ByChatId(chatId))
     }
 }

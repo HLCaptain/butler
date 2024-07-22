@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -113,23 +114,20 @@ fun HomeScreen() {
             var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
             var isAuthFlowEnded by remember { mutableStateOf(state.isUserSignedIn) }
             LaunchedEffect(state.isUserSignedIn) {
-                if (isAuthFlowEnded == null) isAuthFlowEnded = state.isUserSignedIn
-                if (state.isUserSignedIn != true) isAuthFlowEnded = false
+                state.isUserSignedIn?.let { isSignedIn ->
+                    if (isAuthFlowEnded == null) isAuthFlowEnded = isSignedIn
+                    if (!isSignedIn) isAuthFlowEnded = false
+                }
                 isProfileDialogShowing = false
             }
-            var isDialogOpen by rememberSaveable { mutableStateOf(isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing) }
-            LaunchedEffect(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) {
-                isDialogOpen = isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing
-            }
+            val isDialogOpen = rememberSaveable(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
+
             var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
             LaunchedEffect(state.isTutorialDone) {
                 if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
                 if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
-                if (state.isUserSignedIn == true || state.isTutorialDone == true) isAuthFlowEnded = true
+                if (state.isUserSignedIn == true && state.isTutorialDone == true) isAuthFlowEnded = true
             }
-            val onBoardingNavController = rememberNavController()
-            val profileNavController = rememberNavController()
-            val authNavController = rememberNavController()
             val userFlow = remember(isDialogOpen, state.isTutorialDone, isDialogClosedAfterTutorial, isAuthFlowEnded, state.isUserSignedIn, isProfileDialogShowing) {
                 if (!isDialogOpen) null
                 else if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
@@ -137,13 +135,17 @@ fun HomeScreen() {
                 } else DialogUserFlow.OnBoarding
             }
 
-            val currentNavController = remember(userFlow) {
-                Napier.d("Current user flow: $userFlow")
-                when (userFlow) {
+            val onBoardingNavController = rememberNavController()
+            val profileNavController = rememberNavController()
+            val authNavController = rememberNavController()
+            var currentNavController by remember { mutableStateOf<NavHostController?>(null) }
+            LaunchedEffect(userFlow) {
+                Napier.d("Current dialog flow: $userFlow")
+                currentNavController = when (userFlow) {
                     DialogUserFlow.Auth -> authNavController
                     DialogUserFlow.OnBoarding -> onBoardingNavController
                     DialogUserFlow.Profile -> profileNavController
-                    null -> null
+                    null -> currentNavController
                 }
             }
 
@@ -243,13 +245,19 @@ fun HomeScreen() {
                 }
             }
 
-            val numberOfErrors = state.appErrors.size + state.serverErrors.size
+            val numberOfErrors = remember(state.appErrors, state.serverErrors) { state.appErrors.size + state.serverErrors.size }
             ButlerDialog(
                 modifier = Modifier.zIndex(1f),
                 isDialogOpen = numberOfErrors > 0,
                 isDialogFullscreen = false,
-                onDismissDialog = viewModel::removeLastError
-            ) { ErrorScreen() }
+                onDismissDialog = viewModel::removeLastError,
+            ) {
+                ErrorScreen(
+                    cleanError = viewModel::clearError,
+                    appErrors = state.appErrors,
+                    serverErrors = state.serverErrors
+                )
+            }
             ButlerDialog(
                 modifier = Modifier.zIndex(2f),
                 isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
@@ -298,7 +306,9 @@ fun HomeScreen() {
                                 startDestination = "chat"
                             ) {
                                 composable("chat") {
-                                    ChatScreen()
+                                    ChatScreen(selectedChat) {
+                                        selectedChat = it
+                                    }
                                 }
                                 composable("newChat") {
                                     NewChatScreen()
@@ -314,7 +324,9 @@ fun HomeScreen() {
                                         startDestination = "chat"
                                     ) {
                                         composable("chat") {
-                                            ChatScreen()
+                                            ChatScreen(selectedChat) {
+                                                selectedChat = it
+                                            }
                                         }
                                         composable("newChat") {
                                             NewChatScreen()

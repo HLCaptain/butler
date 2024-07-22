@@ -23,7 +23,16 @@ class ChatRoomDataSource(
 
     override suspend fun upsertChat(chat: DomainChat) {
         chatDao.upsertChat(chat.toRoomModel())
-        chatMemberDao.upsertChatMembers(chat.members.map { RoomChatMember(chat.id!!, it) })
+        chatMemberDao.replaceChatMembersForChat(chat.id!!, chat.members.map { RoomChatMember(chat.id, it) })
+    }
+
+    override suspend fun replaceChat(oldChatId: String, newChat: DomainChat) {
+        if (oldChatId == newChat.id) {
+            upsertChat(newChat)
+        } else {
+            chatDao.replaceChat(oldChatId, newChat.toRoomModel())
+            chatMemberDao.replaceChatMembersForChat(oldChatId, newChat.members.map { RoomChatMember(newChat.id!!, it) })
+        }
     }
 
     override suspend fun deleteChatById(chatId: String) {

@@ -1,11 +1,9 @@
 package illyan.butler.repository.message
 
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
-import illyan.butler.data.network.datasource.MessageNetworkDataSource
-import illyan.butler.data.store.ChatMessageStoreBuilder
-import illyan.butler.data.store.MessageMutableStoreBuilder
-import illyan.butler.data.store.UserMessageStoreBuilder
+import illyan.butler.data.store.builder.ChatMessageStoreBuilder
+import illyan.butler.data.store.builder.MessageMutableStoreBuilder
+import illyan.butler.data.store.builder.UserMessageStoreBuilder
+import illyan.butler.data.store.key.MessageKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.manager.HostManager
@@ -22,19 +20,18 @@ import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
+import org.mobilenativefoundation.store.store5.StoreWriteResponse
 
 @Single
 class MessageStoreRepository(
     messageMutableStoreBuilder: MessageMutableStoreBuilder,
     chatMessageStoreBuilder: ChatMessageStoreBuilder,
     userMessageStoreBuilder: UserMessageStoreBuilder,
-    private val messageNetworkDataSource: MessageNetworkDataSource,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
     private val hostManager: HostManager
 ) : MessageRepository {
     @OptIn(ExperimentalStoreApi::class)
     val messageMutableStore = messageMutableStoreBuilder.store
-    @OptIn(ExperimentalStoreApi::class)
     val chatMessageMutableStore = chatMessageStoreBuilder.store
     private val userMessageStore = userMessageStoreBuilder.store
 
@@ -53,10 +50,10 @@ class MessageStoreRepository(
     override fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>> {
         return messageStateFlows.getOrPut(messageId) {
             messageMutableStore.stream<StoreReadResponse<DomainMessage>>(
-                StoreReadRequest.cached(messageId, true)
+                StoreReadRequest.cached(MessageKey.Read.ByMessageId(messageId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Message: $data")
                 data to (it is StoreReadResponse.Loading)
@@ -69,14 +66,13 @@ class MessageStoreRepository(
     }
 
     private val chatMessagesStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    @OptIn(ExperimentalStoreApi::class)
     override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatMessagesStateFlows.getOrPut(chatId) {
-            chatMessageMutableStore.stream<StoreReadResponse<List<DomainMessage>>>(
-                StoreReadRequest.cached(chatId, true)
+            chatMessageMutableStore.stream(
+                StoreReadRequest.cached(MessageKey.Read.ByChatId(chatId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)
@@ -90,26 +86,22 @@ class MessageStoreRepository(
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun upsert(message: DomainMessage): String {
-        val newMessage = if (message.id == null) {
-            messageNetworkDataSource.upsert(message.toNetworkModel()).toDomainModel()
-        } else message
-        messageMutableStore.write(
+        return (messageMutableStore.write(
             StoreWriteRequest.of(
-                key = newMessage.id!!,
-                value = newMessage,
+                key = if (message.id == null) MessageKey.Write.Create else MessageKey.Write.Upsert,
+                value = message,
             )
-        )
-        return newMessage.id
+        ) as? StoreWriteResponse.Success.Typed<DomainMessage>)?.value?.id!!
     }
 
     private val userMessageStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     override fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return userMessageStateFlows.getOrPut(userId) {
             userMessageStore.stream(
-                StoreReadRequest.cached(userId, true)
+                StoreReadRequest.cached(MessageKey.Read.ByUserId(userId), true)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.simpleName}")
+                Napier.d("Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
                 data to (it is StoreReadResponse.Loading)

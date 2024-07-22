@@ -82,6 +82,7 @@ class UserRoomRepository(
 
     override suspend fun deleteUserData() {
         userDao.deleteAllUsers()
+        userDao.updateTokens(null, null)
     }
 
     override suspend fun refreshUserTokens(accessToken: DomainToken?, refreshToken: DomainToken?) {

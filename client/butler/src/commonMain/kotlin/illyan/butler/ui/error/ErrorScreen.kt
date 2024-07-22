@@ -4,29 +4,13 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.ui.components.ButlerErrorDialogContent
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
-
-@OptIn(KoinExperimentalAPI::class)
-@Composable
-fun ErrorScreen() {
-    val screenModel = koinViewModel<ErrorViewModel>()
-    val state by screenModel.state.collectAsState()
-    ErrorScreen(
-        cleanError = screenModel::clearError,
-        appErrors = state.appErrors,
-        serverErrors = state.serverErrors
-    )
-}
 
 @Composable
-private fun ErrorScreen(
+fun ErrorScreen(
     cleanError: (String) -> Unit,
     appErrors: List<DomainErrorEvent>,
     serverErrors: List<Pair<String, DomainErrorResponse>>

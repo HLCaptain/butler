@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import illyan.butler.data.room.model.RoomChatMember
 import kotlinx.coroutines.flow.Flow
 
@@ -21,6 +22,12 @@ interface ChatMemberDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertChatMembers(chatMembers: List<RoomChatMember>): List<Long>
+
+    @Transaction
+    suspend fun replaceChatMembersForChat(chatId: String, chatMembers: List<RoomChatMember>) {
+        deleteChatMembersByChatId(chatId)
+        insertChatMembers(chatMembers)
+    }
 
     @Delete
     suspend fun deleteChatMember(chatMember: RoomChatMember)

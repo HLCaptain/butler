@@ -31,21 +31,19 @@ class HomeViewModel(
 
     val state = combine(
         authManager.isUserSignedIn,
-        authManager.signedInUserId,
         appManager.isTutorialDone,
         _serverErrors,
         _appErrors,
         permissionManager.preparedPermissionsToRequest
     ) { flows ->
         val isUserSignedIn = flows[0] as? Boolean
-        val signedInUserUUID = flows[1] as? String
-        val isTutorialDone = flows[2] as? Boolean
-        val serverErrors = flows[3] as List<Pair<String, DomainErrorResponse>>
-        val appErrors = flows[4] as List<DomainErrorEvent>
-        val preparedPermissionsToRequest = flows[5] as Set<Permission>
+        val isTutorialDone = flows[1] as? Boolean
+        val serverErrors = flows[2] as List<Pair<String, DomainErrorResponse>>
+        val appErrors = flows[3] as List<DomainErrorEvent>
+        val preparedPermissionsToRequest = flows[4] as Set<Permission>
+        if (isTutorialDone == null || isUserSignedIn == null) HomeScreenState()
         HomeScreenState(
             isUserSignedIn = isUserSignedIn,
-            signedInUserUUID = signedInUserUUID,
             isTutorialDone = isTutorialDone,
             serverErrors = serverErrors,
             appErrors = appErrors,

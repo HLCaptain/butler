@@ -20,7 +20,7 @@ interface UserDao {
     fun getCurrentUser(): Flow<RoomUser?>
 
     @Query("SELECT COUNT(*) FROM users")
-    fun isUserSignedIn(): Flow<Boolean?>
+    fun isUserSignedIn(): Flow<Boolean>
 
     @Query("UPDATE users SET accessToken = :accessToken, refreshToken = :refreshToken")
     suspend fun updateTokens(accessToken: DomainToken?, refreshToken: DomainToken?): Int

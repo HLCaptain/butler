@@ -66,17 +66,13 @@ class ChatManager(
             authManager.signedInUserId.flatMapLatest {
                 _userChats.update { emptyList() }
                 loadChats(it)
-            }.collectLatest { newChats ->
-                _userChats.update { chats -> (chats + newChats).distinctBy { it.id } }
-            }
+            }.collectLatest { chats -> _userChats.update { chats } }
         }
         coroutineScopeIO.launch {
             authManager.signedInUserId.flatMapLatest {
                 _userMessages.update { emptyList() }
                 loadMessages(it)
-            }.collectLatest { newMessages ->
-                _userMessages.update { messages -> (messages + newMessages).distinctBy { it.id } }
-            }
+            }.collectLatest { messages -> _userMessages.update { messages } }
         }
     }
 

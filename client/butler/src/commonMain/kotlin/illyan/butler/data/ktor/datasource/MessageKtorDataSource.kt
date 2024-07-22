@@ -7,10 +7,8 @@ import illyan.butler.di.KoinNames
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.websocket.receiveDeserialized
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -20,9 +18,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
@@ -73,15 +72,8 @@ class MessageKtorDataSource(
         }.filterNotNull()
     }
 
-    override suspend fun fetchByChat(chatUUID: String, limit: Int, timestamp: Long): List<MessageDto> {
-        return client.get("/chats/$chatUUID/messages") {
-            parameter("limit", limit)
-            parameter("timestamp", timestamp)
-        }.body()
-    }
-
-    override suspend fun fetchByChat(chatUUID: String): List<MessageDto> {
-        return client.get("/chats/$chatUUID/messages").body()
+    override fun fetchByChatId(chatId: String): Flow<List<MessageDto>> {
+        return fetchNewMessages().filter { messages -> messages.any { it.chatId == chatId } }
     }
 
     // To avoid needless updates to messages right after they are created
@@ -99,15 +91,19 @@ class MessageKtorDataSource(
         }.also { newMessagesStateFlow.update { _ -> listOf(it) } }
     }
 
-    override suspend fun delete(id: String, chatId: String): Boolean {
-        return client.delete("/chats/$chatId/messages/$id").status.isSuccess()
+    override suspend fun delete(messageId: String, chatId: String): Boolean {
+        return client.delete("/chats/$chatId/messages/$messageId").status.isSuccess()
     }
 
-    override suspend fun fetch(key: String): MessageDto? {
-        return client.get("/messages/$key").body()
+    override fun fetchById(messageId: String): Flow<MessageDto> {
+        return fetchNewMessages().map { messages -> messages.first { it.id == messageId } }
     }
 
-    override suspend fun fetchByUser(): List<MessageDto> {
+    override fun fetchAvailableToUser(): Flow<List<MessageDto>> {
+        return fetchNewMessages()
+    }
+
+    private suspend fun fetchByUser(): List<MessageDto> {
         return client.get("/messages").body()
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.ai_members
 import illyan.butler.generated.resources.chat_details
@@ -33,6 +34,11 @@ fun ChatDetailsScreen(chatId: String?) {
     LaunchedEffect(Unit) {
         screenModel.loadChat(chatId)
     }
+    ChatDetailsScreen(state.chat, state.userId)
+}
+
+@Composable
+fun ChatDetailsScreen(chat: DomainChat?, currentUserId: String?) {
     ButlerDialogContent(
         modifier = Modifier.mediumDialogSize(),
         title = {
@@ -42,7 +48,7 @@ fun ChatDetailsScreen(chatId: String?) {
             )
         },
         text = {
-            val aiMembers = state.chat?.members?.filter { it != state.userId } ?: emptyList()
+            val aiMembers = chat?.members?.filter { it != currentUserId } ?: emptyList()
             val aiMembersString = if (aiMembers.isEmpty()) {
                 stringResource(Res.string.none)
             } else {
@@ -51,10 +57,10 @@ fun ChatDetailsScreen(chatId: String?) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(stringResource(Res.string.chat_name_is_x).format(state.chat?.name ?: stringResource(Res.string.new_chat)))
-                Text(stringResource(Res.string.chat_id_is_x).format(state.chat?.id ?: stringResource(Res.string.unknown)))
+                Text(stringResource(Res.string.chat_name_is_x).format(chat?.name ?: stringResource(Res.string.new_chat)))
+                Text(stringResource(Res.string.chat_id_is_x).format(chat?.id ?: stringResource(Res.string.unknown)))
                 Text(stringResource(Res.string.ai_members).format(aiMembersString))
-                state.chat?.summary?.let { Text(it) }
+                chat?.summary?.let { Text(it) }
             }
         },
         containerColor = Color.Transparent
