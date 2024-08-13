@@ -29,6 +29,6 @@ ENV CHAT_API_URL=$CHAT_API_URL
 EXPOSE $KTOR_PORT
 
 RUN mkdir /app
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/butler_api_gateway.jar
+COPY --from=build /home/gradle/src/build/libs/*.jar /app/butler_backend.jar
 
-ENTRYPOINT ["java", "-jar", "/app/butler_api_gateway.jar"]
+ENTRYPOINT ["java", "-jar", "/app/butler_backend.jar"]

@@ -11,12 +11,12 @@ version = "0.0.1"
 val apiVersion = 1
 
 application {
-    mainClass = "illyan.butler.api_gateway.ApplicationKt"
+    mainClass = "illyan.butler.backend.ApplicationKt"
 }
 
 ktor {
     fatJar {
-        archiveFileName = "butler_api_gateway.jar"
+        archiveFileName = "butler_backend.jar"
     }
 }
 
@@ -62,6 +62,12 @@ dependencies {
     implementation(libs.koin.annotations)
     ksp(libs.koin.ksp.compiler)
 
+    // Database
+    implementation(libs.postgresql)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.dao)
+
     // Security
     implementation(libs.commons.codec)
 
@@ -94,6 +100,9 @@ dependencies {
     implementation(libs.ktor.server.metrics.micrometer)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.napier)
+
+    implementation(libs.nanoid)
+    implementation(libs.spring.security.crypto)
 }
 
 ksp {
