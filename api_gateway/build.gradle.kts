@@ -103,6 +103,8 @@ dependencies {
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.napier)
 
+    implementation(libs.openai.client)
+
     implementation(libs.nanoid)
     implementation(libs.spring.security.crypto)
 }

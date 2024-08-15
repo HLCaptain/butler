@@ -11,6 +11,8 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.engine.okhttp.OkHttpConfig
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -32,17 +34,38 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
+import java.security.KeyStore
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
-fun HttpClientConfig<*>.setupClient() {
+fun HttpClientConfig<OkHttpConfig>.setupClient() {
     install(Logging) {
         logger = Logger.DEFAULT
         level = LogLevel.ALL
     }
     developmentMode = AppConfig.Ktor.DEVELOPMENT
+
+    engine {
+        config {
+            val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(null as KeyStore?) // Explicitly cast to KeyStore? to indicate null value
+            val trustManagers = trustManagerFactory.trustManagers
+            if (trustManagers.size != 1 || trustManagers[0] !is X509TrustManager) {
+                throw IllegalStateException("Unexpected default trust managers: ${trustManagers.contentToString()}")
+            }
+            val trustManager = trustManagers[0] as X509TrustManager
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(null, arrayOf(trustManager), null)
+            val sslSocketFactory: SSLSocketFactory = sslContext.socketFactory
+            sslSocketFactory(sslSocketFactory, trustManager)
+        }
+    }
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
@@ -106,7 +129,7 @@ fun provideWebSocketClientProvider(): () -> HttpClient = { provideWebSocketClien
 
 @Named("WebSocket")
 @Single
-fun provideWebSocketClient() = HttpClient(CIO) {
+fun provideWebSocketClient() = HttpClient(OkHttp) {
     setupClient()
     install(WebSockets) {
         contentConverter = WebsocketContentConverterWithFallback(
@@ -117,7 +140,7 @@ fun provideWebSocketClient() = HttpClient(CIO) {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Single
-fun provideHttpClient() = HttpClient(CIO) {
+fun provideHttpClient() = HttpClient(OkHttp) {
     setupClient()
 
     install(ContentNegotiation) {

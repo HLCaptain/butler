@@ -67,6 +67,7 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 nanoid = { module = "com.aventrix.jnanoid:jnanoid", version = "2.0.0" }
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.2.3" }
+openai-client = { module = "com.aallam.openai:openai-client", version = "3.7.2" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -42,8 +42,17 @@ data object AppConfig {
         val REALM = System.getenv("JWT_REALM") ?: "your_jwt_realm"
     }
     data object Api {
-        val CHAT_API_URL = System.getenv("CHAT_API_URL") ?: "http://localhost:8082"
-        val AI_API_URL = System.getenv("AI_API_URL") ?: "http://localhost:8083"
+        val LOCAL_AI_OPEN_AI_API_URL = System.getenv("LOCAL_AI_API_URL") ?: "http://localai:8080"
+        val ANYSCALE_API_URL = System.getenv("ANYSCALE_API_URL") ?: "https://api.endpoints.anyscale.com/v1"
+        val OPEN_AI_API_URL = System.getenv("OPEN_AI_API_URL") ?: "https://api.openai.com/v1"
+        // val OTHER_AI_PROVIDER_OPEN_AI_API_URL...
+        val OPEN_AI_API_KEY = System.getenv("OPEN_AI_API_KEY") ?: "sk-1234567890abcdef1234567890abcdef"
+        val ANYSCALE_API_CREDENTIAL = System.getenv("ANYSCALE_API_CREDENTIAL") ?: "sk-1234567890abcdef1234567890abcdef"
+        val OPEN_AI_API_URLS_AND_KEYS = mapOf(
+            LOCAL_AI_OPEN_AI_API_URL to "",
+            ANYSCALE_API_URL to ANYSCALE_API_CREDENTIAL,
+            OPEN_AI_API_URL to OPEN_AI_API_KEY
+        )
     }
     data object Telemetry {
         val OTEL_EXPORTER_OTLP_ENDPOINT = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4317"

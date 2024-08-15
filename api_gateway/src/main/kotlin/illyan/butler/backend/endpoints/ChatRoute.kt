@@ -4,6 +4,7 @@ import illyan.butler.backend.data.model.chat.ChatDto
 import illyan.butler.backend.data.model.chat.MessageDto
 import illyan.butler.backend.data.model.chat.ResourceDto
 import illyan.butler.backend.data.service.ChatService
+import illyan.butler.backend.data.service.LlmService
 import illyan.butler.backend.endpoints.utils.ChatSocketHandler
 import illyan.butler.backend.endpoints.utils.WebSocketServerHandler
 import illyan.butler.backend.utils.Claim
@@ -27,6 +28,7 @@ import org.koin.ktor.ext.inject
 
 fun Route.chatRoute() {
     val chatService: ChatService by inject()
+    val llmService: LlmService by inject()
 
     authenticate("auth-jwt") {
         route("/messages") {
@@ -113,6 +115,42 @@ fun Route.chatRoute() {
                             require(message.id == messageId) { "Message id must match path parameter" }
                             val result = chatService.editMessage(userId, message)
                             call.respond(HttpStatusCode.OK, result)
+                        }
+
+                        // Connecting to Chat Service with "AI" service account
+                        // Listen to chats with custom Chat Service endpoints with WebSocket
+                        // Send message to Chat Service
+                        // Cache chat history in memory
+                        // Regenerate message or generate new one when prompted
+                        // TODO: Implement robust message regeneration logic
+
+                        // Average AI message size: 2.78 KB
+                        // Average user message size: 0.2 KB
+                        // Average interaction back and forth: 3 KB
+                        // Long chat history: 10 * 3 KB = 30 KB
+                        // DAU: 10000
+                        // Daily chat history: 30 KB * 10000 = 300 MB
+
+                        // https://www.pugetsystems.com/labs/hpc/benchmarking-with-tensorrt-llm/
+                        // 4090 LLaMA 2 7B_q4_0 tokens/s: 150 ~ 150 bytes (LOW model)
+                        // 540 KB/hour data retrieval ~ 13 MB/day
+                        // DAU average 10 messages/day
+                        // 30 KB/DAU/day -> ~433 DAU can be supported by a single 4090, ~2780 tokens/user/day
+                        // Electric cost: 0.1 USD/hour, 4090 draws 450W ~ 500W with PC on -> 0.5 * 24 * 0.1 = 1.2 USD/day, ~36 USD/month (0.08314/user/month)
+                        // 2780 * 30 = 83,400 tokens/month
+                        // https://app.endpoints.anyscale.com/
+                        // https://openrouter.ai/
+                        // Average price /M tokens: 0.50 USD
+                        // 83,400 * 0.50 / 1M = 0.0417 USD / USER / MONTH (MID models)
+
+                        // Best case scenario: 10000 DAU * 0.0417 USD / MONTH = 417 USD / MONTH
+
+                        // TODO: calculate accumulation of tokens in a single chat (more input tokens per message)
+
+                        get("/regenerate") {
+                            val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                            val messageId = call.parameters["messageId"]
+                            call.respond(llmService.regenerateMessage(chatId, messageId))
                         }
 
                         delete {
