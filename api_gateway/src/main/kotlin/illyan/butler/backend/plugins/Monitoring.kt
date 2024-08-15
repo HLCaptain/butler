@@ -1,6 +1,6 @@
 package illyan.butler.backend.plugins
 
-import illyan.Butler_API_Gateway.BuildConfig
+import illyan.butler.backend.BuildConfig
 import illyan.butler.backend.AppConfig
 import illyan.butler.backend.plugins.opentelemetry.server.attributeExtractor
 import illyan.butler.backend.plugins.opentelemetry.server.capturedRequestHeaders

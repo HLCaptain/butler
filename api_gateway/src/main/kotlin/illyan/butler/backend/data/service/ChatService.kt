@@ -1,150 +1,131 @@
 package illyan.butler.backend.data.service
 
-import illyan.butler.backend.AppConfig
+import illyan.butler.backend.data.datasource.ChatDataSource
+import illyan.butler.backend.data.datasource.MessageDataSource
+import illyan.butler.backend.data.datasource.ResourceDataSource
+import illyan.butler.backend.data.db.ChatDatabase
+import illyan.butler.backend.data.db.MessageDatabase
+import illyan.butler.backend.data.db.ResourceDatabase
 import illyan.butler.backend.data.model.chat.ChatDto
 import illyan.butler.backend.data.model.chat.MessageDto
 import illyan.butler.backend.data.model.chat.ResourceDto
-import illyan.butler.backend.data.model.response.PaginationResponse
-import illyan.butler.backend.data.utils.getLastMonthDate
-import illyan.butler.backend.data.utils.getLastWeekDate
-import illyan.butler.backend.data.utils.getOrPutWebSocketFlow
-import illyan.butler.backend.endpoints.utils.WebSocketSessionManager
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import io.ktor.client.request.put
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.http.encodeURLPath
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
-import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
+/**
+ * Chat service implementation.
+ * Pipeline:
+ *  1. Check Cache
+ *  2. Update/get resource from Database if needed
+ *  3. Update Cache if needed
+ *  4. Return resource/flow of resource
+ * FIXME: fix caching
+ * FIXME: check authorization
+ */
 @Single
 class ChatService(
-    private val client: HttpClient,
-    private val webSocketSessionManager: WebSocketSessionManager,
-) {
-    private val messagesFlows = mutableMapOf<String, Flow<List<MessageDto>?>>()
-    fun receiveMessages(userId: String, chatId: String) = flow {
-        val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId"
-        messagesFlows.getOrPutWebSocketFlow(url) {
-            webSocketSessionManager.createSession(url)
-        }.let { emitAll(it) }
+    private val chatDatabase: ChatDatabase,
+    private val messageDatabase: MessageDatabase,
+    private val resourceDatabase: ResourceDatabase
+) : ChatDataSource, MessageDataSource, ResourceDataSource {
+    override suspend fun getChat(userId: String, chatId: String): ChatDto {
+        return chatDatabase.getChat(userId, chatId)
     }
-    suspend fun sendMessage(userId: String, message: MessageDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>()
-    suspend fun editMessage(userId: String, messageId: String, message: MessageDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/${message.chatId}/messages/$messageId") { setBody(message) }.body<MessageDto>()
-    suspend fun deleteMessage(userId: String, chatId: String, messageId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages/$messageId").body<Boolean>()
 
-    private val userChatFlows = mutableMapOf<String, Flow<List<ChatDto>?>>()
-    fun receiveChats(userId: String) = flow {
-        val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats"
-        userChatFlows.getOrPutWebSocketFlow(url) {
-            webSocketSessionManager.createSession(url)
-        }.let { emitAll(it) }
+    override suspend fun createChat(userId: String, chat: ChatDto): ChatDto {
+        return chatDatabase.createChat(userId, chat)
     }
-    suspend fun getChat(userId: String, chatId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId").body<ChatDto>()
-    suspend fun createChat(userId: String, chat: ChatDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") { setBody(chat) }.body<ChatDto>()
-    suspend fun editChat(userId: String, chatId: String, chat: ChatDto) = client.put("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId") { setBody(chat) }.body<ChatDto>()
-    suspend fun deleteChat(userId: String, chatId: String) = client.delete("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId").body<Boolean>()
 
-    suspend fun getResources(userId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources").body<List<ResourceDto>>()
-    suspend fun getResource(userId: String, resourceId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources/$resourceId").body<ResourceDto>()
-    suspend fun createResource(userId: String, resource: ResourceDto) = client.post("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/resources") {
-        contentType(ContentType.Application.ProtoBuf)
-        setBody(resource.copy(id = resource.id ?: "")) // ProtoBuf does not support null
-    }.body<ResourceDto>()
+    override suspend fun editChat(userId: String, chat: ChatDto) {
+        chatDatabase.editChat(userId, chat)
+    }
 
-    /**
-     * @param fromDate epoch milli
-     * @param toDate epoch milli
-     * @return list of [ChatDto]
-     */
-    private suspend fun getChats(
-        userId: String,
-        fromDate: Long,
-        toDate: Long = Clock.System.now().toEpochMilliseconds()
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") {
-        parameter("from", fromDate)
-        parameter("to", toDate)
-    }.body<PaginationResponse<ChatDto>>()
+    override suspend fun deleteChat(userId: String, chatId: String): Boolean {
+        return chatDatabase.deleteChat(userId, chatId)
+    }
 
-    suspend fun getChatsLastMonth(userId: String) = getChats(
-        userId = userId,
-        fromDate = getLastMonthDate().toEpochMilliseconds()
-    )
+    override suspend fun getChats(userId: String): List<ChatDto> {
+        return chatDatabase.getChats(userId)
+    }
 
-    suspend fun getChatsLastWeek(userId: String) = getChats(
-        userId = userId,
-        fromDate = getLastWeekDate().toEpochMilliseconds()
-    )
+    override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
+        return chatDatabase.getChats(userId, limit, offset)
+    }
 
-    suspend fun getChats(userId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats").body<List<ChatDto>>()
+    override suspend fun getChats(userId: String, fromDate: Long, toDate: Long): List<ChatDto> {
+        return chatDatabase.getChats(userId, fromDate, toDate)
+    }
 
-    suspend fun getChats(
-        userId: String,
-        limit: Int,
-        offset: Int
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") {
-        parameter("limit", limit)
-        parameter("offset", offset)
-    }.body<List<ChatDto>>()
+    override suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto> {
+        return chatDatabase.getPreviousChats(userId, limit, timestamp)
+    }
 
-    suspend fun getPreviousChats(
-        userId: String,
-        limit: Int,
-        timestamp: Long
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") {
-        parameter("limit", limit)
-        parameter("timestamp", timestamp)
-    }.body<List<ChatDto>>()
+    override suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
+        return chatDatabase.getPreviousChats(userId, limit, offset)
+    }
 
-    suspend fun getPreviousChats(
-        userId: String,
-        limit: Int,
-        offset: Int
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats") {
-        parameter("limit", limit)
-        parameter("offset", offset)
-    }.body<List<ChatDto>>()
+    override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
+        return chatDatabase.getChangedChatsAffectingUser(userId)
+    }
 
-    suspend fun getPreviousMessages(
+    override fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto> {
+        return chatDatabase.getChangesFromChat(userId, chatId)
+    }
+
+    override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
+        return messageDatabase.sendMessage(userId, message)
+    }
+
+    override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
+        return messageDatabase.editMessage(userId, message)
+    }
+
+    override suspend fun deleteMessage(userId: String, chatId: String, messageId: String): Boolean {
+        return messageDatabase.deleteMessage(userId, chatId, messageId)
+    }
+
+    override suspend fun getPreviousMessages(
         userId: String,
         chatId: String,
         limit: Int,
         timestamp: Long
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages") {
-        parameter("limit", limit)
-        parameter("timestamp", timestamp)
-    }.body<List<MessageDto>>()
-
-    suspend fun getMessages(
-        userId: String,
-        chatId: String,
-        limit: Int,
-        offset: Int
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages") {
-        parameter("offset", offset)
-        parameter("limit", limit)
-    }.body<List<MessageDto>>()
-
-    suspend fun getMessages(
-        userId: String,
-        chatId: String
-    ) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/chats/$chatId/messages").body<List<MessageDto>>()
-
-    fun getChangedMessagesByUser(userId: String) = flow {
-        val url = "${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/messages"
-        messagesFlows.getOrPutWebSocketFlow(url) {
-            webSocketSessionManager.createSession(url)
-        }.let { emitAll(it) }
+    ): List<MessageDto> {
+        return messageDatabase.getPreviousMessages(userId, chatId, limit, timestamp)
     }
 
-    suspend fun getMessages(userId: String) = client.get("${AppConfig.Api.CHAT_API_URL}/${userId.encodeURLPath()}/messages").body<List<MessageDto>>()
+    override suspend fun getMessages(userId: String, chatId: String, limit: Int, offset: Int): List<MessageDto> {
+        return messageDatabase.getMessages(userId, chatId, limit, offset)
+    }
+
+    override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
+        return messageDatabase.getMessages(userId, chatId)
+    }
+
+    override suspend fun getMessages(userId: String): List<MessageDto> {
+        return messageDatabase.getMessages(userId)
+    }
+
+    override fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>> {
+        return messageDatabase.getChangedMessagesAffectingUser(userId)
+    }
+
+    override fun getChangedMessagesByChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+        return messageDatabase.getChangedMessagesAffectingChat(userId, chatId)
+    }
+
+    override suspend fun createResource(userId: String, resource: ResourceDto): ResourceDto {
+        return resourceDatabase.createResource(userId, resource)
+    }
+
+    override suspend fun getResource(userId: String, resourceId: String): ResourceDto {
+        return resourceDatabase.getResource(userId, resourceId)
+    }
+
+    override suspend fun deleteResource(userId: String, resourceId: String): Boolean {
+        return resourceDatabase.deleteResource(userId, resourceId)
+    }
+
+    override suspend fun getResources(userId: String): List<ResourceDto> {
+        return resourceDatabase.getResources(userId)
+    }
 }

@@ -1,16 +1,17 @@
 package illyan.butler.backend.data.exposed
 
 import illyan.butler.backend.data.db.UserDatabase
+import illyan.butler.backend.data.model.identity.AddressDto
 import illyan.butler.backend.data.model.identity.UserDto
 import illyan.butler.backend.data.schema.UserPasswords
 import illyan.butler.backend.data.schema.Users
-import illyan.butler.services.identity.data.model.identity.AddressDto
 import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.UpdateBuilder

@@ -21,6 +21,7 @@ ktor {
 }
 
 buildConfig {
+    packageName = "illyan.butler.backend"
     buildConfigField("String", "API_VERSION", "\"$apiVersion\"")
     buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
     buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")
@@ -67,6 +68,7 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
     implementation(libs.exposed.dao)
+    implementation(libs.exposed.json)
 
     // Security
     implementation(libs.commons.codec)
