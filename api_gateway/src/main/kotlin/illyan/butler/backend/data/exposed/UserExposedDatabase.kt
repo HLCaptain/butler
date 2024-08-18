@@ -5,6 +5,8 @@ import illyan.butler.backend.data.model.identity.AddressDto
 import illyan.butler.backend.data.model.identity.UserDto
 import illyan.butler.backend.data.schema.UserPasswords
 import illyan.butler.backend.data.schema.Users
+import illyan.butler.backend.data.service.ApiException
+import illyan.butler.backend.endpoints.utils.StatusCode
 import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -38,7 +40,7 @@ class UserExposedDatabase(
             val userId = try {
                 Users.insertAndGetId { setUser(it, user) }
             } catch (e: Exception) {
-                throw Exception("User already exists")
+                throw throw ApiException(StatusCode.UserAlreadyExists)
             }
             user.copy(id = userId.value)
         }
@@ -46,14 +48,14 @@ class UserExposedDatabase(
 
     override suspend fun getUser(userId: String): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
-            Users.selectAll().where { Users.id eq userId }.first().toUserDto()
+            Users.selectAll().where { Users.id eq userId }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
         }
     }
 
     override suspend fun updateUser(user: UserDto): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
             val isUserUpdated = Users.update({ Users.id eq user.id!! }) { setUser(it, user) } > 0
-            if (isUserUpdated) user else throw Exception("User not found")
+            if (isUserUpdated) user else throw ApiException(StatusCode.UserNotFound)
         }
     }
 
@@ -67,10 +69,10 @@ class UserExposedDatabase(
         return newSuspendedTransaction(dispatcher, database) {
             val user = Users.selectAll().where {
                 Users.email eq email
-            }.first().toUserDto()
+            }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
 
             val potentialUser = UserPasswords.selectAll().where { UserPasswords.userId eq user.id!! }.first()
-            if (passwordEncoder.matches(password, potentialUser[UserPasswords.hash])) user else throw Exception("User not found")
+            if (passwordEncoder.matches(password, potentialUser[UserPasswords.hash])) user else throw throw ApiException(StatusCode.UserNotFound)
         }
     }
 

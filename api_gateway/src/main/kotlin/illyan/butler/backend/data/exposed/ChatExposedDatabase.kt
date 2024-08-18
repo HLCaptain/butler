@@ -6,6 +6,8 @@ import illyan.butler.backend.data.model.chat.MessageDto
 import illyan.butler.backend.data.schema.ChatMembers
 import illyan.butler.backend.data.schema.Chats
 import illyan.butler.backend.data.schema.Messages
+import illyan.butler.backend.data.service.ApiException
+import illyan.butler.backend.endpoints.utils.StatusCode
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -48,7 +50,7 @@ class ChatExposedDatabase(
                     Napier.d("Returning chat $it")
                 }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }
@@ -96,7 +98,7 @@ class ChatExposedDatabase(
                     }
                 }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
             chat
         }
@@ -110,7 +112,7 @@ class ChatExposedDatabase(
                 ChatMembers.deleteWhere { ChatMembers.chatId eq chatId }
                 Chats.deleteWhere { Chats.id eq chatId } > 0 // Deleted more than 0 rows
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }
@@ -180,13 +182,6 @@ class ChatExposedDatabase(
         return newSuspendedTransaction(dispatcher, database) {
             val userChatQuery = ChatMembers.selectAll().where { ChatMembers.memberId eq userId }
             val userChatReferences = userChatQuery.map { it[ChatMembers.chatId] }
-
-            val relevantChatIds = Messages
-                .selectAll()
-                .where { (Messages.chatId inList userChatReferences) and (Messages.time lessEq timestamp) }
-                .sortedByDescending { Messages.time }
-                .take(limit)
-                .map { it[Messages.chatId].value }.distinct()
 
             val chats = Chats.selectAll()
                 .where {

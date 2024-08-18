@@ -6,6 +6,8 @@ import illyan.butler.backend.data.schema.ChatMembers
 import illyan.butler.backend.data.schema.MessageResources
 import illyan.butler.backend.data.schema.Messages
 import illyan.butler.backend.data.schema.Resources
+import illyan.butler.backend.data.service.ApiException
+import illyan.butler.backend.endpoints.utils.StatusCode
 import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -44,7 +46,7 @@ class ResourceExposedDatabase(
         return newSuspendedTransaction(dispatcher, database) {
             // Check if user is part of chat where message is which is connected to resource
             if (!canUserAccessResource(resourceId, userId)) {
-                throw Exception("User cannot access resource")
+                throw ApiException(StatusCode.ResourceNotFound)
             }
             Resources.selectAll().where(Resources.id eq resourceId).first().let {
                 ResourceDto(
@@ -59,7 +61,7 @@ class ResourceExposedDatabase(
     override suspend fun deleteResource(userId: String, resourceId: String): Boolean {
         return newSuspendedTransaction(dispatcher, database) {
             if (!canUserAccessResource(resourceId, userId)) {
-                throw Exception("User cannot access resource")
+                throw ApiException(StatusCode.ResourceNotFound)
             }
             MessageResources.deleteWhere { MessageResources.resourceId eq resourceId }
             Resources.deleteWhere { Resources.id eq resourceId } > 0
@@ -83,7 +85,7 @@ class ResourceExposedDatabase(
 
     private fun canUserAccessResource(resourceId: String, userId: String): Boolean {
         val messageId = MessageResources.selectAll().where(MessageResources.resourceId eq resourceId).firstOrNull()?.get(
-            MessageResources.messageId) ?: throw Exception("Resource not found")
+            MessageResources.messageId) ?: throw ApiException(StatusCode.ResourceNotFound)
         val message = Messages.selectAll().where(Messages.id eq messageId).firstOrNull() ?: throw Exception("Resource not found")
         val isUserPartOfChat = ChatMembers.selectAll().where((ChatMembers.memberId eq userId) and (ChatMembers.chatId eq message[Messages.chatId])).count() > 0
         return isUserPartOfChat

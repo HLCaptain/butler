@@ -1,4 +1,4 @@
-package illyan.butler.backend.data.utils
+package illyan.butler.backend.data.schema
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import org.jetbrains.exposed.dao.id.EntityID

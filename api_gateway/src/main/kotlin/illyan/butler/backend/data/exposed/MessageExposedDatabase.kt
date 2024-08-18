@@ -7,6 +7,8 @@ import illyan.butler.backend.data.schema.Chats
 import illyan.butler.backend.data.schema.MessageResources
 import illyan.butler.backend.data.schema.Messages
 import illyan.butler.backend.data.schema.Resources
+import illyan.butler.backend.data.service.ApiException
+import illyan.butler.backend.endpoints.utils.StatusCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +51,7 @@ class MessageExposedDatabase(
                     it[this.message] = message.message
                 }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
             // Insert content urls if not yet inserted in ContentUrls table
             // Insert content urls id to MessageContentUrls table
@@ -71,7 +73,7 @@ class MessageExposedDatabase(
             if (isUserInChat) {
                 Messages.update({ Messages.id eq message.id }) { it[this.message] = message.message }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
             // Remove all content urls for the message
             // Insert content urls if not yet inserted in ContentUrls table
@@ -106,7 +108,7 @@ class MessageExposedDatabase(
                 MessageResources.deleteWhere { MessageResources.messageId eq messageId }
                 Messages.deleteWhere { (id eq messageId) and (Messages.chatId eq chatId) and (senderId eq userId) } > 0
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }
@@ -122,7 +124,7 @@ class MessageExposedDatabase(
                     .take(limit)
                 messages.map { it.toMessageDto() }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }
@@ -138,7 +140,7 @@ class MessageExposedDatabase(
                     .take(limit)
                 messages.map { it.toMessageDto() }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }
@@ -153,7 +155,7 @@ class MessageExposedDatabase(
                     .where(Messages.chatId eq chatId)
                     .map { it.toMessageDto() }
             } else {
-                throw Exception("User is not in chat")
+                throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }

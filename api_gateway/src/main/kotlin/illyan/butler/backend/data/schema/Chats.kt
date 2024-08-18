@@ -1,6 +1,5 @@
 package illyan.butler.backend.data.schema
 
-import illyan.butler.backend.data.utils.NanoIdTable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.json.json
 

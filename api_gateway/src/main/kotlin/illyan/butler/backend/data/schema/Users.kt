@@ -1,7 +1,5 @@
 package illyan.butler.backend.data.schema
 
-import illyan.butler.backend.data.utils.NanoIdTable
-
 object Users : NanoIdTable() {
     val email = text("email").uniqueIndex()
     val username = text("username").uniqueIndex()

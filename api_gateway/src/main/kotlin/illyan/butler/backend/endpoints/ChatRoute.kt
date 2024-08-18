@@ -5,10 +5,7 @@ import illyan.butler.backend.data.model.chat.MessageDto
 import illyan.butler.backend.data.model.chat.ResourceDto
 import illyan.butler.backend.data.service.ChatService
 import illyan.butler.backend.data.service.LlmService
-import illyan.butler.backend.endpoints.utils.ChatSocketHandler
-import illyan.butler.backend.endpoints.utils.WebSocketServerHandler
 import illyan.butler.backend.utils.Claim
-import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -22,8 +19,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import io.ktor.server.websocket.webSocket
-import kotlinx.coroutines.flow.filterNotNull
 import org.koin.ktor.ext.inject
 
 fun Route.chatRoute() {

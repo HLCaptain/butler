@@ -1,27 +1,17 @@
 package illyan.butler.backend.plugins
 
-import illyan.butler.backend.BuildConfig
 import illyan.butler.backend.data.model.authenticate.TokenConfiguration
 import illyan.butler.backend.endpoints.aiRoute
 import illyan.butler.backend.endpoints.chatRoute
 import illyan.butler.backend.endpoints.identityRoutes
-import illyan.butler.backend.endpoints.utils.ContentVersion
-import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
-import io.ktor.server.application.install
-import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlin.random.Random
 
 fun Application.configureRouting(tokenConfiguration: TokenConfiguration) {
-    install(DefaultHeaders) {
-        // No need to check Accept-Version header, as it is not used in the code
-        // Kubernetes will handle ingress based on the version
-        header(HttpHeaders.ContentVersion, BuildConfig.API_VERSION)
-    }
     routing {
         identityRoutes(tokenConfiguration)
         chatRoute()

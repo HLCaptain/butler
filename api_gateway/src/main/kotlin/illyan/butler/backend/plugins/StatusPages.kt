@@ -1,12 +1,13 @@
 package illyan.butler.backend.plugins
 
-import illyan.butler.backend.data.utils.ApiGatewayException
-import illyan.butler.backend.endpoints.utils.respondWithError
+import illyan.butler.backend.data.model.response.ServerErrorResponse
+import illyan.butler.backend.data.service.ApiException
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
+import io.ktor.server.response.respond
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
@@ -16,16 +17,19 @@ fun Application.configureStatusPages() {
 }
 
 private fun StatusPagesConfig.handleStatusPagesExceptions() {
-    exception<ApiGatewayException> { call, t ->
-        respondWithError(call, HttpStatusCode.BadRequest, t.errorCodes)
+    exception<ApiException> { call, t ->
+        call.respond(HttpStatusCode.InternalServerError, ServerErrorResponse(t.statusCodes))
     }
-    exception<SecurityException>{ call, throwable ->
-        respondWithError(call, HttpStatusCode.Unauthorized)
+    exception<IllegalArgumentException> { call, _ ->
+        call.respond(HttpStatusCode.BadRequest)
+    }
+    exception<SecurityException>{ call, _ ->
+        call.respond(HttpStatusCode.Unauthorized)
     }
 }
 
 private fun StatusPagesConfig.handleUnauthorizedAccess() {
     status(HttpStatusCode.Unauthorized) { call, _ ->
-        respondWithError(call, HttpStatusCode.Unauthorized)
+        call.respond(HttpStatusCode.Unauthorized)
     }
 }

@@ -8,7 +8,6 @@ import illyan.butler.backend.plugins.configureMonitoring
 import illyan.butler.backend.plugins.configureRouting
 import illyan.butler.backend.plugins.configureSerialization
 import illyan.butler.backend.plugins.configureStatusPages
-import illyan.butler.backend.plugins.configureWebSockets
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.ktor.server.application.Application
@@ -48,7 +47,6 @@ fun Application.module() {
     configureDependencyInjection()
     configureAuthentication()
     configureSerialization()
-    configureWebSockets()
     configureStatusPages()
     configureCompression()
     configureRouting(tokenConfig)

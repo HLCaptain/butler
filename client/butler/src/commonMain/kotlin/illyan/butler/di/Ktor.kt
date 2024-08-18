@@ -1,6 +1,5 @@
 package illyan.butler.di
 
-import illyan.butler.data.ktor.utils.WebsocketContentConverterWithFallback
 import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.data.room.dao.UserDao
 import illyan.butler.domain.model.DomainToken
@@ -24,7 +23,6 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
@@ -33,7 +31,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.coroutines.CoroutineScope
@@ -43,45 +40,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
-import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
-
-@ExperimentalSerializationApi
-@Single
-fun provideWebSocketClientProvider(
-    userDao: UserDao,
-    appRepository: AppRepository,
-    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
-    errorManager: ErrorManager
-): () -> HttpClient = { provideWebSocketClient(userDao, appRepository, coroutineScopeIO, errorManager) }
-
-@ExperimentalSerializationApi
-@Named(KoinNames.WebSocketClient)
-@Factory
-fun provideWebSocketClient(
-    userDao: UserDao,
-    appRepository: AppRepository,
-    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
-    errorManager: ErrorManager
-) = HttpClient {
-    setupClient(
-        userDao = userDao,
-        appRepository = appRepository,
-        coroutineScopeIO = coroutineScopeIO,
-        errorManager = errorManager
-    )
-    install(WebSockets) {
-        contentConverter = WebsocketContentConverterWithFallback(
-            listOf(
-                KotlinxWebsocketSerializationConverter(ProtoBuf),
-                KotlinxWebsocketSerializationConverter(Json)
-            )
-        )
-    }
-}
 
 @ExperimentalSerializationApi
 @Single
@@ -257,14 +217,7 @@ fun HttpClientConfig<*>.setupClient(
     }
     defaultRequest {
         Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl, protocol: ${url.protocol}")
-        if (url.protocol == URLProtocol.WS) {
-            url(
-                host = currentApiUrl?.substringAfter("://")?.takeWhile { it != ':' } ?: "localhost",
-                port = currentApiUrl?.takeLastWhile { it != ':' }?.takeWhile { it != '/' }?.toInt() ?: 8080
-            )
-        } else {
-            url(urlString = currentApiUrl ?: "http://localhost:8080")
-        }
+        url(urlString = currentApiUrl ?: "http://localhost:8080")
     }
 }
 

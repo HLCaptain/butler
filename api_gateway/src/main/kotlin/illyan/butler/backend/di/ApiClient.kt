@@ -1,7 +1,6 @@
 package illyan.butler.backend.di
 
 import illyan.butler.backend.AppConfig
-import illyan.butler.backend.endpoints.utils.WebsocketContentConverterWithFallback
 import illyan.butler.backend.plugins.opentelemetry.client.attributeExtractor
 import illyan.butler.backend.plugins.opentelemetry.client.capturedRequestHeaders
 import illyan.butler.backend.plugins.opentelemetry.client.capturedResponseHeaders
@@ -10,7 +9,6 @@ import illyan.butler.backend.plugins.opentelemetry.client.knownMethods
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.engine.okhttp.OkHttpConfig
 import io.ktor.client.plugins.api.Send
@@ -21,7 +19,6 @@ import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -29,20 +26,18 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
+import kotlinx.datetime.Clock
+import kotlinx.serialization.ExperimentalSerializationApi
+import org.koin.core.annotation.Single
 import java.security.KeyStore
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
-import kotlinx.datetime.Clock
-import kotlinx.serialization.ExperimentalSerializationApi
-import org.koin.core.annotation.Named
-import org.koin.core.annotation.Single
 
 fun HttpClientConfig<OkHttpConfig>.setupClient() {
     install(Logging) {
@@ -122,20 +117,6 @@ fun HttpClientConfig<OkHttpConfig>.setupClient() {
     }
 
     install(ContentEncoding)
-}
-
-@Single
-fun provideWebSocketClientProvider(): () -> HttpClient = { provideWebSocketClient() }
-
-@Named("WebSocket")
-@Single
-fun provideWebSocketClient() = HttpClient(OkHttp) {
-    setupClient()
-    install(WebSockets) {
-        contentConverter = WebsocketContentConverterWithFallback(
-            AppConfig.Ktor.SERIALIZATION_FORMATS.map { KotlinxWebsocketSerializationConverter(it) }
-        )
-    }
 }
 
 @OptIn(ExperimentalSerializationApi::class)

@@ -1,5 +1,6 @@
 package illyan.butler.repository.error
 
+import illyan.butler.data.network.model.response.ServerErrorResponse
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.domain.model.ErrorState
@@ -41,13 +42,34 @@ class ErrorMemoryRepository : ErrorRepository {
     }
 
     override suspend fun reportError(response: HttpResponse) {
-        val errorResponse = DomainErrorResponse(
-            httpStatusCode = response.status,
-            customErrorCode = try {
-                if ((response.contentLength()?.toInt() ?: 0) > 0) response.body() else null
-            } catch (t: Throwable) { null }, // Checking if anything is returned in the body
-            timestamp = response.responseTime.timestamp
-        )
-        _serverErrorEventFlow.emit(errorResponse)
+        try {
+            val containsBody = (response.contentLength()?.toInt() ?: 0) > 0
+            if (containsBody) {
+                val serverResponse = response.body<ServerErrorResponse>()
+                serverResponse.statusCodes.forEach {
+                    val domainResponse = DomainErrorResponse(
+                        httpStatusCode = response.status,
+                        customErrorCode = it.code,
+                        timestamp = response.responseTime.timestamp,
+                        message = it.message
+                    )
+                    _serverErrorEventFlow.emit(domainResponse)
+                }
+            } else {
+                val domainResponse = DomainErrorResponse(
+                    httpStatusCode = response.status,
+                    customErrorCode = null,
+                    timestamp = response.responseTime.timestamp
+                )
+                _serverErrorEventFlow.emit(domainResponse)
+            }
+        } catch (t: Throwable) {
+            val domainResponse = DomainErrorResponse(
+                httpStatusCode = response.status,
+                customErrorCode = null,
+                timestamp = response.responseTime.timestamp
+            )
+            _serverErrorEventFlow.emit(domainResponse)
+        }
     }
 }
