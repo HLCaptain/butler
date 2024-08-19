@@ -8,7 +8,6 @@ import illyan.butler.data.ktor.rpc.service.ModelService
 import illyan.butler.data.ktor.rpc.service.ResourceService
 import illyan.butler.repository.host.HostRepository
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.RPCClient
 import kotlinx.rpc.client.withService
 import org.koin.core.annotation.Single
@@ -17,7 +16,7 @@ import org.koin.core.annotation.Single
 fun provideRpcClient(
     hostRepository: HostRepository,
     httpClient: HttpClient
-): Flow<RPCClient> {
+): RPCClient {
     TODO("Not yet implemented")
     // TODO: handle dynamic host changes
 }

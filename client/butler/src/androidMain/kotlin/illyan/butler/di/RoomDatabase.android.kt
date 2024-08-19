@@ -5,11 +5,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import illyan.butler.config.BuildConfig
 import illyan.butler.data.room.ButlerDatabase
-import org.koin.core.annotation.Single
 import org.koin.core.context.GlobalContext
 
-@Single
-actual fun getRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase> {
+actual fun getPlatformRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase> {
     val context = GlobalContext.get().get<Context>()
     val appContext = context.applicationContext
     val dbFile = appContext.getDatabasePath("butler.db")

@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.core.annotation.Single
 
 @Single
-fun getRoomDatabase(
+fun provideRoomDatabase(
     builder: RoomDatabase.Builder<ButlerDatabase>
 ): ButlerDatabase {
     return builder
@@ -19,7 +19,9 @@ fun getRoomDatabase(
 }
 
 @Single
-expect fun getRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase>
+fun provideRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase> = getPlatformRoomDatabaseBuilder()
+
+expect fun getPlatformRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase>
 
 @Single
 fun getChatDao(database: ButlerDatabase) = database.chatDao()
