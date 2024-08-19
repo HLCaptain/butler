@@ -39,6 +39,9 @@ class ChatStoreRepository(
         userChatStore.clear(ChatKey.Delete.ByUserId(userId))
     }
 
+    private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<DomainChat?, Boolean>>>()
+    private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
+
     init {
         coroutineScopeIO.launch {
             hostManager.currentHost.collect {
@@ -56,7 +59,6 @@ class ChatStoreRepository(
         }
     }
 
-    private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<DomainChat?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
     override fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>> {
         return chatStateFlows.getOrPut(chatId) {
@@ -76,7 +78,6 @@ class ChatStoreRepository(
         }
     }
 
-    private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
     override fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStateFlows.getOrPut(userId) {
             userChatStore.stream(
