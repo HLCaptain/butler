@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.kotlinx.rpc.platform)
     alias(libs.plugins.ktor)
     alias(libs.plugins.ksp)
     alias(libs.plugins.buildconfig)
@@ -84,6 +85,7 @@ dependencies {
     implementation(libs.ktor.client.websockets)
 
     implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.rpc.server)
 
     // OpenTelemetry
     implementation(libs.opentelemetry.api)

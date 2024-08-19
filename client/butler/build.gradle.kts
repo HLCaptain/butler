@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.rpc.platform)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.google.ksp)
@@ -49,11 +50,11 @@ kotlin {
                 implementation(libs.ktor.auth)
                 implementation(libs.ktor.client.cio)
                 implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.encoding)
+                implementation(libs.kotlinx.rpc.client)
 
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
