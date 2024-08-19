@@ -6,21 +6,22 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
+import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.annotation.Single
 
 @Single
 class AuthRpcDataSource(
-    private val authService: AuthService,
+    private val authService: StateFlow<AuthService?>,
 ) : AuthNetworkDataSource {
     override suspend fun signup(credentials: UserRegistrationDto): UserLoginResponseDto {
-        return authService.signup(credentials)
+        return authService.value?.signup(credentials) ?: throw IllegalStateException("AuthService is not available")
     }
 
     override suspend fun login(credentials: UserLoginDto): UserLoginResponseDto {
-        return authService.login(credentials)
+        return authService.value?.login(credentials) ?: throw IllegalStateException("AuthService is not available")
     }
 
     override suspend fun sendPasswordResetEmail(request: PasswordResetRequest): Boolean {
-        return authService.sendPasswordResetEmail(request)
+        return authService.value?.sendPasswordResetEmail(request) ?: throw IllegalStateException("AuthService is not available")
     }
 }

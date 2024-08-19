@@ -29,6 +29,8 @@ class ResourceStoreRepository(
     @OptIn(ExperimentalStoreApi::class)
     val resourceMutableStore = resourceMutableStoreBuilder.store
 
+    private val resourceStateFlows = mutableMapOf<String, StateFlow<Pair<DomainResource?, Boolean>>>()
+
     init {
         coroutineScopeIO.launch {
             hostManager.currentHost.collect {
@@ -38,11 +40,11 @@ class ResourceStoreRepository(
         }
     }
 
-    override suspend fun deleteAllResources(userId: String) {
-
+    @OptIn(ExperimentalStoreApi::class)
+    override suspend fun deleteAllResources() {
+        resourceMutableStore.clear(ResourceKey.Delete.All)
     }
 
-    private val resourceStateFlows = mutableMapOf<String, StateFlow<Pair<DomainResource?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
     override fun getResourceFlow(resourceId: String): StateFlow<Pair<DomainResource?, Boolean>> {
         return resourceStateFlows.getOrPut(resourceId) {

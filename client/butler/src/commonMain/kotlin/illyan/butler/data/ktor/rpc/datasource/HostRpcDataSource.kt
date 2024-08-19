@@ -2,17 +2,14 @@ package illyan.butler.data.ktor.rpc.datasource
 
 import illyan.butler.data.ktor.rpc.service.HostService
 import illyan.butler.data.network.datasource.HostNetworkDataSource
-import illyan.butler.di.KoinNames
-import kotlinx.coroutines.CoroutineScope
-import org.koin.core.annotation.Named
+import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.annotation.Single
 
 @Single
 class HostRpcDataSource(
-    private val hostService: HostService,
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
+    private val hostService: StateFlow<HostService?>,
 ) : HostNetworkDataSource {
     override suspend fun tryToConnect(url: String): Boolean {
-        return hostService.tryToConnect(url)
+        return hostService.value?.tryToConnect(url) ?: throw IllegalStateException("HostService is not available")
     }
 }

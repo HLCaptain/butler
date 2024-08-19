@@ -52,8 +52,11 @@ fun provideResourceMutableStore(
             }
         },
         delete = { key ->
-            require(key is ResourceKey.Delete.ByResourceId)
-            resourceLocalDataSource.deleteResourceById(key.resourceId)
+            require(key is ResourceKey.Delete)
+            when (key) {
+                is ResourceKey.Delete.ByResourceId -> resourceLocalDataSource.deleteResourceById(key.resourceId)
+                is ResourceKey.Delete.All -> resourceLocalDataSource.deleteAllResources()
+            }
         },
         deleteAll = {
             resourceLocalDataSource.deleteAllResources()
