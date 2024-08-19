@@ -18,12 +18,12 @@ fun Application.configureStatusPages() {
 
 private fun StatusPagesConfig.handleStatusPagesExceptions() {
     exception<ApiException> { call, t ->
-        call.respond(HttpStatusCode.InternalServerError, ServerErrorResponse(t.statusCodes))
+        call.respond(t.httpStatusCode, ServerErrorResponse(t.statusCodes))
     }
     exception<IllegalArgumentException> { call, _ ->
         call.respond(HttpStatusCode.BadRequest)
     }
-    exception<SecurityException>{ call, _ ->
+    exception<SecurityException> { call, _ ->
         call.respond(HttpStatusCode.Unauthorized)
     }
 }

@@ -1,6 +1,5 @@
 package illyan.butler.data.ktor.datasource
 
-import illyan.butler.data.ktor.utils.WebSocketSessionManager
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.network.model.chat.MessageDto
 import illyan.butler.di.KoinNames
@@ -30,7 +29,6 @@ import org.koin.core.annotation.Single
 @Single
 class MessageKtorDataSource(
     private val client: HttpClient,
-    private val webSocketSessionManager: WebSocketSessionManager,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) : MessageNetworkDataSource {
     private val newMessagesStateFlow = MutableStateFlow<List<MessageDto>?>(null)
@@ -39,15 +37,6 @@ class MessageKtorDataSource(
 
     private suspend fun createNewMessagesFlow() {
         Napier.v { "Receiving new messages" }
-//        val session = webSocketSessionManager.createSession("/messages")
-//        coroutineScopeIO.launch {
-//            session.incoming.receiveAsFlow().collect { _ ->
-//                val messages = session.receiveDeserialized<List<MessageDto>?>()
-//                Napier.v { "Received new ${messages?.size} messages " }
-//                newMessagesStateFlow.update { messages }
-//            }
-//        }
-        // TODO: remove when websockets are fixed
         coroutineScopeIO.launch {
             while (true) {
                 val allMessages = fetchByUser()

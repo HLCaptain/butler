@@ -3,7 +3,10 @@ package illyan.butler.backend.endpoints.utils
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class StatusCode(val code: Int, val message: String? = null) {
+data class StatusCode(
+    val code: Int, // Custom code for more accurate error handling
+    val message: String? = null // Optional message to be sent to the client
+) {
 
     companion object {
         // 404 Not Found

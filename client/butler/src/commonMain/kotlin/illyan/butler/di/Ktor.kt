@@ -28,7 +28,6 @@ import io.ktor.client.request.post
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.URLProtocol
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -50,7 +49,7 @@ fun provideHttpClient(
     appRepository: AppRepository,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
-) = HttpClient {
+): HttpClient = HttpClient {
     setupClient(
         userDao = userDao,
         appRepository = appRepository,

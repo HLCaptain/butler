@@ -3,11 +3,13 @@ package illyan.butler.ui.error
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.ui.components.ButlerErrorDialogContent
+import illyan.butler.ui.components.smallDialogWidth
 
 @Composable
 fun ErrorScreen(
@@ -56,7 +58,8 @@ fun ServerErrorContent(
     serverErrors.maxByOrNull { it.second.timestamp }?.let {
         ButlerErrorDialogContent(
             errorResponse = it.second,
-            onClose = { clearError(it.first) }
+            onClose = { clearError(it.first) },
+            text = { Text(it.second.message ?: it.second.httpStatusCode.description) }
         )
     }
 }

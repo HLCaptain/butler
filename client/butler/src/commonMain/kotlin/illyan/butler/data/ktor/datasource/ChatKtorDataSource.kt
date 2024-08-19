@@ -1,6 +1,5 @@
 package illyan.butler.data.ktor.datasource
 
-import illyan.butler.data.ktor.utils.WebSocketSessionManager
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.chat.ChatDto
 import illyan.butler.di.KoinNames
@@ -30,7 +29,6 @@ import org.koin.core.annotation.Single
 @Single
 class ChatKtorDataSource(
     private val client: HttpClient,
-    private val webSocketSessionManager: WebSocketSessionManager,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) : ChatNetworkDataSource {
     private var newChatsStateFlow = MutableStateFlow<List<ChatDto>?>(null)
@@ -39,14 +37,6 @@ class ChatKtorDataSource(
 
     private suspend fun createNewChatsFlow() {
         Napier.v { "Receiving new chats" }
-//        val session = webSocketSessionManager.createSession("/chats")
-//        coroutineScopeIO.launch {
-//            session.incoming.receiveAsFlow().collect { _ ->
-//                Napier.v { "Received new chat" }
-//                newChatsStateFlow.update { session.receiveDeserialized() }
-//            }
-//        }
-        // TODO: remove when websockets are fixed
         coroutineScopeIO.launch {
             while (true) {
                 val allChats = fetch()

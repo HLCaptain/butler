@@ -26,7 +26,7 @@ class ErrorMemoryRepository : ErrorRepository {
     override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
 
     override suspend fun reportError(throwable: Throwable) {
-        Napier.e(throwable) { "Error reported" }
+        Napier.e(throwable) { "Default throwable error reported" }
         val newErrorEvent = DomainErrorEvent(
             id = randomUUID(),
             platform = getPlatformName(),
@@ -46,6 +46,7 @@ class ErrorMemoryRepository : ErrorRepository {
             val containsBody = (response.contentLength()?.toInt() ?: 0) > 0
             if (containsBody) {
                 val serverResponse = response.body<ServerErrorResponse>()
+                Napier.e { "Custom server error reported: ${serverResponse.statusCodes}" }
                 serverResponse.statusCodes.forEach {
                     val domainResponse = DomainErrorResponse(
                         httpStatusCode = response.status,
@@ -56,6 +57,7 @@ class ErrorMemoryRepository : ErrorRepository {
                     _serverErrorEventFlow.emit(domainResponse)
                 }
             } else {
+                Napier.e { "Default server error reported" }
                 val domainResponse = DomainErrorResponse(
                     httpStatusCode = response.status,
                     customErrorCode = null,
@@ -64,6 +66,7 @@ class ErrorMemoryRepository : ErrorRepository {
                 _serverErrorEventFlow.emit(domainResponse)
             }
         } catch (t: Throwable) {
+            Napier.e { "Default server error reported" }
             val domainResponse = DomainErrorResponse(
                 httpStatusCode = response.status,
                 customErrorCode = null,
