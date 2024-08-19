@@ -54,7 +54,9 @@ kotlin {
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.encoding)
-                implementation(libs.kotlinx.rpc.client)
+                implementation(libs.ktor.krpc.client)
+                implementation(libs.ktor.serialization.krpc.json)
+                implementation(libs.ktor.serialization.krpc.protobuf)
 
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
@@ -67,6 +69,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.io)
+                implementation(libs.kotlinx.rpc.client)
 
                 implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
@@ -157,6 +160,9 @@ buildConfig {
 
         val resetRoomDb = localProperties["RESET_ROOM_DB"].toBoolean() // Set to true to reset Room database on app start
         buildConfigField("Boolean", "RESET_ROOM_DB", resetRoomDb.toString())
+
+        val useRpc = localProperties["USE_RPC"].toBoolean() // Set to true to use RPC, else Ktor will be used
+        buildConfigField("Boolean", "USE_RPC", useRpc.toString())
     }
 }
 

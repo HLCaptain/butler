@@ -1,4 +1,4 @@
-package illyan.butler.data.ktor.datasource
+package illyan.butler.data.ktor.http
 
 import illyan.butler.data.network.datasource.ResourceNetworkDataSource
 import illyan.butler.data.network.model.chat.ResourceDto
@@ -26,7 +26,7 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
-class ResourceKtorDataSource(
+class ResourceHttpDataSource(
     private val client: HttpClient,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) : ResourceNetworkDataSource {

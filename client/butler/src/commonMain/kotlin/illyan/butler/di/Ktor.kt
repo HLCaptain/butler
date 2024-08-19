@@ -38,6 +38,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.rpc.serialization.json
+import kotlinx.rpc.serialization.protobuf
+import kotlinx.rpc.transport.ktor.client.installRPC
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -63,6 +66,7 @@ fun provideHttpClient(
     }
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 fun HttpClientConfig<*>.setupClient(
     userDao: UserDao,
     appRepository: AppRepository,
@@ -88,6 +92,13 @@ fun HttpClientConfig<*>.setupClient(
             }
         }
         level = LogLevel.HEADERS
+    }
+
+    installRPC {
+        serialization {
+            json()
+            protobuf()
+        }
     }
 
     install(Auth) {

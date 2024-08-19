@@ -1,4 +1,4 @@
-package illyan.butler.data.ktor.datasource
+package illyan.butler.data.ktor.http
 
 import illyan.butler.data.network.datasource.AuthNetworkDataSource
 import illyan.butler.data.network.model.auth.PasswordResetRequest
@@ -13,7 +13,7 @@ import io.ktor.http.isSuccess
 import org.koin.core.annotation.Single
 
 @Single
-class AuthKtorDataSource(
+class AuthHttpDataSource(
     private val client: HttpClient,
 ) : AuthNetworkDataSource {
 

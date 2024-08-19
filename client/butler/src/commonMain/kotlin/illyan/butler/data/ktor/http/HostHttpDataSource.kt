@@ -1,4 +1,4 @@
-package illyan.butler.data.ktor.datasource
+package illyan.butler.data.ktor.http
 
 import illyan.butler.data.network.datasource.HostNetworkDataSource
 import io.ktor.client.HttpClient
@@ -7,7 +7,7 @@ import io.ktor.http.isSuccess
 import org.koin.core.annotation.Single
 
 @Single
-class HostKtorDataSource(
+class HostHttpDataSource(
     private val client: HttpClient
 ) : HostNetworkDataSource {
     override suspend fun tryToConnect(url: String): Boolean {

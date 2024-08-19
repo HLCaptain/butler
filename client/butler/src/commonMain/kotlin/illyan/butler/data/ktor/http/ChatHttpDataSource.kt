@@ -1,4 +1,4 @@
-package illyan.butler.data.ktor.datasource
+package illyan.butler.data.ktor.http
 
 import illyan.butler.data.network.datasource.ChatNetworkDataSource
 import illyan.butler.data.network.model.chat.ChatDto
@@ -27,7 +27,7 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
-class ChatKtorDataSource(
+class ChatHttpDataSource(
     private val client: HttpClient,
     @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) : ChatNetworkDataSource {
