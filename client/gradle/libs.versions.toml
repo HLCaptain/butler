@@ -1,7 +1,7 @@
 [versions]
 butler = "2.0.0-alpha"
-kotlin = "2.0.20-RC2"
-ksp = "2.0.20-RC2-1.0.24"
+kotlin = "2.0.10"
+ksp = "2.0.10-1.0.24"
 agp = "8.5.2"
 compose = "1.6.11"
 compose-android = "1.6.8"
@@ -11,8 +11,8 @@ koin-annotations = "1.4.0-RC3"
 coroutines = "1.9.0-RC"
 serialization = "1.7.1"
 aboutlibraries = "11.2.2"
-room = "2.7.0-alpha06"
-krpc = "0.2.2"
+room = "2.7.0-alpha07"
+krpc = "0.2.4"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -21,7 +21,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-#kotlinx-rpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "krpc" } # Not yet available official for K2
+kotlinx-rpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "krpc" } # Not yet available official for K2
 kotlinx-rpc-platform = { id = "org.jetbrains.kotlinx.rpc.platform", version.ref = "krpc" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -63,7 +63,7 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 androidx-room = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-common = { module = "androidx.room:room-common", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0-alpha06" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0-alpha07" }
 
 jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.0" }
 jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version = "2.7.0-alpha07" }

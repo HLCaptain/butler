@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.rpc.RPCClient
-import kotlinx.rpc.client.withService
 import kotlinx.rpc.transport.ktor.client.rpc
+import kotlinx.rpc.withService
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 

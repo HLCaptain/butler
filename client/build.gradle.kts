@@ -30,5 +30,6 @@ plugins {
     alias(libs.plugins.aboutlibraries) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.androidx.room) apply false
+    alias(libs.plugins.kotlinx.rpc) apply false
     alias(libs.plugins.kotlinx.rpc.platform) apply false
 }

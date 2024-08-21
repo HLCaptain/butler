@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.rpc)
     alias(libs.plugins.kotlinx.rpc.platform)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
