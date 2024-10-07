@@ -21,17 +21,28 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
+@Named(KoinNames.SecureRPCClient)
 fun provideRpcClient(
     hostRepository: HostRepository,
     httpClient: HttpClient
 ): Flow<RPCClient?> = hostRepository.currentHost.map { host ->
-    host?.let { httpClient.rpc("$host/service") }
+    host?.let { httpClient.rpc("$host/secure") }
+}
+
+@Single
+@Named(KoinNames.OpenRPCClient)
+fun provideOpenRpcClient(
+    hostRepository: HostRepository,
+    httpClient: HttpClient
+): Flow<RPCClient?> = hostRepository.currentHost.map { host ->
+    host?.let { httpClient.rpc("$host/open") }
 }
 
 @Single fun provideAuthService(
-    rpcClient: Flow<RPCClient?>,
+    @Named(KoinNames.OpenRPCClient) openRpcClient: Flow<RPCClient?>,
+    @Named(KoinNames.SecureRPCClient) secureRPCClient: Flow<RPCClient?>,
     @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope
-): StateFlow<AuthService?> = rpcClient
+): StateFlow<AuthService?> = openRpcClient
     .map { it?.withService<AuthService>() }
     .stateIn(coroutineScopeIO, SharingStarted.Eagerly, null)
 

@@ -4,12 +4,12 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import illyan.butler.backend.AppConfig
 import illyan.butler.backend.data.model.authenticate.TokenType
+import illyan.butler.backend.utils.Claim
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.Application
 import io.ktor.server.auth.UnauthorizedResponse
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
-import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.response.respond
 
@@ -28,14 +28,10 @@ fun Application.configureAuthentication() {
                 JWT.require(Algorithm.HMAC256(jwtSecret))
                     .withAudience(jwtAudience)
                     .withIssuer(jwtDomain)
-                    .withClaim("tokenType", TokenType.ACCESS_TOKEN.name)
+                    .withClaim(Claim.TOKEN_TYPE, TokenType.ACCESS_TOKEN.name)
+                    .withClaimPresence(Claim.USER_ID)
                     .build()
             )
-            validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) {
-                    JWTPrincipal(credential.payload)
-                } else null
-            }
             respondUnauthorized()
         }
 
@@ -45,14 +41,10 @@ fun Application.configureAuthentication() {
                 JWT.require(Algorithm.HMAC256(jwtSecret))
                     .withAudience(jwtAudience)
                     .withIssuer(jwtDomain)
-                    .withClaim("tokenType", TokenType.REFRESH_TOKEN.name)
+                    .withClaim(Claim.TOKEN_TYPE, TokenType.REFRESH_TOKEN.name)
+                    .withClaimPresence(Claim.USER_ID)
                     .build()
             )
-            validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) {
-                    JWTPrincipal(credential.payload)
-                } else null
-            }
             respondUnauthorized()
         }
     }
