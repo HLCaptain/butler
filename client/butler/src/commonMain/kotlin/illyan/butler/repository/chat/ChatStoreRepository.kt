@@ -1,8 +1,8 @@
 package illyan.butler.repository.chat
 
-import illyan.butler.data.store.builder.ChatMutableStoreBuilder
-import illyan.butler.data.store.builder.UserChatStoreBuilder
-import illyan.butler.data.store.key.ChatKey
+import illyan.butler.data.sync.store.builder.ChatMutableStoreBuilder
+import illyan.butler.data.sync.store.builder.UserChatStoreBuilder
+import illyan.butler.data.sync.store.key.ChatKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.manager.AuthManager

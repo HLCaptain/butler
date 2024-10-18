@@ -1,7 +1,7 @@
 package illyan.butler.data.mapping
 
 import illyan.butler.data.network.model.chat.MessageDto
-import illyan.butler.data.room.model.RoomMessage
+import illyan.butler.data.local.room.model.RoomMessage
 import illyan.butler.domain.model.DomainMessage
 
 fun RoomMessage.toDomainModel() = DomainMessage(

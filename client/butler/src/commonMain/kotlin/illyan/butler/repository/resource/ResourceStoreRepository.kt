@@ -1,7 +1,7 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.data.store.builder.ResourceMutableStoreBuilder
-import illyan.butler.data.store.key.ResourceKey
+import illyan.butler.data.sync.store.builder.ResourceMutableStoreBuilder
+import illyan.butler.data.sync.store.key.ResourceKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainResource
 import illyan.butler.manager.HostManager

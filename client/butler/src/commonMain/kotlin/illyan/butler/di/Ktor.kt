@@ -1,7 +1,7 @@
 package illyan.butler.di
 
 import illyan.butler.data.network.model.auth.UserTokensResponse
-import illyan.butler.data.room.dao.UserDao
+import illyan.butler.data.local.room.dao.UserDao
 import illyan.butler.domain.model.DomainToken
 import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.app.AppRepository
@@ -38,9 +38,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.rpc.serialization.json
-import kotlinx.rpc.serialization.protobuf
-import kotlinx.rpc.transport.ktor.client.installRPC
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -92,13 +89,6 @@ fun HttpClientConfig<*>.setupClient(
             }
         }
         level = LogLevel.HEADERS
-    }
-
-    installRPC {
-        serialization {
-            json()
-            protobuf()
-        }
     }
 
     install(Auth) {

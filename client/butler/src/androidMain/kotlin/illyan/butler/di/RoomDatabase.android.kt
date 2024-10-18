@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import illyan.butler.config.BuildConfig
-import illyan.butler.data.room.ButlerDatabase
+import illyan.butler.data.local.room.ButlerDatabase
 import org.koin.core.context.GlobalContext
 
 actual fun getPlatformRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase> {

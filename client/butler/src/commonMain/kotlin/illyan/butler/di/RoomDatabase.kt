@@ -2,7 +2,7 @@ package illyan.butler.di
 
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import illyan.butler.data.room.ButlerDatabase
+import illyan.butler.data.local.room.ButlerDatabase
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.annotation.Single
 

@@ -1,6 +1,6 @@
 package illyan.butler.data.mapping
 
-import illyan.butler.data.room.model.RoomAppSettings
+import illyan.butler.data.local.room.model.RoomAppSettings
 import illyan.butler.domain.model.AppSettings
 
 fun RoomAppSettings.toDomainModel() = AppSettings(

@@ -1,9 +1,9 @@
 package illyan.butler.repository.message
 
-import illyan.butler.data.store.builder.ChatMessageStoreBuilder
-import illyan.butler.data.store.builder.MessageMutableStoreBuilder
-import illyan.butler.data.store.builder.UserMessageStoreBuilder
-import illyan.butler.data.store.key.MessageKey
+import illyan.butler.data.sync.store.builder.ChatMessageStoreBuilder
+import illyan.butler.data.sync.store.builder.MessageMutableStoreBuilder
+import illyan.butler.data.sync.store.builder.UserMessageStoreBuilder
+import illyan.butler.data.sync.store.key.MessageKey
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.manager.HostManager

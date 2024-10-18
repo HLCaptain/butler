@@ -7,8 +7,8 @@ import illyan.butler.data.network.model.auth.PasswordResetRequest
 import illyan.butler.data.network.model.auth.UserLoginDto
 import illyan.butler.data.network.model.auth.UserLoginResponseDto
 import illyan.butler.data.network.model.auth.UserRegistrationDto
-import illyan.butler.data.room.dao.AppSettingsDao
-import illyan.butler.data.room.dao.UserDao
+import illyan.butler.data.local.room.dao.AppSettingsDao
+import illyan.butler.data.local.room.dao.UserDao
 import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser

@@ -3,7 +3,7 @@ package illyan.butler.data.mapping
 import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.data.network.model.identity.AddressDto
 import illyan.butler.data.network.model.identity.UserDto
-import illyan.butler.data.room.model.RoomUser
+import illyan.butler.data.local.room.model.RoomUser
 import illyan.butler.domain.model.DomainAddress
 import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser

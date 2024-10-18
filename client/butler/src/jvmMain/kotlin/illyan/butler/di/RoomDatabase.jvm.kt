@@ -3,7 +3,7 @@ package illyan.butler.di
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import illyan.butler.config.BuildConfig
-import illyan.butler.data.room.ButlerDatabase
+import illyan.butler.data.local.room.ButlerDatabase
 import java.io.File
 
 actual fun getPlatformRoomDatabaseBuilder(): RoomDatabase.Builder<ButlerDatabase> {

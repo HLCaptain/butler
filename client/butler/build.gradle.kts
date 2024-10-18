@@ -6,8 +6,6 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlinx.rpc)
-    alias(libs.plugins.kotlinx.rpc.platform)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.google.ksp)
@@ -55,9 +53,6 @@ kotlin {
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.encoding)
-                implementation(libs.ktor.krpc.client)
-                implementation(libs.ktor.serialization.krpc.json)
-                implementation(libs.ktor.serialization.krpc.protobuf)
 
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
@@ -70,7 +65,6 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.io)
-                implementation(libs.kotlinx.rpc.client)
 
                 implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
@@ -116,16 +110,14 @@ kotlin {
 
 dependencies {
     annotationProcessor(libs.androidx.room.compiler)
-    // TODO: use KSP in Common Code because ksp(...) is deprecated
-//    kspCommonMainMetadata(libs.androidx.room.compiler)
-//    kspCommonMainMetadata(libs.koin.ksp)
-    ksp(libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
     ksp(libs.koin.ksp)
 }
 
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")
-    arg("USE_COMPOSE_VIEWMODEL", "true") // TODO: Remove when Koin 4.0 comes out with common viewmodel support
+    arg("USE_KOIN_COMPOSE_VIEWMODEL", "true")
 }
 
 kotlin.sourceSets.all {
@@ -161,9 +153,6 @@ buildConfig {
 
         val resetRoomDb = localProperties["RESET_ROOM_DB"].toBoolean() // Set to true to reset Room database on app start
         buildConfigField("Boolean", "RESET_ROOM_DB", resetRoomDb.toString())
-
-        val useRpc = localProperties["USE_RPC"].toBoolean() // Set to true to use RPC, else Ktor will be used
-        buildConfigField("Boolean", "USE_RPC", useRpc.toString())
     }
 }
 
