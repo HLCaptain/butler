@@ -1,8 +1,8 @@
 package illyan.butler.ui.home
 
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
-import illyan.butler.domain.model.Permission
+import illyan.butler.model.DomainErrorEvent
+import illyan.butler.model.DomainErrorResponse
+import illyan.butler.model.Permission
 
 data class HomeScreenState(
     val isUserSignedIn: Boolean? = null,

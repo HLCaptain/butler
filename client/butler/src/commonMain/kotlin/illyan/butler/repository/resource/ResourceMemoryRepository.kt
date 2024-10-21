@@ -1,6 +1,6 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ class ResourceMemoryRepository : ResourceRepository {
         return resourceWithId.id
     }
 
-    override suspend fun deleteAllResources(userId: String) {
+    override suspend fun deleteAllResources() {
         resources.values.forEach { it.update { null to false } }
         resources.clear()
     }

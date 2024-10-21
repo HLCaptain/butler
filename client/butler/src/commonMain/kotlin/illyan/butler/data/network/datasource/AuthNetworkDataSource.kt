@@ -25,6 +25,4 @@ interface AuthNetworkDataSource {
      * @return true if reset email is sent.
      */
     suspend fun sendPasswordResetEmail(request: PasswordResetRequest): Boolean
-
-    suspend fun getMe(): Flow<UserDto?>
 }

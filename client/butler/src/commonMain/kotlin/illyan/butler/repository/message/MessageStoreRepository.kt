@@ -1,11 +1,11 @@
 package illyan.butler.repository.message
 
-import illyan.butler.data.store.builder.ChatMessageStoreBuilder
-import illyan.butler.data.store.builder.MessageMutableStoreBuilder
-import illyan.butler.data.store.builder.UserMessageStoreBuilder
-import illyan.butler.data.store.key.MessageKey
+import illyan.butler.data.sync.store.builder.ChatMessageStoreBuilder
+import illyan.butler.data.sync.store.builder.MessageMutableStoreBuilder
+import illyan.butler.data.sync.store.builder.UserMessageStoreBuilder
+import illyan.butler.data.sync.store.key.MessageKey
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.model.DomainMessage
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -35,6 +35,9 @@ class MessageStoreRepository(
     val chatMessageMutableStore = chatMessageStoreBuilder.store
     private val userMessageStore = userMessageStoreBuilder.store
 
+    private val messageStateFlows = mutableMapOf<String, StateFlow<Pair<DomainMessage?, Boolean>>>()
+    private val chatMessagesStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
+
     init {
         coroutineScopeIO.launch {
             hostManager.currentHost.collect {
@@ -45,7 +48,6 @@ class MessageStoreRepository(
         }
     }
 
-    private val messageStateFlows = mutableMapOf<String, StateFlow<Pair<DomainMessage?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
     override fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>> {
         return messageStateFlows.getOrPut(messageId) {
@@ -65,7 +67,6 @@ class MessageStoreRepository(
         }
     }
 
-    private val chatMessagesStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
     override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatMessagesStateFlows.getOrPut(chatId) {
             chatMessageMutableStore.stream(

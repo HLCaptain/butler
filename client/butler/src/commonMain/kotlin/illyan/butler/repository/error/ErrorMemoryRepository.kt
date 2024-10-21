@@ -1,8 +1,9 @@
 package illyan.butler.repository.error
 
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
-import illyan.butler.domain.model.ErrorState
+import illyan.butler.data.network.model.response.ServerErrorResponse
+import illyan.butler.model.DomainErrorEvent
+import illyan.butler.model.DomainErrorResponse
+import illyan.butler.model.ErrorState
 import illyan.butler.getOsName
 import illyan.butler.getPlatformName
 import illyan.butler.getSystemMetadata
@@ -25,7 +26,7 @@ class ErrorMemoryRepository : ErrorRepository {
     override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
 
     override suspend fun reportError(throwable: Throwable) {
-        Napier.e(throwable) { "Error reported" }
+        Napier.e(throwable) { "Default throwable error reported" }
         val newErrorEvent = DomainErrorEvent(
             id = randomUUID(),
             platform = getPlatformName(),
@@ -41,13 +42,37 @@ class ErrorMemoryRepository : ErrorRepository {
     }
 
     override suspend fun reportError(response: HttpResponse) {
-        val errorResponse = DomainErrorResponse(
-            httpStatusCode = response.status,
-            customErrorCode = try {
-                if ((response.contentLength()?.toInt() ?: 0) > 0) response.body() else null
-            } catch (t: Throwable) { null }, // Checking if anything is returned in the body
-            timestamp = response.responseTime.timestamp
-        )
-        _serverErrorEventFlow.emit(errorResponse)
+        try {
+            val containsBody = (response.contentLength()?.toInt() ?: 0) > 0
+            if (containsBody) {
+                val serverResponse = response.body<ServerErrorResponse>()
+                Napier.e { "Custom server error reported: ${serverResponse.statusCodes}" }
+                serverResponse.statusCodes.forEach {
+                    val domainResponse = DomainErrorResponse(
+                        httpStatusCode = response.status,
+                        customErrorCode = it.code,
+                        timestamp = response.responseTime.timestamp,
+                        message = it.message
+                    )
+                    _serverErrorEventFlow.emit(domainResponse)
+                }
+            } else {
+                Napier.e { "Default server error reported" }
+                val domainResponse = DomainErrorResponse(
+                    httpStatusCode = response.status,
+                    customErrorCode = null,
+                    timestamp = response.responseTime.timestamp
+                )
+                _serverErrorEventFlow.emit(domainResponse)
+            }
+        } catch (t: Throwable) {
+            Napier.e { "Default server error reported" }
+            val domainResponse = DomainErrorResponse(
+                httpStatusCode = response.status,
+                customErrorCode = null,
+                timestamp = response.responseTime.timestamp
+            )
+            _serverErrorEventFlow.emit(domainResponse)
+        }
     }
 }

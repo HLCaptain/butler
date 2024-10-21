@@ -1,9 +1,9 @@
 package illyan.butler.manager
 
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainResource
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.DomainResource
+import illyan.butler.model.Permission
+import illyan.butler.model.PermissionStatus
 import illyan.butler.repository.resource.ResourceRepository
 import illyan.butler.utils.Wav
 import illyan.butler.utils.audio.AudioRecorder

@@ -44,7 +44,7 @@ fun Route.chatRoute() {
 
     // TODO: calculate accumulation of tokens in a single chat (more input tokens per message)
 
-    route("/chats/{chatId}") {
+    route("/chats/{chatId}/messages/{messageId}") {
         get("/regenerate") {
             val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             val messageId = call.parameters["messageId"]

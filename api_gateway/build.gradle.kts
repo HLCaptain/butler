@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.kotlinx.rpc)
+    alias(libs.plugins.kotlinx.rpc.platform)
     alias(libs.plugins.ktor)
     alias(libs.plugins.ksp)
     alias(libs.plugins.buildconfig)
@@ -11,16 +13,17 @@ version = "0.0.1"
 val apiVersion = 1
 
 application {
-    mainClass = "illyan.butler.api_gateway.ApplicationKt"
+    mainClass = "illyan.butler.backend.ApplicationKt"
 }
 
 ktor {
     fatJar {
-        archiveFileName = "butler_api_gateway.jar"
+        archiveFileName = "butler_backend.jar"
     }
 }
 
 buildConfig {
+    packageName = "illyan.butler.backend"
     buildConfigField("String", "API_VERSION", "\"$apiVersion\"")
     buildConfigField("String", "PROJECT_VERSION", "\"$version\"")
     buildConfigField("String", "PROJECT_NAME", "\"${project.name}\"")
@@ -62,6 +65,13 @@ dependencies {
     implementation(libs.koin.annotations)
     ksp(libs.koin.ksp.compiler)
 
+    // Database
+    implementation(libs.postgresql)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.json)
+
     // Security
     implementation(libs.commons.codec)
 
@@ -74,8 +84,12 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.ktor.client.websockets)
+    implementation(libs.ktor.krpc.server)
+    implementation(libs.ktor.serialization.krpc.json)
+    implementation(libs.ktor.serialization.krpc.protobuf)
 
     implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.rpc.server)
 
     // OpenTelemetry
     implementation(libs.opentelemetry.api)
@@ -94,6 +108,11 @@ dependencies {
     implementation(libs.ktor.server.metrics.micrometer)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.napier)
+
+    implementation(libs.openai.client)
+
+    implementation(libs.nanoid)
+    implementation(libs.spring.security.crypto)
 }
 
 ksp {

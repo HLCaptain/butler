@@ -1,8 +1,8 @@
 package illyan.butler.data.mapping
 
 import illyan.butler.data.network.model.chat.ResourceDto
-import illyan.butler.data.room.model.RoomResource
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.data.local.room.model.RoomResource
+import illyan.butler.model.DomainResource
 
 fun RoomResource.toDomainModel() = DomainResource(
     id = id,

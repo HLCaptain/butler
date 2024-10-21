@@ -1,8 +1,8 @@
 package illyan.butler.manager
 
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.Permission
+import illyan.butler.model.PermissionStatus
 import illyan.butler.repository.permission.PermissionRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope

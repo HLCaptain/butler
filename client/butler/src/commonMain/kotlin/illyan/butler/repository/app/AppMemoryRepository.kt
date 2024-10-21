@@ -1,7 +1,7 @@
 package illyan.butler.repository.app
 
-import illyan.butler.domain.model.AppSettings
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.model.AppSettings
+import illyan.butler.model.DomainPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

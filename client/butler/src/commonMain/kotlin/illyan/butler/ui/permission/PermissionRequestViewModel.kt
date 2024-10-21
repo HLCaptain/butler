@@ -2,7 +2,7 @@ package illyan.butler.ui.permission
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.Permission
+import illyan.butler.model.Permission
 import illyan.butler.manager.PermissionManager
 import kotlinx.coroutines.launch
 

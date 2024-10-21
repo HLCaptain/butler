@@ -8,9 +8,7 @@ import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.ui.theme.ThemeViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 
-@OptIn(KoinExperimentalAPI::class)
 @Composable
 fun App() {
     KoinContext {

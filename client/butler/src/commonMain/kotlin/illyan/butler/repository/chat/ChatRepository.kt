@@ -1,6 +1,6 @@
 package illyan.butler.repository.chat
 
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 import kotlinx.coroutines.flow.StateFlow
 
 interface ChatRepository {

@@ -1,10 +1,10 @@
 package illyan.butler.repository.chat
 
-import illyan.butler.data.store.builder.ChatMutableStoreBuilder
-import illyan.butler.data.store.builder.UserChatStoreBuilder
-import illyan.butler.data.store.key.ChatKey
+import illyan.butler.data.sync.store.builder.ChatMutableStoreBuilder
+import illyan.butler.data.sync.store.builder.UserChatStoreBuilder
+import illyan.butler.data.sync.store.key.ChatKey
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
@@ -39,6 +39,9 @@ class ChatStoreRepository(
         userChatStore.clear(ChatKey.Delete.ByUserId(userId))
     }
 
+    private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<DomainChat?, Boolean>>>()
+    private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
+
     init {
         coroutineScopeIO.launch {
             hostManager.currentHost.collect {
@@ -56,7 +59,6 @@ class ChatStoreRepository(
         }
     }
 
-    private val chatStateFlows = mutableMapOf<String, StateFlow<Pair<DomainChat?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
     override fun getChatFlow(chatId: String): StateFlow<Pair<DomainChat?, Boolean>> {
         return chatStateFlows.getOrPut(chatId) {
@@ -76,7 +78,6 @@ class ChatStoreRepository(
         }
     }
 
-    private val userChatStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainChat>?, Boolean>>>()
     override fun getUserChatsFlow(userId: String): StateFlow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStateFlows.getOrPut(userId) {
             userChatStore.stream(

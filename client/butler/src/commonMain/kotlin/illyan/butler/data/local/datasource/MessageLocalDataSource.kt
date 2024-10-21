@@ -1,6 +1,6 @@
 package illyan.butler.data.local.datasource
 
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.model.DomainMessage
 import kotlinx.coroutines.flow.Flow
 
 interface MessageLocalDataSource {

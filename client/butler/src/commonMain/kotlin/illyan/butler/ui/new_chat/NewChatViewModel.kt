@@ -2,7 +2,7 @@ package illyan.butler.ui.new_chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.DomainModel
+import illyan.butler.model.DomainModel
 import illyan.butler.manager.ChatManager
 import illyan.butler.manager.ModelManager
 import kotlinx.coroutines.Dispatchers

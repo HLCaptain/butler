@@ -1,7 +1,7 @@
 package illyan.butler.repository.host
 
 import illyan.butler.data.network.datasource.HostNetworkDataSource
-import illyan.butler.data.room.dao.AppSettingsDao
+import illyan.butler.data.local.room.dao.AppSettingsDao
 import illyan.butler.di.KoinNames
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay

@@ -31,7 +31,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import illyan.butler.domain.model.Theme
+import illyan.butler.model.Theme
 
 val LightColors = lightColorScheme(
     primary = md_theme_light_primary,

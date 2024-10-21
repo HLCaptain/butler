@@ -1,9 +1,9 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.data.store.builder.ResourceMutableStoreBuilder
-import illyan.butler.data.store.key.ResourceKey
+import illyan.butler.data.sync.store.builder.ResourceMutableStoreBuilder
+import illyan.butler.data.sync.store.key.ResourceKey
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +29,8 @@ class ResourceStoreRepository(
     @OptIn(ExperimentalStoreApi::class)
     val resourceMutableStore = resourceMutableStoreBuilder.store
 
+    private val resourceStateFlows = mutableMapOf<String, StateFlow<Pair<DomainResource?, Boolean>>>()
+
     init {
         coroutineScopeIO.launch {
             hostManager.currentHost.collect {
@@ -38,11 +40,11 @@ class ResourceStoreRepository(
         }
     }
 
-    override suspend fun deleteAllResources(userId: String) {
-
+    @OptIn(ExperimentalStoreApi::class)
+    override suspend fun deleteAllResources() {
+        resourceMutableStore.clear(ResourceKey.Delete.All)
     }
 
-    private val resourceStateFlows = mutableMapOf<String, StateFlow<Pair<DomainResource?, Boolean>>>()
     @OptIn(ExperimentalStoreApi::class)
     override fun getResourceFlow(resourceId: String): StateFlow<Pair<DomainResource?, Boolean>> {
         return resourceStateFlows.getOrPut(resourceId) {

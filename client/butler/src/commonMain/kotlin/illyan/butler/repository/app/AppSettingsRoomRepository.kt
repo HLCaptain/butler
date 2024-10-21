@@ -2,10 +2,10 @@ package illyan.butler.repository.app
 
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toRoomModel
-import illyan.butler.data.room.dao.AppSettingsDao
+import illyan.butler.data.local.room.dao.AppSettingsDao
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.AppSettings
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.model.AppSettings
+import illyan.butler.model.DomainPreferences
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted

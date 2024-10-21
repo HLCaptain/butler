@@ -1,9 +1,9 @@
 package illyan.butler.manager
 
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainChat
+import illyan.butler.model.DomainMessage
+import illyan.butler.model.DomainResource
 import illyan.butler.repository.chat.ChatRepository
 import illyan.butler.repository.message.MessageRepository
 import illyan.butler.repository.resource.ResourceRepository

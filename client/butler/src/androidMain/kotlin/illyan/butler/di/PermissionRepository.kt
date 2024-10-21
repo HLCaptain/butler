@@ -10,8 +10,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.Permission
+import illyan.butler.model.PermissionStatus
 import illyan.butler.repository.permission.PermissionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

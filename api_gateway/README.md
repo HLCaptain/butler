@@ -1,6 +1,6 @@
-# Butler API Gateway
+# Butler Backend
 
-Butler API Gateway is a gateway that provides a single point of entry for all the microservices in the Butler AI Chat App. It is a reverse proxy that routes requests to the appropriate microservice.
+Backend services to the Butler AI Chat App.
 
 ## Installation
 

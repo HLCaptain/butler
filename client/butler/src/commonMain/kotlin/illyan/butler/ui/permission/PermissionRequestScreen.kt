@@ -11,7 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import illyan.butler.domain.model.Permission
+import illyan.butler.model.Permission
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.all_permissions_granted_description
 import illyan.butler.generated.resources.all_permissions_granted_title

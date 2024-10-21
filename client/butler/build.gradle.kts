@@ -49,7 +49,6 @@ kotlin {
                 implementation(libs.ktor.auth)
                 implementation(libs.ktor.client.cio)
                 implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinx.protobuf)
                 implementation(libs.ktor.serialization.kotlinx.json)
@@ -111,16 +110,14 @@ kotlin {
 
 dependencies {
     annotationProcessor(libs.androidx.room.compiler)
-    // TODO: use KSP in Common Code because ksp(...) is deprecated
-//    kspCommonMainMetadata(libs.androidx.room.compiler)
-//    kspCommonMainMetadata(libs.koin.ksp)
-    ksp(libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
     ksp(libs.koin.ksp)
 }
 
 ksp {
     arg("KOIN_CONFIG_CHECK", "true")
-    arg("USE_COMPOSE_VIEWMODEL", "true") // TODO: Remove when Koin 4.0 comes out with common viewmodel support
+    arg("USE_KOIN_COMPOSE_VIEWMODEL", "true")
 }
 
 kotlin.sourceSets.all {

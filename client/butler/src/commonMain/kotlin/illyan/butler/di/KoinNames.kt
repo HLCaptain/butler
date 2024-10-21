@@ -5,6 +5,7 @@ object KoinNames {
     const val CoroutineScopeMain = "CoroutineScopeMain"
     const val CoroutineScopeDefault = "CoroutineScopeDefault"
     const val CoroutineScopeIOWithoutHandler = "CoroutineScopeIOWithoutHandler"
-    const val WebSocketClient = "WebSocketClient"
     const val PlatformPermissionRepository = "PlatformPermissionRepository"
+    const val SecureRPCClient = "SecureRPCClient"
+    const val OpenRPCClient = "OpenRPCClient"
 }

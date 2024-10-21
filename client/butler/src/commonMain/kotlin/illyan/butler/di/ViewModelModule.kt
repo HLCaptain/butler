@@ -14,7 +14,7 @@ import illyan.butler.ui.select_host_tutorial.SelectHostTutorialViewModel
 import illyan.butler.ui.settings.user.UserSettingsViewModel
 import illyan.butler.ui.signup.SignUpViewModel
 import illyan.butler.ui.theme.ThemeViewModel
-import org.koin.compose.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 fun getViewModelModule() = module {

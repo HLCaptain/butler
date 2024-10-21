@@ -1,6 +1,6 @@
 package illyan.butler.ui.theme
 
-import illyan.butler.domain.model.Theme
+import illyan.butler.model.Theme
 
 data class ThemeScreenState(
     val theme: Theme? = null,
