@@ -2,9 +2,9 @@ package illyan.butler.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
-import illyan.butler.domain.model.Permission
+import illyan.butler.model.DomainErrorEvent
+import illyan.butler.model.DomainErrorResponse
+import illyan.butler.model.Permission
 import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ErrorManager

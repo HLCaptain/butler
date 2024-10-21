@@ -5,7 +5,7 @@ import illyan.butler.data.sync.store.builder.MessageMutableStoreBuilder
 import illyan.butler.data.sync.store.builder.UserMessageStoreBuilder
 import illyan.butler.data.sync.store.key.MessageKey
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.model.DomainMessage
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope

@@ -1,4 +1,4 @@
-package illyan.butler.domain.model
+package illyan.butler.model
 
 data class DomainErrorEvent(
     val id: String,

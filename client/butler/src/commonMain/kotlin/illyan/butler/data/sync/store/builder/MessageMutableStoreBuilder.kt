@@ -7,7 +7,7 @@ import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.MessageNetworkDataSource
 import illyan.butler.data.sync.store.key.MessageKey
 import illyan.butler.data.sync.store.provideBookkeeper
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.model.DomainMessage
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single

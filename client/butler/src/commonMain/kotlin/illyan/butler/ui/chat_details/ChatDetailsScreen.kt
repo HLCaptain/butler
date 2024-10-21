@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.ai_members
 import illyan.butler.generated.resources.chat_details

@@ -2,7 +2,7 @@ package illyan.butler.ui.settings.user
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.Theme
+import illyan.butler.model.Theme
 import illyan.butler.manager.SettingsManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map

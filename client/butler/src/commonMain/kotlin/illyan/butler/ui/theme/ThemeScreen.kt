@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import illyan.butler.domain.model.Theme
+import illyan.butler.model.Theme
 import io.github.aakira.napier.Napier
 
 @Composable

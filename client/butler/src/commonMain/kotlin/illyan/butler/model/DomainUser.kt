@@ -1,4 +1,4 @@
-package illyan.butler.domain.model
+package illyan.butler.model
 
 data class DomainUser(
     val id: String,

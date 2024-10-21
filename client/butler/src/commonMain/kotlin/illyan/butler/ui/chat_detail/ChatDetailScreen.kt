@@ -73,8 +73,8 @@ import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
-import illyan.butler.domain.model.DomainMessage
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.DomainMessage
+import illyan.butler.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back

@@ -1,6 +1,6 @@
 package illyan.butler.data.local.datasource
 
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 import kotlinx.coroutines.flow.Flow
 
 interface ChatLocalDataSource {

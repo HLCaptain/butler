@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import illyan.butler.domain.model.DomainModel
+import illyan.butler.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat

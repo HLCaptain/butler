@@ -12,8 +12,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
+import illyan.butler.model.DomainErrorEvent
+import illyan.butler.model.DomainErrorResponse
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.hello_x

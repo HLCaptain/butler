@@ -1,4 +1,4 @@
-package illyan.butler.domain.model
+package illyan.butler.model
 
 enum class Permission {
     CAMERA, // Accessing camera

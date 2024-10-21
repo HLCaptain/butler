@@ -1,9 +1,9 @@
 package illyan.butler.repository.error
 
 import illyan.butler.data.network.model.response.ServerErrorResponse
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
-import illyan.butler.domain.model.ErrorState
+import illyan.butler.model.DomainErrorEvent
+import illyan.butler.model.DomainErrorResponse
+import illyan.butler.model.ErrorState
 import illyan.butler.getOsName
 import illyan.butler.getPlatformName
 import illyan.butler.getSystemMetadata

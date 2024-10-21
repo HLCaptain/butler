@@ -1,7 +1,7 @@
 package illyan.butler.data.local.room.model
 
 import androidx.room.Entity
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.model.DomainPreferences
 import kotlinx.serialization.Serializable
 
 @Entity(tableName = "app_settings", primaryKeys = ["clientId"])

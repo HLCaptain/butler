@@ -1,6 +1,6 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

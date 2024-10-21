@@ -1,8 +1,8 @@
 package illyan.butler.repository.permission
 
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.Permission
+import illyan.butler.model.PermissionStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

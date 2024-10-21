@@ -7,7 +7,7 @@ import illyan.butler.data.mapping.toNetworkModel
 import illyan.butler.data.network.datasource.ResourceNetworkDataSource
 import illyan.butler.data.sync.store.key.ResourceKey
 import illyan.butler.data.sync.store.provideBookkeeper
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single

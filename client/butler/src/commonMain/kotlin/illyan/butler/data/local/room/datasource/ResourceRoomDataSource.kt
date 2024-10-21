@@ -4,7 +4,7 @@ import illyan.butler.data.local.datasource.ResourceLocalDataSource
 import illyan.butler.data.mapping.toDomainModel
 import illyan.butler.data.mapping.toRoomModel
 import illyan.butler.data.local.room.dao.ResourceDao
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single

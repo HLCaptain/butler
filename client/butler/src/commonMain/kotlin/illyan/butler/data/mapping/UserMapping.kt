@@ -4,9 +4,9 @@ import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.data.network.model.identity.AddressDto
 import illyan.butler.data.network.model.identity.UserDto
 import illyan.butler.data.local.room.model.RoomUser
-import illyan.butler.domain.model.DomainAddress
-import illyan.butler.domain.model.DomainToken
-import illyan.butler.domain.model.DomainUser
+import illyan.butler.model.DomainAddress
+import illyan.butler.model.DomainToken
+import illyan.butler.model.DomainUser
 
 fun RoomUser.toDomainModel() = DomainUser(
     id = id,

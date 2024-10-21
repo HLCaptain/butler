@@ -1,8 +1,8 @@
 package illyan.butler.repository.user
 
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainToken
-import illyan.butler.domain.model.DomainUser
+import illyan.butler.model.DomainToken
+import illyan.butler.model.DomainUser
 import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow

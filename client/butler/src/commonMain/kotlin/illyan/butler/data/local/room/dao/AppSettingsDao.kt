@@ -6,7 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import illyan.butler.data.local.room.model.RoomAppSettings
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.model.DomainPreferences
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -1,8 +1,8 @@
 package illyan.butler.data.local.room.model
 
 import androidx.room.Entity
-import illyan.butler.domain.model.DomainAddress
-import illyan.butler.domain.model.DomainToken
+import illyan.butler.model.DomainAddress
+import illyan.butler.model.DomainToken
 
 @Entity(tableName = "users", primaryKeys = ["id"])
 data class RoomUser(

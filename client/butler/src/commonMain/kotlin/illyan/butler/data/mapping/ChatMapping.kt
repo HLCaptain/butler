@@ -2,7 +2,7 @@ package illyan.butler.data.mapping
 
 import illyan.butler.data.network.model.chat.ChatDto
 import illyan.butler.data.local.room.model.RoomChat
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 
 fun RoomChat.toDomainModel() = DomainChat(
     id = id,

@@ -3,7 +3,7 @@ package illyan.butler.repository.resource
 import illyan.butler.data.sync.store.builder.ResourceMutableStoreBuilder
 import illyan.butler.data.sync.store.key.ResourceKey
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope

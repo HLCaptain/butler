@@ -1,4 +1,4 @@
-package illyan.butler.domain.model
+package illyan.butler.model
 
 sealed class PermissionStatus {
     open val shouldShowRationale: Boolean = false

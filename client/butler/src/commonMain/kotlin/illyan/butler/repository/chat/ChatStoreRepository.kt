@@ -4,7 +4,7 @@ import illyan.butler.data.sync.store.builder.ChatMutableStoreBuilder
 import illyan.butler.data.sync.store.builder.UserChatStoreBuilder
 import illyan.butler.data.sync.store.key.ChatKey
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.HostManager
 import io.github.aakira.napier.Napier

@@ -1,4 +1,4 @@
-package illyan.butler.domain.model
+package illyan.butler.model
 
 import illyan.butler.utils.randomUUID
 import kotlinx.serialization.Serializable

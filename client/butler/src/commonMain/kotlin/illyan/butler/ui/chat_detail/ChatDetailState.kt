@@ -1,8 +1,8 @@
 package illyan.butler.ui.chat_detail
 
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.DomainChat
+import illyan.butler.model.DomainMessage
+import illyan.butler.model.PermissionStatus
 
 data class ChatDetailState(
     val chat: DomainChat? = null,

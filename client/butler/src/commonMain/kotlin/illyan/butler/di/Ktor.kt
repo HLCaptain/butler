@@ -2,7 +2,7 @@ package illyan.butler.di
 
 import illyan.butler.data.network.model.auth.UserTokensResponse
 import illyan.butler.data.local.room.dao.UserDao
-import illyan.butler.domain.model.DomainToken
+import illyan.butler.model.DomainToken
 import illyan.butler.manager.ErrorManager
 import illyan.butler.repository.app.AppRepository
 import io.github.aakira.napier.Napier

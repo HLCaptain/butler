@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import illyan.butler.data.local.room.model.RoomUser
-import illyan.butler.domain.model.DomainToken
+import illyan.butler.model.DomainToken
 import kotlinx.coroutines.flow.Flow
 
 @Dao

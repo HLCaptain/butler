@@ -1,6 +1,6 @@
 package illyan.butler.repository.resource
 
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.model.DomainResource
 import kotlinx.coroutines.flow.StateFlow
 
 interface ResourceRepository {

@@ -2,11 +2,11 @@ package illyan.butler.ui.chat_detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
-import illyan.butler.domain.model.DomainResource
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
+import illyan.butler.model.DomainChat
+import illyan.butler.model.DomainMessage
+import illyan.butler.model.DomainResource
+import illyan.butler.model.Permission
+import illyan.butler.model.PermissionStatus
 import illyan.butler.manager.AudioManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ChatManager

@@ -1,9 +1,9 @@
 package illyan.butler.data.local.room
 
 import androidx.room.TypeConverter
-import illyan.butler.domain.model.DomainAddress
-import illyan.butler.domain.model.DomainPreferences
-import illyan.butler.domain.model.DomainToken
+import illyan.butler.model.DomainAddress
+import illyan.butler.model.DomainPreferences
+import illyan.butler.model.DomainToken
 import kotlinx.serialization.json.Json
 
 class Converters {

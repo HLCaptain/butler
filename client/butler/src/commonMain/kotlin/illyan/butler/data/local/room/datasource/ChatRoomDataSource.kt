@@ -6,7 +6,7 @@ import illyan.butler.data.mapping.toRoomModel
 import illyan.butler.data.local.room.dao.ChatDao
 import illyan.butler.data.local.room.dao.ChatMemberDao
 import illyan.butler.data.local.room.model.RoomChatMember
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.model.DomainChat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map

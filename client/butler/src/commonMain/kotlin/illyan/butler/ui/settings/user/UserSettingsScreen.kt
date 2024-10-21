@@ -81,8 +81,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import illyan.butler.domain.model.DomainPreferences
-import illyan.butler.domain.model.Theme
+import illyan.butler.model.DomainPreferences
+import illyan.butler.model.Theme
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.analytics
 import illyan.butler.generated.resources.dark
