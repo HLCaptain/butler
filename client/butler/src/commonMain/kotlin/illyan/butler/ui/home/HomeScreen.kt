@@ -208,7 +208,6 @@ fun HomeScreen() {
                                     AuthSuccessIcon()
                                     LaunchedEffect(Unit) {
                                         delay(1000L)
-
                                     }
                                 }
                                 composable("usageTutorial") {

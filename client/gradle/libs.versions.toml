@@ -1,7 +1,7 @@
 [versions]
 butler = "2.0.0-alpha"
 kotlin = "2.0.21"
-ksp = "2.0.21-1.0.25"
+ksp = "2.0.21-1.0.26"
 agp = "8.7.1"
 compose = "1.6.11"
 compose-android = "1.7.4"
