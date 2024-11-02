@@ -73,8 +73,6 @@ import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
-import illyan.butler.model.DomainMessage
-import illyan.butler.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back
@@ -89,6 +87,8 @@ import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
+import illyan.butler.model.DomainMessage
+import illyan.butler.model.PermissionStatus
 import illyan.butler.ui.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
 import illyan.butler.ui.components.RichTooltipWithContent

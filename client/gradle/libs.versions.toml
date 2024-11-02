@@ -9,7 +9,7 @@ compose = "1.7.0"
 compose-android = "1.7.5"
 ktor = "3.0.0"
 koin = "4.0.0"
-koin-annotations = "1.4.0-RC4"
+koin-annotations = "2.0.0-Beta1"
 coroutines = "1.9.0"
 serialization = "1.7.3"
 aboutlibraries = "11.2.2"
@@ -18,7 +18,7 @@ logback = "1.5.11"
 commonsCodec = "1.17.1"
 okhttpLoggingInterceptor = "5.0.0-alpha.12"
 prometheus = "1.12.3"
-exposed = "0.50.1"
+exposed = "0.56.0"
 postgres = "42.7.2"
 
 [plugins]
@@ -68,18 +68,18 @@ androidx-room-common = { module = "androidx.room:room-common", version.ref = "ro
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0-alpha11" }
 
-jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.2" }
+jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.3" }
 jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version = "2.8.0-alpha10" }
 
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
-store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha04" }
+store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha05" }
 uuid = { module = "com.benasher44:uuid", version = "0.8.4" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.2" }
 korge-core = { module = "com.soywiz:korlibs-audio", version = "6.0.0-alpha1" }
 filepicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }
 ffmpeg-kit = { module = "com.arthenica:ffmpeg-kit-full", version = "6.0-2" }
-coil = { module = "io.coil-kt.coil3:coil", version = "3.0.0-alpha08" }
-coil-compose = { module = "io.coil-kt.coil3:coil-compose-core", version = "3.0.0-alpha08" }
+coil = { module = "io.coil-kt.coil3:coil", version = "3.0.0-rc02" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose-core", version = "3.0.0-rc02" }
 haze = { module = "dev.chrisbanes.haze:haze-materials", version = "0.7.2" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -124,14 +124,14 @@ okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-intercepto
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
-opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version = "1.38.0" }
-opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version = "1.38.0" }
-opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version = "1.38.0" }
-opentelemetry-exporter-prometheus = { module = "io.opentelemetry:opentelemetry-exporter-prometheus", version = "1.38.0-alpha" }
-opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.38.0" }
-opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.38.0" }
-opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0", version = "2.3.0-alpha" }
-opentelemetry-resources = { module = "io.opentelemetry.instrumentation:opentelemetry-resources", version = "2.3.0-alpha" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version = "1.43.0" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version = "1.43.0" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version = "1.43.0" }
+opentelemetry-exporter-prometheus = { module = "io.opentelemetry:opentelemetry-exporter-prometheus", version = "1.43.0-alpha" }
+opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.43.0" }
+opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.43.0" }
+opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0", version = "2.9.0-alpha" }
+opentelemetry-resources = { module = "io.opentelemetry.instrumentation:opentelemetry-resources", version = "2.9.0-alpha" }
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheus" }
 nanoid = { module = "com.aventrix.jnanoid:jnanoid", version = "2.0.0" }
