@@ -27,3 +27,6 @@ rootProject.name = "Butler"
 include(":composeApp")
 include(":server")
 include(":shared")
+include(":composeApp:core:ui:components")
+include(":composeApp:core:ui:theme")
+include(":composeApp:core:ui:resources")

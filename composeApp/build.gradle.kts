@@ -21,13 +21,14 @@ version = libs.versions.butler.get()
 kotlin {
     androidTarget()
     jvm()
-
     jvmToolchain(17)
 
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":shared"))
+                implementation(projects.shared)
+                implementation(projects.composeApp.core.ui.resources)
+                implementation(projects.composeApp.core.ui.components)
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
                 implementation(compose.ui)
@@ -107,12 +108,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
         }
     }
-}
-
-compose.resources {
-    publicResClass = false // Res class stays internal
-    packageOfResClass = "illyan.butler.generated.resources"
-    generateResClass = auto
 }
 
 dependencies {

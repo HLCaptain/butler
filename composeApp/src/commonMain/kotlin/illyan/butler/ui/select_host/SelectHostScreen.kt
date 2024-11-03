@@ -26,10 +26,10 @@ import androidx.compose.ui.graphics.Color
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
-import illyan.butler.ui.SmallCircularProgressIndicator
-import illyan.butler.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.SmallCircularProgressIndicator
+import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.ui.components.MenuButton
-import illyan.butler.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.smallDialogWidth
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource

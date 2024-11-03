@@ -50,12 +50,12 @@ import illyan.butler.generated.resources.settings
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
-import illyan.butler.ui.components.ButlerDialogContent
-import illyan.butler.ui.components.ButlerDialogSurface
+import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.TooltipElevatedCard
-import illyan.butler.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.ui.dialog.LocalDialogDismissRequest
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.utils.randomUUID

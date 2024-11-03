@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":shared"))
+    implementation(projects.shared)
     // Ktor Core
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.protobuf)

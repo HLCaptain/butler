@@ -20,8 +20,8 @@ import illyan.butler.generated.resources.permission_request_record_audio_descrip
 import illyan.butler.generated.resources.permission_request_record_audio_title
 import illyan.butler.generated.resources.request_permission
 import illyan.butler.model.Permission
-import illyan.butler.ui.components.ButlerDialogContent
-import illyan.butler.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.smallDialogWidth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI

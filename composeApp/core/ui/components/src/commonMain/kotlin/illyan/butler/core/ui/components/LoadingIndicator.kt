@@ -1,4 +1,4 @@
-package illyan.butler.ui.components
+package illyan.butler.core.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.loading
-import illyan.butler.ui.MediumCircularProgressIndicator
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 

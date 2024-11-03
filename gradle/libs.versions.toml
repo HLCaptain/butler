@@ -20,6 +20,11 @@ okhttpLoggingInterceptor = "5.0.0-alpha.12"
 prometheus = "1.12.3"
 exposed = "0.56.0"
 postgres = "42.7.2"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+material = "1.12.0"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -137,3 +142,8 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 nanoid = { module = "com.aventrix.jnanoid:jnanoid", version = "2.0.0" }
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.3.4" }
 openai-client = { module = "com.aallam.openai:openai-client", version = "3.7.2" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }

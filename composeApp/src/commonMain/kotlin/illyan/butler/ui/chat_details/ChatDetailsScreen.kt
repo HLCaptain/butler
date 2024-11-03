@@ -20,8 +20,8 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.none
 import illyan.butler.generated.resources.unknown
 import illyan.butler.model.DomainChat
-import illyan.butler.ui.components.ButlerDialogContent
-import illyan.butler.ui.components.mediumDialogSize
+import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.mediumDialogSize
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI

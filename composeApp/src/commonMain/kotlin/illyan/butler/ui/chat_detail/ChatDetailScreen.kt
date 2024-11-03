@@ -89,7 +89,7 @@ import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.model.DomainMessage
 import illyan.butler.model.PermissionStatus
-import illyan.butler.ui.MediumCircularProgressIndicator
+import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
 import illyan.butler.ui.components.RichTooltipWithContent
 import illyan.butler.ui.dialog.ButlerDialog

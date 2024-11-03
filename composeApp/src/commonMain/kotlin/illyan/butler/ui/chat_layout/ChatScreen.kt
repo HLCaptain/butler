@@ -24,9 +24,9 @@ import illyan.butler.ui.chat_detail.ChatDetailScreen
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.chat_list.ChatListViewModel
-import illyan.butler.ui.components.ButlerTwoPane
-import illyan.butler.ui.components.FixedOffsetHorizontalTwoPaneStrategy
-import illyan.butler.ui.components.FractionHorizontalTwoPaneStrategy
+import illyan.butler.core.ui.components.ButlerTwoPane
+import illyan.butler.core.ui.components.FixedOffsetHorizontalTwoPaneStrategy
+import illyan.butler.core.ui.components.FractionHorizontalTwoPaneStrategy
 import io.github.aakira.napier.Napier
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI

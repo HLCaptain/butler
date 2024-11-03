@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_host_description
-import illyan.butler.ui.components.largeDialogWidth
+import illyan.butler.core.ui.components.largeDialogWidth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI

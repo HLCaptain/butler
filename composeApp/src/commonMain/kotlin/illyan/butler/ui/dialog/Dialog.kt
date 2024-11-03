@@ -28,9 +28,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import illyan.butler.getWindowSizeInDp
-import illyan.butler.ui.components.ButlerDialogContentHolder
-import illyan.butler.ui.components.ButlerDialogSurface
-import illyan.butler.ui.components.dialogSize
+import illyan.butler.core.ui.components.ButlerDialogContentHolder
+import illyan.butler.core.ui.components.ButlerDialogSurface
+import illyan.butler.core.ui.components.dialogSize
 import kotlinx.coroutines.delay
 
 val LocalDialogDismissRequest = compositionLocalOf { {} }

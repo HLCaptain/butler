@@ -16,7 +16,7 @@ import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.create_new_chat
 import illyan.butler.generated.resources.new_chat_tutorial
 import illyan.butler.model.DomainModel
-import illyan.butler.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.ui.new_chat.ModelListItem
 import org.jetbrains.compose.resources.stringResource
 

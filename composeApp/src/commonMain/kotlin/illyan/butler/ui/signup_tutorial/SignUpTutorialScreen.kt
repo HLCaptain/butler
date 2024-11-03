@@ -20,7 +20,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.butler_logo_alternative
 import illyan.butler.generated.resources.sign_up
 import illyan.butler.generated.resources.sign_up_tutorial
-import illyan.butler.ui.components.largeDialogWidth
+import illyan.butler.core.ui.components.largeDialogWidth
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 

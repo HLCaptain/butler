@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-package illyan.butler.ui
+package illyan.butler.core.ui.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
