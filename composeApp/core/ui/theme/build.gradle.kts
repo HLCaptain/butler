@@ -18,6 +18,8 @@ kotlin {
     jvm()
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.core.ui.utils)
+
         implementation(compose.runtime)
         implementation(compose.runtimeSaveable)
         implementation(compose.ui)
@@ -29,10 +31,15 @@ kotlin {
         implementation(compose.uiTooling)
         implementation(compose.uiUtil)
     }
+
+    sourceSets.androidMain.dependencies {
+        implementation(libs.androidx.appcompat)
+        implementation(libs.androidx.activity)
+    }
 }
 
 android {
-    namespace = "illyan.butler.shared"
+    namespace = "illyan.butler.core.ui.theme"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

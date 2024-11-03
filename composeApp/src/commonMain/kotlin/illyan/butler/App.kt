@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import illyan.butler.ui.home.HomeScreen
-import illyan.butler.ui.theme.ButlerTheme
-import illyan.butler.ui.theme.ThemeViewModel
+import illyan.butler.core.ui.theme.ButlerTheme
+import illyan.butler.core.ui.theme.ThemeViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 

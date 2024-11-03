@@ -1,4 +1,4 @@
-package illyan.butler.ui.components
+package illyan.butler.ui.error
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope

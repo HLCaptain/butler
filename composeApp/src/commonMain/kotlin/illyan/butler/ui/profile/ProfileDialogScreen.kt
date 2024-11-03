@@ -56,7 +56,7 @@ import illyan.butler.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.ui.components.MenuButton
 import illyan.butler.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
-import illyan.butler.ui.dialog.LocalDialogDismissRequest
+import illyan.butler.core.ui.components.LocalDialogDismissRequest
 import illyan.butler.ui.theme.ButlerTheme
 import illyan.butler.utils.randomUUID
 import org.jetbrains.compose.resources.ExperimentalResourceApi

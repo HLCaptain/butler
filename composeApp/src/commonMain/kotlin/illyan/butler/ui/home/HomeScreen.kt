@@ -80,7 +80,7 @@ import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.chat_layout.LocalSelectedChat
 import illyan.butler.ui.components.GestureType
 import illyan.butler.ui.components.PlainTooltipWithContent
-import illyan.butler.ui.dialog.ButlerDialog
+import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.ui.error.ErrorScreen
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.permission.PermissionRequestScreen

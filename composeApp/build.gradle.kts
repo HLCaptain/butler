@@ -29,6 +29,8 @@ kotlin {
                 implementation(projects.shared)
                 implementation(projects.composeApp.core.ui.resources)
                 implementation(projects.composeApp.core.ui.components)
+                implementation(projects.composeApp.core.ui.theme)
+                implementation(projects.composeApp.core.ui.utils)
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
                 implementation(compose.ui)

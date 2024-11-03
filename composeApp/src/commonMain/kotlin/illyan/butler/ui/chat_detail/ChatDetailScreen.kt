@@ -92,7 +92,7 @@ import illyan.butler.model.PermissionStatus
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.ui.chat_details.ChatDetailsScreen
 import illyan.butler.ui.components.RichTooltipWithContent
-import illyan.butler.ui.dialog.ButlerDialog
+import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.ui.home.LocalNavBarOrientation
 import illyan.butler.ui.home.getNavBarTooltipGestures
 import io.github.aakira.napier.Napier

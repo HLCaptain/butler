@@ -1,4 +1,4 @@
-package illyan.butler.ui.theme
+package illyan.butler.core.ui.theme
 
 import android.annotation.SuppressLint
 import android.os.Build

@@ -1,4 +1,4 @@
-package illyan.butler.ui.dialog
+package illyan.butler.core.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -27,10 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
-import illyan.butler.getWindowSizeInDp
-import illyan.butler.core.ui.components.ButlerDialogContentHolder
-import illyan.butler.core.ui.components.ButlerDialogSurface
-import illyan.butler.core.ui.components.dialogSize
+import illyan.butler.core.ui.utils.getWindowSizeInDp
 import kotlinx.coroutines.delay
 
 val LocalDialogDismissRequest = compositionLocalOf { {} }

@@ -19,6 +19,8 @@ kotlin {
 
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.core.ui.resources)
+        implementation(projects.composeApp.core.ui.utils)
+
         implementation(compose.runtime)
         implementation(compose.runtimeSaveable)
         implementation(compose.ui)
@@ -29,6 +31,7 @@ kotlin {
         implementation(compose.preview)
         implementation(compose.uiTooling)
         implementation(compose.uiUtil)
+        implementation(libs.jetbrains.navigation.compose)
     }
 }
 

@@ -1,15 +1,12 @@
-package illyan.butler.ui.theme
+package illyan.butler.core.ui.theme
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import illyan.butler.model.Theme
-import io.github.aakira.napier.Napier
 
 @Composable
 fun ButlerTheme(
@@ -48,17 +45,6 @@ fun ButlerTheme(
                 null -> LightColors
             }
         }
-    }
-
-    LaunchedEffect(targetColorScheme) {
-        val themeName = when (targetColorScheme) {
-            LightColors -> "Light"
-            DarkColors -> "Dark"
-            dynamicLightColorScheme -> "Dynamic Light"
-            dynamicDarkColorScheme -> "Dynamic Dark"
-            else -> "Undefined theme"
-        }
-        Napier.d("Theme: $theme, Dynamic colors: ${dynamicColorEnabled}, Is night: $isNight, Is system in dark theme: $isSystemInDarkTheme, Is dark: $isDark, Target color scheme: $themeName")
     }
 
     ThemeSystemWindow(isDark ?: isSystemInDarkTheme, dynamicColorEnabled)

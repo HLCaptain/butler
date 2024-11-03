@@ -31,14 +31,8 @@ kotlin {
     }
 }
 
-compose.resources {
-    publicResClass = true // Make Res accessible from other modules
-    packageOfResClass = "illyan.butler.generated.resources"
-    generateResClass = always // To use Res class transitively
-}
-
 android {
-    namespace = "illyan.butler.core.ui.resources"
+    namespace = "illyan.butler.core.ui.utils"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

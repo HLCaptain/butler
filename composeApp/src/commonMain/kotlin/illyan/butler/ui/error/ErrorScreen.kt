@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import illyan.butler.model.DomainErrorEvent
 import illyan.butler.model.DomainErrorResponse
-import illyan.butler.ui.components.ButlerErrorDialogContent
 
 @Composable
 fun ErrorScreen(
