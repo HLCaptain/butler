@@ -17,9 +17,9 @@ docker-compose up
 
 Grafana, Prometheus and Jaeger can be used to monitor the backend services.
 
-### Frontend
+### Android app
 
-To build and run the Compose Multiplatform app, you should have a `local.properties` file in the project root directory (where the `composeApp`, `server` and `shared` folders are located) with the following content:
+To build and run on the Android platform app, you should have a `local.properties` file in the project root directory (where the `composeApp`, `server` and `shared` folders are located) with the following content:
 
 ```properties
 RELEASE_KEYSTORE_PASSWORD=your_release_keystore_password
@@ -31,8 +31,6 @@ DEBUG_KEYSTORE_PASSWORD=your_debug_keystore_password
 DEBUG_KEY_PASSWORD=your_debug_key_password
 DEBUG_KEY_ALIAS=your_debug_key_alias
 DEBUG_KEY_PATH=path/to/debug.keystore
-
-API_GATEWAY_URL=http://127.0.0.1:12345
 ```
 
 ## Usage
