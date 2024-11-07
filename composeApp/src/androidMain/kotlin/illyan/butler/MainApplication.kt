@@ -1,7 +1,7 @@
 package illyan.butler
 
 import android.app.Application
-import illyan.butler.di.AndroidPermissionRepository
+import illyan.butler.data.permission.AndroidPermissionRepository
 import illyan.butler.di.getViewModelModule
 import illyan.butler.utils.initNapier
 import org.koin.android.ext.koin.androidContext

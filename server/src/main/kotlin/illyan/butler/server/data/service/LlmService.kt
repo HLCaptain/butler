@@ -16,7 +16,7 @@ import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import illyan.butler.server.AppConfig
-import illyan.butler.server.data.ktor.ai.ModelDto
+import illyan.butler.shared.model.llm.ModelDto
 import illyan.butler.shared.model.chat.ChatDto
 import illyan.butler.shared.model.chat.MessageDto
 import illyan.butler.shared.model.chat.ResourceDto

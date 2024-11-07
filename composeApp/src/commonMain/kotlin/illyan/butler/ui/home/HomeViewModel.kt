@@ -2,7 +2,6 @@ package illyan.butler.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import illyan.butler.manager.ErrorManager
 import illyan.butler.manager.PermissionManager

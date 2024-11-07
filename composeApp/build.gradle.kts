@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.google.ksp)
-    alias(libs.plugins.buildconfig)
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.androidx.room)
@@ -27,10 +26,36 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.shared)
+
                 implementation(projects.composeApp.core.ui.resources)
                 implementation(projects.composeApp.core.ui.components)
-                implementation(projects.composeApp.core.ui.theme)
                 implementation(projects.composeApp.core.ui.utils)
+                implementation(projects.composeApp.core.local)
+                implementation(projects.composeApp.core.network)
+
+                implementation(projects.composeApp.data.chat)
+                implementation(projects.composeApp.data.host)
+                implementation(projects.composeApp.data.user)
+                implementation(projects.composeApp.data.permission)
+                implementation(projects.composeApp.data.resource)
+                implementation(projects.composeApp.data.settings)
+                implementation(projects.composeApp.data.model)
+                implementation(projects.composeApp.data.error)
+                implementation(projects.composeApp.data.message)
+
+                implementation(projects.composeApp.domain.audio)
+                implementation(projects.composeApp.domain.auth)
+                implementation(projects.composeApp.domain.chat)
+                implementation(projects.composeApp.domain.config)
+                implementation(projects.composeApp.domain.error)
+                implementation(projects.composeApp.domain.host)
+                implementation(projects.composeApp.domain.model)
+                implementation(projects.composeApp.domain.permission)
+                implementation(projects.composeApp.domain.settings)
+
+                implementation(projects.composeApp.di)
+                implementation(projects.composeApp.feature.theme)
+
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
                 implementation(compose.ui)
@@ -43,7 +68,7 @@ kotlin {
                 implementation(compose.uiUtil)
 
                 implementation(libs.androidx.room.common)
-                implementation(libs.androidx.room)
+                implementation(libs.androidx.room.runtime)
                 implementation(libs.androidx.sqlite.bundled)
 
                 implementation(libs.jetbrains.lifecycle.viewmodel.compose)
@@ -70,10 +95,8 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.io)
 
-                implementation(libs.uuid)
                 implementation(libs.aboutlibraries.core)
                 implementation(libs.store)
-                implementation(libs.korge.core)
                 implementation(libs.filepicker)
                 implementation(libs.coil)
                 implementation(libs.coil.compose)
@@ -132,32 +155,6 @@ val localProperties = localPropertiesFile.readLines().associate {
     if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
     val (key, value) = it.split("=", limit = 2)
     key to value
-}
-
-buildConfig {
-    // Setting required for collision avoidance with Android platform BuildConfig
-    packageName = "illyan.butler.config"
-
-    // Checking if the task is a debug or release task to set DEBUG flag
-    // Parsing main task name to check if it contains debug or release type names
-    // Not 100% accurate but should work for most cases
-    // Defaults to DEBUG = true
-    gradle.taskGraph.whenReady {
-        val taskName = allTasks.last().name
-        val debugIndicatorNames = listOf("dev", "debug")
-        val prodIndicatorNames = listOf("release", "prod")
-        val isProd = debugIndicatorNames.none { taskName.contains(it, ignoreCase = true) } &&
-            prodIndicatorNames.any { taskName.contains(it, ignoreCase = true) }
-
-        println("Task [$taskName] isProd=$isProd")
-        buildConfigField("Boolean", "DEBUG", (!isProd).toString())
-
-        val useMemoryDb = localProperties["USE_MEMORY_DB"].toBoolean() // Set to false to use Room database and Ktor, else memory based DB will be used without networking
-        buildConfigField("Boolean", "USE_MEMORY_DB", if (isProd) "false" else useMemoryDb.toString())
-
-        val resetRoomDb = localProperties["RESET_ROOM_DB"].toBoolean() // Set to true to reset Room database on app start
-        buildConfigField("Boolean", "RESET_ROOM_DB", resetRoomDb.toString())
-    }
 }
 
 android {

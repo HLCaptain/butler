@@ -2,7 +2,6 @@ package illyan.butler.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.manager.AppManager
 import illyan.butler.manager.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted

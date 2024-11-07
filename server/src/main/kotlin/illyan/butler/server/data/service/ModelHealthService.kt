@@ -1,6 +1,6 @@
 package illyan.butler.server.data.service
 
-import illyan.butler.server.data.ktor.ai.ModelDto
+import illyan.butler.shared.model.llm.ModelDto
 import illyan.butler.shared.model.openai.Model
 import illyan.butler.shared.model.openai.ModelsResponse
 import io.github.aakira.napier.Napier
