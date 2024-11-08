@@ -1,14 +1,12 @@
 package illyan.butler.data.message
 
-import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
-import illyan.butler.data.local.datasource.MessageLocalDataSource
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
+import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
+import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.MessageNetworkDataSource
-import illyan.butler.data.sync.store.provideBookkeeper
-import illyan.butler.model.DomainMessage
-import illyan.butler.utils.randomUUID
-import kotlinx.coroutines.flow.map
+import illyan.butler.core.sync.NoopConverter
+import illyan.butler.core.sync.provideBookkeeper
+import illyan.butler.core.utils.randomUUID
+import illyan.butler.domain.model.DomainMessage
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -35,7 +33,7 @@ fun provideMessageMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         require(key is MessageKey.Read.ByMessageId)
-        messageNetworkDataSource.fetchById(key.messageId).map { it.toDomainModel() }
+        messageNetworkDataSource.fetchById(key.messageId)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
@@ -63,14 +61,13 @@ fun provideMessageMutableStore(
     updater = Updater.by(
         post = { key, output ->
             require(key is MessageKey.Write)
-            val message = output.toNetworkModel()
             val newMessage = when (key) {
-                is MessageKey.Write.Create -> messageNetworkDataSource.upsert(message).also {
-                    messageLocalDataSource.replaceMessage(it.id!!, it.toDomainModel())
+                is MessageKey.Write.Create -> messageNetworkDataSource.upsert(output).also {
+                    messageLocalDataSource.replaceMessage(it.id!!, it)
                 }
-                is MessageKey.Write.Upsert -> messageNetworkDataSource.upsert(message)
+                is MessageKey.Write.Upsert -> messageNetworkDataSource.upsert(output)
             }
-            UpdaterResult.Success.Typed(newMessage.toDomainModel())
+            UpdaterResult.Success.Typed(newMessage)
         },
         onCompletion = null
     ),

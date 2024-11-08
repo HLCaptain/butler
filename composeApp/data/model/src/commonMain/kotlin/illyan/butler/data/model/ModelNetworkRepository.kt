@@ -9,6 +9,5 @@ import org.koin.core.annotation.Single
 class ModelNetworkRepository(
     private val modelNetworkDataSource: ModelNetworkDataSource
 ) : ModelRepository {
-    override suspend fun getAvailableModels(): Map<DomainModel, List<String>> = modelNetworkDataSource
-        .fetchAll().mapKeys { (model, _) -> model.toDomainModel() }
+    override suspend fun getAvailableModels(): Map<DomainModel, List<String>> = modelNetworkDataSource.fetchAll()
 }

@@ -1,8 +1,7 @@
 package illyan.butler.data.resource
 
+import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainResource
-import illyan.butler.repository.resource.ResourceRepository
-import illyan.butler.utils.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -18,7 +17,7 @@ class ResourceMemoryRepository : ResourceRepository {
     override suspend fun upsert(resource: DomainResource): String {
         val resourceWithId = if (resource.id == null) resource.copy(id = randomUUID()) else resource
         resources.getOrPut(resourceWithId.id!!) { MutableStateFlow(null to true) }.update { resourceWithId to false }
-        return resourceWithId.id
+        return resourceWithId.id!!
     }
 
     override suspend fun deleteAllResources() {

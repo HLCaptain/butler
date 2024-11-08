@@ -1,20 +1,18 @@
 package illyan.butler.chat
 
-import illyan.butler.di.KoinNames
-import illyan.butler.model.DomainChat
-import illyan.butler.model.DomainMessage
-import illyan.butler.model.DomainResource
+import illyan.butler.auth.AuthManager
 import illyan.butler.data.chat.ChatRepository
-import illyan.butler.repository.message.MessageRepository
-import illyan.butler.repository.resource.ResourceRepository
+import illyan.butler.data.resource.ResourceRepository
+import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.DomainResource
+import illyan.butler.data.message.MessageRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
@@ -22,14 +20,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.io.buffered
-import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
+import kotlinx.io.files.Path
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Single
@@ -38,13 +33,22 @@ class ChatManager(
     private val chatRepository: ChatRepository,
     private val messageRepository: MessageRepository,
     private val resourceRepository: ResourceRepository,
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope
 ) {
-    private val _userChats = MutableStateFlow<List<DomainChat>>(emptyList())
-    val userChats = _userChats.asStateFlow()
+    val userChats = authManager.signedInUserId.flatMapLatest {
+        loadChats(it)
+    }.stateIn(
+        CoroutineScope(Dispatchers.IO),
+        SharingStarted.Eagerly,
+        emptyList()
+    )
 
-    private val _userMessages = MutableStateFlow<List<DomainMessage>>(emptyList())
-    private val userMessages = _userMessages.asStateFlow()
+    private val userMessages = authManager.signedInUserId.flatMapLatest {
+        loadMessages(it)
+    }.stateIn(
+        CoroutineScope(Dispatchers.IO),
+        SharingStarted.Eagerly,
+        emptyList()
+    )
 
     private val messageResources = userMessages.flatMapLatest { messages ->
         // map to Flow<Map<String?, List<DomainResource?>>>
@@ -56,25 +60,10 @@ class ChatManager(
             resources.toList().toMap()
         }
     }.stateIn(
-        coroutineScopeIO,
+        CoroutineScope(Dispatchers.IO),
         SharingStarted.Eagerly,
         emptyMap()
     )
-
-    init {
-        coroutineScopeIO.launch {
-            authManager.signedInUserId.flatMapLatest {
-                _userChats.update { emptyList() }
-                loadChats(it)
-            }.collectLatest { chats -> _userChats.update { chats } }
-        }
-        coroutineScopeIO.launch {
-            authManager.signedInUserId.flatMapLatest {
-                _userMessages.update { emptyList() }
-                loadMessages(it)
-            }.collectLatest { messages -> _userMessages.update { messages } }
-        }
-    }
 
     private fun loadChats(userId: String? = authManager.signedInUserId.value): Flow<List<DomainChat>> {
         if (userId == null) {
@@ -101,7 +90,6 @@ class ChatManager(
     fun getChatFlow(chatId: String) = userChats.map { chats -> chats.firstOrNull { it.id == chatId } }
     fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
     fun getResourcesByMessageFlow(messageId: String) = messageResources.map { resources -> resources[messageId] }
-
 
     suspend fun startNewChat(modelId: String, endpoint: String? = null): String {
         return authManager.signedInUserId.first()?.let { userId ->

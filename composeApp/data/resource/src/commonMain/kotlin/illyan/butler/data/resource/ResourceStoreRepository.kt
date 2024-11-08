@@ -1,18 +1,13 @@
-package illyan.butler.repository.resource
+package illyan.butler.data.resource
 
-import illyan.butler.data.sync.store.builder.ResourceMutableStoreBuilder
-import illyan.butler.data.sync.store.key.ResourceKey
-import illyan.butler.di.KoinNames
-import illyan.butler.manager.HostManager
-import illyan.butler.model.DomainResource
+import illyan.butler.domain.model.DomainResource
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
@@ -22,23 +17,12 @@ import org.mobilenativefoundation.store.store5.StoreWriteResponse
 
 @Single
 class ResourceStoreRepository(
-    resourceMutableStoreBuilder: ResourceMutableStoreBuilder,
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
-    private val hostManager: HostManager
+    resourceMutableStoreBuilder: ResourceMutableStoreBuilder
 ) : ResourceRepository {
     @OptIn(ExperimentalStoreApi::class)
     val resourceMutableStore = resourceMutableStoreBuilder.store
 
     private val resourceStateFlows = mutableMapOf<String, StateFlow<Pair<DomainResource?, Boolean>>>()
-
-    init {
-        coroutineScopeIO.launch {
-            hostManager.currentHost.collect {
-                Napier.d("Host changed, clearing resource state flows")
-                resourceStateFlows.clear()
-            }
-        }
-    }
 
     @OptIn(ExperimentalStoreApi::class)
     override suspend fun deleteAllResources() {
@@ -57,7 +41,7 @@ class ResourceStoreRepository(
                 Napier.d("Resource id: ${data?.id}")
                 data to (it is StoreReadResponse.Loading)
             }.stateIn(
-                coroutineScopeIO,
+                CoroutineScope(Dispatchers.IO),
                 SharingStarted.Eagerly,
                 null to true
             )

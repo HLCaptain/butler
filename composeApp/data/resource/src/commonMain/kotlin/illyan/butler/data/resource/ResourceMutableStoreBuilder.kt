@@ -1,15 +1,12 @@
 package illyan.butler.data.resource
 
-import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
-import illyan.butler.data.local.datasource.ResourceLocalDataSource
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
+import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
+import illyan.butler.core.local.datasource.ResourceLocalDataSource
 import illyan.butler.core.network.datasource.ResourceNetworkDataSource
-import illyan.butler.data.sync.store.key.ResourceKey
-import illyan.butler.data.sync.store.provideBookkeeper
-import illyan.butler.model.DomainResource
-import illyan.butler.utils.randomUUID
-import kotlinx.coroutines.flow.map
+import illyan.butler.core.sync.NoopConverter
+import illyan.butler.core.sync.provideBookkeeper
+import illyan.butler.core.utils.randomUUID
+import illyan.butler.domain.model.DomainResource
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -36,7 +33,7 @@ fun provideResourceMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         require(key is ResourceKey.Read.ByResourceId)
-        resourceNetworkDataSource.fetchResourceById(key.resourceId).map { it.toDomainModel() }
+        resourceNetworkDataSource.fetchResourceById(key.resourceId)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
@@ -67,14 +64,13 @@ fun provideResourceMutableStore(
     updater = Updater.by(
         post = { key, output ->
             require(key is ResourceKey.Write)
-            val resource = output.toNetworkModel()
             val newResource = when (key) {
-                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(resource).also {
-                    resourceLocalDataSource.replaceResource(it.id!!, it.toDomainModel())
+                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(output).also {
+                    resourceLocalDataSource.replaceResource(it.id!!, it)
                 }
-                is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(resource)
+                is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(output)
             }
-            UpdaterResult.Success.Typed(newResource.toDomainModel())
+            UpdaterResult.Success.Typed(newResource)
         },
         onCompletion = null
     ),

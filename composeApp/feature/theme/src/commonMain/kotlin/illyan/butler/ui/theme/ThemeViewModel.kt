@@ -20,8 +20,7 @@ package illyan.butler.ui.theme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.manager.SettingsManager
-import illyan.butler.utils.calculateSunriseSunsetTimes
+import illyan.butler.settings.SettingsManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

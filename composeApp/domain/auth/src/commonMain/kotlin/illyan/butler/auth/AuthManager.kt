@@ -1,9 +1,9 @@
 package illyan.butler.auth
 
-import illyan.butler.data.local.datasource.ChatLocalDataSource
-import illyan.butler.data.local.datasource.MessageLocalDataSource
-import illyan.butler.data.local.datasource.ResourceLocalDataSource
-import illyan.butler.repository.user.UserRepository
+import illyan.butler.core.local.datasource.ChatLocalDataSource
+import illyan.butler.core.local.datasource.MessageLocalDataSource
+import illyan.butler.core.local.datasource.ResourceLocalDataSource
+import illyan.butler.data.user.UserRepository
 import org.koin.core.annotation.Single
 
 @Single
@@ -36,10 +36,10 @@ class AuthManager(
     suspend fun sendPasswordResetEmail(email: String) = userRepository.sendPasswordResetEmail(email)
     suspend fun signOut() {
         // Delete everything from the database
+        userRepository.signOut()
         messageLocalDataSource.deleteAllMessages()
         chatLocalDataSource.deleteAllChats()
         resourceLocalDataSource.deleteAllResources()
-        userRepository.signOut()
     }
 
     suspend fun deleteAccount() {

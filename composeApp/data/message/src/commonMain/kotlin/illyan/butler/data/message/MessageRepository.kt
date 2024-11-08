@@ -1,11 +1,11 @@
-package illyan.butler.repository.message
+package illyan.butler.data.message
 
-import illyan.butler.model.DomainMessage
-import kotlinx.coroutines.flow.StateFlow
+import illyan.butler.domain.model.DomainMessage
+import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>>
-    fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>>
+    fun getMessageFlow(messageId: String): Flow<Pair<DomainMessage?, Boolean>>
+    fun getChatMessagesFlow(chatId: String): Flow<Pair<List<DomainMessage>?, Boolean>>
     suspend fun upsert(message: DomainMessage): String
-    fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>>
+    fun getUserMessagesFlow(userId: String): Flow<Pair<List<DomainMessage>?, Boolean>>
 }

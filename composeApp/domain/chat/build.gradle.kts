@@ -14,11 +14,19 @@ kotlin {
     jvm()
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.domain)
         implementation(projects.composeApp.data.chat)
+        implementation(projects.composeApp.data.message)
+        implementation(projects.composeApp.data.resource)
+        implementation(projects.composeApp.domain.auth)
 
         api(project.dependencies.platform(libs.koin.bom))
         api(libs.koin.core)
         implementation(libs.koin.annotations)
+
+        implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.io)
+        implementation(libs.napier)
     }
 }
 

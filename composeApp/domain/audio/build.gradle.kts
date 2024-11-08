@@ -14,6 +14,11 @@ kotlin {
     jvm()
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.domain.permission)
+        implementation(projects.composeApp.data.resource)
+        implementation(projects.composeApp.domain)
+        implementation(projects.shared)
+
         api(project.dependencies.platform(libs.koin.bom))
         api(libs.koin.core)
         implementation(libs.koin.annotations)
@@ -21,6 +26,9 @@ kotlin {
         implementation(libs.kotlinx.coroutines)
         implementation(libs.korge.core) // Kotlin Multiplatform Audio
         implementation(libs.napier)
+        implementation(libs.ktor.core)
+        implementation(libs.ffmpeg.kit)
+        implementation(libs.kotlinx.datetime)
     }
 }
 

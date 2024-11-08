@@ -15,10 +15,13 @@ kotlin {
 
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.data.settings)
+        implementation(projects.composeApp.domain)
 
         api(project.dependencies.platform(libs.koin.bom))
         api(libs.koin.core)
         implementation(libs.koin.annotations)
+
+        implementation(libs.kotlinx.coroutines)
     }
 }
 

@@ -1,8 +1,7 @@
 package illyan.butler.data.message
 
 import illyan.butler.domain.model.DomainMessage
-import illyan.butler.repository.message.MessageRepository
-import illyan.butler.repository.user.UserRepository
+import illyan.butler.data.user.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update

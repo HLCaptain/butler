@@ -21,6 +21,7 @@ kotlin {
         implementation(libs.koin.annotations)
 
         implementation(libs.ktor.core)
+        implementation(libs.kotlinx.coroutines)
     }
 }
 

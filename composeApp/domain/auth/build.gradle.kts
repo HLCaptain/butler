@@ -14,11 +14,14 @@ kotlin {
     jvm()
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.core.local)
         implementation(projects.composeApp.data.user)
 
         api(project.dependencies.platform(libs.koin.bom))
         api(libs.koin.core)
         implementation(libs.koin.annotations)
+
+        implementation(libs.kotlinx.coroutines)
     }
 }
 

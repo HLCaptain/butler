@@ -1,9 +1,10 @@
-package illyan.butler.repository.host
+package illyan.butler.data.host
 
 import illyan.butler.core.local.room.dao.AppSettingsDao
 import illyan.butler.core.network.datasource.HostNetworkDataSource
-import illyan.butler.di.KoinNames
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,19 +13,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
 class HostRoomRepository(
     private val hostNetworkDataSource: HostNetworkDataSource,
     private val appSettingsDao: AppSettingsDao,
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
 ) : HostRepository {
     private val _isConnectingToHost = MutableStateFlow(false)
     override val isConnectingToHost = _isConnectingToHost.asStateFlow()
     override val currentHost = appSettingsDao.getAppSettings().map { it?.hostUrl }.stateIn(
-        coroutineScope,
+        CoroutineScope(Dispatchers.IO),
         SharingStarted.Eagerly,
         initialValue = null
     )
@@ -39,9 +38,11 @@ class HostRoomRepository(
         if (url.isBlank()) return false
         _isConnectingToHost.update { true }
         return try {
-            val connectionTimeoutJob = coroutineScope.launch {
-                delay(5000)
-                throw Exception("Connection timeout")
+            val connectionTimeoutJob = coroutineScope {
+                launch {
+                    delay(5000)
+                    throw Exception("Connection timeout")
+                }
             }
             hostNetworkDataSource.tryToConnect(url).also { connectionTimeoutJob.cancel() }
         } catch (e: Exception) {

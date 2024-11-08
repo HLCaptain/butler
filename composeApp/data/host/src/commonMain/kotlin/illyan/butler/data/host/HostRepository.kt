@@ -1,4 +1,4 @@
-package illyan.butler.repository.host
+package illyan.butler.data.host
 
 import kotlinx.coroutines.flow.StateFlow
 

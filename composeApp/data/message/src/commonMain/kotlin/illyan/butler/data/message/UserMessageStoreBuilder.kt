@@ -1,9 +1,8 @@
 package illyan.butler.data.message
 
-import illyan.butler.data.local.datasource.MessageLocalDataSource
-import illyan.butler.data.mapping.toDomainModel
+import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.MessageNetworkDataSource
-import kotlinx.coroutines.flow.map
+import illyan.butler.core.sync.NoopConverter
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.store5.Fetcher
 import org.mobilenativefoundation.store.store5.SourceOfTruth
@@ -23,7 +22,7 @@ fun provideUserMessageStore(
 ) = StoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         require(key is MessageKey.Read.ByUserId)
-        messageNetworkDataSource.fetchAvailableToUser().map { messages -> messages.map { it.toDomainModel() } }
+        messageNetworkDataSource.fetchAvailableToUser()
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->

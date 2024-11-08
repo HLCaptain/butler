@@ -62,5 +62,6 @@ include(":composeApp:domain:permission")
 include(":composeApp:domain:settings")
 
 include(":composeApp:di")
+include(":composeApp:di:coroutines")
 
 include(":composeApp:feature:theme")

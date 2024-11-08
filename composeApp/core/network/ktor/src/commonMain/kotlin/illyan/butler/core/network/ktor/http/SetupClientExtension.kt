@@ -2,7 +2,8 @@ package illyan.butler.core.network.ktor.http
 
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.local.room.model.RoomToken
-import illyan.butler.domain.model.DomainToken
+import illyan.butler.data.settings.AppRepository
+import illyan.butler.error.ErrorManager
 import illyan.butler.shared.model.response.UserTokensResponse
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClientConfig
@@ -31,20 +32,18 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
-import org.koin.core.annotation.Named
-import java.util.logging.ErrorManager
 
 @OptIn(ExperimentalSerializationApi::class)
 fun HttpClientConfig<*>.setupClient(
     userDao: UserDao,
     appRepository: AppRepository,
-    @Named(KoinNames.CoroutineScopeIO) coroutineScopeIO: CoroutineScope,
     errorManager: ErrorManager
 ) {
     expectSuccess = true
@@ -191,7 +190,7 @@ fun HttpClientConfig<*>.setupClient(
     install(ContentEncoding)
 
     var currentApiUrl: String? = null
-    coroutineScopeIO.launch {
+    CoroutineScope(Dispatchers.IO).launch {
         appRepository.currentHost.collectLatest {
             Napier.d { "API URL changed to $it" }
             currentApiUrl = it

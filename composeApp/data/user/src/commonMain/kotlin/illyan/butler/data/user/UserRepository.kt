@@ -1,7 +1,7 @@
-package illyan.butler.repository.user
+package illyan.butler.data.user
 
-import illyan.butler.model.DomainToken
-import illyan.butler.model.DomainUser
+import illyan.butler.domain.model.DomainToken
+import illyan.butler.domain.model.DomainUser
 import kotlinx.coroutines.flow.StateFlow
 
 interface UserRepository {

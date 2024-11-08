@@ -1,20 +1,9 @@
-package illyan.butler.repository.message
+package illyan.butler.data.message
 
-import illyan.butler.data.sync.store.builder.ChatMessageStoreBuilder
-import illyan.butler.data.sync.store.builder.MessageMutableStoreBuilder
-import illyan.butler.data.sync.store.builder.UserMessageStoreBuilder
-import illyan.butler.data.sync.store.key.MessageKey
-import illyan.butler.di.KoinNames
-import illyan.butler.manager.HostManager
-import illyan.butler.model.DomainMessage
+import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
@@ -26,62 +15,35 @@ import org.mobilenativefoundation.store.store5.StoreWriteResponse
 class MessageStoreRepository(
     messageMutableStoreBuilder: MessageMutableStoreBuilder,
     chatMessageStoreBuilder: ChatMessageStoreBuilder,
-    userMessageStoreBuilder: UserMessageStoreBuilder,
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
-    private val hostManager: HostManager
+    userMessageStoreBuilder: UserMessageStoreBuilder
 ) : MessageRepository {
     @OptIn(ExperimentalStoreApi::class)
     val messageMutableStore = messageMutableStoreBuilder.store
     val chatMessageMutableStore = chatMessageStoreBuilder.store
     private val userMessageStore = userMessageStoreBuilder.store
 
-    private val messageStateFlows = mutableMapOf<String, StateFlow<Pair<DomainMessage?, Boolean>>>()
-    private val chatMessagesStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-
-    init {
-        coroutineScopeIO.launch {
-            hostManager.currentHost.collect {
-                Napier.d("Host changed, clearing message state flows")
-                chatMessagesStateFlows.clear()
-                userMessageStateFlows.clear()
-            }
-        }
-    }
-
     @OptIn(ExperimentalStoreApi::class)
-    override fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>> {
-        return messageStateFlows.getOrPut(messageId) {
-            messageMutableStore.stream<StoreReadResponse<DomainMessage>>(
-                StoreReadRequest.cached(MessageKey.Read.ByMessageId(messageId), true)
-            ).map {
-                it.throwIfError()
-                Napier.d("Read Response: ${it::class.qualifiedName}")
-                val data = it.dataOrNull()
-                Napier.d("Message: $data")
-                data to (it is StoreReadResponse.Loading)
-            }.stateIn(
-                coroutineScopeIO,
-                SharingStarted.Eagerly,
-                null to true
-            )
+    override fun getMessageFlow(messageId: String): Flow<Pair<DomainMessage?, Boolean>> {
+        return messageMutableStore.stream<StoreReadResponse<DomainMessage>>(
+            StoreReadRequest.cached(MessageKey.Read.ByMessageId(messageId), true)
+        ).map {
+            it.throwIfError()
+            Napier.d("Read Response: ${it::class.qualifiedName}")
+            val data = it.dataOrNull()
+            Napier.d("Message: $data")
+            data to (it is StoreReadResponse.Loading)
         }
     }
 
-    override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
-        return chatMessagesStateFlows.getOrPut(chatId) {
-            chatMessageMutableStore.stream(
-                StoreReadRequest.cached(MessageKey.Read.ByChatId(chatId), true)
-            ).map {
-                it.throwIfError()
-                Napier.d("Read Response: ${it::class.qualifiedName}")
-                val data = it.dataOrNull()
-                Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
-                data to (it is StoreReadResponse.Loading)
-            }.stateIn(
-                coroutineScopeIO,
-                SharingStarted.Eagerly,
-                null to true
-            )
+    override fun getChatMessagesFlow(chatId: String): Flow<Pair<List<DomainMessage>?, Boolean>> {
+        return chatMessageMutableStore.stream(
+            StoreReadRequest.cached(MessageKey.Read.ByChatId(chatId), true)
+        ).map {
+            it.throwIfError()
+            Napier.d("Read Response: ${it::class.qualifiedName}")
+            val data = it.dataOrNull()
+            Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
+            data to (it is StoreReadResponse.Loading)
         }
     }
 
@@ -95,22 +57,15 @@ class MessageStoreRepository(
         ) as? StoreWriteResponse.Success.Typed<DomainMessage>)?.value?.id!!
     }
 
-    private val userMessageStateFlows = mutableMapOf<String, StateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    override fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
-        return userMessageStateFlows.getOrPut(userId) {
-            userMessageStore.stream(
-                StoreReadRequest.cached(MessageKey.Read.ByUserId(userId), true)
-            ).map {
-                it.throwIfError()
-                Napier.d("Read Response: ${it::class.qualifiedName}")
-                val data = it.dataOrNull()
-                Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
-                data to (it is StoreReadResponse.Loading)
-            }.stateIn(
-                coroutineScopeIO,
-                SharingStarted.Eagerly,
-                null to true
-            )
+    override fun getUserMessagesFlow(userId: String): Flow<Pair<List<DomainMessage>?, Boolean>> {
+        return userMessageStore.stream(
+            StoreReadRequest.cached(MessageKey.Read.ByUserId(userId), true)
+        ).map {
+            it.throwIfError()
+            Napier.d("Read Response: ${it::class.qualifiedName}")
+            val data = it.dataOrNull()
+            Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
+            data to (it is StoreReadResponse.Loading)
         }
     }
 }

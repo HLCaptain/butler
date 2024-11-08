@@ -1,10 +1,9 @@
 package illyan.butler.data.chat
 
-import illyan.butler.data.local.datasource.ChatLocalDataSource
-import illyan.butler.data.local.datasource.MessageLocalDataSource
-import illyan.butler.data.mapping.toDomainModel
+import illyan.butler.core.local.datasource.ChatLocalDataSource
+import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.ChatNetworkDataSource
-import kotlinx.coroutines.flow.map
+import illyan.butler.core.sync.NoopConverter
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.store5.Fetcher
 import org.mobilenativefoundation.store.store5.SourceOfTruth
@@ -26,7 +25,7 @@ fun provideUserChatStore(
 ) = StoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         require(key is ChatKey.Read.ByUserId)
-        chatNetworkDataSource.fetchByUserId(key.userId).map { chats -> chats.map { it.toDomainModel() } }
+        chatNetworkDataSource.fetchByUserId(key.userId)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->

@@ -19,6 +19,7 @@ kotlin {
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.config)
         implementation(projects.composeApp.data.settings)
+        implementation(projects.composeApp.domain.error)
         implementation(projects.shared)
 
         api(project.dependencies.platform(libs.koin.bom))

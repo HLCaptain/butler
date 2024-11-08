@@ -1,14 +1,12 @@
 package illyan.butler.data.chat
 
-import illyan.butler.data.local.datasource.ChatLocalDataSource
-import illyan.butler.data.local.datasource.DataHistoryLocalDataSource
-import illyan.butler.data.mapping.toDomainModel
-import illyan.butler.data.mapping.toNetworkModel
+import illyan.butler.core.local.datasource.ChatLocalDataSource
+import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.core.network.datasource.ChatNetworkDataSource
-import illyan.butler.data.sync.store.provideBookkeeper
-import illyan.butler.model.DomainChat
-import illyan.butler.utils.randomUUID
-import kotlinx.coroutines.flow.map
+import illyan.butler.core.sync.NoopConverter
+import illyan.butler.core.sync.provideBookkeeper
+import illyan.butler.core.utils.randomUUID
+import illyan.butler.domain.model.DomainChat
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -35,7 +33,7 @@ fun provideChatMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->
         require(key is ChatKey.Read.ByChatId)
-        chatNetworkDataSource.fetchByChatId(key.chatId).map { it.toDomainModel() }
+        chatNetworkDataSource.fetchByChatId(key.chatId)
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
@@ -64,14 +62,13 @@ fun provideChatMutableStore(
     updater = Updater.by(
         post = { key, output ->
             require(key is ChatKey.Write)
-            val chat = output.toNetworkModel()
             val newChat = when (key) {
-                is ChatKey.Write.Create -> chatNetworkDataSource.upsert(chat.copy(id = null)).also {
-                    chatLocalDataSource.replaceChat(it.id!!, it.toDomainModel())
+                is ChatKey.Write.Create -> chatNetworkDataSource.upsert(output.copy(id = null)).also {
+                    chatLocalDataSource.replaceChat(it.id!!, it)
                 }
-                is ChatKey.Write.Upsert -> chatNetworkDataSource.upsert(chat)
+                is ChatKey.Write.Upsert -> chatNetworkDataSource.upsert(output)
             }
-            UpdaterResult.Success.Typed(newChat.toDomainModel())
+            UpdaterResult.Success.Typed(newChat)
         },
         onCompletion = null
     ),

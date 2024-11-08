@@ -1,7 +1,11 @@
 package illyan.butler.core.network.ktor.http
 
 import illyan.butler.core.network.datasource.ChatNetworkDataSource
+import illyan.butler.core.network.mapping.toDomainModel
+import illyan.butler.core.network.mapping.toNetworkModel
+import illyan.butler.domain.model.DomainChat
 import illyan.butler.shared.model.chat.ChatDto
+import illyan.butler.shared.model.chat.MessageDto
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -26,7 +30,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class ChatHttpDataSource(private val client: HttpClient) : ChatNetworkDataSource {
-    private var newChatsStateFlow = MutableStateFlow<List<ChatDto>?>(null)
+    private var newChatsStateFlow = MutableStateFlow<List<DomainChat>?>(null)
     private var isLoadingNewChatsWebSocketSession = false
     private var isLoadedNewChatsWebSocketSession = false
 
@@ -43,19 +47,19 @@ class ChatHttpDataSource(private val client: HttpClient) : ChatNetworkDataSource
         }
     }
 
-    override fun fetchByChatId(chatId: String): Flow<ChatDto> {
+    override fun fetchByChatId(chatId: String): Flow<DomainChat> {
         return fetchNewChats().map { chats ->
             chats.first { it.id == chatId }
         }
     }
 
-    override fun fetchByUserId(userId: String): Flow<List<ChatDto>> {
+    override fun fetchByUserId(userId: String): Flow<List<DomainChat>> {
         return fetchNewChats().map { chats ->
             chats.filter { it.members.contains(userId) }
         }
     }
 
-    override fun fetchNewChats(): Flow<List<ChatDto>> {
+    override fun fetchNewChats(): Flow<List<DomainChat>> {
         return if (newChatsStateFlow.value == null && !isLoadingNewChatsWebSocketSession && !isLoadedNewChatsWebSocketSession) {
             isLoadingNewChatsWebSocketSession = true
             flow {
@@ -70,34 +74,34 @@ class ChatHttpDataSource(private val client: HttpClient) : ChatNetworkDataSource
         }.filterNotNull()
     }
 
-    override suspend fun fetchPaginated(limit: Int, timestamp: Long): List<ChatDto> {
+    override suspend fun fetchPaginated(limit: Int, timestamp: Long): List<DomainChat> {
         return client.get("/chats") {
             parameter("limit", limit)
             parameter("timestamp", timestamp)
-        }.body()
+        }.body<List<ChatDto>>().map { it.toDomainModel() }
     }
 
-    override suspend fun fetch(): List<ChatDto> {
-        return client.get("/chats").body()
+    override suspend fun fetch(): List<DomainChat> {
+        return client.get("/chats").body<List<ChatDto>>().map { it.toDomainModel() }
     }
 
-    override suspend fun fetchByModel(modelUUID: String): List<ChatDto> {
+    override suspend fun fetchByModel(modelUUID: String): List<DomainChat> {
         TODO("Not yet implemented")
     }
 
     // To avoid needless updates to chats right after they are created
-    private val dontUpdateChat = mutableSetOf<ChatDto>()
-    override suspend fun upsert(chat: ChatDto): ChatDto {
+    private val dontUpdateChat = mutableSetOf<DomainChat>()
+    override suspend fun upsert(chat: DomainChat): DomainChat {
         return if (chat.id == null) {
-            val newChat = client.post("/chats") { setBody(chat) }.body<ChatDto>()
+            val newChat = client.post("/chats") { setBody(chat.toNetworkModel()) }.body<ChatDto>().toDomainModel()
             dontUpdateChat.add(newChat)
             newChat
         } else if (chat !in dontUpdateChat) {
-            client.put("/chats/${chat.id}") { setBody(chat) }.body()
+            client.put("/chats/${chat.id}") { setBody(chat.toNetworkModel()) }.body<ChatDto>().toDomainModel()
         } else {
             dontUpdateChat.removeIf { it.id == chat.id }
             chat
-        }. also { newChatsStateFlow.update { _ -> listOf(it) } }
+        }.also { newChatsStateFlow.update { _ -> listOf(it) } }
     }
 
     override suspend fun delete(id: String): Boolean {

@@ -1,19 +1,15 @@
-package illyan.butler.repository.host
+package illyan.butler.data.host
 
-import illyan.butler.di.KoinNames
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
-class HostMemoryRepository(
-    @Named(KoinNames.CoroutineScopeIO) private val coroutineScope: CoroutineScope
-) : HostRepository {
+class HostMemoryRepository : HostRepository {
 
     private val _isConnectingToHost = MutableStateFlow(false)
     override val isConnectingToHost = _isConnectingToHost.asStateFlow()
@@ -31,9 +27,11 @@ class HostMemoryRepository(
         _isConnectingToHost.update { true }
         return try {
             var testingEnded = false
-            coroutineScope.launch {
-                delay(5000)
-                if (!testingEnded) throw Exception("Connection timeout")
+            coroutineScope {
+                launch {
+                    delay(5000)
+                    if (!testingEnded) throw Exception("Connection timeout")
+                }
             }
             // Simulate a network connection test
             delay(1000)

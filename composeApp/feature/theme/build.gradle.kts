@@ -10,7 +10,6 @@ plugins {
 
 kotlin {
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
@@ -20,7 +19,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.domain)
-        implementation(projects.composeApp.data.settings)
+        implementation(projects.composeApp.domain.settings)
 
         implementation(compose.runtime)
         implementation(compose.runtimeSaveable)

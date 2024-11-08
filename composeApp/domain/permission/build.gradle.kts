@@ -14,11 +14,16 @@ kotlin {
     jvm()
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.domain)
+        implementation(projects.composeApp.data.permission)
         implementation(projects.composeApp.data.permission)
 
         api(project.dependencies.platform(libs.koin.bom))
         api(libs.koin.core)
         implementation(libs.koin.annotations)
+
+        implementation(libs.kotlinx.coroutines)
+        implementation(libs.napier)
     }
 }
 

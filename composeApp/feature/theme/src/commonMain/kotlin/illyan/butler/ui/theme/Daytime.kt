@@ -1,4 +1,4 @@
-package illyan.butler.utils
+package illyan.butler.ui.theme
 
 import androidx.compose.ui.util.lerp
 import kotlinx.datetime.Clock

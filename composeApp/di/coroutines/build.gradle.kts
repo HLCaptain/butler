@@ -14,26 +14,30 @@ kotlin {
     jvm()
 
     sourceSets.commonMain.dependencies {
-        implementation(projects.composeApp.core.utils)
-        implementation(projects.composeApp.core.sync)
-        implementation(projects.composeApp.core.local)
-        implementation(projects.composeApp.core.network)
+        implementation(projects.composeApp.config)
+        implementation(projects.composeApp.data.error)
+        implementation(projects.composeApp.data.host)
+        implementation(projects.composeApp.data.user)
+        implementation(projects.composeApp.data.chat)
+        implementation(projects.composeApp.data.model)
+        implementation(projects.composeApp.data.message)
+        implementation(projects.composeApp.data.resource)
+        implementation(projects.composeApp.data.settings)
+        implementation(projects.composeApp.data.permission)
+
+        implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.core.local.room)
-        implementation(projects.composeApp.domain)
-        implementation(projects.shared)
 
         api(project.dependencies.platform(libs.koin.bom))
         api(libs.koin.core)
         implementation(libs.koin.annotations)
-
-        implementation(libs.kotlinx.coroutines)
-        implementation(libs.store)
-        implementation(libs.napier)
+        
+        implementation(libs.koin.compose.viewmodel)
     }
 }
 
 android {
-    namespace = "illyan.butler.data.resource"
+    namespace = "illyan.butler.di"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

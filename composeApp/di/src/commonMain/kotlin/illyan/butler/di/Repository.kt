@@ -14,19 +14,19 @@ import illyan.butler.data.settings.AppRepository
 import illyan.butler.data.settings.AppSettingsRoomRepository
 import illyan.butler.data.chat.ChatMemoryRepository
 import illyan.butler.data.chat.ChatRepository
-import illyan.butler.repository.chat.ChatStoreRepository
-import illyan.butler.repository.host.HostMemoryRepository
-import illyan.butler.repository.host.HostRepository
-import illyan.butler.repository.host.HostRoomRepository
+import illyan.butler.data.chat.ChatStoreRepository
+import illyan.butler.data.host.HostMemoryRepository
+import illyan.butler.data.host.HostRepository
+import illyan.butler.data.host.HostRoomRepository
 import illyan.butler.data.message.MessageMemoryRepository
-import illyan.butler.repository.message.MessageRepository
-import illyan.butler.repository.message.MessageStoreRepository
+import illyan.butler.data.message.MessageRepository
+import illyan.butler.data.message.MessageStoreRepository
 import illyan.butler.data.resource.ResourceMemoryRepository
-import illyan.butler.repository.resource.ResourceRepository
-import illyan.butler.repository.resource.ResourceStoreRepository
+import illyan.butler.data.resource.ResourceRepository
+import illyan.butler.data.resource.ResourceStoreRepository
 import illyan.butler.repository.user.UserMemoryRepository
-import illyan.butler.repository.user.UserRepository
-import illyan.butler.repository.user.UserRoomRepository
+import illyan.butler.data.user.UserRepository
+import illyan.butler.data.user.UserRoomRepository
 import org.koin.core.annotation.Single
 
 @Single

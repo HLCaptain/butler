@@ -1,7 +1,7 @@
 package illyan.butler.data.chat
 
 import illyan.butler.domain.model.DomainChat
-import illyan.butler.repository.user.UserRepository
+import illyan.butler.data.user.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -48,7 +48,7 @@ class ChatMemoryRepository(
         userChats[userId] = userChats[userId]?.plus(newChat) ?: listOf(newChat)
         userChatStateFlows[userId]?.update { userChats[userId] to false }
 
-        return newChat.id
+        return newChat.id!!
     }
 
     override suspend fun deleteAllChats(userId: String) {

@@ -1,6 +1,8 @@
 package illyan.butler.core.network.ktor.http
 
 import illyan.butler.core.network.datasource.ResourceNetworkDataSource
+import illyan.butler.core.network.mapping.toDomainModel
+import illyan.butler.domain.model.DomainResource
 import illyan.butler.shared.model.chat.ResourceDto
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -25,7 +27,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDataSource {
-    private val newResourcesStateFlow = MutableStateFlow<List<ResourceDto>?>(null)
+    private val newResourcesStateFlow = MutableStateFlow<List<DomainResource>?>(null)
     private var isLoadingNewResourcesWebSocketSession = false
     private var isLoadedNewResourcesWebSocketSession = false
 
@@ -46,7 +48,7 @@ class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDa
         return client.delete("/resources/$resourceId").status.isSuccess()
     }
 
-    override fun fetchNewResources(): Flow<List<ResourceDto>> {
+    override fun fetchNewResources(): Flow<List<DomainResource>> {
         return if (newResourcesStateFlow.value == null && !isLoadingNewResourcesWebSocketSession && !isLoadedNewResourcesWebSocketSession) {
             isLoadingNewResourcesWebSocketSession = true
             flow {
@@ -60,30 +62,30 @@ class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDa
             newResourcesStateFlow
         }.filterNotNull()
     }
-    override fun fetchResourceById(resourceId: String): Flow<ResourceDto> {
+    override fun fetchResourceById(resourceId: String): Flow<DomainResource> {
         return fetchNewResources().map { resources -> resources.first { it.id == resourceId } }
     }
 
     // To avoid needless updates to resources right after they are created
-    private val dontUpdateResource = mutableSetOf<ResourceDto>()
-    override suspend fun upsert(resource: ResourceDto): ResourceDto {
+    private val dontUpdateResource = mutableSetOf<DomainResource>()
+    override suspend fun upsert(resource: DomainResource): DomainResource {
         return if (resource.id == null) {
-            val newMessage = client.post("/resources") { setBody(resource) }.body<ResourceDto>()
+            val newMessage = client.post("/resources") { setBody(resource) }.body<ResourceDto>().toDomainModel()
             dontUpdateResource.add(newMessage)
             newMessage
         } else if (resource !in dontUpdateResource) {
-            client.put("/resources/${resource.id}") { setBody(resource) }.body()
+            client.put("/resources/${resource.id}") { setBody(resource) }.body<ResourceDto>().toDomainModel()
         } else {
             dontUpdateResource.removeIf { it.id == resource.id }
             resource
         }
     }
 
-    override fun fetchByUser(): Flow<List<ResourceDto>> {
+    override fun fetchByUser(): Flow<List<DomainResource>> {
         return fetchNewResources()
     }
 
-    private suspend fun fetchByUserOnce(): List<ResourceDto> {
-        return client.get("/resources").body()
+    private suspend fun fetchByUserOnce(): List<DomainResource> {
+        return client.get("/resources").body<List<ResourceDto>>().map { it.toDomainModel() }
     }
 }

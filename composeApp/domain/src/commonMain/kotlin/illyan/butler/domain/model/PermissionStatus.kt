@@ -1,8 +1,8 @@
 package illyan.butler.domain.model
 
 sealed class PermissionStatus {
-    open val shouldShowRationale: Boolean = false
-
+    data object Unknown : PermissionStatus()
+    data object NotSupported : PermissionStatus()
     data object Granted : PermissionStatus()
-    data class Denied(override val shouldShowRationale: Boolean) : PermissionStatus()
+    data class Denied(val shouldShowRationale: Boolean) : PermissionStatus()
 }
