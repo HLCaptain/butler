@@ -1,12 +1,12 @@
 package illyan.butler.server
 
-import illyan.butler.server.data.model.authenticate.TokenConfiguration
 import illyan.butler.server.plugins.configureAuthentication
 import illyan.butler.server.plugins.configureCompression
 import illyan.butler.server.plugins.configureDependencyInjection
 import illyan.butler.server.plugins.configureRouting
 import illyan.butler.server.plugins.configureSerialization
 import illyan.butler.server.plugins.configureStatusPages
+import illyan.butler.shared.model.authenticate.TokenConfiguration
 import io.ktor.client.call.body
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

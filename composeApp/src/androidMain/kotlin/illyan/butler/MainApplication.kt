@@ -18,7 +18,7 @@ class MainApplication : Application() {
         startKoin {
             androidLogger()
             androidContext(applicationContext)
-            modules(defaultModule, getViewModelModule(), module {
+            modules(defaultModule, module {
                 single { AndroidPermissionRepository() }
             })
         }

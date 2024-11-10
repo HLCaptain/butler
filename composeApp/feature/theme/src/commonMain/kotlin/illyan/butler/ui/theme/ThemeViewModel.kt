@@ -32,10 +32,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.koin.android.annotation.KoinViewModel
 
-class ThemeViewModel(
-    settingsManager: SettingsManager,
-) : ViewModel() {
+@KoinViewModel
+class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
     private val theme = settingsManager.userPreferences.map { it?.theme }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 

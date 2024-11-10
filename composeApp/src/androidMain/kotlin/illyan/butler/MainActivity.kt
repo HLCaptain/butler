@@ -5,6 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import illyan.butler.data.permission.AndroidPermissionRepository
+import illyan.butler.data.permission.getPlatformPermissionRepository
 
 class MainActivity : AppCompatActivity() {
     private lateinit var permissionRepository: AndroidPermissionRepository

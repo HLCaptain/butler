@@ -20,7 +20,7 @@ version = libs.versions.butler.get()
 kotlin {
     androidTarget()
     jvm()
-    jvmToolchain(17)
+    jvmToolchain(21)
 
     sourceSets {
         commonMain {
@@ -32,6 +32,7 @@ kotlin {
                 implementation(projects.composeApp.core.ui.utils)
                 implementation(projects.composeApp.core.local)
                 implementation(projects.composeApp.core.network)
+                implementation(projects.composeApp.config)
 
                 implementation(projects.composeApp.data.chat)
                 implementation(projects.composeApp.data.host)
@@ -43,6 +44,7 @@ kotlin {
                 implementation(projects.composeApp.data.error)
                 implementation(projects.composeApp.data.message)
 
+                implementation(projects.composeApp.domain)
                 implementation(projects.composeApp.domain.audio)
                 implementation(projects.composeApp.domain.auth)
                 implementation(projects.composeApp.domain.chat)
@@ -55,6 +57,13 @@ kotlin {
 
                 implementation(projects.composeApp.di)
                 implementation(projects.composeApp.feature.theme)
+                implementation(projects.composeApp.feature.home)
+                implementation(projects.composeApp.feature.auth)
+                implementation(projects.composeApp.feature.chat)
+                implementation(projects.composeApp.feature.error)
+                implementation(projects.composeApp.feature.onboarding)
+                implementation(projects.composeApp.feature.permission)
+                implementation(projects.composeApp.feature.profile)
 
                 implementation(compose.runtime)
                 implementation(compose.runtimeSaveable)
@@ -87,6 +96,7 @@ kotlin {
                 api(libs.koin.core)
                 implementation(libs.koin.annotations)
                 implementation(libs.koin.compose)
+                implementation(libs.koin.core.viewmodel)
                 implementation(libs.koin.compose.viewmodel)
 
                 implementation(libs.kotlinx.atomicfu)
@@ -139,7 +149,7 @@ dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspJvm", libs.androidx.room.compiler)
-    ksp(libs.koin.ksp)
+    add("kspCommonMainMetadata", libs.koin.ksp)
 }
 
 ksp {

@@ -32,6 +32,12 @@ kotlin {
         implementation(compose.uiTooling)
         implementation(compose.uiUtil)
 
+        api(project.dependencies.platform(libs.koin.bom))
+        api(libs.koin.core)
+        implementation(libs.koin.annotations)
+        implementation(libs.koin.compose)
+        implementation(libs.koin.compose.viewmodel)
+
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
 

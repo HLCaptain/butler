@@ -2,7 +2,6 @@ package illyan.butler
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import illyan.butler.di.getViewModelModule
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.app_name
 import illyan.butler.generated.resources.butler_logo
@@ -15,7 +14,7 @@ import org.koin.ksp.generated.defaultModule
 fun main() = application {
     initNapier()
     startKoin {
-        modules(defaultModule, getViewModelModule())
+        modules(defaultModule)
     }
     Window(
         onCloseRequest = ::exitApplication,
