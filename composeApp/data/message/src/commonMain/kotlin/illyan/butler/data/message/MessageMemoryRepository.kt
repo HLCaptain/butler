@@ -4,6 +4,7 @@ import illyan.butler.domain.model.DomainMessage
 import illyan.butler.data.user.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
 
@@ -44,7 +45,7 @@ class MessageMemoryRepository(
 
         messages[newMessage.id!!] = newMessage
         messageStateFlows[newMessage.id]?.update { newMessage to false }
-        val userId = userRepository.signedInUserId.value!!
+        val userId = userRepository.signedInUserId.first()!!
         userMessages[userId] = userMessages[userId]?.plus(newMessage) ?: listOf(newMessage)
         userMessageStateFlows[userId]?.update { userMessages[userId] to false }
 

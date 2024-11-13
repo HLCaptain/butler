@@ -9,4 +9,5 @@ interface PermissionRepository {
     val cachedPermissionFlows: StateFlow<Map<Permission, PermissionStatus>>
     fun getPermissionStatus(permission: Permission): Flow<PermissionStatus?>
     fun launchPermissionRequest(permission: Permission)
+    fun showAppRationale(permission: Permission)
 }

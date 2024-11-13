@@ -1,11 +1,13 @@
 package illyan.butler.data.host
 
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.koin.core.annotation.Single
 
 @Single
@@ -26,18 +28,12 @@ class HostMemoryRepository : HostRepository {
     override suspend fun testHost(url: String): Boolean {
         _isConnectingToHost.update { true }
         return try {
-            var testingEnded = false
-            coroutineScope {
-                launch {
-                    delay(5000)
-                    if (!testingEnded) throw Exception("Connection timeout")
-                }
+            withTimeout(5000) {
+                // Simulate a network connection test
+                delay(1000)
+                true
             }
-            // Simulate a network connection test
-            delay(1000)
-            testingEnded = true
-            true
-        } catch (e: Exception) {
+        } catch (e: TimeoutCancellationException) {
             false
         }.also { _isConnectingToHost.update { false } }
     }

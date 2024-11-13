@@ -8,8 +8,10 @@ import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.domain.model.Permission
+import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.error.ErrorManager
 import illyan.butler.permission.PermissionManager
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,14 +50,14 @@ class HomeViewModel(
         val isTutorialDone = flows[1] as? Boolean
         val serverErrors = flows[2] as List<Pair<String, DomainErrorResponse>>
         val appErrors = flows[3] as List<DomainErrorEvent>
-        val preparedPermissionsToRequest = flows[4] as Set<Permission>
-        if (isTutorialDone == null || isUserSignedIn == null) HomeScreenState()
+        val permissionStatuses = flows[4] as Map<Permission, PermissionStatus?>
+        if (isTutorialDone == null || isUserSignedIn == null) return@combine HomeScreenState()
         HomeScreenState(
             isUserSignedIn = isUserSignedIn,
             isTutorialDone = isTutorialDone,
             serverErrors = serverErrors,
             appErrors = appErrors,
-            preparedPermissionsToRequest = preparedPermissionsToRequest,
+            permissionStatuses = permissionStatuses
         )
     }.stateIn(
         viewModelScope,

@@ -1,4 +1,4 @@
-package illyan.butler.repository.user
+package illyan.butler.data.user
 
 import illyan.butler.core.utils.randomUUID
 import illyan.butler.data.user.UserRepository
@@ -6,6 +6,7 @@ import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,13 +21,13 @@ class UserMemoryRepository : UserRepository {
     private val _isUserSigningIn = MutableStateFlow(false)
 
     private val _userData = MutableStateFlow<DomainUser?>(null)
-    override val userData: StateFlow<DomainUser?> = _userData.asStateFlow()
-    override val isUserSignedIn = userData.map { it != null }.stateIn(CoroutineScope(Dispatchers.IO), SharingStarted.Eagerly, null)
-    override val signedInUserId = userData.map { it?.id }.stateIn(CoroutineScope(Dispatchers.IO), SharingStarted.Eagerly, null)
-    override val signedInUserEmail = userData.map { it?.email }.stateIn(CoroutineScope(Dispatchers.IO), SharingStarted.Eagerly, null)
-    override val signedInUserPhoneNumber = userData.map { it?.phone }.stateIn(CoroutineScope(Dispatchers.IO), SharingStarted.Eagerly, null)
-    override val signedInUserPhotoURL = userData.map { it?.photoUrl }.stateIn(CoroutineScope(Dispatchers.IO), SharingStarted.Eagerly, null)
-    override val signedInUserName = userData.map { it?.username }.stateIn(CoroutineScope(Dispatchers.IO), SharingStarted.Eagerly, null)
+    override val userData: Flow<DomainUser?> = _userData.asStateFlow()
+    override val isUserSignedIn = userData.map { it != null }
+    override val signedInUserId = userData.map { it?.id }
+    override val signedInUserEmail = userData.map { it?.email }
+    override val signedInUserPhoneNumber = userData.map { it?.phone }
+    override val signedInUserPhotoURL = userData.map { it?.photoUrl }
+    override val signedInUserName = userData.map { it?.username }
     override val isUserSigningIn = _isUserSigningIn.asStateFlow()
 
     override suspend fun loginWithEmailAndPassword(email: String, password: String) {

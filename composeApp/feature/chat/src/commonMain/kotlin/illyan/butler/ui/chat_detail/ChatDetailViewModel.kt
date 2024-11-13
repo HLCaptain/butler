@@ -152,7 +152,7 @@ class ChatDetailViewModel(
 
     fun requestGalleryPermission() {
         viewModelScope.launch {
-            permissionManager.launchPermissionRequest(Permission.GALLERY)
+            permissionManager.showAppRationale(Permission.GALLERY)
         }
     }
 }

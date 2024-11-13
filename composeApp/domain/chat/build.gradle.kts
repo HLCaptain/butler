@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.google.ksp)
 }
 
 kotlin {
@@ -28,6 +29,12 @@ kotlin {
         implementation(libs.kotlinx.io)
         implementation(libs.napier)
     }
+}
+
+dependencies {
+    add("kspCommonMainMetadata", libs.koin.ksp)
+    add("kspAndroid", libs.koin.ksp)
+    add("kspJvm", libs.koin.ksp)
 }
 
 android {

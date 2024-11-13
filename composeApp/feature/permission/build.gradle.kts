@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.jetbrains.compose)
+    alias(libs.plugins.google.ksp)
 }
 
 kotlin {
@@ -49,6 +50,16 @@ kotlin {
         implementation(libs.androidx.appcompat)
         implementation(libs.androidx.activity)
     }
+}
+
+ksp {
+    arg("KOIN_USE_COMPOSE_VIEWMODEL", "true")
+}
+
+dependencies {
+    add("kspCommonMainMetadata", libs.koin.ksp)
+    add("kspAndroid", libs.koin.ksp)
+    add("kspJvm", libs.koin.ksp)
 }
 
 android {

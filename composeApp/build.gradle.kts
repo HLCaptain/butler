@@ -30,8 +30,8 @@ kotlin {
                 implementation(projects.composeApp.core.ui.resources)
                 implementation(projects.composeApp.core.ui.components)
                 implementation(projects.composeApp.core.ui.utils)
-                implementation(projects.composeApp.core.local)
-                implementation(projects.composeApp.core.network)
+                implementation(projects.composeApp.core.local.room)
+                implementation(projects.composeApp.core.network.ktor)
                 implementation(projects.composeApp.config)
 
                 implementation(projects.composeApp.data.chat)
@@ -56,6 +56,7 @@ kotlin {
                 implementation(projects.composeApp.domain.settings)
 
                 implementation(projects.composeApp.di)
+                implementation(projects.composeApp.di.repository)
                 implementation(projects.composeApp.feature.theme)
                 implementation(projects.composeApp.feature.home)
                 implementation(projects.composeApp.feature.auth)
@@ -94,7 +95,7 @@ kotlin {
 
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
-                implementation(libs.koin.annotations)
+                api(libs.koin.annotations)
                 implementation(libs.koin.compose)
                 implementation(libs.koin.core.viewmodel)
                 implementation(libs.koin.compose.viewmodel)
@@ -234,7 +235,9 @@ android {
     dependencies {
         implementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
-        ksp(libs.koin.ksp)
+        add("kspCommonMainMetadata", libs.koin.ksp)
+    add("kspAndroid", libs.koin.ksp)
+    add("kspJvm", libs.koin.ksp)
     }
 }
 

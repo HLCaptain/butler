@@ -34,7 +34,7 @@ fun PermissionRequestScreen() {
     val permissions by screenModel.state.collectAsState()
     var permission by rememberSaveable { mutableStateOf<Permission?>(null) }
     LaunchedEffect(permissions) {
-        permission = permissions.filter { it.value is PermissionStatus.Denied && (it.value as PermissionStatus.Denied).shouldShowRationale }.keys.firstOrNull()
+        permission = permissions.filterValues { it is PermissionStatus.ShowAppRationale }.keys.firstOrNull()
     }
     ButlerDialogContent(
     modifier = Modifier.smallDialogWidth(),

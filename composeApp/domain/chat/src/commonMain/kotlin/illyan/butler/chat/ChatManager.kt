@@ -65,7 +65,7 @@ class ChatManager(
         emptyMap()
     )
 
-    private fun loadChats(userId: String? = authManager.signedInUserId.value): Flow<List<DomainChat>> {
+    private fun loadChats(userId: String? = null): Flow<List<DomainChat>> {
         if (userId == null) {
             Napier.v { "User not signed in, reseting chats" }
             return flowOf(emptyList())
@@ -74,7 +74,7 @@ class ChatManager(
         return chatRepository.getUserChatsFlow(userId).filterNot { it.second }.map { it.first ?: emptyList() }
     }
 
-    private fun loadMessages(userId: String? = authManager.signedInUserId.value): Flow<List<DomainMessage>> {
+    private fun loadMessages(userId: String? = null): Flow<List<DomainMessage>> {
         if (userId == null) {
             Napier.v { "User not signed in, reseting messages" }
             return flowOf(emptyList())
@@ -113,7 +113,7 @@ class ChatManager(
         message: String? = null,
         resourceIds: List<String> = emptyList()
     ) {
-        authManager.signedInUserId.value?.let { userId ->
+        authManager.signedInUserId.first()?.let { userId ->
             messageRepository.upsert(
                 DomainMessage(
                     chatId = chatId,

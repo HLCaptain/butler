@@ -1,3 +1,4 @@
+import org.jetbrains.compose.internal.utils.localPropertiesFile
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.jetbrains.compose)
+    alias(libs.plugins.google.ksp)
 }
 
 kotlin {
@@ -65,6 +67,24 @@ kotlin {
     }
 }
 
+ksp {
+    arg("KOIN_USE_COMPOSE_VIEWMODEL", "true")
+}
+
+dependencies {
+    add("kspCommonMainMetadata", libs.koin.ksp)
+    add("kspAndroid", libs.koin.ksp)
+    add("kspJvm", libs.koin.ksp)
+}
+
+val keyStorePath = "${rootProject.projectDir}/composeApp"
+
+val localProperties = File("${rootProject.projectDir.path}/local.properties").readLines().associate {
+    if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
+    val (key, value) = it.split("=", limit = 2)
+    key to value
+}
+
 android {
     namespace = "illyan.butler.ui.home"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -74,5 +94,27 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    signingConfigs {
+        val debugStorePath = "$keyStorePath/${localProperties["DEBUG_KEY_PATH"].toString()}"
+        val debugKeyAlias = localProperties["DEBUG_KEY_ALIAS"].toString()
+        val debugStorePassword = localProperties["DEBUG_KEYSTORE_PASSWORD"].toString()
+        val debugKeyPassword = localProperties["DEBUG_KEY_PASSWORD"].toString()
+        getByName("debug") {
+            storeFile = file(debugStorePath)
+            keyAlias = debugKeyAlias
+            storePassword = debugStorePassword
+            keyPassword = debugKeyPassword
+        }
+        val releaseStorePath = "$keyStorePath/${localProperties["RELEASE_KEY_PATH"].toString()}"
+        val releaseKeyAlias = localProperties["RELEASE_KEY_ALIAS"].toString()
+        val releaseStorePassword = localProperties["RELEASE_KEYSTORE_PASSWORD"].toString()
+        val releaseKeyPassword = localProperties["RELEASE_KEY_PASSWORD"].toString()
+        create("release") {
+            storeFile = file(releaseStorePath)
+            keyAlias = releaseKeyAlias
+            storePassword = releaseStorePassword
+            keyPassword = releaseKeyPassword
+        }
     }
 }

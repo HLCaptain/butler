@@ -20,13 +20,9 @@ class AppManager(
     val firstSignInHappenedYet = appRepository.firstSignInHappenedYet
     val isTutorialDone = appRepository.isTutorialDone.map {
         // If the user is signed in on the start of the app, set the tutorial as done
-        if (authManager.isUserSignedIn.filterNotNull().first()) setTutorialDone()
+        if (authManager.isUserSignedIn.filterNotNull().first() && it != true) setTutorialDone()
         it
-    }.stateIn(
-        CoroutineScope(Dispatchers.IO),
-        SharingStarted.Eagerly,
-        null
-    )
+    }
 
     suspend fun setTutorialDone() {
         appRepository.setTutorialDone(true)

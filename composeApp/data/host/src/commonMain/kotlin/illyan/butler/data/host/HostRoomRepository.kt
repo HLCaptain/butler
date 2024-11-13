@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.koin.core.annotation.Single
 
 @Single
@@ -38,13 +39,9 @@ class HostRoomRepository(
         if (url.isBlank()) return false
         _isConnectingToHost.update { true }
         return try {
-            val connectionTimeoutJob = coroutineScope {
-                launch {
-                    delay(5000)
-                    throw Exception("Connection timeout")
-                }
+            withTimeout(5000) {
+                hostNetworkDataSource.tryToConnect(url)
             }
-            hostNetworkDataSource.tryToConnect(url).also { connectionTimeoutJob.cancel() }
         } catch (e: Exception) {
             false
         }.also { _isConnectingToHost.update { false } }

@@ -42,10 +42,10 @@ kotlin {
         implementation(compose.uiUtil)
 
         api(project.dependencies.platform(libs.koin.bom))
-        api(libs.koin.core)
-        implementation(libs.koin.annotations)
+        implementation(libs.koin.core)
+        api(libs.koin.annotations)
         implementation(libs.koin.compose)
-        api(libs.koin.core.viewmodel)
+//        api(libs.koin.core.viewmodel)
         api(libs.koin.compose.viewmodel)
 
         implementation(libs.kotlinx.coroutines)
@@ -75,13 +75,6 @@ dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp)
     add("kspAndroid", libs.koin.ksp)
     add("kspJvm", libs.koin.ksp)
-}
-
-// Trigger Common Metadata Generation from Native tasks
-project.tasks.withType(KotlinCompilationTask::class.java).configureEach {
-    if(name != "kspCommonMainKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
-    }
 }
 
 android {

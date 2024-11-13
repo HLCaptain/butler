@@ -16,11 +16,7 @@ import org.koin.core.annotation.Single
 class PermissionManager(private val permissionRepository: PermissionRepository) {
     val permissionStates = combine(
         Permission.entries.map { permission -> permissionRepository.getPermissionStatus(permission).map { permission to it } }
-    ) { it.toMap() }.stateIn(
-        CoroutineScope(Dispatchers.Main),
-        SharingStarted.Eagerly,
-        emptyMap()
-    )
+    ) { it.toMap() }
 
     fun getPermissionStatus(permission: Permission) = permissionRepository.getPermissionStatus(permission).also {
         Napier.d("getPermissionStatus($permission)")
@@ -28,5 +24,9 @@ class PermissionManager(private val permissionRepository: PermissionRepository) 
 
     fun launchPermissionRequest(permission: Permission) = permissionRepository.launchPermissionRequest(permission).also {
         Napier.d("launchPermissionRequest($permission)")
+    }
+
+    fun showAppRationale(permission: Permission) = permissionRepository.showAppRationale(permission).also {
+        Napier.d("showAppRationale($permission)")
     }
 }

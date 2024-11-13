@@ -1,4 +1,4 @@
-package illyan.butler.di
+package illyan.butler.di.repository
 
 import illyan.butler.config.BuildConfig
 import illyan.butler.data.error.ErrorMemoryRepository
@@ -24,7 +24,7 @@ import illyan.butler.data.message.MessageStoreRepository
 import illyan.butler.data.resource.ResourceMemoryRepository
 import illyan.butler.data.resource.ResourceRepository
 import illyan.butler.data.resource.ResourceStoreRepository
-import illyan.butler.repository.user.UserMemoryRepository
+import illyan.butler.data.user.UserMemoryRepository
 import illyan.butler.data.user.UserRepository
 import illyan.butler.data.user.UserRoomRepository
 import org.koin.core.annotation.Single

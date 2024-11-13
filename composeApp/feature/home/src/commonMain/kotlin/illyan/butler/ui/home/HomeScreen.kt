@@ -69,6 +69,7 @@ import androidx.navigation.compose.rememberNavController
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.getWindowSizeInDp
+import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.close
@@ -257,7 +258,7 @@ fun HomeScreen() {
             }
             ButlerDialog(
                 modifier = Modifier.zIndex(2f),
-                isDialogOpen = state.preparedPermissionsToRequest.isNotEmpty(),
+                isDialogOpen = state.permissionStatuses.filterValues { it is PermissionStatus.ShowAppRationale }.isNotEmpty(),
                 isDialogFullscreen = false
             ) { PermissionRequestScreen() }
             // Index is rememberSaveable, Screen is probably not.

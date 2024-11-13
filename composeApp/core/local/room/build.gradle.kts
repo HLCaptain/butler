@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -11,7 +10,6 @@ plugins {
 
 kotlin {
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
@@ -35,11 +33,13 @@ kotlin {
 }
 
 dependencies {
-//    add("kspAndroid", libs.androidx.room.compiler)
-//    add("kspJvm", libs.androidx.room.compiler)
     annotationProcessor(libs.androidx.room.compiler)
-    ksp(libs.androidx.room.compiler)
-    ksp(libs.koin.ksp)
+    add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
+    add("kspCommonMainMetadata", libs.koin.ksp)
+    add("kspAndroid", libs.koin.ksp)
+    add("kspJvm", libs.koin.ksp)
 }
 
 room {

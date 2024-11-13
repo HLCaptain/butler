@@ -63,6 +63,7 @@ include(":composeApp:domain:settings")
 
 include(":composeApp:di")
 include(":composeApp:di:coroutines")
+include(":composeApp:di:repository")
 
 include(":composeApp:feature:auth")
 include(":composeApp:feature:chat")

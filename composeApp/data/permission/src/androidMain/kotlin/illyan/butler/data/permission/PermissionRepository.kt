@@ -63,6 +63,10 @@ class AndroidPermissionRepository : PermissionRepository {
             it.launch(ANDROID_PERMISSIONS[permission]!!)
         }
     }
+
+    override fun showAppRationale(permission: Permission) {
+        cachedPermissionFlows.update { it + (permission to PermissionStatus.ShowAppRationale) }
+    }
 }
 
 fun Context.findActivity(): Activity {

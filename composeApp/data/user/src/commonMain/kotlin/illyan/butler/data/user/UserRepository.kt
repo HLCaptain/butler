@@ -2,17 +2,18 @@ package illyan.butler.data.user
 
 import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface UserRepository {
-    val userData: StateFlow<DomainUser?>
-    val isUserSignedIn: StateFlow<Boolean?>
-    val signedInUserId: StateFlow<String?>
-    val signedInUserEmail: StateFlow<String?>
-    val signedInUserPhoneNumber: StateFlow<String?>
-    val signedInUserPhotoURL: StateFlow<String?>
-    val signedInUserName: StateFlow<String?>
-    val isUserSigningIn: StateFlow<Boolean>
+    val userData: Flow<DomainUser?>
+    val isUserSignedIn: Flow<Boolean?>
+    val signedInUserId: Flow<String?>
+    val signedInUserEmail: Flow<String?>
+    val signedInUserPhoneNumber: Flow<String?>
+    val signedInUserPhotoURL: Flow<String?>
+    val signedInUserName: Flow<String?>
+    val isUserSigningIn: Flow<Boolean>
 
     suspend fun loginWithEmailAndPassword(email: String, password: String)
     suspend fun signUpAndLogin(email: String, password: String, userName: String)

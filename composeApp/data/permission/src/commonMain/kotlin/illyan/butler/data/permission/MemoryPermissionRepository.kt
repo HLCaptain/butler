@@ -22,4 +22,8 @@ class MemoryPermissionRepository : PermissionRepository {
     override fun launchPermissionRequest(permission: Permission) {
         cachedPermissionFlows.update { it + (permission to PermissionStatus.Granted) }
     }
+
+    override fun showAppRationale(permission: Permission) {
+        cachedPermissionFlows.update { it + (permission to PermissionStatus.ShowAppRationale) }
+    }
 }
