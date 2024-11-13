@@ -40,7 +40,6 @@ import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.koin.ksp.generated.module
-import org.koin.dsl.*
 
 fun main() = application {
     initNapier()
