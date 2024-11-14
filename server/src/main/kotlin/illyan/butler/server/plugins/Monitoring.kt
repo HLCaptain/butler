@@ -2,12 +2,6 @@ package illyan.butler.server.plugins
 
 import illyan.butler.server.AppConfig
 import illyan.butler.server.BuildConfig
-import illyan.butler.server.plugins.opentelemetry.server.attributeExtractor
-import illyan.butler.server.plugins.opentelemetry.server.capturedRequestHeaders
-import illyan.butler.server.plugins.opentelemetry.server.capturedResponseHeaders
-import illyan.butler.server.plugins.opentelemetry.server.knownMethods
-import illyan.butler.server.plugins.opentelemetry.server.spanKindExtractor
-import illyan.butler.server.plugins.opentelemetry.server.spanStatusExtractor
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
@@ -42,7 +36,7 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.exporter.prometheus.PrometheusHttpServer
-import io.opentelemetry.instrumentation.ktor.v2_0.server.KtorServerTracing
+import io.opentelemetry.instrumentation.ktor.v3_0.server.KtorServerTracing
 import io.opentelemetry.instrumentation.resources.ContainerResource
 import io.opentelemetry.instrumentation.resources.HostResource
 import io.opentelemetry.instrumentation.resources.OsResource
@@ -57,6 +51,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import io.opentelemetry.semconv.ResourceAttributes
+import io.opentelemetry.semconv.ServiceAttributes
 import kotlinx.datetime.Clock
 import org.slf4j.event.Level
 import kotlin.time.Duration.Companion.seconds
@@ -84,9 +79,8 @@ fun Application.configureMonitoring() {
         .merge(ProcessResource.get())
         .merge(ProcessRuntimeResource.get())
         .merge(Resource.create(Attributes.builder()
-            .put(ResourceAttributes.SERVICE_NAME, BuildConfig.PROJECT_NAME)
-            .put(ResourceAttributes.SERVICE_NAMESPACE, BuildConfig.PROJECT_GROUP)
-            .put(ResourceAttributes.SERVICE_VERSION, BuildConfig.PROJECT_VERSION)
+            .put(ServiceAttributes.SERVICE_NAME, BuildConfig.PROJECT_NAME)
+            .put(ServiceAttributes.SERVICE_VERSION, BuildConfig.PROJECT_VERSION)
             .put(ResourceAttributes.DEPLOYMENT_ENVIRONMENT, AppConfig.DEPLOYMENT_ENVIRONMENT)
             .build()))
 

@@ -1,11 +1,6 @@
 package illyan.butler.server.di
 
 import illyan.butler.server.AppConfig
-import illyan.butler.server.plugins.opentelemetry.client.attributeExtractor
-import illyan.butler.server.plugins.opentelemetry.client.capturedRequestHeaders
-import illyan.butler.server.plugins.opentelemetry.client.capturedResponseHeaders
-import illyan.butler.server.plugins.opentelemetry.client.emitExperimentalHttpClientMetrics
-import illyan.butler.server.plugins.opentelemetry.client.knownMethods
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -29,7 +24,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.instrumentation.ktor.v2_0.client.KtorClientTracing
+import io.opentelemetry.instrumentation.ktor.v3_0.client.KtorClientTracing
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
