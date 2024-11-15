@@ -4,162 +4,77 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.compose)
-    alias(libs.plugins.google.ksp)
-    alias(libs.plugins.aboutlibraries)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.androidx.room)
+    alias(libs.plugins.illyan.butler.composeMultiplatform)
+    alias(libs.plugins.illyan.butler.koinForComposeMultiplatform)
+
 }
 
 group = "illyan"
 version = libs.versions.butler.get()
 
 kotlin {
-    androidTarget()
-    jvm()
-    jvmToolchain(21)
+    sourceSets.commonMain.dependencies {
+        implementation(projects.shared)
 
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation(projects.shared)
+        implementation(projects.composeApp.core.ui.resources)
+        implementation(projects.composeApp.core.ui.components)
+        implementation(projects.composeApp.core.ui.utils)
+        implementation(projects.composeApp.core.local.room)
+        implementation(projects.composeApp.core.network.ktor)
+        implementation(projects.composeApp.config)
 
-                implementation(projects.composeApp.core.ui.resources)
-                implementation(projects.composeApp.core.ui.components)
-                implementation(projects.composeApp.core.ui.utils)
-                implementation(projects.composeApp.core.local.room)
-                implementation(projects.composeApp.core.network.ktor)
-                implementation(projects.composeApp.config)
+        implementation(projects.composeApp.data.chat)
+        implementation(projects.composeApp.data.host)
+        implementation(projects.composeApp.data.user)
+        implementation(projects.composeApp.data.permission)
+        implementation(projects.composeApp.data.resource)
+        implementation(projects.composeApp.data.settings)
+        implementation(projects.composeApp.data.model)
+        implementation(projects.composeApp.data.error)
+        implementation(projects.composeApp.data.message)
 
-                implementation(projects.composeApp.data.chat)
-                implementation(projects.composeApp.data.host)
-                implementation(projects.composeApp.data.user)
-                implementation(projects.composeApp.data.permission)
-                implementation(projects.composeApp.data.resource)
-                implementation(projects.composeApp.data.settings)
-                implementation(projects.composeApp.data.model)
-                implementation(projects.composeApp.data.error)
-                implementation(projects.composeApp.data.message)
+        implementation(projects.composeApp.domain)
+        implementation(projects.composeApp.domain.audio)
+        implementation(projects.composeApp.domain.auth)
+        implementation(projects.composeApp.domain.chat)
+        implementation(projects.composeApp.domain.config)
+        implementation(projects.composeApp.domain.error)
+        implementation(projects.composeApp.domain.host)
+        implementation(projects.composeApp.domain.model)
+        implementation(projects.composeApp.domain.permission)
+        implementation(projects.composeApp.domain.settings)
 
-                implementation(projects.composeApp.domain)
-                implementation(projects.composeApp.domain.audio)
-                implementation(projects.composeApp.domain.auth)
-                implementation(projects.composeApp.domain.chat)
-                implementation(projects.composeApp.domain.config)
-                implementation(projects.composeApp.domain.error)
-                implementation(projects.composeApp.domain.host)
-                implementation(projects.composeApp.domain.model)
-                implementation(projects.composeApp.domain.permission)
-                implementation(projects.composeApp.domain.settings)
+        implementation(projects.composeApp.di)
+        implementation(projects.composeApp.di.repository)
+        implementation(projects.composeApp.feature.theme)
+        implementation(projects.composeApp.feature.home)
+        implementation(projects.composeApp.feature.auth)
+        implementation(projects.composeApp.feature.chat)
+        implementation(projects.composeApp.feature.error)
+        implementation(projects.composeApp.feature.onboarding)
+        implementation(projects.composeApp.feature.permission)
+        implementation(projects.composeApp.feature.profile)
 
-                implementation(projects.composeApp.di)
-                implementation(projects.composeApp.di.repository)
-                implementation(projects.composeApp.feature.theme)
-                implementation(projects.composeApp.feature.home)
-                implementation(projects.composeApp.feature.auth)
-                implementation(projects.composeApp.feature.chat)
-                implementation(projects.composeApp.feature.error)
-                implementation(projects.composeApp.feature.onboarding)
-                implementation(projects.composeApp.feature.permission)
-                implementation(projects.composeApp.feature.profile)
-
-                implementation(compose.runtime)
-                implementation(compose.runtimeSaveable)
-                implementation(compose.ui)
-                implementation(compose.foundation)
-                implementation(compose.materialIconsExtended)
-                implementation(compose.material3)
-                implementation(compose.components.resources)
-                implementation(compose.preview)
-                implementation(compose.uiTooling)
-                implementation(compose.uiUtil)
-
-                implementation(libs.androidx.room.common)
-                implementation(libs.androidx.room.runtime)
-                implementation(libs.androidx.sqlite.bundled)
-
-                implementation(libs.jetbrains.lifecycle.viewmodel.compose)
-                implementation(libs.jetbrains.navigation.compose)
-
-                implementation(libs.ktor.core)
-                implementation(libs.ktor.auth)
-                implementation(libs.ktor.client.cio)
-                implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization.kotlinx.protobuf)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.encoding)
-
-                api(project.dependencies.platform(libs.koin.bom))
-                api(libs.koin.core)
-                api(libs.koin.annotations)
-                implementation(libs.koin.compose)
-                implementation(libs.koin.core.viewmodel)
-                implementation(libs.koin.compose.viewmodel)
-
-                implementation(libs.kotlinx.atomicfu)
-                implementation(libs.kotlinx.coroutines)
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.io)
-
-                implementation(libs.aboutlibraries.core)
-                implementation(libs.store)
-                implementation(libs.filepicker)
-                implementation(libs.coil)
-                implementation(libs.coil.compose)
-                implementation(libs.haze)
-
-                api(libs.napier)
-            }
-        }
-
-        commonTest.dependencies {
-            implementation(libs.koin.test)
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(kotlin("test-common"))
-            implementation(kotlin("test-annotations-common"))
-        }
-
-        jvmTest
-
-        androidMain.dependencies {
-            implementation(libs.androidx.core)
-            implementation(libs.koin.android)
-            implementation(libs.koin.logger.slf4j)
-            implementation(libs.kotlinx.coroutines.android)
-            implementation(libs.androidx.activity)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.ffmpeg.kit)
-        }
-
-        jvmMain.dependencies {
-            implementation(compose.preview)
-            implementation(compose.desktop.common)
-            implementation(libs.koin.logger.slf4j)
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
-        }
+        implementation(libs.napier)
     }
-}
 
-dependencies {
-    annotationProcessor(libs.androidx.room.compiler)
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspJvm", libs.androidx.room.compiler)
-    add("kspCommonMainMetadata", libs.koin.ksp)
-}
 
-ksp {
-    arg("KOIN_CONFIG_CHECK", "true")
-    arg("USE_KOIN_COMPOSE_VIEWMODEL", "true")
-}
+    sourceSets.androidMain.dependencies {
+        implementation(libs.androidx.core)
+        implementation(libs.koin.android)
+        implementation(libs.kotlinx.coroutines.android)
+        implementation(libs.androidx.activity)
+        implementation(libs.androidx.activity.compose)
+        implementation(libs.ffmpeg.kit)
+    }
 
-kotlin.sourceSets.all {
-    languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
+    sourceSets.jvmMain.dependencies {
+        implementation(compose.preview)
+        implementation(compose.desktop.common)
+        implementation(compose.desktop.currentOs)
+        implementation(libs.kotlinx.coroutines.swing)
+    }
 }
 
 val localProperties = localPropertiesFile.readLines().associate {
@@ -235,9 +150,6 @@ android {
     dependencies {
         implementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
-        add("kspCommonMainMetadata", libs.koin.ksp)
-    add("kspAndroid", libs.koin.ksp)
-    add("kspJvm", libs.koin.ksp)
     }
 }
 
@@ -252,14 +164,4 @@ compose.desktop.application {
         configurationFiles.from(project.file("compose-desktop.pro"))
 //        obfuscate.set(true)
     }
-}
-
-rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
-    rootProject.the<YarnRootExtension>().yarnLockMismatchReport = YarnLockMismatchReport.WARNING
-    rootProject.the<YarnRootExtension>().reportNewYarnLock = true
-    rootProject.the<YarnRootExtension>().yarnLockAutoReplace = true
-}
-
-room {
-    schemaDirectory("$projectDir/schemas")
 }

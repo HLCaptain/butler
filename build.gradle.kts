@@ -30,4 +30,12 @@ plugins {
     alias(libs.plugins.aboutlibraries) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.androidx.room) apply false
+
+    // Convention plugins
+    alias(libs.plugins.illyan.butler.kotlinMultiplatform) apply false
+    alias(libs.plugins.illyan.butler.kotlinMultiplatformLibrary) apply false
+    alias(libs.plugins.illyan.butler.composeMultiplatform) apply false
+    alias(libs.plugins.illyan.butler.composeMultiplatformLibrary) apply false
+    alias(libs.plugins.illyan.butler.koinForKotlinMultiplatform) apply false
+    alias(libs.plugins.illyan.butler.koinForComposeMultiplatform) apply false
 }
