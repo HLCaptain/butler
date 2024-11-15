@@ -1,7 +1,6 @@
-version: '3.8'
 services:
   server:
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile
     image: illyan1337/butler-server:latest

@@ -4,11 +4,16 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
+    application
 }
 
 group = "illyan"
 version = "0.0.1"
 val apiVersion = 1
+
+kotlin {
+    jvmToolchain(21)
+}
 
 application {
     mainClass = "illyan.butler.server.ApplicationKt"
@@ -112,8 +117,4 @@ dependencies {
 
 ksp {
     arg("KOIN_CONFIG_CHECK","true")
-}
-
-kotlin {
-    jvmToolchain(17)
 }
