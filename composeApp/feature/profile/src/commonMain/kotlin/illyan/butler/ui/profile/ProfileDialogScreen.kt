@@ -55,16 +55,16 @@ import illyan.butler.generated.resources.settings
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
-import illyan.butler.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.ui.components.MenuButton
-import illyan.butler.ui.components.TooltipElevatedCard
-import illyan.butler.ui.theme.ButlerTheme
+import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
+import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.TooltipElevatedCard
+import illyan.butler.core.ui.theme.ButlerTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun ProfileDialogScreen(
+fun ProfileDialog(
     onShowSettingsScreen: () -> Unit = {},
 ) {
     val viewModel = koinViewModel<ProfileViewModel>()

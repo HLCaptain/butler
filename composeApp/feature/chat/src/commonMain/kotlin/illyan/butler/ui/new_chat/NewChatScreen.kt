@@ -41,8 +41,8 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
 import illyan.butler.ui.chat_layout.LocalChatSelector
-import illyan.butler.ui.components.ExpandableCard
-import illyan.butler.ui.components.MenuButton
+import illyan.butler.core.ui.components.ExpandableCard
+import illyan.butler.core.ui.components.MenuButton
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

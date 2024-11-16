@@ -81,14 +81,14 @@ import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.chat_layout.ChatScreen
 import illyan.butler.ui.chat_layout.LocalChatSelector
 import illyan.butler.ui.chat_layout.LocalSelectedChat
-import illyan.butler.ui.components.PlainTooltipWithContent
+import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.ui.error.ErrorScreen
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
-import illyan.butler.ui.profile.ProfileDialogScreen
+import illyan.butler.ui.profile.ProfileDialog
 import illyan.butler.ui.select_host.SelectHostScreen
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
-import illyan.butler.ui.settings.UserSettingsScreen
+import illyan.butler.ui.settings.UserSettings
 import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
 import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
 import illyan.butler.ui.welcome.WelcomeScreen
@@ -228,12 +228,12 @@ fun HomeScreen() {
                                 popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
                             ) {
                                 composable("profile") {
-                                    ProfileDialogScreen {
+                                    ProfileDialog {
                                         profileNavController.navigate("settings")
                                     }
                                 }
                                 composable("settings") {
-                                    UserSettingsScreen()
+                                    UserSettings()
                                 }
                             }
                         }

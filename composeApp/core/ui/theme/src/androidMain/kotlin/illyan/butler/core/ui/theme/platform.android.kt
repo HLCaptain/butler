@@ -1,4 +1,4 @@
-package illyan.butler.ui.theme
+package illyan.butler.core.ui.theme
 
 import android.annotation.SuppressLint
 import android.os.Build
@@ -36,7 +36,6 @@ actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
     }
     if (!view.isInEditMode) {
         SideEffect {
-            activity.window.statusBarColor = colorScheme.primary.toArgb()
             WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars = !isDark
         }
         LaunchedEffect(colorScheme) {

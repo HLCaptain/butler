@@ -1,4 +1,4 @@
-package illyan.butler.ui.components
+package illyan.butler.core.ui.components
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons

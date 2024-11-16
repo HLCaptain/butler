@@ -82,11 +82,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
-import illyan.butler.core.ui.components.ButlerDialogSurface
+import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
+import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
+import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
+import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.Theme
 import illyan.butler.generated.resources.Res
@@ -112,21 +115,14 @@ import illyan.butler.generated.resources.turn_on
 import illyan.butler.generated.resources.turn_on_analytics
 import illyan.butler.generated.resources.turn_on_analytics_description
 import illyan.butler.generated.resources.user_id
-import illyan.butler.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.ui.components.MenuButton
-import illyan.butler.ui.components.TooltipElevatedCard
-import illyan.butler.ui.theme.ButlerTheme
-import illyan.butler.ui.theme.canUseDynamicColors
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 import kotlin.random.Random
 
-@OptIn(KoinExperimentalAPI::class)
 @Composable
-fun UserSettingsScreen() {
+fun UserSettings() {
     val screenModel = koinViewModel<UserSettingsViewModel>()
     val state by screenModel.state.collectAsState()
     LaunchedEffect(state) {
@@ -185,7 +181,7 @@ fun UserSettingsDialogContent(
                     )
                 },
                 text = {
-                    UserSettingsScreen(
+                    UserSettings(
                         preferences = preferences,
                         setAnalytics = setAnalytics,
                         setFreeDriveAutoStart = setFreeDriveAutoStart,
@@ -550,7 +546,7 @@ fun SettingLabel(
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun UserSettingsScreen(
+fun UserSettings(
     modifier: Modifier = Modifier,
     preferences: DomainPreferences? = null,
     setAnalytics: (Boolean) -> Unit = {},
@@ -895,81 +891,6 @@ fun SettingItem(
         ) {
             title()
             Row { content() }
-        }
-    }
-}
-
-private fun generateRandomUserPreferences(): DomainPreferences {
-    return DomainPreferences(
-        analyticsEnabled = Random.nextBoolean(),
-        theme = Theme.entries.random(),
-        dynamicColorEnabled = Random.nextBoolean(),
-//        clientId = UUID.randomUUID().toString(),
-//        lastUpdate = ZonedDateTime.now()
-    )
-}
-
-@Composable
-fun UserSettingsDialogScreenPreview() {
-    ButlerTheme {
-        ButlerDialogSurface {
-            val preferences = generateRandomUserPreferences()
-            val canSyncPreferences = Random.nextBoolean()
-            val arePreferencesSynced = if (canSyncPreferences) Random.nextBoolean() else false
-            val shouldSyncPreferences = if (arePreferencesSynced) true else Random.nextBoolean()
-            UserSettingsDialogContent(
-                preferences = preferences,
-                canSyncPreferences = canSyncPreferences,
-                arePreferencesSynced = arePreferencesSynced,
-                shouldSyncPreferences = shouldSyncPreferences
-            )
-        }
-    }
-}
-
-@Composable
-fun AnalyticsRequestDialogContentPreview() {
-    ButlerTheme {
-        ButlerDialogSurface {
-            val preferences = generateRandomUserPreferences()
-            AnalyticsRequestDialogContent(
-                analyticsEnabled = preferences.analyticsEnabled,
-            )
-        }
-    }
-}
-
-// DropdownSetting when opened likes to shift to the start unintentionally.
-// Wrap it inside a Row or layour to prevent this.
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-fun DropdownSettingPreview() {
-    ButlerTheme {
-        ButlerDialogSurface {
-            val isDropdownOpen by remember { mutableStateOf(true) }
-            DropdownSetting(
-                settingName = stringResource(Res.string.theme),
-                isDropdownOpen = isDropdownOpen,
-                selectValue = {},
-                selectedValue = Theme.entries.random(),
-                values = Theme.entries.toList(),
-                getValueName = { theme ->
-                    when (theme) {
-                        Theme.System -> stringResource(Res.string.system)
-                        Theme.Light -> stringResource(Res.string.light)
-                        Theme.Dark -> stringResource(Res.string.dark)
-                        Theme.DayNightCycle -> stringResource(Res.string.day_night_cycle)
-                    }
-                },
-                getValueLeadingIcon = { theme ->
-                    when (theme) {
-                        Theme.System -> Icons.Rounded.Settings
-                        Theme.Light -> Icons.Rounded.LightMode
-                        Theme.Dark -> Icons.Rounded.DarkMode
-                        Theme.DayNightCycle -> Icons.Rounded.Schedule
-                    }
-                }
-            )
         }
     }
 }

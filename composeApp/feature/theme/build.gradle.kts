@@ -5,16 +5,11 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.composeApp.core.ui.utils)
+        implementation(projects.composeApp.core.ui.theme)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.settings)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
-    }
-
-    sourceSets.androidMain.dependencies {
-        implementation(libs.androidx.appcompat)
-        implementation(libs.androidx.activity)
     }
 }

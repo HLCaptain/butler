@@ -16,11 +16,11 @@ class UserSettingsViewModel(
 ) : ViewModel() {
 
     val state = settingsManager.userPreferences.map { userPreferences ->
-        UserSettingsScreenState(userPreferences = userPreferences)
+        UserSettingsState(userPreferences = userPreferences)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = UserSettingsScreenState()
+        initialValue = UserSettingsState()
     )
 
     fun setTheme(theme: Theme) {

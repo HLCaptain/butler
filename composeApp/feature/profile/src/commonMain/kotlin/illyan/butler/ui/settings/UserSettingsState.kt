@@ -2,6 +2,6 @@ package illyan.butler.ui.settings
 
 import illyan.butler.domain.model.DomainPreferences
 
-data class UserSettingsScreenState(
+data class UserSettingsState(
     val userPreferences: DomainPreferences? = null
 )

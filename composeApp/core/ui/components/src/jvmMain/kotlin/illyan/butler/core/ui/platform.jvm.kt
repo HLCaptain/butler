@@ -1,6 +1,6 @@
 package illyan.butler.core.ui
 
-import illyan.butler.ui.components.GestureType
+import illyan.butler.core.ui.components.GestureType
 import kotlin.time.Duration.Companion.seconds
 
 actual fun getTooltipGestures(): List<GestureType> {

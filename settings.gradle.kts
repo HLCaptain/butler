@@ -38,6 +38,7 @@ include(":composeApp:core:local:room")
 include(":composeApp:core:utils")
 include(":composeApp:core:ui:components")
 include(":composeApp:core:ui:resources")
+include(":composeApp:core:ui:theme")
 include(":composeApp:core:ui:utils")
 include(":composeApp:core:sync")
 

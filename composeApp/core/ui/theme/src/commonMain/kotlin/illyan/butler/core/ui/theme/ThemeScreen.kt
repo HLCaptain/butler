@@ -1,4 +1,4 @@
-package illyan.butler.ui.theme
+package illyan.butler.core.ui.theme
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -7,6 +7,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import illyan.butler.core.ui.theme.ThemeSystemWindow
+import illyan.butler.core.ui.theme.canUseDynamicColors
+import illyan.butler.core.ui.theme.dynamicDarkColorScheme
+import illyan.butler.core.ui.theme.dynamicLightColorScheme
 import illyan.butler.domain.model.Theme
 
 @Composable

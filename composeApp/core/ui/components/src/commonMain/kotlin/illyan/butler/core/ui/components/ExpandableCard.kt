@@ -1,4 +1,4 @@
-package illyan.butler.ui.components
+package illyan.butler.core.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement

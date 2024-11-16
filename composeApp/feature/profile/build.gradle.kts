@@ -7,6 +7,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
+        implementation(projects.composeApp.core.ui.theme)
         implementation(projects.composeApp.core.utils)
         implementation(projects.composeApp.feature.theme)
         implementation(projects.composeApp.domain.auth)

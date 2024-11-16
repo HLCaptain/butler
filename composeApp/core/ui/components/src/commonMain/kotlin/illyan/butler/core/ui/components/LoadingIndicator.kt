@@ -13,7 +13,6 @@ import illyan.butler.generated.resources.loading
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoadingIndicator(
     progressIndicator: @Composable () -> Unit = {

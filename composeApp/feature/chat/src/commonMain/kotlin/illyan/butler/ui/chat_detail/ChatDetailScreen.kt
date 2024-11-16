@@ -92,7 +92,7 @@ import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.chat_details.ChatDetailsScreen
-import illyan.butler.ui.components.RichTooltipWithContent
+import illyan.butler.core.ui.components.RichTooltipWithContent
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant

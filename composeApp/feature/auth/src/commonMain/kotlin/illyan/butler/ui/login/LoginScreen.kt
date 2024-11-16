@@ -30,7 +30,7 @@ import illyan.butler.generated.resources.sign_in_anonymously
 import illyan.butler.generated.resources.sign_up
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.LoadingIndicator
-import illyan.butler.ui.components.MenuButton
+import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.smallDialogWidth
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource

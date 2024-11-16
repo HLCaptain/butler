@@ -28,7 +28,7 @@ import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
-import illyan.butler.ui.components.MenuButton
+import illyan.butler.core.ui.components.MenuButton
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
