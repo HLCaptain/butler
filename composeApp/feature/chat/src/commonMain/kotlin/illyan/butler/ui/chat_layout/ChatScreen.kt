@@ -140,7 +140,7 @@ fun ChatScreen(
                         val viewModel = koinViewModel<ChatDetailViewModel>()
                         val state by viewModel.state.collectAsState()
                         ChatDetailScreen(state, viewModel, chatId, isListOnly, navBarWindowInsets) {
-                            chatListNavController.popBackStack()
+                            chatListNavController.navigateUp()
                         }
                     }
                 }

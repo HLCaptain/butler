@@ -91,6 +91,9 @@ fun SignUpDialogContent(
                 },
                 text = {
                     SignUpScreen(
+                        username = username,
+                        email = email,
+                        password = password,
                         userNameChanged = { username = it },
                         emailChanged = { email = it },
                         passwordChanged = { password = it }
@@ -108,39 +111,30 @@ fun SignUpDialogContent(
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
+    username: String,
+    email: String,
+    password: String,
     userNameChanged: (String) -> Unit = {},
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {}
 ) {
     Column(modifier = modifier) {
-        var username by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
             value = username,
             enabled = true,
-            onValueChange = {
-                username = it
-                userNameChanged(it)
-            },
+            onValueChange = userNameChanged,
             label = { Text(text = stringResource(Res.string.username)) }
         )
-        var email by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
             value = email,
             enabled = true,
-            onValueChange = {
-                email = it
-                emailChanged(it)
-            },
+            onValueChange = emailChanged,
             label = { Text(text = stringResource(Res.string.email)) }
         )
-        var password by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(
             value = password,
             enabled = true,
-            onValueChange = {
-                password = it
-                passwordChanged(it)
-            },
+            onValueChange = passwordChanged,
             label = { Text(text = stringResource(Res.string.password)) }
         )
     }

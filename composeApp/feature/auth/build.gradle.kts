@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.illyan.butler.composeMultiplatformLibrary)
     alias(libs.plugins.illyan.butler.koinForComposeMultiplatform)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -13,6 +14,7 @@ kotlin {
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
+        implementation(libs.kotlinx.serialization.core)
 
         implementation(libs.napier)
     }
