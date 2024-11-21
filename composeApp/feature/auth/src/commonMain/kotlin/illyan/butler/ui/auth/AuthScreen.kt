@@ -1,5 +1,6 @@
 package illyan.butler.ui.auth
 
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,6 +48,7 @@ fun AuthScreen(
     NavHost(
         navController = authNavController,
         contentAlignment = Alignment.Center,
+        sizeTransform = { SizeTransform() },
         startDestination = "login",
         enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
         popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },

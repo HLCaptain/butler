@@ -2,10 +2,13 @@ package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.gestures.Orientation
@@ -171,6 +174,7 @@ fun HomeScreen() {
                             NavHost(
                                 navController = onBoardingNavController,
                                 contentAlignment = Alignment.Center,
+                                sizeTransform = { SizeTransform(clip = false) },
                                 startDestination = "welcome",
                                 enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
                                 popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
@@ -224,6 +228,8 @@ fun HomeScreen() {
                         DialogUserFlow.Profile -> {
                             NavHost(
                                 navController = profileNavController,
+                                contentAlignment = Alignment.Center,
+                                sizeTransform = { SizeTransform(clip = false) },
                                 startDestination = "profile",
                                 enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
                                 popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
