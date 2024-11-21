@@ -22,6 +22,11 @@ kotlin {
         implementation(projects.composeApp.feature.error)
         implementation(projects.composeApp.feature.permission)
 
+        implementation(compose.material3AdaptiveNavigationSuite)
+        implementation(libs.material.adaptive)
+        implementation(libs.material.adaptive.navigation)
+        implementation(libs.material.adaptive.layout)
+
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
 
