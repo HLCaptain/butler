@@ -76,7 +76,6 @@ fun ChatScreen(
     }
     LaunchedEffect(width, height) {
         windowWidth = width
-        Napier.v("Window size: $width x $height")
     }
     LaunchedEffect(currentPaneStrategy) {
         val strategy = when (currentPaneStrategy) {

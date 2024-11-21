@@ -14,7 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.largeDialogWidth
+import illyan.butler.core.ui.components.mediumDialogSize
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.butler_logo
 import illyan.butler.generated.resources.next
@@ -25,7 +29,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun WelcomeScreen(onNext: () -> Unit) {
     Column(
-        modifier = Modifier.padding(16.dp).safeContentPadding(),
+        modifier = Modifier.largeDialogWidth().padding(16.dp).safeContentPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -36,13 +40,14 @@ fun WelcomeScreen(onNext: () -> Unit) {
             contentDescription = "Butler Logo"
         )
         Column(
-            modifier = Modifier.padding(top = 16.dp).safeContentPadding(),
+            modifier = Modifier.padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = stringResource(Res.string.welcome_to_butler),
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.headlineLarge,
+                textAlign = TextAlign.Center
             )
             Button(onClick = onNext) {
                 Text(text = stringResource(Res.string.next))

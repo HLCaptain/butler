@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
@@ -157,7 +158,7 @@ fun ChatDetailScreen(
         },
         bottomBar = {
             Column(
-                Modifier.consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
+                Modifier.navigationBarsPadding().consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
             ) {
                 if (state.chat?.id != null) {
                     MessageField(
@@ -402,7 +403,6 @@ fun AudioMessages(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MessageField(
     modifier: Modifier = Modifier,
@@ -415,9 +415,7 @@ fun MessageField(
     requestGalleryAccess: () -> Unit
 ) {
     Row(
-        modifier = modifier
-            .padding(8.dp)
-            .animateContentSize(),
+        modifier = modifier.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AnimatedVisibility(visible = canRecordAudio) {
