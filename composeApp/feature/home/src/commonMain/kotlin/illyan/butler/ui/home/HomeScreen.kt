@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,7 +52,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,11 +67,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.window.core.layout.WindowWidthSizeClass
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.PlainTooltipWithContent
@@ -88,8 +90,6 @@ import illyan.butler.generated.resources.profile
 import illyan.butler.ui.auth.AuthScreen
 import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.chat_layout.ChatScreen
-import illyan.butler.ui.chat_layout.LocalChatSelector
-import illyan.butler.ui.chat_layout.LocalSelectedChat
 import illyan.butler.ui.error.ErrorScreen
 import illyan.butler.ui.new_chat.NewChatScreen
 import illyan.butler.ui.permission.PermissionRequestScreen
@@ -103,10 +103,17 @@ import illyan.butler.ui.welcome.WelcomeScreen
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+
+@Serializable
+private data class ChatDestination(val id: String? = null)
+
+@Serializable
+data object NewChatDestination
 
 @Composable
 fun HomeScreen() {
@@ -126,15 +133,28 @@ fun HomeScreen() {
                 }
                 isProfileDialogShowing = false
             }
-            val isDialogOpen = rememberSaveable(isAuthFlowEnded, state.isTutorialDone, isProfileDialogShowing) { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
+            val isDialogOpen = rememberSaveable(
+                isAuthFlowEnded,
+                state.isTutorialDone,
+                isProfileDialogShowing
+            ) { isAuthFlowEnded != true || state.isTutorialDone == false || isProfileDialogShowing }
 
             var isDialogClosedAfterTutorial by rememberSaveable { mutableStateOf(state.isTutorialDone) }
             LaunchedEffect(state.isTutorialDone) {
-                if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial = state.isTutorialDone
+                if (isDialogClosedAfterTutorial == null) isDialogClosedAfterTutorial =
+                    state.isTutorialDone
                 if (state.isTutorialDone == false) isDialogClosedAfterTutorial = false
-                if (state.isUserSignedIn == true && state.isTutorialDone == true) isAuthFlowEnded = true
+                if (state.isUserSignedIn == true && state.isTutorialDone == true) isAuthFlowEnded =
+                    true
             }
-            val userFlow = remember(isDialogOpen, state.isTutorialDone, isDialogClosedAfterTutorial, isAuthFlowEnded, state.isUserSignedIn, isProfileDialogShowing) {
+            val userFlow = remember(
+                isDialogOpen,
+                state.isTutorialDone,
+                isDialogClosedAfterTutorial,
+                isAuthFlowEnded,
+                state.isUserSignedIn,
+                isProfileDialogShowing
+            ) {
                 if (!isDialogOpen) null
                 else if (state.isTutorialDone == true && isDialogClosedAfterTutorial == true) {
                     if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) DialogUserFlow.Profile else DialogUserFlow.Auth
@@ -162,7 +182,9 @@ fun HomeScreen() {
                     if (state.isUserSignedIn == true) isAuthFlowEnded = true
                     isProfileDialogShowing = false
                 },
-                onDialogClosed = { if (state.isTutorialDone == true) isDialogClosedAfterTutorial = true },
+                onDialogClosed = {
+                    if (state.isTutorialDone == true) isDialogClosedAfterTutorial = true
+                },
                 navController = currentNavController
             ) {
                 Crossfade(userFlow) {
@@ -178,10 +200,26 @@ fun HomeScreen() {
                                 contentAlignment = Alignment.Center,
                                 sizeTransform = { SizeTransform(clip = false) },
                                 startDestination = "welcome",
-                                enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-                                popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-                                exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-                                popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+                                enterTransition = {
+                                    slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
+                                        tween(animationTime)
+                                    )
+                                },
+                                popEnterTransition = {
+                                    slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
+                                        tween(animationTime)
+                                    )
+                                },
+                                exitTransition = {
+                                    slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
+                                        tween(animationTime)
+                                    )
+                                },
+                                popExitTransition = {
+                                    slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
+                                        tween(animationTime)
+                                    )
+                                }
                             ) {
                                 composable("welcome") {
                                     WelcomeScreen {
@@ -208,7 +246,9 @@ fun HomeScreen() {
                                         authSuccessEnded = {
                                             // FIXME: launch single on top does not work right now
                                             //  due to bug in androidx.navigation, update dependencies
-                                            onBoardingNavController.navigate("usageTutorial") { launchSingleTop = true }
+                                            onBoardingNavController.navigate("usageTutorial") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                     )
                                 }
@@ -233,10 +273,26 @@ fun HomeScreen() {
                                 contentAlignment = Alignment.Center,
                                 sizeTransform = { SizeTransform(clip = false) },
                                 startDestination = "profile",
-                                enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-                                popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-                                exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-                                popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+                                enterTransition = {
+                                    slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
+                                        tween(animationTime)
+                                    )
+                                },
+                                popEnterTransition = {
+                                    slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
+                                        tween(animationTime)
+                                    )
+                                },
+                                exitTransition = {
+                                    slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
+                                        tween(animationTime)
+                                    )
+                                },
+                                popExitTransition = {
+                                    slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
+                                        tween(animationTime)
+                                    )
+                                }
                             ) {
                                 composable("profile") {
                                     ProfileDialog {
@@ -254,7 +310,10 @@ fun HomeScreen() {
                 }
             }
 
-            val numberOfErrors = remember(state.appErrors, state.serverErrors) { state.appErrors.size + state.serverErrors.size }
+            val numberOfErrors = remember(
+                state.appErrors,
+                state.serverErrors
+            ) { state.appErrors.size + state.serverErrors.size }
             ButlerDialog(
                 modifier = Modifier.zIndex(1f),
                 isDialogOpen = numberOfErrors > 0,
@@ -269,7 +328,8 @@ fun HomeScreen() {
             }
             ButlerDialog(
                 modifier = Modifier.zIndex(2f),
-                isDialogOpen = state.permissionStatuses.filterValues { it is PermissionStatus.ShowAppRationale }.isNotEmpty(),
+                isDialogOpen = state.permissionStatuses.filterValues { it is PermissionStatus.ShowAppRationale }
+                    .isNotEmpty(),
                 isDialogFullscreen = false
             ) { PermissionRequestScreen() }
             // Index is rememberSaveable, Screen is probably not.
@@ -285,72 +345,86 @@ fun HomeScreen() {
                     else -> NavigationSuiteType.NavigationDrawer
                 }
             }
-            var selectedChat by rememberSaveable { mutableStateOf<String?>(null) }
             val homeNavController = rememberNavController()
-            val selectChat = { chat: String? ->
-                Napier.d("Selected chat: $chat")
-                homeNavController.navigate("chat") { launchSingleTop = true }
-                selectedChat = chat
+            val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
+                windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
             }
-            CompositionLocalProvider(
-                LocalSelectedChat provides selectedChat,
-                LocalChatSelector provides selectChat,
-            ) {
-                val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
-                    windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
+            val navigateToChats = {
+                homeNavController.navigate(ChatDestination()) {
+                    popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
                 }
-                NavigationSuiteScaffoldLayout(
-                    layoutType = navigationSuiteLayout,
-                    navigationSuite = {
-                        AnimatedContent(
-                            targetState = navigationSuiteLayout,
-                            transitionSpec = {
-                                val enter = if (targetState == NavigationSuiteType.NavigationBar) {
-                                    slideInVertically { -it } + fadeIn()
-                                } else {
-                                    slideInHorizontally { -it } + fadeIn()
-                                }
-                                val exit = if (initialState == NavigationSuiteType.NavigationBar) {
-                                    slideOutVertically { it } + fadeOut()
-                                } else {
-                                    slideOutHorizontally { it } + fadeOut()
-                                }
-                                enter togetherWith exit
-                            }
-                        ) { type ->
-                            if (type == NavigationSuiteType.NavigationBar) {
-                                HorizontalNavBar(
-                                    navController = homeNavController,
-                                    isProfileDialogShowing = isProfileDialogShowing,
-                                    setProfileDialogShowing = { isProfileDialogShowing = it },
-                                    navigateToChats = { homeNavController.navigate("chat") { launchSingleTop = true } },
-                                    navigateToNewChat = { homeNavController.navigate("newChat") { launchSingleTop = true } }
-                                )
+            }
+            val navigateToNewChat = {
+                homeNavController.navigate(NewChatDestination) {
+                    popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+            NavigationSuiteScaffoldLayout(
+                layoutType = navigationSuiteLayout,
+                navigationSuite = {
+                    AnimatedContent(
+                        targetState = navigationSuiteLayout,
+                        transitionSpec = {
+                            val enter = if (targetState == NavigationSuiteType.NavigationBar) {
+                                slideInVertically { -it } + fadeIn()
                             } else {
-                                VerticalNavBar(
-                                    navController = homeNavController,
-                                    compact = isVerticalNavBarCompact,
-                                    isProfileDialogShowing = isProfileDialogShowing,
-                                    setProfileDialogShowing = { isProfileDialogShowing = it },
-                                    navigateToChats = { homeNavController.navigate("chat") { launchSingleTop = true } },
-                                    navigateToNewChat = { homeNavController.navigate("newChat") { launchSingleTop = true } },
-                                )
+                                slideInHorizontally { -it } + fadeIn()
                             }
+                            val exit = if (initialState == NavigationSuiteType.NavigationBar) {
+                                slideOutVertically { it } + fadeOut()
+                            } else {
+                                slideOutHorizontally { it } + fadeOut()
+                            }
+                            enter togetherWith exit
+                        }
+                    ) { type ->
+                        if (type == NavigationSuiteType.NavigationBar) {
+                            HorizontalNavBar(
+                                navController = homeNavController,
+                                isProfileDialogShowing = isProfileDialogShowing,
+                                setProfileDialogShowing = { isProfileDialogShowing = it },
+                                navigateToChats = navigateToChats,
+                                navigateToNewChat = navigateToNewChat
+                            )
+                        } else {
+                            VerticalNavBar(
+                                navController = homeNavController,
+                                compact = isVerticalNavBarCompact,
+                                isProfileDialogShowing = isProfileDialogShowing,
+                                setProfileDialogShowing = { isProfileDialogShowing = it },
+                                navigateToChats = navigateToChats,
+                                navigateToNewChat = navigateToNewChat
+                            )
                         }
                     }
-                ) {
-                    HomeContent(navBarOrientation) {
-                        NavHost(
-                            navController = homeNavController,
-                            startDestination = "chat"
-                        ) {
-                            composable("chat") {
-                                ChatScreen(selectedChat, WindowInsets(88.dp)) {
-                                    selectedChat = it
+                }
+            ) {
+                HomeContent(navBarOrientation) {
+                    NavHost(
+                        navController = homeNavController,
+                        startDestination = ChatDestination()
+                    ) {
+                        composable<ChatDestination> {
+                            Napier.d("Navigating to chat with id: ${it.toRoute<ChatDestination>().id}")
+                            ChatScreen(it.toRoute<ChatDestination>().id, WindowInsets(88.dp))
+                        }
+                        composable<NewChatDestination> {
+                            NewChatScreen { chatId ->
+                                homeNavController.navigate(ChatDestination(chatId)) {
+                                    // Pop up to the start destination of the graph to
+                                    // avoid building up a large stack of destinations
+                                    // on the back stack as users select items
+                                    popUpTo(homeNavController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    // Avoid multiple copies of the same destination when
+                                    // reselecting the same item
+                                    launchSingleTop = true
                                 }
-                            }
-                            composable("newChat") {
-                                NewChatScreen()
                             }
                         }
                     }
@@ -372,10 +446,10 @@ private fun HorizontalNavBar(
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
     ) {
-        ChatsNavigationBarItem(selected = backStackEntry?.destination?.route == "chat" && !isProfileDialogShowing) {
+        ChatsNavigationBarItem(selected = backStackEntry?.destination?.hasRoute<ChatDestination>() == true && !isProfileDialogShowing) {
             navigateToChats()
         }
-        NewChatNavigationBarItem(selected =  backStackEntry?.destination?.route == "newChat" && !isProfileDialogShowing) {
+        NewChatNavigationBarItem(selected = backStackEntry?.destination?.hasRoute<NewChatDestination>() == true && !isProfileDialogShowing) {
             navigateToNewChat()
         }
         ProfileNavigationBarItem(selected = isProfileDialogShowing) {
@@ -395,7 +469,6 @@ private fun VerticalNavBar(
 ) {
     var navRailExpanded by rememberSaveable(compact) { mutableStateOf(!compact) }
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val destinationRoute = remember(backStackEntry) { backStackEntry?.destination?.route }
     AnimatedContent(
         targetState = !navRailExpanded,
         transitionSpec = {
@@ -416,10 +489,10 @@ private fun VerticalNavBar(
                 }
             ) {
                 Spacer(Modifier.weight(0.5f))
-                ChatsNavigationRailItem(selected = destinationRoute == "chat" && !isProfileDialogShowing) {
+                ChatsNavigationRailItem(selected = backStackEntry?.destination?.hasRoute<ChatDestination>() == true && !isProfileDialogShowing) {
                     navigateToChats()
                 }
-                NewChatNavigationRailItem(selected = destinationRoute == "newChat" && !isProfileDialogShowing) {
+                NewChatNavigationRailItem(selected = backStackEntry?.destination?.hasRoute<NewChatDestination>() == true && !isProfileDialogShowing) {
                     navigateToNewChat()
                 }
                 ProfileNavigationRailItem(selected = isProfileDialogShowing) {

@@ -1,6 +1,5 @@
 package illyan.butler.core.ui.utils
 
-import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalDensity
@@ -15,3 +14,6 @@ actual fun getWindowSizeInDp(): Pair<Dp, Dp> {
     val density = LocalDensity.current.density
     return size.height.dp / density to size.width.dp / density
 }
+
+@Composable
+actual fun BackHandler(enabled: Boolean, onBack: () -> Unit) {}

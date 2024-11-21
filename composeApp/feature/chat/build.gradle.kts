@@ -16,6 +16,11 @@ kotlin {
         implementation(projects.composeApp.domain.audio)
         implementation(projects.composeApp.domain.permission)
 
+        implementation(compose.material3AdaptiveNavigationSuite)
+        implementation(libs.material.adaptive)
+        implementation(libs.material.adaptive.navigation)
+        implementation(libs.material.adaptive.layout)
+
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.core)

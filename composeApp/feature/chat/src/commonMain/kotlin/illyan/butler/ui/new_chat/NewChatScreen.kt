@@ -34,27 +34,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ExpandableCard
+import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
-import illyan.butler.ui.chat_layout.LocalChatSelector
-import illyan.butler.core.ui.components.ExpandableCard
-import illyan.butler.core.ui.components.MenuButton
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewChatScreen() {
+fun NewChatScreen(selectNewChat: (String) -> Unit) {
     val screenModel = koinViewModel<NewChatViewModel>()
     val state by screenModel.state.collectAsState()
-    val selectNewChat = LocalChatSelector.current
-    LaunchedEffect(state.newChatId) {
-        if (state.newChatId != null) {
-            selectNewChat(state.newChatId!!)
+    var newChatId by rememberSaveable(state) { mutableStateOf(state.newChatId) }
+    LaunchedEffect(newChatId) {
+        newChatId?.let {
+            selectNewChat(it)
+            newChatId = null
         }
     }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
