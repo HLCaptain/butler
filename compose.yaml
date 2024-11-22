@@ -1,22 +1,6 @@
-version: '3.8'
 services:
-  api_gateway:
+  server:
     build:
-      context: ./api_gateway
+      context: .
       dockerfile: Dockerfile
-    image: illyan1337/butler-api-gateway:latest
-  chat_service:
-    build:
-      context: ./services/chat_service
-      dockerfile: Dockerfile
-    image: illyan1337/butler-chat-service:latest
-  identity_service:
-    build:
-      context: ./services/identity_service
-      dockerfile: Dockerfile
-    image: illyan1337/butler-identity-service:latest
-  ai_service:
-    build:
-      context: ./services/ai_service
-      dockerfile: Dockerfile
-    image: illyan1337/butler-ai-service:latest
+    image: illyan1337/butler-server:latest
