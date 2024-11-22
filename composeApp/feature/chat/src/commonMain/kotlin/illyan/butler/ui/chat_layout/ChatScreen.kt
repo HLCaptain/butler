@@ -37,7 +37,6 @@ fun ChatScreen(currentChat: String?) {
         navigator.navigateBack()
     }
     LaunchedEffect(currentChat) {
-        Napier.d("ChatScreen: currentChat=$currentChat")
         currentChat?.let { chatId = it }
     }
     LaunchedEffect(chatId) {

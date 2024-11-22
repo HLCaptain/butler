@@ -42,7 +42,6 @@ import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
-import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -52,7 +51,6 @@ fun NewChatScreen(selectNewChat: (String) -> Unit) {
     val viewModel = koinViewModel<NewChatViewModel>()
     val state by viewModel.state.collectAsState()
     DisposableEffect(state) {
-        Napier.d("NewChatScreen: newChatId=${state.newChatId}")
         state.newChatId?.let { selectNewChat(it) }
         onDispose { viewModel.clearNewChatId() }
     }
