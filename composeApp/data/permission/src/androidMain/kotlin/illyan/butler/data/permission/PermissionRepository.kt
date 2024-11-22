@@ -48,13 +48,17 @@ class AndroidPermissionRepository : PermissionRepository {
     }
 
     private fun refreshPermissionStatus(context: Context, permission: Permission) {
-        val hasPermission = context.checkPermission(ANDROID_PERMISSIONS[permission]!!)
-        val status = if (hasPermission) {
-            PermissionStatus.Granted
+        if (permission in ANDROID_PERMISSIONS.keys) {
+            val hasPermission = context.checkPermission(ANDROID_PERMISSIONS[permission]!!)
+            val status = if (hasPermission) {
+                PermissionStatus.Granted
+            } else {
+                PermissionStatus.Denied(context.findActivity().shouldShowRationale(ANDROID_PERMISSIONS[permission]!!))
+            }
+            cachedPermissionFlows.update { it + (permission to status) }
         } else {
-            PermissionStatus.Denied(context.findActivity().shouldShowRationale(ANDROID_PERMISSIONS[permission]!!))
+            cachedPermissionFlows.update { it + (permission to PermissionStatus.Unknown) }
         }
-        cachedPermissionFlows.update { it + (permission to status) }
     }
 
     override fun launchPermissionRequest(permission: Permission) {
