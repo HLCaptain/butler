@@ -49,7 +49,7 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatList(
     chats: List<DomainChat>,
@@ -79,7 +79,7 @@ fun ChatList(
         Crossfade(
             modifier = Modifier
                 .padding(insetsPadding)
-                .haze(hazeState, HazeMaterials.thin()),
+                .haze(hazeState),
             targetState = chats
         ) {
             if (it.isEmpty()) {

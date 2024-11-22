@@ -27,4 +27,8 @@ class JvmPermissionRepository : PermissionRepository {
     override fun showAppRationale(permission: Permission) {
         cachedPermissionFlows.update { it + (permission to PermissionStatus.ShowAppRationale) }
     }
+
+    override fun removePermissionStatus(permission: Permission) {
+        cachedPermissionFlows.update { it - permission }
+    }
 }

@@ -10,4 +10,5 @@ interface PermissionRepository {
     fun getPermissionStatus(permission: Permission): Flow<PermissionStatus?>
     fun launchPermissionRequest(permission: Permission)
     fun showAppRationale(permission: Permission)
+    fun removePermissionStatus(permission: Permission)
 }

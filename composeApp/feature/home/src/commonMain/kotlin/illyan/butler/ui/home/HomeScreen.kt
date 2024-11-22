@@ -14,20 +14,14 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutoutPadding
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -36,13 +30,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
@@ -50,13 +42,11 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.PermanentDrawerSheet
-import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldLayout
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,7 +54,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -75,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -109,7 +97,6 @@ import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
 import illyan.butler.ui.welcome.WelcomeScreen
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
@@ -333,12 +320,21 @@ fun HomeScreen() {
                     serverErrors = state.serverErrors
                 )
             }
+            val permission = state.permissionStatuses.filterValues { it is PermissionStatus.ShowAppRationale }.keys.firstOrNull()
             ButlerDialog(
                 modifier = Modifier.zIndex(2f),
-                isDialogOpen = state.permissionStatuses.filterValues { it is PermissionStatus.ShowAppRationale }
-                    .isNotEmpty(),
-                isDialogFullscreen = false
-            ) { PermissionRequestScreen() }
+                isDialogOpen = permission != null,
+                isDialogFullscreen = false,
+                onDismissDialog = { viewModel.dismissPermissionRequest(permission) },
+            ) {
+                permission?.let {
+                    PermissionRequestScreen(
+                        permission = it,
+                        onDismiss = { viewModel.dismissPermissionRequest(it) },
+                        requestPermission = { viewModel.launchPermissionRequest(it) }
+                    )
+                }
+            }
             // Index is rememberSaveable, Screen is probably not.
             val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
             val isNavBarCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
@@ -357,16 +353,20 @@ fun HomeScreen() {
                 windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
             }
             val navigateToChats = {
-                homeNavController.navigate(ChatDestination()) {
-                    popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
+                if (homeNavController.currentDestination?.hasRoute<ChatDestination>() != true) {
+                    homeNavController.navigate(ChatDestination()) {
+                        popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                    }
                 }
             }
             val navigateToNewChat = {
-                homeNavController.navigate(NewChatDestination) {
-                    popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
+                if (homeNavController.currentDestination?.hasRoute<NewChatDestination>() != true) {
+                    homeNavController.navigate(NewChatDestination) {
+                        popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             }
             NavigationSuiteScaffoldLayout(

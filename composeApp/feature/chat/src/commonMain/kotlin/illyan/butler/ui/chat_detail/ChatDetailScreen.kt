@@ -72,6 +72,7 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -107,7 +108,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
     state: ChatDetailState,
@@ -159,6 +160,7 @@ fun ChatDetailScreen(
             )
         },
         bottomBar = {
+            LocalHazeStyle
             if (state.chat?.id != null) {
                 MessageField(
                     modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
@@ -174,7 +176,7 @@ fun ChatDetailScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier.haze(hazeState, HazeMaterials.thin()),
+            modifier = Modifier.haze(hazeState),
         ) {
             AnimatedVisibility(state.chat?.id == null) {
                 SelectChat()

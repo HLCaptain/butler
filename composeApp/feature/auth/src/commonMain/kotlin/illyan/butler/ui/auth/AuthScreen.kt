@@ -34,15 +34,6 @@ fun AuthScreen(
     authSuccess: () -> Unit = {},
     authSuccessEnded: () -> Unit
 ) {
-    val viewModel = koinViewModel<AuthViewModel>()
-    val state by viewModel.state.collectAsState()
-    // Make your Compose Multiplatform UI
-
-    // Close if user is authenticated!
-    // 1. Select host if not set
-    // 2. Show login screen
-    // 3. Close if user is authenticated
-
     val authNavController = rememberNavController()
     val animationTime = 200
     NavHost(

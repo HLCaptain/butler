@@ -11,7 +11,6 @@ import illyan.butler.domain.model.Permission
 import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.error.ErrorManager
 import illyan.butler.permission.PermissionManager
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -108,6 +107,22 @@ class HomeViewModel(
     fun setTutorialDone() {
         viewModelScope.launch(Dispatchers.IO) {
             appManager.setTutorialDone()
+        }
+    }
+
+    fun dismissPermissionRequest(permission: Permission?) {
+        permission?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                permissionManager.closeAppRationale(it)
+            }
+        }
+    }
+
+    fun launchPermissionRequest(permission: Permission?) {
+        permission?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                permissionManager.launchPermissionRequest(it)
+            }
         }
     }
 }
