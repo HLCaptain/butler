@@ -23,7 +23,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,20 +42,19 @@ import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewChatScreen(selectNewChat: (String) -> Unit) {
-    val screenModel = koinViewModel<NewChatViewModel>()
-    val state by screenModel.state.collectAsState()
-    var newChatId by rememberSaveable(state) { mutableStateOf(state.newChatId) }
-    LaunchedEffect(newChatId) {
-        newChatId?.let {
-            selectNewChat(it)
-            newChatId = null
-        }
+    val viewModel = koinViewModel<NewChatViewModel>()
+    val state by viewModel.state.collectAsState()
+    DisposableEffect(state) {
+        Napier.d("NewChatScreen: newChatId=${state.newChatId}")
+        state.newChatId?.let { selectNewChat(it) }
+        onDispose { viewModel.clearNewChatId() }
     }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     Scaffold(
@@ -84,7 +83,7 @@ fun NewChatScreen(selectNewChat: (String) -> Unit) {
             } else if (models.isNotEmpty()) {
                 ModelList(
                     state = state,
-                    selectModel = screenModel::createChatWithModel,
+                    selectModel = viewModel::createChatWithModel,
                     innerPadding = innerPadding
                 )
             } else {

@@ -67,6 +67,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines.android)
         implementation(libs.androidx.activity)
         implementation(libs.androidx.activity.compose)
+        implementation(libs.compose.ui.tooling)
         implementation(libs.ffmpeg.kit)
     }
 

@@ -18,9 +18,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -353,7 +360,6 @@ fun HomeScreen() {
                 homeNavController.navigate(ChatDestination()) {
                     popUpTo(homeNavController.graph.findStartDestination().id) { saveState = true }
                     launchSingleTop = true
-                    restoreState = true
                 }
             }
             val navigateToNewChat = {
@@ -384,6 +390,7 @@ fun HomeScreen() {
                     ) { type ->
                         if (type == NavigationSuiteType.NavigationBar) {
                             HorizontalNavBar(
+                                modifier = Modifier.navigationBarsPadding(),
                                 navController = homeNavController,
                                 isProfileDialogShowing = isProfileDialogShowing,
                                 setProfileDialogShowing = { isProfileDialogShowing = it },
@@ -392,6 +399,7 @@ fun HomeScreen() {
                             )
                         } else {
                             VerticalNavBar(
+                                modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
                                 navController = homeNavController,
                                 compact = isVerticalNavBarCompact,
                                 isProfileDialogShowing = isProfileDialogShowing,
@@ -409,8 +417,7 @@ fun HomeScreen() {
                         startDestination = ChatDestination()
                     ) {
                         composable<ChatDestination> {
-                            Napier.d("Navigating to chat with id: ${it.toRoute<ChatDestination>().id}")
-                            ChatScreen(it.toRoute<ChatDestination>().id, WindowInsets(88.dp))
+                            ChatScreen(currentChat = it.toRoute<ChatDestination>().id)
                         }
                         composable<NewChatDestination> {
                             NewChatScreen { chatId ->
@@ -436,6 +443,7 @@ fun HomeScreen() {
 
 @Composable
 private fun HorizontalNavBar(
+    modifier: Modifier = Modifier,
     navController: NavController,
     isProfileDialogShowing: Boolean,
     setProfileDialogShowing: (Boolean) -> Unit,
@@ -444,6 +452,7 @@ private fun HorizontalNavBar(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     NavigationBar(
+        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
     ) {
         ChatsNavigationBarItem(selected = backStackEntry?.destination?.hasRoute<ChatDestination>() == true && !isProfileDialogShowing) {
@@ -460,6 +469,7 @@ private fun HorizontalNavBar(
 
 @Composable
 private fun VerticalNavBar(
+    modifier: Modifier = Modifier,
     compact: Boolean,
     navController: NavController,
     isProfileDialogShowing: Boolean,
@@ -481,7 +491,7 @@ private fun VerticalNavBar(
     ) { isCompact ->
         if (isCompact) {
             NavigationRail(
-                modifier = Modifier.statusBarsPadding(),
+                modifier = modifier.statusBarsPadding(),
                 containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
                 header = {
                     HamburgerButton { navRailExpanded = true }
@@ -502,6 +512,7 @@ private fun VerticalNavBar(
             }
         } else {
             NavigationDrawerContent(
+                modifier = modifier.statusBarsPadding(),
                 navController = navController,
                 isProfileShown = isProfileDialogShowing,
                 onProfileClick = { setProfileDialogShowing(true) },
@@ -510,87 +521,6 @@ private fun VerticalNavBar(
                 closeDrawer = { navRailExpanded = false },
                 isDrawerPermanent = false
             )
-        }
-    }
-}
-
-@Composable
-private fun HomeContentWithVerticalNavBar(
-    isNavBarCompact: Boolean,
-    isProfileDialogShowing: Boolean,
-    navController: NavController,
-    navBarOrientation: Orientation,
-    setDialogVisibility: (Boolean) -> Unit,
-    navigateToChats: () -> Unit,
-    navigateToNewChat: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-    Crossfade(isNavBarCompact) { isCompact ->
-        if (isCompact) {
-            val drawerState = rememberDrawerState(DrawerValue.Closed)
-            ModalNavigationDrawer(
-                drawerState = drawerState,
-                drawerContent = {
-                    NavigationDrawerContent(
-                        navController = navController,
-                        isProfileShown = isProfileDialogShowing,
-                        onProfileClick = {
-                            setDialogVisibility(true)
-                            coroutineScope.launch { drawerState.close() }
-                        },
-                        closeDrawer = { coroutineScope.launch { drawerState.close() } },
-                        navigateToChats = {
-                            navigateToChats()
-                            coroutineScope.launch { drawerState.close() }
-                        },
-                        navigateToNewChat = {
-                            navigateToNewChat()
-                            coroutineScope.launch { drawerState.close() }
-                        }
-                    )
-                }
-            ) {
-                Row {
-                    NavigationRail(
-                        modifier = Modifier.statusBarsPadding(),
-                        containerColor = Color.Transparent,
-                        header = {
-                            HamburgerButton { coroutineScope.launch { drawerState.open() } }
-                            NewChatFAB { navigateToNewChat() }
-                        }
-                    ) {
-                        val backStackEntry by navController.currentBackStackEntryAsState()
-                        Spacer(Modifier.weight(0.5f))
-                        ChatsNavigationRailItem(selected = backStackEntry?.destination?.route == "chat" && !isProfileDialogShowing) {
-                            navigateToChats()
-                        }
-                        NewChatNavigationRailItem(selected = backStackEntry?.destination?.route == "newChat" && !isProfileDialogShowing) {
-                            navigateToNewChat()
-                        }
-                        ProfileNavigationRailItem(selected = isProfileDialogShowing) {
-                            setDialogVisibility(true)
-                        }
-                        Spacer(Modifier.weight(1f))
-                    }
-                    HomeContent(navBarOrientation, content)
-                }
-            }
-        } else {
-            PermanentNavigationDrawer(
-                drawerContent = {
-                    NavigationDrawerContent(
-                        navController = navController,
-                        isProfileShown = isProfileDialogShowing,
-                        onProfileClick = { setDialogVisibility(true) },
-                        navigateToChats = navigateToChats,
-                        navigateToNewChat = navigateToNewChat,
-                        isDrawerPermanent = true
-                    )
-                }
-            ) {
-                HomeContent(navBarOrientation, content)
-            }
         }
     }
 }
@@ -782,6 +712,7 @@ fun CloseButton(
 
 @Composable
 private fun NavigationDrawerContent(
+    modifier: Modifier = Modifier,
     navController: NavController,
     isProfileShown: Boolean = false,
     onProfileClick: () -> Unit = {},
@@ -793,7 +724,7 @@ private fun NavigationDrawerContent(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = remember(backStackEntry) { backStackEntry?.destination?.route }
     PermanentDrawerSheet(
-        modifier = Modifier.widthIn(max = 280.dp),
+        modifier = modifier.widthIn(max = 280.dp),
         drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
     ) {
         Column(

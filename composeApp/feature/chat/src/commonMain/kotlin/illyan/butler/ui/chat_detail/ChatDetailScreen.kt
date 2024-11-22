@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -111,7 +114,6 @@ fun ChatDetailScreen(
     viewModel: ChatDetailViewModel,
     currentSelectedChat: String?,
     canNavigateBack: Boolean = true,
-    navBarWindowInsets: WindowInsets = WindowInsets(8.dp),
     onNavigateBack: () -> Unit = {}
 ) {
     LaunchedEffect(currentSelectedChat) {
@@ -157,22 +159,17 @@ fun ChatDetailScreen(
             )
         },
         bottomBar = {
-            Column(
-                Modifier.navigationBarsPadding().consumeWindowInsets(WindowInsets.systemBars.union(navBarWindowInsets).only(WindowInsetsSides.Bottom)) // Height of Navigation Bar
-            ) {
-                if (state.chat?.id != null) {
-                    MessageField(
-                        modifier = Modifier.hazeChild(hazeState),
-                        sendMessage = viewModel::sendMessage,
-                        isRecording = state.isRecording,
-                        canRecordAudio = state.canRecordAudio,
-                        toggleRecord = viewModel::toggleRecording,
-                        sendImage = viewModel::sendImage,
-                        galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
-                        requestGalleryAccess = viewModel::requestGalleryPermission
-                    )
-                }
-                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
+            if (state.chat?.id != null) {
+                MessageField(
+                    modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
+                    sendMessage = viewModel::sendMessage,
+                    isRecording = state.isRecording,
+                    canRecordAudio = state.canRecordAudio,
+                    toggleRecord = viewModel::toggleRecording,
+                    sendImage = viewModel::sendImage,
+                    galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
+                    requestGalleryAccess = viewModel::requestGalleryPermission
+                )
             }
         }
     ) { innerPadding ->

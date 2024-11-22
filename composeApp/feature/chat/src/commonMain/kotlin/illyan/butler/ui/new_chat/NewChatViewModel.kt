@@ -53,4 +53,8 @@ class NewChatViewModel(
             newChatId.update { id }
         }
     }
+
+    fun clearNewChatId() {
+        newChatId.update { null }
+    }
 }
