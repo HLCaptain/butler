@@ -1,8 +1,8 @@
-package illyan.butler.data
+package illyan.butler.data.host
 
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 
 @Module
 @ComponentScan
-class ErrorDataModule {}
+class HostDataModule {}

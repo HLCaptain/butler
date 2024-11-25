@@ -133,15 +133,6 @@ android {
         buildConfig = true
     }
 
-//    applicationVariants.all {
-//        val variantName = name
-//        sourceSets {
-//            getByName("main") {
-//                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
-//            }
-//        }
-//    }
-
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
     }
@@ -153,7 +144,7 @@ android {
     }
 
     dependencies {
-        implementation(libs.compose.ui.tooling)
+        debugImplementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
     }
 }

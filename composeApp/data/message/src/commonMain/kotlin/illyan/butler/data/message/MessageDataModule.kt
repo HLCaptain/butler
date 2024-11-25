@@ -1,4 +1,4 @@
-package illyan.butler.data
+package illyan.butler.data.message
 
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module

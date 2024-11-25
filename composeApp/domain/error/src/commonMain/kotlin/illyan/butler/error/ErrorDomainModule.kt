@@ -1,8 +1,8 @@
-package illyan.butler.data
+package illyan.butler.error
 
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 
 @Module
-@ComponentScan
-class UserDataModule {}
+@ComponentScan("illyan.butler.error")
+class ErrorDomainModule {}
