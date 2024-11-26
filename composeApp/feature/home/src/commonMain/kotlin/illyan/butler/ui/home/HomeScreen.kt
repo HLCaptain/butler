@@ -75,7 +75,6 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
-import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.close
@@ -319,21 +318,6 @@ fun HomeScreen() {
                     appErrors = state.appErrors,
                     serverErrors = state.serverErrors
                 )
-            }
-            val permission = state.permissionStatuses.filterValues { it is PermissionStatus.ShowAppRationale }.keys.firstOrNull()
-            ButlerDialog(
-                modifier = Modifier.zIndex(2f),
-                isDialogOpen = permission != null,
-                isDialogFullscreen = false,
-                onDismissDialog = { viewModel.dismissPermissionRequest(permission) },
-            ) {
-                permission?.let {
-                    PermissionRequestScreen(
-                        permission = it,
-                        onDismiss = { viewModel.dismissPermissionRequest(it) },
-                        requestPermission = { viewModel.launchPermissionRequest(it) }
-                    )
-                }
             }
             // Index is rememberSaveable, Screen is probably not.
             val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass

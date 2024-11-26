@@ -5,13 +5,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import com.mohamedrejeb.calf.permissions.Permission
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.smallDialogWidth
-import illyan.butler.domain.model.Permission
 import illyan.butler.generated.resources.Res
-import illyan.butler.generated.resources.all_permissions_granted_description
-import illyan.butler.generated.resources.all_permissions_granted_title
+import illyan.butler.generated.resources.permission_request_generic_title
+import illyan.butler.generated.resources.permission_request_generic_description
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.permission_request_gallery_description
 import illyan.butler.generated.resources.permission_request_gallery_title
@@ -24,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 fun PermissionRequestScreen(
     permission: Permission,
     onDismiss: () -> Unit,
-    requestPermission: () -> Unit
+    onRequestPermission: () -> Unit
 ) {
     // Butler dialog screen content, requesting permission
     ButlerDialogContent(
@@ -33,9 +34,9 @@ fun PermissionRequestScreen(
             Text(
                 stringResource(
                     when (permission) {
-                        Permission.RECORD_AUDIO -> Res.string.permission_request_record_audio_title
-                        Permission.GALLERY -> Res.string.permission_request_gallery_title
-                        else -> Res.string.all_permissions_granted_title
+                        Permission.RecordAudio -> Res.string.permission_request_record_audio_title
+                        Permission.ReadImage -> Res.string.permission_request_gallery_title
+                        else -> Res.string.permission_request_generic_title
                     }
                 )
             )
@@ -44,9 +45,9 @@ fun PermissionRequestScreen(
             Text(
                 stringResource(
                     when (permission) {
-                        Permission.RECORD_AUDIO -> Res.string.permission_request_record_audio_description
-                        Permission.GALLERY -> Res.string.permission_request_gallery_description
-                        else -> Res.string.all_permissions_granted_description
+                        Permission.RecordAudio -> Res.string.permission_request_record_audio_description
+                        Permission.Gallery -> Res.string.permission_request_gallery_description
+                        else -> Res.string.permission_request_generic_description
                     }
                 )
             )
@@ -56,7 +57,7 @@ fun PermissionRequestScreen(
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(Res.string.close))
                 }
-                Button(onClick = requestPermission) {
+                Button(onClick = onRequestPermission) {
                     Text(stringResource(Res.string.request_permission))
                 }
             }

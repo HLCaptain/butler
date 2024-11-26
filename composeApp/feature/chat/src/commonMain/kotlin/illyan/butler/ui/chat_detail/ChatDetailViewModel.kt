@@ -9,9 +9,6 @@ import illyan.butler.chat.ChatManager
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
-import illyan.butler.permission.PermissionManager
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
 import korlibs.audio.sound.AudioData
@@ -33,7 +30,6 @@ class ChatDetailViewModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
-    private val permissionManager: PermissionManager,
 ) : ViewModel() {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
 
@@ -70,7 +66,6 @@ class ChatDetailViewModel(
         audioManager.isRecording,
         audioManager.playingAudioId,
         resources,
-        permissionManager.getPermissionStatus(Permission.GALLERY)
     ) { flows ->
         val chat = flows[0] as? DomainChat
         val messages = flows[1] as? List<DomainMessage>
@@ -79,7 +74,6 @@ class ChatDetailViewModel(
         val recording = flows[3] as? Boolean ?: false
         val playing = flows[4] as? String
         val resources = flows[5] as? List<DomainResource>
-        val galleryPermission = flows[6] as? PermissionStatus
 //        Napier.v("Gallery permission: $galleryPermission")
         Napier.v("Resources: $resources")
         val sounds = resources?.filter { it.type.startsWith("audio") }
@@ -93,23 +87,19 @@ class ChatDetailViewModel(
             messages = messages,
             userId = userId,
             isRecording = recording,
-            canRecordAudio = audioManager.canRecordAudio,
             playingAudio = playing,
             sounds = sounds,
-            images = images,
-            galleryPermission = galleryPermission
+            images = images
         )
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        ChatDetailState(canRecordAudio = audioManager.canRecordAudio)
+        ChatDetailState()
     )
 
     fun loadChat(chatId: String) {
         chatIdStateFlow.update { chatId }
     }
-
-    val userId = authManager.signedInUserId
 
     fun sendMessage(message: String) {
         viewModelScope.launch {
@@ -147,12 +137,6 @@ class ChatDetailViewModel(
     fun stopAudio() {
         viewModelScope.launch {
             audioManager.stopAudio()
-        }
-    }
-
-    fun requestGalleryPermission() {
-        viewModelScope.launch {
-            permissionManager.showAppRationale(Permission.GALLERY)
         }
     }
 }

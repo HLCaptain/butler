@@ -2,29 +2,17 @@ package illyan.butler.ui.chat_detail
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,7 +40,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,23 +52,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.ImageLoader
-import coil3.compose.AsyncImagePainter
-import coil3.compose.LocalPlatformContext
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
+import com.mohamedrejeb.calf.permissions.ExperimentalPermissionsApi
+import com.mohamedrejeb.calf.permissions.Permission
+import com.mohamedrejeb.calf.permissions.isGranted
+import com.mohamedrejeb.calf.permissions.rememberPermissionState
+import com.mohamedrejeb.calf.permissions.shouldShowRationale
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
+import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
+import illyan.butler.core.utils.getPlatformName
 import illyan.butler.domain.model.DomainMessage
-import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.back
@@ -97,7 +84,7 @@ import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.chat_details.ChatDetailsScreen
-import illyan.butler.core.ui.components.RichTooltipWithContent
+import illyan.butler.ui.permission.PermissionRequestScreen
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
@@ -105,10 +92,9 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun ChatDetailScreen(
     state: ChatDetailState,
@@ -160,18 +146,41 @@ fun ChatDetailScreen(
             )
         },
         bottomBar = {
-            LocalHazeStyle
+            var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<Permission?>(null) }
+            val galleryPermissionState = rememberPermissionState(Permission.ReadImage) { showAppRationaleWithPermission = null }
+            val recordAudioPermissionState = rememberPermissionState(Permission.RecordAudio) { showAppRationaleWithPermission = null }
+            LaunchedEffect(galleryPermissionState.status) {
+                Napier.d("Gallery permission status: ${galleryPermissionState.status}")
+            }
+            LaunchedEffect(recordAudioPermissionState.status) {
+                Napier.d("Record audio permission status: ${recordAudioPermissionState.status}")
+            }
             if (state.chat?.id != null) {
                 MessageField(
                     modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
                     sendMessage = viewModel::sendMessage,
                     isRecording = state.isRecording,
-                    canRecordAudio = state.canRecordAudio,
                     toggleRecord = viewModel::toggleRecording,
                     sendImage = viewModel::sendImage,
-                    galleryAccessGranted = state.galleryPermission == PermissionStatus.Granted,
-                    requestGalleryAccess = viewModel::requestGalleryPermission
+                    galleryAccessGranted = galleryPermissionState.status.isGranted || getPlatformName() == "Desktop", // Desktop doesn't need permission
+                    galleryEnabled = galleryPermissionState.status.let { it.isGranted || it.shouldShowRationale } || getPlatformName() == "Desktop", // Desktop doesn't need permission
+                    recordAudioAccessGranted = recordAudioPermissionState.status.isGranted || getPlatformName() == "Desktop", // Desktop doesn't need permission
+                    recordAudioEnabled = recordAudioPermissionState.status.let { it.isGranted || it.shouldShowRationale } || getPlatformName() == "Desktop", // Desktop doesn't need permission
+                    requestGalleryAccess = { showAppRationaleWithPermission = Permission.ReadImage },
+                    requestRecordAudioAccess = { showAppRationaleWithPermission = Permission.RecordAudio }
                 )
+            }
+            ButlerDialog(
+                isDialogOpen = showAppRationaleWithPermission != null,
+                onDismissDialog = { showAppRationaleWithPermission = null },
+            ) {
+                showAppRationaleWithPermission?.let {
+                    PermissionRequestScreen(
+                        permission = it,
+                        onDismiss = { showAppRationaleWithPermission = null },
+                        onRequestPermission = { galleryPermissionState.launchPermissionRequest() }
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -324,20 +333,13 @@ fun MessageItem(
                     .sizeIn(maxHeight = 400.dp, maxWidth = 400.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 model = image,
-                imageLoader = ImageLoader(LocalPlatformContext.current),
+                loading = { MediumCircularProgressIndicator() },
+                error = { Text("Error loading image") },
+                success = { _ ->
+                    SubcomposeAsyncImageContent()
+                },
                 contentDescription = "Image"
-            ) {
-                val state by painter.state.collectAsState()
-                when (state) {
-                    AsyncImagePainter.State.Empty -> Text("Empty")
-                    is AsyncImagePainter.State.Error -> {
-                        Text("Error loading image")
-                        Napier.e("Error loading image with size ${image.size} and painter.state: $state", (state as AsyncImagePainter.State.Error).result.throwable)
-                    }
-                    is AsyncImagePainter.State.Loading -> MediumCircularProgressIndicator()
-                    is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
-                }
-            }
+            )
         }
         if (!message.message.isNullOrBlank()) {
             val cardColors = if (sentByUser) CardDefaults.elevatedCardColors(
@@ -383,7 +385,7 @@ fun AudioMessages(
                 } else if (!isActive && progress > 0f) progress = 0f
             }
 
-            Button(onClick = { if (isActive) onStop() else onPlay(resourceId) },) {
+            Button(onClick = { if (isActive) onStop() else onPlay(resourceId) }) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -407,29 +409,38 @@ fun MessageField(
     modifier: Modifier = Modifier,
     sendMessage: (String) -> Unit,
     isRecording: Boolean = false,
-    canRecordAudio: Boolean = false,
     toggleRecord: () -> Unit,
     sendImage: (String) -> Unit,
     galleryAccessGranted: Boolean = false,
-    requestGalleryAccess: () -> Unit
+    galleryEnabled: Boolean = false,
+    recordAudioAccessGranted: Boolean = false,
+    recordAudioEnabled: Boolean = false,
+    requestGalleryAccess: () -> Unit,
+    requestRecordAudioAccess: () -> Unit
 ) {
     Row(
         modifier = modifier.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AnimatedVisibility(visible = canRecordAudio) {
-            IconButton(onClick = toggleRecord) {
+        AnimatedVisibility(visible = recordAudioEnabled) {
+            IconButton(onClick = {
+                if (recordAudioAccessGranted) {
+                    toggleRecord()
+                } else {
+                    requestRecordAudioAccess()
+                }
+            }) {
                 Crossfade(isRecording) {
                     if (it) {
                         Icon(
                             imageVector = Icons.Rounded.StopCircle,
-                            contentDescription = stringResource(Res.string.send),
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.Mic,
-                            contentDescription = stringResource(Res.string.send),
+                            contentDescription = null,
                             tint =  MaterialTheme.colorScheme.primary
                         )
                     }
@@ -437,18 +448,20 @@ fun MessageField(
             }
         }
         var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
-        IconButton(onClick = {
-            if (galleryAccessGranted) {
-                isFilePickerShown = true
-            } else {
-                requestGalleryAccess()
+        AnimatedVisibility(visible = galleryEnabled) {
+            IconButton(onClick = {
+                if (galleryAccessGranted) {
+                    isFilePickerShown = true
+                } else {
+                    requestGalleryAccess()
+                }
+            }) {
+                Icon(
+                    imageVector = Icons.Rounded.Image,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
-        }) {
-            Icon(
-                imageVector = Icons.Rounded.Image,
-                contentDescription = stringResource(Res.string.send),
-                tint = MaterialTheme.colorScheme.primary
-            )
         }
         FilePicker(
             show = isFilePickerShown,

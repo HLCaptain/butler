@@ -1,8 +1,8 @@
-package illyan.butler.di.repository
+package illyan.butler.ui.permission
 
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 
 @Module
 @ComponentScan
-class RepositoryModule {}
+class PermissionFeatureModule {}

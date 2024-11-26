@@ -15,7 +15,6 @@ kotlin {
         implementation(projects.composeApp.domain.config)
         implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.auth)
-        implementation(projects.composeApp.domain.permission)
         implementation(projects.composeApp.feature.auth)
         implementation(projects.composeApp.feature.chat)
         implementation(projects.composeApp.feature.onboarding)

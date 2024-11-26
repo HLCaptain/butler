@@ -84,7 +84,9 @@
     <string name="permission_request_record_audio_description">Audio recording is required to have a spoken conversation with the AI.</string>
     <string name="permission_request_gallery_title">Enable Gallery Access</string>
     <string name="permission_request_gallery_description">Gallery access is required to send images to the AI.</string>
-    <string name="all_permissions_granted_title">All permissions granted</string>
-    <string name="all_permissions_granted_description">All required permissions are granted for the app to work properly.</string>
+    <string name="permission_request_generic_title">Request permission?</string>
+    <string name="permission_request_generic_description">Permission is required for the app to work properly.</string>
+    <string name="all_permissions_granted_title">Permission granted</string>
+    <string name="all_permissions_granted_description">Required permissions are granted for the app to work properly.</string>
     <string name="request_permission">Request permission</string>
 </resources>

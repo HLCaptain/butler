@@ -28,7 +28,6 @@ kotlin {
         implementation(projects.composeApp.data.chat)
         implementation(projects.composeApp.data.host)
         implementation(projects.composeApp.data.user)
-        implementation(projects.composeApp.data.permission)
         implementation(projects.composeApp.data.resource)
         implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.data.model)
@@ -43,7 +42,6 @@ kotlin {
         implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.domain.model)
-        implementation(projects.composeApp.domain.permission)
         implementation(projects.composeApp.domain.settings)
 
         implementation(projects.composeApp.di)
@@ -157,7 +155,11 @@ compose.desktop.application {
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
     }
     buildTypes.release.proguard {
+        version = "7.6.0"
+//        isEnabled = true
+//        optimize = true
+//        obfuscate = true
+
         configurationFiles.from(project.file("compose-desktop.pro"))
-//        obfuscate.set(true)
     }
 }

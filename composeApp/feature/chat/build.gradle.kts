@@ -9,12 +9,13 @@ kotlin {
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.utils)
+        implementation(projects.composeApp.core.utils)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.chat)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.model)
         implementation(projects.composeApp.domain.audio)
-        implementation(projects.composeApp.domain.permission)
+        implementation(projects.composeApp.feature.permission)
 
         implementation(compose.material3AdaptiveNavigationSuite)
         implementation(libs.material.adaptive)
@@ -26,11 +27,12 @@ kotlin {
         implementation(libs.kotlinx.serialization.core)
 
         implementation(libs.haze)
-        implementation(libs.coil)
         implementation(libs.coil.compose)
         implementation(libs.napier)
-        implementation(libs.korge.core)
+        implementation(libs.korge.audio)
+        implementation(libs.korge.io)
         implementation(libs.filepicker)
+        implementation(libs.calf.permissions)
     }
 
     sourceSets.androidMain.dependencies {

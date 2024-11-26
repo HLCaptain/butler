@@ -1,8 +1,8 @@
-package illyan.butler.ui
+package illyan.butler.di
 
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 
 @Module
 @ComponentScan
-class ThemeFeatureModule {}
+class RepositoryModule {}

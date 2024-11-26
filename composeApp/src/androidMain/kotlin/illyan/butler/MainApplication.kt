@@ -12,25 +12,22 @@ import illyan.butler.data.error.ErrorDataModule
 import illyan.butler.data.host.HostDataModule
 import illyan.butler.data.message.MessageDataModule
 import illyan.butler.data.model.ModelDataModule
-import illyan.butler.data.permission.PermissionDataModule
 import illyan.butler.data.resource.ResourceDataModule
 import illyan.butler.data.settings.SettingsDataModule
 import illyan.butler.data.user.UserDataModule
-import illyan.butler.data.permission.AndroidPermissionRepository
-import illyan.butler.di.repository.RepositoryModule
+import illyan.butler.di.RepositoryModule
 import illyan.butler.error.ErrorManager
 import illyan.butler.host.HostDomainModule
 import illyan.butler.model.ModelManager
-import illyan.butler.permission.PermissionDomainModule
 import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
-import illyan.butler.ui.ErrorFeatureModule
-import illyan.butler.ui.HomeFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
-import illyan.butler.ui.PermissionFeatureModule
 import illyan.butler.ui.ProfileFeatureModule
-import illyan.butler.ui.ThemeFeatureModule
+import illyan.butler.ui.error.ErrorFeatureModule
+import illyan.butler.ui.home.HomeFeatureModule
+import illyan.butler.ui.permission.PermissionFeatureModule
+import illyan.butler.ui.theme.ThemeFeatureModule
 import illyan.butler.utils.initNapier
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -64,7 +61,6 @@ class MainApplication : Application() {
                 ConfigDomainModule().module,
                 HostDomainModule().module,
                 module { singleOf(::ModelManager) },
-                PermissionDomainModule().module,
                 SettingsDomainModule().module
             )
             val dataModules = listOf(
@@ -72,7 +68,6 @@ class MainApplication : Application() {
                 HostDataModule().module,
                 MessageDataModule().module,
                 ModelDataModule().module,
-                PermissionDataModule().module,
                 ResourceDataModule().module,
                 SettingsDataModule().module,
                 UserDataModule().module
@@ -88,8 +83,7 @@ class MainApplication : Application() {
                 *dataModules.toTypedArray(),
                 RepositoryModule().module,
                 *domainModules.toTypedArray(),
-                *featureModules.toTypedArray(),
-                module { single { AndroidPermissionRepository() } }
+                *featureModules.toTypedArray()
             )
         }
     }
