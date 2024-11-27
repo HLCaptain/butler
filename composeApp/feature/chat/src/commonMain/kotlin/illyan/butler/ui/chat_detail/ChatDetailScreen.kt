@@ -55,11 +55,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
-import com.mohamedrejeb.calf.permissions.ExperimentalPermissionsApi
-import com.mohamedrejeb.calf.permissions.Permission
-import com.mohamedrejeb.calf.permissions.isGranted
-import com.mohamedrejeb.calf.permissions.rememberPermissionState
-import com.mohamedrejeb.calf.permissions.shouldShowRationale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
@@ -67,7 +62,6 @@ import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
-import illyan.butler.core.utils.getPlatformName
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
@@ -84,7 +78,6 @@ import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.ui.chat_details.ChatDetailsScreen
-import illyan.butler.ui.permission.PermissionRequestScreen
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
@@ -94,7 +87,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
     state: ChatDetailState,
@@ -146,42 +139,18 @@ fun ChatDetailScreen(
             )
         },
         bottomBar = {
-            var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<Permission?>(null) }
-            val galleryPermissionState = rememberPermissionState(Permission.ReadImage) { showAppRationaleWithPermission = null }
-            val recordAudioPermissionState = rememberPermissionState(Permission.RecordAudio) { showAppRationaleWithPermission = null }
-            LaunchedEffect(galleryPermissionState.status) {
-                Napier.d("Gallery permission status: ${galleryPermissionState.status}")
-            }
-            LaunchedEffect(recordAudioPermissionState.status) {
-                Napier.d("Record audio permission status: ${recordAudioPermissionState.status}")
-            }
+
             if (state.chat?.id != null) {
-                MessageField(
+                ChatDetailBottomBar(
                     modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
                     sendMessage = viewModel::sendMessage,
+                    sendImage = viewModel::sendImage,
                     isRecording = state.isRecording,
                     toggleRecord = viewModel::toggleRecording,
-                    sendImage = viewModel::sendImage,
-                    galleryAccessGranted = galleryPermissionState.status.isGranted || getPlatformName() == "Desktop", // Desktop doesn't need permission
-                    galleryEnabled = galleryPermissionState.status.let { it.isGranted || it.shouldShowRationale } || getPlatformName() == "Desktop", // Desktop doesn't need permission
-                    recordAudioAccessGranted = recordAudioPermissionState.status.isGranted || getPlatformName() == "Desktop", // Desktop doesn't need permission
-                    recordAudioEnabled = recordAudioPermissionState.status.let { it.isGranted || it.shouldShowRationale } || getPlatformName() == "Desktop", // Desktop doesn't need permission
-                    requestGalleryAccess = { showAppRationaleWithPermission = Permission.ReadImage },
-                    requestRecordAudioAccess = { showAppRationaleWithPermission = Permission.RecordAudio }
                 )
+
             }
-            ButlerDialog(
-                isDialogOpen = showAppRationaleWithPermission != null,
-                onDismissDialog = { showAppRationaleWithPermission = null },
-            ) {
-                showAppRationaleWithPermission?.let {
-                    PermissionRequestScreen(
-                        permission = it,
-                        onDismiss = { showAppRationaleWithPermission = null },
-                        onRequestPermission = { galleryPermissionState.launchPermissionRequest() }
-                    )
-                }
-            }
+
         }
     ) { innerPadding ->
         Column(
@@ -222,6 +191,15 @@ private fun SelectChat() {
         Text(stringResource(Res.string.select_chat))
     }
 }
+
+@Composable
+expect fun ChatDetailBottomBar(
+    modifier: Modifier = Modifier,
+    sendMessage: (String) -> Unit,
+    sendImage: (String) -> Unit,
+    isRecording: Boolean = false,
+    toggleRecord: () -> Unit
+)
 
 @Composable
 fun MessageList(

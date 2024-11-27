@@ -52,13 +52,6 @@ fun WelcomeScreen(onNext: () -> Unit) {
             Button(onClick = onNext) {
                 Text(text = stringResource(Res.string.next))
             }
-//                if (BuildConfig.DEBUG) {
-//                    Button(onClick = {
-//                        screenModel.skipTutorialAndLogin()
-//                    }) {
-//                        Text(text = "Skip Tutorial and Login")
-//                    }
-//                }
         }
     }
 }

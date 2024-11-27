@@ -88,5 +88,8 @@
     <string name="permission_request_generic_description">Permission is required for the app to work properly.</string>
     <string name="all_permissions_granted_title">Permission granted</string>
     <string name="all_permissions_granted_description">Required permissions are granted for the app to work properly.</string>
+    <string name="permission_request_denied_title">Permission denied</string>
+    <string name="permission_request_denied_description">Please enable the permission in the app settings.</string>
+    <string name="open_app_settings">Open settings</string>
     <string name="request_permission">Request permission</string>
 </resources>

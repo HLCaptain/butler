@@ -32,11 +32,12 @@ kotlin {
         implementation(libs.korge.audio)
         implementation(libs.korge.io)
         implementation(libs.filepicker)
-        implementation(libs.calf.permissions)
     }
 
     sourceSets.androidMain.dependencies {
         implementation(libs.androidx.appcompat)
         implementation(libs.androidx.activity)
+        implementation(libs.androidx.activity.compose)
+        implementation(libs.accompanist.permissions)
     }
 }

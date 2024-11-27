@@ -11,7 +11,6 @@ kotlin {
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
-        implementation(libs.calf.permissions)
     }
 
     sourceSets.androidMain.dependencies {
