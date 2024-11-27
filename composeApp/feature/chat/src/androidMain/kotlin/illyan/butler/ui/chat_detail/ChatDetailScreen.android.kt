@@ -1,20 +1,20 @@
 package illyan.butler.ui.chat_detail
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
@@ -24,6 +24,7 @@ import illyan.butler.generated.resources.open_app_settings
 import illyan.butler.generated.resources.permission_request_denied_description
 import illyan.butler.generated.resources.permission_request_denied_title
 import illyan.butler.ui.permission.PermissionRequestScreen
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -35,7 +36,7 @@ actual fun ChatDetailBottomBar(
     isRecording: Boolean,
     toggleRecord: () -> Unit
 ) {
-    var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<PermissionState?>(null) }
+    var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
     var permissionDeniedOnLaunch by rememberSaveable { mutableStateOf(false) }
 
     val galleryPermissionState = rememberPermissionState(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -60,14 +61,21 @@ actual fun ChatDetailBottomBar(
         galleryEnabled = true,
         recordAudioAccessGranted = recordAudioPermissionState.status.isGranted,
         recordAudioEnabled = true,
-        requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState },
-        requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState }
+        requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
+        requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission }
     )
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,
         onDismissDialog = { showAppRationaleWithPermission = null },
     ) {
-        if (permissionDeniedOnLaunch && showAppRationaleWithPermission?.status?.shouldShowRationale == false) {
+        val permissionState = remember(showAppRationaleWithPermission) {
+            when (showAppRationaleWithPermission) {
+                galleryPermissionState.permission -> galleryPermissionState
+                recordAudioPermissionState.permission -> recordAudioPermissionState
+                else -> null
+            }
+        }
+        if (permissionDeniedOnLaunch && permissionState?.status?.shouldShowRationale == false) {
             val context = LocalContext.current
             PermissionRequestScreen(
                 title = stringResource(Res.string.permission_request_denied_title),
@@ -75,15 +83,23 @@ actual fun ChatDetailBottomBar(
                 requestPermissionText = stringResource(Res.string.open_app_settings),
                 onDismiss = { showAppRationaleWithPermission = null },
                 onRequestPermission = {
-                    context.startActivity(Intent(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        Settings.ACTION_APPLICATION_SETTINGS
-                    } else {
-                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                    }))
+                    try {
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(this)
+                        }
+                    } catch (e: ActivityNotFoundException) {
+                        Napier.e(e) { "Failed to open app settings" }
+                        // Fallback to general settings
+                        Intent(Settings.ACTION_APPLICATION_SETTINGS).apply {
+                            context.startActivity(this)
+                        }
+                    }
                 }
             )
         } else {
-            showAppRationaleWithPermission?.let {
+            permissionState?.let {
                 PermissionRequestScreen(
                     permission = it.permission,
                     onDismiss = { showAppRationaleWithPermission = null },
