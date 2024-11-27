@@ -13,8 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.open_app_settings
@@ -32,13 +35,21 @@ actual fun ChatDetailBottomBar(
     isRecording: Boolean,
     toggleRecord: () -> Unit
 ) {
-    var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
+    var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<PermissionState?>(null) }
+    var permissionDeniedOnLaunch by rememberSaveable { mutableStateOf(false) }
+
     val galleryPermissionState = rememberPermissionState(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
     } else {
         Manifest.permission.READ_EXTERNAL_STORAGE
-    })
-    val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    }) {
+        permissionDeniedOnLaunch = !it
+        if (it) showAppRationaleWithPermission = null
+    }
+    val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO) {
+        permissionDeniedOnLaunch = !it
+        if (it) showAppRationaleWithPermission = null
+    }
     MessageField(
         modifier = modifier,
         sendMessage = sendMessage,
@@ -49,58 +60,34 @@ actual fun ChatDetailBottomBar(
         galleryEnabled = true,
         recordAudioAccessGranted = recordAudioPermissionState.status.isGranted,
         recordAudioEnabled = true,
-        requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
-        requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission }
+        requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState },
+        requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState }
     )
-    val context = LocalContext.current
-    var permissionDeniedOnLaunch by rememberSaveable { mutableStateOf(false) }
-    var isLaunchingPermissionRequest by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(showAppRationaleWithPermission) {
-        if (showAppRationaleWithPermission == null) permissionDeniedOnLaunch = false; isLaunchingPermissionRequest = false
-    }
-    LaunchedEffect(galleryPermissionState) {
-        if (galleryPermissionState.status.isGranted) {
-            showAppRationaleWithPermission = null
-        } else if (showAppRationaleWithPermission == galleryPermissionState.permission) {
-            permissionDeniedOnLaunch = true
-        }
-    }
-    LaunchedEffect(recordAudioPermissionState) {
-        if (recordAudioPermissionState.status.isGranted) {
-            showAppRationaleWithPermission = null
-        } else if (showAppRationaleWithPermission == recordAudioPermissionState.permission) {
-            permissionDeniedOnLaunch = true
-        }
-    }
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,
         onDismissDialog = { showAppRationaleWithPermission = null },
     ) {
-        if (isLaunchingPermissionRequest) {
+        if (permissionDeniedOnLaunch && showAppRationaleWithPermission?.status?.shouldShowRationale == false) {
+            val context = LocalContext.current
             PermissionRequestScreen(
                 title = stringResource(Res.string.permission_request_denied_title),
                 description = stringResource(Res.string.permission_request_denied_description),
                 requestPermissionText = stringResource(Res.string.open_app_settings),
                 onDismiss = { showAppRationaleWithPermission = null },
                 onRequestPermission = {
-                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        context.startActivity(this)
-                    }
+                    context.startActivity(Intent(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Settings.ACTION_APPLICATION_SETTINGS
+                    } else {
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    }))
                 }
             )
         } else {
             showAppRationaleWithPermission?.let {
                 PermissionRequestScreen(
-                    permission = it,
+                    permission = it.permission,
                     onDismiss = { showAppRationaleWithPermission = null },
-                    onRequestPermission = {
-                        isLaunchingPermissionRequest = true
-                        when (it) {
-                            recordAudioPermissionState.permission -> recordAudioPermissionState.launchPermissionRequest()
-                            galleryPermissionState.permission -> galleryPermissionState.launchPermissionRequest()
-                        }
-                    }
+                    onRequestPermission = { it.launchPermissionRequest() }
                 )
             }
         }
