@@ -20,16 +20,15 @@ import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.utils.BackHandler
-import illyan.butler.ui.chat_detail.ChatDetailScreen
+import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.chat_list.ChatListViewModel
-import io.github.aakira.napier.Napier
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
-fun ChatScreen(currentChat: String?) {
+fun ChatLayout(currentChat: String?) {
     var chatId by rememberSaveable { mutableStateOf(currentChat) }
     val navigator = rememberListDetailPaneScaffoldNavigator<String>(
         scaffoldDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo()).copy(
@@ -65,7 +64,18 @@ fun ChatScreen(currentChat: String?) {
                 AnimatedPane {
                     val viewModel = koinViewModel<ChatDetailViewModel>()
                     val state by viewModel.state.collectAsState()
-                    ChatDetailScreen(state, viewModel, navigator.currentDestination?.content, navigator.canNavigateBack()) {
+                    LaunchedEffect(navigator.currentDestination?.content) {
+                        navigator.currentDestination?.content?.let { viewModel.loadChat(it) }
+                    }
+                    ChatDetail(
+                        state = state,
+                        sendMessage = viewModel::sendMessage,
+                        toggleRecord = viewModel::toggleRecording,
+                        sendImage = viewModel::sendImage,
+                        playAudio = viewModel::playAudio,
+                        stopAudio = viewModel::stopAudio,
+                        canNavigateBack = navigator.canNavigateBack()
+                    ) {
                         chatId = null
                         navigator.navigateBack()
                     }

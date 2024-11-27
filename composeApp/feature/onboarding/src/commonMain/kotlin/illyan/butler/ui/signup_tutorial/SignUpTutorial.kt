@@ -21,13 +21,11 @@ import illyan.butler.generated.resources.butler_logo_alternative
 import illyan.butler.generated.resources.sign_up
 import illyan.butler.generated.resources.sign_up_tutorial
 import illyan.butler.core.ui.components.largeDialogWidth
-import illyan.butler.core.ui.components.mediumDialogSize
-import illyan.butler.core.ui.components.mediumDialogWidth
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SignUpTutorialScreen(onSignUp: () -> Unit) {
+fun SignUpTutorial(onSignUp: () -> Unit) {
     Column(
         modifier = Modifier.largeDialogWidth().padding(16.dp).safeContentPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -37,17 +37,15 @@ fun ButlerTheme(
             when (theme) {
                 Theme.Dark -> dynamicDarkColorScheme
                 Theme.Light -> dynamicLightColorScheme
-                Theme.System -> if (isSystemInDarkTheme) dynamicDarkColorScheme else dynamicLightColorScheme
+                Theme.System, null -> if (isSystemInDarkTheme) dynamicDarkColorScheme else dynamicLightColorScheme
                 Theme.DayNightCycle -> if (isNight) dynamicDarkColorScheme else dynamicLightColorScheme
-                null -> LightColors
             }
         } else {
             when (theme) {
                 Theme.Dark -> DarkColors
                 Theme.Light -> LightColors
-                Theme.System -> if (isSystemInDarkTheme) DarkColors else LightColors
+                Theme.System, null -> if (isSystemInDarkTheme) DarkColors else LightColors
                 Theme.DayNightCycle -> if (isNight) DarkColors else LightColors
-                null -> LightColors
             }
         }
     }

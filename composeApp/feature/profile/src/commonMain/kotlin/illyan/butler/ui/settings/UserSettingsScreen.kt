@@ -63,7 +63,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -115,19 +114,27 @@ import illyan.butler.generated.resources.turn_on
 import illyan.butler.generated.resources.turn_on_analytics
 import illyan.butler.generated.resources.turn_on_analytics_description
 import illyan.butler.generated.resources.user_id
-import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.random.Random
 
 @Composable
 fun UserSettings() {
-    val screenModel = koinViewModel<UserSettingsViewModel>()
-    val state by screenModel.state.collectAsState()
-    LaunchedEffect(state) {
-        Napier.d("UserSettingsScreen: $state")
-    }
+    val viewModel = koinViewModel<UserSettingsViewModel>()
+    val state by viewModel.state.collectAsState()
+    UserSettings(
+        state = state,
+        onThemeChange = viewModel::setTheme,
+        setDynamicColorEnabled = viewModel::setDynamicColorEnabled
+    )
+}
+
+@Composable
+fun UserSettings(
+    state: UserSettingsState,
+    onThemeChange: (Theme) -> Unit = {},
+    setDynamicColorEnabled: (Boolean) -> Unit = {},
+) {
     UserSettingsDialogContent(
         preferences = state.userPreferences,
 //        arePreferencesSynced = arePreferencesSynced,
@@ -135,11 +142,11 @@ fun UserSettings() {
 //        shouldSyncPreferences = shouldSyncPreferences,
 //        showAnalyticsRequestDialog = showAnalyticsRequestDialog,
 //        onShouldSyncChanged = screenModel::setPreferencesSync,
-        onThemeChange = screenModel::setTheme,
+        onThemeChange = onThemeChange,
 //        setAnalytics = screenModel::setAnalytics,
 //        setFreeDriveAutoStart = screenModel::setFreeDriveAutoStart,
 //        setAdVisibility = screenModel::setAdVisibility,
-        setDynamicColorEnabled = screenModel::setDynamicColorEnabled,
+        setDynamicColorEnabled = setDynamicColorEnabled,
 //        navigateToDataSettings = { destinationsNavigator.navigate(DataSettingsDialogScreenDestination) },
 //        navigateToMLSettings = { destinationsNavigator.navigate(MLSettingsDialogScreenDestination) },
     )
@@ -205,7 +212,6 @@ fun UserSettingsDialogContent(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AnalyticsRequestDialogContent(
     modifier: Modifier = Modifier,

@@ -1,4 +1,4 @@
-package illyan.butler.ui.auth
+package illyan.butler.ui.auth_flow
 
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -8,8 +8,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,11 +15,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.login.LoginScreen
-import illyan.butler.ui.select_host.SelectHostScreen
-import illyan.butler.ui.signup.SignUpScreen
+import illyan.butler.ui.select_host.SelectHost
+import illyan.butler.ui.signup.SignUp
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
-import org.koin.compose.viewmodel.koinViewModel
 
 @Serializable
 private data class SignUp(
@@ -30,7 +27,7 @@ private data class SignUp(
 )
 
 @Composable
-fun AuthScreen(
+fun AuthFlow(
     authSuccess: () -> Unit = {},
     authSuccessEnded: () -> Unit
 ) {
@@ -54,16 +51,16 @@ fun AuthScreen(
             )
         }
         composable("selectHost") {
-            SelectHostScreen {
+            SelectHost {
                 authNavController.navigateUp()
             }
         }
         composable<SignUp> {
             val (email, password) = it.toRoute<SignUp>()
-            SignUpScreen(
+            SignUp(
                 initialEmail = email,
                 initialPassword = password,
-                signedUp = {
+                onSignUpSuccessful = {
                     authNavController.navigate("authSuccess") { launchSingleTop = true }
                 }
             )

@@ -17,8 +17,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.largeDialogWidth
-import illyan.butler.core.ui.components.mediumDialogSize
-import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.butler_logo
 import illyan.butler.generated.resources.next
@@ -27,7 +25,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun WelcomeScreen(onNext: () -> Unit) {
+fun Welcome(onNext: () -> Unit) {
     Column(
         modifier = Modifier.largeDialogWidth().padding(16.dp).safeContentPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,

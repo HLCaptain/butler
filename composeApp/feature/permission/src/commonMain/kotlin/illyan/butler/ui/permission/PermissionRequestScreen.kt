@@ -7,7 +7,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import illyan.butler.core.ui.components.ButlerDialogContent
-import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.permission_request_generic_description

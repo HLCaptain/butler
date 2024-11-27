@@ -27,16 +27,14 @@ import illyan.butler.generated.resources.username
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.smallDialogWidth
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 
 @Composable
-fun SignUpScreen(
+fun SignUp(
     initialEmail: String = "",
     initialPassword: String = "",
-    signedUp: () -> Unit
+    onSignUpSuccessful: () -> Unit
 ) {
     val screenModel = koinViewModel<SignUpViewModel>()
     val state by screenModel.state.collectAsState()
@@ -47,7 +45,7 @@ fun SignUpScreen(
     // Go back when user is authenticated
     // Login button should navigate to LoginScreen. Go back if it is already on the stack.
     LaunchedEffect(state.isSignedIn) {
-        if (state.isSignedIn == true) signedUp()
+        if (state.isSignedIn == true) onSignUpSuccessful()
     }
 
     SignUpDialogContent(
@@ -90,7 +88,7 @@ fun SignUpDialogContent(
                     )
                 },
                 text = {
-                    SignUpScreen(
+                    SignUp(
                         username = username,
                         email = email,
                         password = password,
@@ -109,7 +107,7 @@ fun SignUpDialogContent(
 }
 
 @Composable
-fun SignUpScreen(
+fun SignUp(
     modifier: Modifier = Modifier,
     username: String,
     email: String,

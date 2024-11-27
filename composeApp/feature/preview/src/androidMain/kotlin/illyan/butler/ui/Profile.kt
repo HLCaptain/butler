@@ -1,15 +1,16 @@
-package illyan.butler.ui.preview
+package illyan.butler.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.domain.model.DomainPreferences
@@ -20,6 +21,7 @@ import illyan.butler.generated.resources.day_night_cycle
 import illyan.butler.generated.resources.light
 import illyan.butler.generated.resources.system
 import illyan.butler.generated.resources.theme
+import illyan.butler.ui.profile.ProfileDialogContent
 import illyan.butler.ui.settings.AnalyticsRequestDialogContent
 import illyan.butler.ui.settings.DropdownSetting
 import illyan.butler.ui.settings.UserSettingsDialogContent
@@ -36,7 +38,26 @@ private fun generateRandomUserPreferences(): DomainPreferences {
     )
 }
 
-@Preview
+@PreviewLightDark
+@Composable
+fun ProfilePreview() {
+    ButlerTheme {
+        ButlerDialogSurface {
+            ProfileDialogContent(
+                userUUID = "1234",
+                isUserSignedIn = true,
+                isUserSigningOut = false,
+                confidentialInfo = listOf(
+                    "Email" to "illyan@butler.com",
+                    "Phone" to "+1 234 567 890"
+                ),
+                showConfidentialInfoInitially = false,
+            )
+        }
+    }
+}
+
+@PreviewLightDark
 @Composable
 fun UserSettingsDialogScreenPreview() {
     ButlerTheme {
@@ -55,7 +76,7 @@ fun UserSettingsDialogScreenPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 fun AnalyticsRequestDialogContentPreview() {
     ButlerTheme {
@@ -70,7 +91,7 @@ fun AnalyticsRequestDialogContentPreview() {
 
 // DropdownSetting when opened likes to shift to the start unintentionally.
 // Wrap it inside a Row or layour to prevent this.
-@Preview
+@PreviewLightDark
 @Composable
 fun DropdownSettingPreview() {
     ButlerTheme {

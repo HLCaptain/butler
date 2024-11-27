@@ -21,17 +21,11 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_host_description
 import illyan.butler.core.ui.components.largeDialogWidth
-import illyan.butler.core.ui.components.mediumDialogSize
-import illyan.butler.core.ui.components.mediumDialogWidth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 
 @Composable
-fun SelectHostTutorialScreen(onSelectHost: () -> Unit) {
-    val screenModel = koinViewModel<SelectHostTutorialViewModel>()
-    val state by screenModel.state.collectAsState()
-
+fun SelectHostTutorial(navigateToHostSelection: () -> Unit) {
     Column(
         modifier = Modifier.largeDialogWidth().safeContentPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -47,7 +41,7 @@ fun SelectHostTutorialScreen(onSelectHost: () -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
-        Button(onClick = onSelectHost) {
+        Button(onClick = navigateToHostSelection) {
             Text(text = stringResource(Res.string.select_host))
         }
     }

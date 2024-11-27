@@ -26,17 +26,17 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun ChatDetailsScreen(chatId: String?) {
+fun ChatDetails(chatId: String?) {
     val screenModel = koinViewModel<ChatDetailsViewModel>()
     val state by screenModel.state.collectAsState()
     LaunchedEffect(Unit) {
         screenModel.loadChat(chatId)
     }
-    ChatDetailsScreen(state.chat, state.userId)
+    ChatDetails(state.chat, state.userId)
 }
 
 @Composable
-fun ChatDetailsScreen(chat: DomainChat?, currentUserId: String?) {
+fun ChatDetails(chat: DomainChat?, currentUserId: String?) {
     ButlerDialogContent(
         modifier = Modifier.mediumDialogSize(),
         title = {

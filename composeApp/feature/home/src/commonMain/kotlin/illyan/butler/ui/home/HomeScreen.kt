@@ -81,19 +81,18 @@ import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
-import illyan.butler.ui.auth.AuthScreen
+import illyan.butler.ui.auth_flow.AuthFlow
 import illyan.butler.ui.auth_success.AuthSuccessIcon
-import illyan.butler.ui.chat_layout.ChatScreen
+import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.error.ErrorScreen
-import illyan.butler.ui.new_chat.NewChatScreen
-import illyan.butler.ui.permission.PermissionRequestScreen
+import illyan.butler.ui.new_chat.NewChat
 import illyan.butler.ui.profile.ProfileDialog
-import illyan.butler.ui.select_host.SelectHostScreen
-import illyan.butler.ui.select_host_tutorial.SelectHostTutorialScreen
+import illyan.butler.ui.select_host.SelectHost
+import illyan.butler.ui.select_host_tutorial.SelectHostTutorial
 import illyan.butler.ui.settings.UserSettings
-import illyan.butler.ui.signup_tutorial.SignUpTutorialScreen
+import illyan.butler.ui.signup_tutorial.SignUpTutorial
 import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
-import illyan.butler.ui.welcome.WelcomeScreen
+import illyan.butler.ui.welcome.Welcome
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
@@ -184,7 +183,7 @@ fun HomeScreen() {
                     val animationTime = 200
                     when (userFlow) {
                         DialogUserFlow.Auth -> {
-                            AuthScreen(authSuccessEnded = { isAuthFlowEnded = true })
+                            AuthFlow(authSuccessEnded = { isAuthFlowEnded = true })
                         }
 
                         DialogUserFlow.OnBoarding -> {
@@ -215,27 +214,27 @@ fun HomeScreen() {
                                 }
                             ) {
                                 composable("welcome") {
-                                    WelcomeScreen {
+                                    Welcome {
                                         onBoardingNavController.navigate("selectHostTutorial")
                                     }
                                 }
                                 composable("selectHostTutorial") {
-                                    SelectHostTutorialScreen {
+                                    SelectHostTutorial {
                                         onBoardingNavController.navigate("selectHost")
                                     }
                                 }
                                 composable("selectHost") {
-                                    SelectHostScreen {
+                                    SelectHost {
                                         onBoardingNavController.navigate("signUpTutorial")
                                     }
                                 }
                                 composable("signUpTutorial") {
-                                    SignUpTutorialScreen {
+                                    SignUpTutorial {
                                         onBoardingNavController.navigate("auth")
                                     }
                                 }
                                 composable("auth") {
-                                    AuthScreen(
+                                    AuthFlow(
                                         authSuccessEnded = {
                                             // FIXME: launch single on top does not work right now
                                             //  due to bug in androidx.navigation, update dependencies
@@ -401,10 +400,10 @@ fun HomeScreen() {
                         startDestination = ChatDestination()
                     ) {
                         composable<ChatDestination> {
-                            ChatScreen(currentChat = it.toRoute<ChatDestination>().id)
+                            ChatLayout(currentChat = it.toRoute<ChatDestination>().id)
                         }
                         composable<NewChatDestination> {
-                            NewChatScreen { chatId ->
+                            NewChat { chatId ->
                                 homeNavController.navigate(ChatDestination(chatId)) {
                                     // Pop up to the start destination of the graph to
                                     // avoid building up a large stack of destinations

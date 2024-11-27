@@ -393,7 +393,6 @@ fun ConfidentialInfoToggleButton(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun UserInfo(
     modifier: Modifier = Modifier,
@@ -423,7 +422,6 @@ fun UserInfo(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileMenu(
     modifier: Modifier = Modifier,

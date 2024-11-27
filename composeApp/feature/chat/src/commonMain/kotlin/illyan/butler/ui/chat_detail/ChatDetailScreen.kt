@@ -26,9 +26,9 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,7 +77,7 @@ import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
-import illyan.butler.ui.chat_details.ChatDetailsScreen
+import illyan.butler.ui.chat_details.ChatDetails
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
@@ -89,16 +89,16 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatDetailScreen(
+fun ChatDetail(
     state: ChatDetailState,
-    viewModel: ChatDetailViewModel,
-    currentSelectedChat: String?,
     canNavigateBack: Boolean = true,
+    sendMessage: (String) -> Unit,
+    sendImage: (String) -> Unit,
+    toggleRecord: () -> Unit,
+    playAudio: (String) -> Unit,
+    stopAudio: () -> Unit,
     onNavigateBack: () -> Unit = {}
 ) {
-    LaunchedEffect(currentSelectedChat) {
-        currentSelectedChat?.let { viewModel.loadChat(it) }
-    }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
     val hazeState = remember { HazeState() }
@@ -139,18 +139,15 @@ fun ChatDetailScreen(
             )
         },
         bottomBar = {
-
             if (state.chat?.id != null) {
                 ChatDetailBottomBar(
                     modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
-                    sendMessage = viewModel::sendMessage,
-                    sendImage = viewModel::sendImage,
+                    sendMessage = sendMessage,
+                    sendImage = sendImage,
                     isRecording = state.isRecording,
-                    toggleRecord = viewModel::toggleRecording,
+                    toggleRecord = toggleRecord,
                 )
-
             }
-
         }
     ) { innerPadding ->
         Column(
@@ -165,9 +162,9 @@ fun ChatDetailScreen(
                     messages = state.messages ?: emptyList(),
                     userId = state.userId ?: "",
                     sounds = state.sounds,
-                    playAudio = viewModel::playAudio,
+                    playAudio = playAudio,
                     playingAudio = state.playingAudio,
-                    stopAudio = viewModel::stopAudio,
+                    stopAudio = stopAudio,
                     images = state.images,
                     innerPadding = innerPadding
                 )
@@ -178,7 +175,7 @@ fun ChatDetailScreen(
         isDialogOpen = isChatDetailsDialogOpen,
         onDismissDialog = { isChatDetailsDialogOpen = false },
     ) {
-        ChatDetailsScreen(state.chat, state.userId)
+        ChatDetails(state.chat, state.userId)
     }
 }
 
@@ -320,13 +317,13 @@ fun MessageItem(
             )
         }
         if (!message.message.isNullOrBlank()) {
-            val cardColors = if (sentByUser) CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            val cardColors = CardDefaults.cardColors(
+                containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-            ) else CardDefaults.elevatedCardColors()
-            ElevatedCard(
+            )
+            Card(
                 colors = cardColors
             ) {
                 Text(
@@ -456,7 +453,8 @@ fun MessageField(
             value = textMessage,
             onValueChange = { textMessage = it },
             shape = RoundedCornerShape(16.dp),
-            placeholder = { Text(stringResource(Res.string.send_message)) }
+            placeholder = { Text(stringResource(Res.string.send_message)) },
+            maxLines = 1
         )
 
         IconButton(

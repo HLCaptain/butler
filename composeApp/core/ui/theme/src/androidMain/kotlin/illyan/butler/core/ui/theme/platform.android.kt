@@ -21,8 +21,6 @@ import androidx.core.view.WindowCompat
 @SuppressLint("NewApi")
 @Composable
 actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
-    val view = LocalView.current
-    val activity = LocalContext.current as ComponentActivity
     val dynamicDarkColorScheme = dynamicDarkColorScheme()
     val dynamicLightColorScheme = dynamicLightColorScheme()
     val colorScheme = remember(isDark, isDynamicColors) {
@@ -34,7 +32,9 @@ actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
             LightColors
         }
     }
+    val view = LocalView.current
     if (!view.isInEditMode) {
+        val activity = LocalContext.current as ComponentActivity
         SideEffect {
             WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars = !isDark
         }

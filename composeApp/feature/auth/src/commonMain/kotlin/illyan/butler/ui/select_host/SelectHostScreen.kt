@@ -34,7 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun SelectHostScreen(selectedHost: () -> Unit) {
+fun SelectHost(onSelectHostSuccessful: () -> Unit) {
     val viewModel = koinViewModel<SelectHostViewModel>()
     val state by viewModel.state.collectAsState()
 
@@ -52,7 +52,7 @@ fun SelectHostScreen(selectedHost: () -> Unit) {
         if (state.isConnected == true && triedToConnect) {
             triedToConnect = false // Tried to connect from last successful connection
             Napier.d("Connected to host: ${state.currentHost}")
-            if (!isTestingOnly) selectedHost()
+            if (!isTestingOnly) onSelectHostSuccessful()
         }
     }
 
@@ -86,7 +86,7 @@ fun SelectHostDialogContent(
             )
         },
         text = {
-            SelectHostScreen(
+            SelectHost(
                 state = state,
                 hostUrlChanged = { hostUrl = it }
             )
@@ -102,7 +102,7 @@ fun SelectHostDialogContent(
 }
 
 @Composable
-fun SelectHostScreen(
+fun SelectHost(
     modifier: Modifier = Modifier,
     state: SelectHostState,
     hostUrlChanged: (String) -> Unit = {}
@@ -161,16 +161,4 @@ fun SelectHostButtons(
             text = stringResource(Res.string.test_connection)
         )
     }
-}
-
-@Composable
-fun SelectHostScreenPreview() {
-    SelectHostDialogContent(
-        state = SelectHostState(
-            isConnecting = false,
-            isConnected = null,
-            currentHost = "http://localhost:8080"
-        ),
-        testAndSelectHost = {}
-    )
 }

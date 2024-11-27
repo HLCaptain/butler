@@ -45,15 +45,26 @@ import illyan.butler.generated.resources.select_self_hosted
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewChatScreen(selectNewChat: (String) -> Unit) {
+fun NewChat(selectNewChat: (String) -> Unit) {
     val viewModel = koinViewModel<NewChatViewModel>()
     val state by viewModel.state.collectAsState()
     DisposableEffect(state) {
         state.newChatId?.let { selectNewChat(it) }
         onDispose { viewModel.clearNewChatId() }
     }
+    NewChat(
+        state = state,
+        selectModel = viewModel::createChatWithModel
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NewChat(
+    state: NewChatState,
+    selectModel: (String, String?) -> Unit
+) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -81,7 +92,7 @@ fun NewChatScreen(selectNewChat: (String) -> Unit) {
             } else if (models.isNotEmpty()) {
                 ModelList(
                     state = state,
-                    selectModel = viewModel::createChatWithModel,
+                    selectModel = selectModel,
                     innerPadding = innerPadding
                 )
             } else {
