@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.Image
@@ -58,14 +57,12 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
-import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
-import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.message_id
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
@@ -77,7 +74,6 @@ import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
-import illyan.butler.ui.chat_details.ChatDetails
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
@@ -96,10 +92,10 @@ fun ChatDetail(
     toggleRecord: () -> Unit,
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
+    openChatDetails: () -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
     val hazeState = remember { HazeState() }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -117,7 +113,7 @@ fun ChatDetail(
                 navigationIcon = navigationIcon ?: {},
                 actions = {
                     if (state.chat != null) {
-                        IconButton(onClick = { isChatDetailsDialogOpen = true }) {
+                        IconButton(onClick = openChatDetails) {
                             Icon(
                                 imageVector = Icons.Filled.Menu,
                                 contentDescription = "Chat details"
@@ -160,12 +156,6 @@ fun ChatDetail(
                 )
             }
         }
-    }
-    ButlerDialog(
-        isDialogOpen = isChatDetailsDialogOpen,
-        onDismissDialog = { isChatDetailsDialogOpen = false },
-    ) {
-        ChatDetails(state.chat, state.userId)
     }
 }
 

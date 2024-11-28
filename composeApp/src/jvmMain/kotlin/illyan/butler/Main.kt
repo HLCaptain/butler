@@ -27,7 +27,7 @@ import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
 import illyan.butler.ui.error.ErrorFeatureModule
-import illyan.butler.ui.home.HomeFeatureModule
+import illyan.butler.ui.HomeFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
 import illyan.butler.ui.permission.PermissionFeatureModule
 import illyan.butler.ui.ProfileFeatureModule

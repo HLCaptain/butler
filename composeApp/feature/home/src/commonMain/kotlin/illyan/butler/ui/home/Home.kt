@@ -12,7 +12,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -42,8 +41,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationRail
@@ -67,25 +64,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import androidx.window.core.layout.WindowWidthSizeClass
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.plus
+import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.close
@@ -95,8 +86,8 @@ import illyan.butler.generated.resources.profile
 import illyan.butler.ui.auth_flow.AuthFlow
 import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.chat_layout.ChatLayout
+import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.error.ErrorScreen
-import illyan.butler.ui.new_chat.NewChat
 import illyan.butler.ui.profile.ProfileDialog
 import illyan.butler.ui.select_host.SelectHost
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorial
@@ -106,8 +97,6 @@ import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
 import illyan.butler.ui.welcome.Welcome
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -222,9 +211,14 @@ fun Home() {
                                     modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
                                     compact = isVerticalNavBarCompact,
                                     selectedChat = currentChat,
+                                    chats = state.userChats,
                                     isProfileDialogShowing = isProfileDialogShowing,
                                     setProfileDialogShowing = { isProfileDialogShowing = it },
-                                    navigateToNewChat = { currentChat = null }
+                                    navigateToNewChat = { currentChat = null },
+                                    deleteChat = {
+                                        viewModel.deleteChat(it)
+                                        if (currentChat == it) currentChat = null
+                                    },
                                 )
                             }
                         }
@@ -249,8 +243,7 @@ fun Home() {
                                     ModalDrawerSheet(
                                         modifier = Modifier
                                             .widthIn(max = 280.dp)
-                                            .fillMaxHeight()
-                                            .clip(RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)),
+                                            .fillMaxHeight(),
                                         windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
                                     ) {
                                         NavigationDrawerContent(
@@ -261,6 +254,17 @@ fun Home() {
                                             navigateToNewChat = { currentChat = null },
                                             onProfileClick = { isProfileDialogShowing = true },
                                             closeButtonPadding = DrawerCloseButtonPadding
+                                        )
+                                        ChatList(
+                                            chats = state.userChats,
+                                            deleteChat = {
+                                                viewModel.deleteChat(it)
+                                                if (currentChat == it) currentChat = null
+                                            },
+                                            openChat = {
+                                                currentChat = it
+                                                coroutineScope.launch { drawerState.close() }
+                                            }
                                         )
                                     }
                                 },
@@ -378,11 +382,13 @@ private fun HomeNavRail(
     }
 }
 
-
 @Composable
 private fun VerticalNavBar(
     modifier: Modifier = Modifier,
     selectedChat: String?,
+    selectChat: (String?) -> Unit = {},
+    chats: List<DomainChat>,
+    deleteChat: (String) -> Unit = {},
     compact: Boolean,
     isProfileDialogShowing: Boolean,
     setProfileDialogShowing: (Boolean) -> Unit,
@@ -412,6 +418,12 @@ private fun VerticalNavBar(
             PermanentNavigationDrawerSheet(
                 modifier = modifier.statusBarsPadding(),
                 selectedChat = selectedChat,
+                selectChat = {
+                    selectChat(it)
+                    navRailExpanded = false
+                },
+                chats = chats,
+                deleteChat = deleteChat,
                 isProfileShown = isProfileDialogShowing,
                 onProfileClick = { setProfileDialogShowing(true) },
                 navigateToNewChat = navigateToNewChat,
@@ -584,6 +596,9 @@ fun CloseButton(
 private fun PermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
     selectedChat: String?,
+    chats: List<DomainChat>,
+    selectChat: (String?) -> Unit = {},
+    deleteChat: (String) -> Unit = {},
     isProfileShown: Boolean = false,
     onProfileClick: () -> Unit = {},
     closeDrawer: () -> Unit = {},
@@ -600,6 +615,11 @@ private fun PermanentNavigationDrawerSheet(
             closeDrawer = closeDrawer,
             navigateToNewChat = navigateToNewChat,
             onProfileClick = onProfileClick
+        )
+        ChatList(
+            chats = chats,
+            openChat = selectChat,
+            deleteChat = deleteChat
         )
     }
 }
@@ -619,7 +639,7 @@ private fun NavigationDrawerContent(
 ) {
     Column(modifier = modifier) {
         CloseButton(modifier = Modifier.padding(closeButtonPadding)) { closeDrawer() }
-        NewChatNavigationDrawerItem(selected = selectedChat != null && !isProfileShown) {
+        NewChatNavigationDrawerItem(selected = selectedChat == null && !isProfileShown) {
             navigateToNewChat()
         }
         ProfileNavigationDrawerItem(selected = isProfileShown) {

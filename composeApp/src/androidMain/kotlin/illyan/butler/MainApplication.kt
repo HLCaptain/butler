@@ -25,7 +25,7 @@ import illyan.butler.ui.ChatFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
 import illyan.butler.ui.ProfileFeatureModule
 import illyan.butler.ui.error.ErrorFeatureModule
-import illyan.butler.ui.home.HomeFeatureModule
+import illyan.butler.ui.HomeFeatureModule
 import illyan.butler.ui.permission.PermissionFeatureModule
 import illyan.butler.ui.theme.ThemeFeatureModule
 import illyan.butler.utils.initNapier
