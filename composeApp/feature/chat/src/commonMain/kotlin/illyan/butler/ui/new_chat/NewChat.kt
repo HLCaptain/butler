@@ -46,7 +46,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun NewChat(selectNewChat: (String) -> Unit) {
+fun NewChat(
+    selectNewChat: (String) -> Unit,
+    navigationIcon: @Composable (() -> Unit)? = null
+) {
     val viewModel = koinViewModel<NewChatViewModel>()
     val state by viewModel.state.collectAsState()
     DisposableEffect(state) {
@@ -55,7 +58,8 @@ fun NewChat(selectNewChat: (String) -> Unit) {
     }
     NewChat(
         state = state,
-        selectModel = viewModel::createChatWithModel
+        selectModel = viewModel::createChatWithModel,
+        navigationIcon = navigationIcon,
     )
 }
 
@@ -63,7 +67,8 @@ fun NewChat(selectNewChat: (String) -> Unit) {
 @Composable
 fun NewChat(
     state: NewChatState,
-    selectModel: (String, String?) -> Unit
+    selectModel: (String, String?) -> Unit,
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     Scaffold(
@@ -78,6 +83,7 @@ fun NewChat(
                     )
                 },
                 scrollBehavior = scrollBehavior,
+                navigationIcon = navigationIcon ?: {},
             )
         },
     ) { innerPadding ->

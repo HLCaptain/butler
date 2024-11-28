@@ -38,8 +38,8 @@ class HomeViewModel(
         val isTutorialDone = flows[1] as? Boolean
         val serverErrors = flows[2] as List<Pair<String, DomainErrorResponse>>
         val appErrors = flows[3] as List<DomainErrorEvent>
-        if (isTutorialDone == null || isUserSignedIn == null) return@combine HomeScreenState()
-        HomeScreenState(
+        if (isTutorialDone == null || isUserSignedIn == null) return@combine HomeState()
+        HomeState(
             isUserSignedIn = isUserSignedIn,
             isTutorialDone = isTutorialDone,
             serverErrors = serverErrors,
@@ -48,7 +48,7 @@ class HomeViewModel(
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        HomeScreenState()
+        HomeState()
     )
 
     init {

@@ -50,6 +50,7 @@ fun ChatList(
     chats: List<DomainChat>,
     openChat: (uuid: String) -> Unit,
     deleteChat: (uuid: String) -> Unit,
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
@@ -66,6 +67,7 @@ fun ChatList(
                         overflow = TextOverflow.Ellipsis
                     )
                 },
+                navigationIcon = navigationIcon ?: {},
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -85,7 +87,6 @@ fun ChatList(
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.animateContentSize(),
                     contentPadding = PaddingValues(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

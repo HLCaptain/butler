@@ -1,14 +1,14 @@
 package illyan.butler.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorial
 import illyan.butler.ui.signup_tutorial.SignUpTutorial
 import illyan.butler.ui.welcome.Welcome
 
-@Preview
+@PreviewLightDark
 @Composable
 fun SelectHostTutorialPreview() {
     ButlerTheme {
@@ -20,7 +20,7 @@ fun SelectHostTutorialPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 fun SignUpTutorialPreview() {
     ButlerTheme {
@@ -32,7 +32,7 @@ fun SignUpTutorialPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 fun WelcomePreview() {
     ButlerTheme {

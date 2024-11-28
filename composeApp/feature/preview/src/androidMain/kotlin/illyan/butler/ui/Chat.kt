@@ -85,8 +85,7 @@ fun ChatDetailPreview() {
                     toggleRecord = {},
                     sendImage = {},
                     playAudio = {},
-                    stopAudio = {},
-                    canNavigateBack = true
+                    stopAudio = {}
                 )
             }
         }

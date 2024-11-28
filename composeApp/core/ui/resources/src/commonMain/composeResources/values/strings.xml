@@ -17,6 +17,7 @@
     <string name="password">Password</string>
     <string name="phone">Phone</string>
     <string name="close">Close</string>
+    <string name="copy_stacktrace">Copy stacktrace</string>
     <string name="cancel">Cancel</string>
     <string name="profile">Profile</string>
     <string name="unknown">Unknown</string>

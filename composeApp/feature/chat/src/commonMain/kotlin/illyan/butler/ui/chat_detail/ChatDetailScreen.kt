@@ -91,13 +91,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ChatDetail(
     state: ChatDetailState,
-    canNavigateBack: Boolean = true,
     sendMessage: (String) -> Unit,
     sendImage: (String) -> Unit,
     toggleRecord: () -> Unit,
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
-    onNavigateBack: () -> Unit = {}
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var isChatDetailsDialogOpen by rememberSaveable { mutableStateOf(false) }
@@ -115,16 +114,7 @@ fun ChatDetail(
                         overflow = TextOverflow.Ellipsis
                     )
                 },
-                navigationIcon = {
-                    if (canNavigateBack) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(Res.string.back)
-                            )
-                        }
-                    }
-                },
+                navigationIcon = navigationIcon ?: {},
                 actions = {
                     if (state.chat != null) {
                         IconButton(onClick = { isChatDetailsDialogOpen = true }) {
