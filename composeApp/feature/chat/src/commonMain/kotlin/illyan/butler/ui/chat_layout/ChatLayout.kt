@@ -2,7 +2,6 @@ package illyan.butler.ui.chat_layout
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,11 +11,13 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.PermanentDrawerSheet
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -74,7 +74,10 @@ fun ChatLayout(
             ModalNavigationDrawer(
                 drawerState = drawerState,
                 drawerContent = {
-                    ModalDrawerSheet {
+                    ModalDrawerSheet(
+                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                        drawerContentColor = MaterialTheme.colorScheme.onSurface
+                    ) {
                         ReverseLayoutDirection {
                             Box(modifier = Modifier.fillMaxHeight()) {
                                 ChatDetails(
@@ -114,7 +117,8 @@ fun ChatLayout(
                                     playAudio = viewModel::playAudio,
                                     stopAudio = viewModel::stopAudio,
                                     navigationIcon = navigationIcon,
-                                    openChatDetails = { isChatDetailsOpen = !isChatDetailsOpen }
+                                    openChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
+                                    isChatDetailsOpen = isChatDetailsOpen
                                 )
                             } else {
                                 NewChat(
@@ -124,7 +128,10 @@ fun ChatLayout(
                             }
                         }
                         AnimatedVisibility(visible = !compact && isChatDetailsOpen) {
-                            PermanentDrawerSheet {
+                            PermanentDrawerSheet(
+                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                                drawerContentColor = MaterialTheme.colorScheme.onSurface
+                            ) {
                                 Box(modifier = Modifier.fillMaxHeight()) {
                                     ChatDetails(
                                         chatId = currentChat,

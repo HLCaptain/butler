@@ -1,5 +1,6 @@
 package illyan.butler.ui.chat_list
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,27 +35,34 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ChatList(
+    modifier: Modifier = Modifier,
     chats: List<DomainChat>,
     openChat: (String) -> Unit,
     deleteChat: (String) -> Unit,
 ) {
-    if (chats.isEmpty()) {
-        Text(
-            modifier = Modifier.padding(8.dp),
-            text = stringResource(Res.string.no_chats),
-            style = MaterialTheme.typography.headlineLarge
-        )
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(chats) { chat ->
-                ChatCard(
-                    chat = chat,
-                    openChat = { openChat(chat.id!!) },
-                    deleteChat = { deleteChat(chat.id!!) }
-                )
+    AnimatedContent(
+        targetState = chats.isEmpty(),
+    ) { noChats ->
+        if (noChats) {
+            Text(
+                modifier = modifier.padding(start = 16.dp),
+                text = stringResource(Res.string.no_chats),
+                style = MaterialTheme.typography.headlineLarge
+            )
+        } else {
+            LazyColumn(
+                modifier = modifier,
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(chats, key = { it.id!! }) { chat ->
+                    ChatCard(
+                        modifier = Modifier.animateItem(),
+                        chat = chat,
+                        openChat = { openChat(chat.id!!) },
+                        deleteChat = { deleteChat(chat.id!!) }
+                    )
+                }
             }
         }
     }
@@ -62,11 +70,13 @@ fun ChatList(
 
 @Composable
 fun ChatCard(
+    modifier: Modifier = Modifier,
     chat: DomainChat,
     openChat: () -> Unit,
     deleteChat: () -> Unit,
 ) {
     Card(
+        modifier = modifier,
         onClick = openChat,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)

@@ -23,12 +23,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Menu
@@ -78,7 +77,6 @@ import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
-import illyan.butler.generated.resources.chats
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
@@ -105,10 +103,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun Home() {
     val viewModel = koinViewModel<HomeViewModel>()
     val state by viewModel.state.collectAsState()
-    Surface(
-//            modifier = Modifier.safeContentPadding(),
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-    ) {
+    Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
         Column(modifier = Modifier.statusBarsPadding()) {
             var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
             var isAuthFlowEnded by rememberSaveable { mutableStateOf(state.isUserSignedIn) }
@@ -193,6 +188,7 @@ fun Home() {
                 windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
             }
             var currentChat by rememberSaveable { mutableStateOf<String?>(null) }
+            LaunchedEffect(state.isUserSignedIn) { currentChat = null }
             val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
             NavigationSuiteScaffoldLayout(
                 layoutType = navigationSuiteLayout,
@@ -210,11 +206,11 @@ fun Home() {
                                 VerticalNavBar(
                                     modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
                                     compact = isVerticalNavBarCompact,
-                                    selectedChat = currentChat,
                                     chats = state.userChats,
                                     isProfileDialogShowing = isProfileDialogShowing,
                                     setProfileDialogShowing = { isProfileDialogShowing = it },
                                     navigateToNewChat = { currentChat = null },
+                                    selectChat = { currentChat = it },
                                     deleteChat = {
                                         viewModel.deleteChat(it)
                                         if (currentChat == it) currentChat = null
@@ -244,28 +240,38 @@ fun Home() {
                                         modifier = Modifier
                                             .widthIn(max = 280.dp)
                                             .fillMaxHeight(),
+                                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                                        drawerContentColor = MaterialTheme.colorScheme.onSurface,
                                         windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
                                     ) {
                                         NavigationDrawerContent(
                                             modifier = Modifier.padding(vertical = 8.dp),
-                                            selectedChat = currentChat,
-                                            isProfileShown = isProfileDialogShowing,
                                             closeDrawer = { coroutineScope.launch { drawerState.close() } },
-                                            navigateToNewChat = { currentChat = null },
-                                            onProfileClick = { isProfileDialogShowing = true },
-                                            closeButtonPadding = DrawerCloseButtonPadding
-                                        )
-                                        ChatList(
-                                            chats = state.userChats,
-                                            deleteChat = {
-                                                viewModel.deleteChat(it)
-                                                if (currentChat == it) currentChat = null
-                                            },
-                                            openChat = {
-                                                currentChat = it
-                                                coroutineScope.launch { drawerState.close() }
+                                            closeButtonPadding = DrawerCloseButtonPadding,
+                                            bottomContent = {
+                                                NavDrawerItem(
+                                                    modifier = Modifier
+                                                        .systemBarsPadding()
+                                                        .imePadding()
+                                                        .padding(bottom = 8.dp),
+                                                    onClick = { isProfileDialogShowing = true },
+                                                    icon = Icons.Filled.Person,
+                                                    stringResource = Res.string.profile
+                                                )
                                             }
-                                        )
+                                        ) {
+                                            ChatList(
+                                                chats = state.userChats,
+                                                deleteChat = {
+                                                    viewModel.deleteChat(it)
+                                                    if (currentChat == it) currentChat = null
+                                                },
+                                                openChat = {
+                                                    currentChat = it
+                                                    coroutineScope.launch { drawerState.close() }
+                                                }
+                                            )
+                                        }
                                     }
                                 },
                             ) {
@@ -357,35 +363,30 @@ fun Home() {
 @Composable
 private fun HomeNavRail(
     modifier: Modifier = Modifier,
-    selectedChat: String?,
-    isProfileDialogShowing: Boolean,
-    setProfileDialogShowing: (Boolean) -> Unit,
     navigateToNewChat: () -> Unit,
-    expandNavRail: () -> Unit
+    expandNavRail: () -> Unit,
+    bottomContent: @Composable () -> Unit = {},
+    content: @Composable () -> Unit
 ) {
     NavigationRail(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         header = {
             HamburgerButton(expandNavRail)
             NewChatFAB(navigateToNewChat)
         }
     ) {
         Spacer(Modifier.weight(0.5f))
-        NewChatNavigationRailItem(selected = selectedChat == null && !isProfileDialogShowing) {
-            navigateToNewChat()
-        }
-        ProfileNavigationRailItem(selected = isProfileDialogShowing) {
-            setProfileDialogShowing(true)
-        }
+        content()
         Spacer(Modifier.weight(1f))
+        bottomContent()
     }
 }
 
 @Composable
 private fun VerticalNavBar(
     modifier: Modifier = Modifier,
-    selectedChat: String?,
     selectChat: (String?) -> Unit = {},
     chats: List<DomainChat>,
     deleteChat: (String) -> Unit = {},
@@ -407,26 +408,29 @@ private fun VerticalNavBar(
     ) { isCompact ->
         if (isCompact) {
             HomeNavRail(
-                modifier = modifier.statusBarsPadding(),
-                selectedChat = selectedChat,
-                isProfileDialogShowing = isProfileDialogShowing,
-                setProfileDialogShowing = setProfileDialogShowing,
                 navigateToNewChat = navigateToNewChat,
-                expandNavRail = { navRailExpanded = true }
+                expandNavRail = { navRailExpanded = true },
+                bottomContent = {
+                    NavRailItem(
+                        modifier = Modifier.systemBarsPadding().imePadding().padding(bottom = 8.dp),
+                        icon = Icons.Filled.Person,
+                        stringResource = Res.string.profile,
+                        onClick = { setProfileDialogShowing(true) },
+                        selected = isProfileDialogShowing
+                    )
+                },
+                content = {}
             )
         } else {
             PermanentNavigationDrawerSheet(
                 modifier = modifier.statusBarsPadding(),
-                selectedChat = selectedChat,
                 selectChat = {
                     selectChat(it)
                     navRailExpanded = false
                 },
                 chats = chats,
                 deleteChat = deleteChat,
-                isProfileShown = isProfileDialogShowing,
                 onProfileClick = { setProfileDialogShowing(true) },
-                navigateToNewChat = navigateToNewChat,
                 closeDrawer = { navRailExpanded = false },
             )
         }
@@ -434,39 +438,15 @@ private fun VerticalNavBar(
 }
 
 @Composable
-private fun NewChatNavigationRailItem(
-    selected: Boolean = false,
-    onClick: () -> Unit = {}
-) {
-    NavigationRailItem(
-        selected = selected,
-        onClick = onClick,
-        icon = Icons.Filled.Add,
-        stringResource = Res.string.new_chat
-    )
-}
-
-@Composable
-private fun ProfileNavigationRailItem(
-    selected: Boolean = false,
-    onClick: () -> Unit = {}
-) {
-    NavigationRailItem(
-        selected = selected,
-        onClick = onClick,
-        icon = Icons.Filled.Person,
-        stringResource = Res.string.profile
-    )
-}
-
-@Composable
-fun NavigationRailItem(
+fun NavRailItem(
+    modifier: Modifier = Modifier,
     selected: Boolean = false,
     onClick: () -> Unit = {},
     icon: ImageVector,
     stringResource: StringResource
 ) {
     NavigationRailItem(
+        modifier = modifier,
         onClick = onClick,
         selected = selected,
         icon = {
@@ -480,46 +460,7 @@ fun NavigationRailItem(
 }
 
 @Composable
-fun ChatsNavigationDrawerItem(
-    selected: Boolean = false,
-    onClick: () -> Unit = {}
-) {
-    NavigationDrawerItem(
-        onClick = onClick,
-        selected = selected,
-        icon = Icons.AutoMirrored.Filled.Chat,
-        stringResource = Res.string.chats
-    )
-}
-
-@Composable
-fun NewChatNavigationDrawerItem(
-    selected: Boolean = false,
-    onClick: () -> Unit = {}
-) {
-    NavigationDrawerItem(
-        selected = selected,
-        onClick = onClick,
-        icon = Icons.Filled.Add,
-        stringResource = Res.string.new_chat
-    )
-}
-
-@Composable
-fun ProfileNavigationDrawerItem(
-    selected: Boolean = false,
-    onClick: () -> Unit = {}
-) {
-    NavigationDrawerItem(
-        selected = selected,
-        onClick = onClick,
-        icon = Icons.Filled.Person,
-        stringResource = Res.string.profile
-    )
-}
-
-@Composable
-fun NavigationDrawerItem(
+fun NavDrawerItem(
     modifier: Modifier = Modifier,
     selected: Boolean = false,
     onClick: () -> Unit = {},
@@ -595,32 +536,39 @@ fun CloseButton(
 @Composable
 private fun PermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
-    selectedChat: String?,
     chats: List<DomainChat>,
     selectChat: (String?) -> Unit = {},
     deleteChat: (String) -> Unit = {},
-    isProfileShown: Boolean = false,
     onProfileClick: () -> Unit = {},
     closeDrawer: () -> Unit = {},
-    navigateToNewChat: () -> Unit = {}
 ) {
     PermanentDrawerSheet(
         modifier = modifier.widthIn(max = 280.dp),
         drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+        drawerContentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         NavigationDrawerContent(
             modifier = Modifier.padding(vertical = 4.dp),
-            selectedChat = selectedChat,
-            isProfileShown = isProfileShown,
             closeDrawer = closeDrawer,
-            navigateToNewChat = navigateToNewChat,
-            onProfileClick = onProfileClick
-        )
-        ChatList(
-            chats = chats,
-            openChat = selectChat,
-            deleteChat = deleteChat
-        )
+            bottomContent = {
+                NavDrawerItem(
+                    modifier = Modifier
+                        .systemBarsPadding()
+                        .imePadding()
+                        .padding(bottom = 8.dp),
+                    onClick = onProfileClick,
+                    icon = Icons.Filled.Person,
+                    stringResource = Res.string.profile
+                )
+            }
+        ) {
+            ChatList(
+                modifier = Modifier,
+                chats = chats,
+                openChat = selectChat,
+                deleteChat = deleteChat
+            )
+        }
     }
 }
 
@@ -630,20 +578,15 @@ private val DrawerCloseButtonPadding = PaddingValues(start = 4.dp)
 @Composable
 private fun NavigationDrawerContent(
     modifier: Modifier = Modifier,
-    selectedChat: String?,
-    isProfileShown: Boolean,
     closeDrawer: () -> Unit,
-    navigateToNewChat: () -> Unit,
-    onProfileClick: () -> Unit,
-    closeButtonPadding: PaddingValues = RailCloseButtonPadding
+    closeButtonPadding: PaddingValues = RailCloseButtonPadding,
+    bottomContent: @Composable () -> Unit = {},
+    content: @Composable () -> Unit = {},
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.fillMaxHeight()) {
         CloseButton(modifier = Modifier.padding(closeButtonPadding)) { closeDrawer() }
-        NewChatNavigationDrawerItem(selected = selectedChat == null && !isProfileShown) {
-            navigateToNewChat()
-        }
-        ProfileNavigationDrawerItem(selected = isProfileShown) {
-            onProfileClick()
-        }
+        content()
+        Spacer(Modifier.weight(1f))
+        bottomContent()
     }
 }

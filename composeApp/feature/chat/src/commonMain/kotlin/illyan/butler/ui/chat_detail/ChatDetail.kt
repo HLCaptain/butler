@@ -1,5 +1,6 @@
 package illyan.butler.ui.chat_detail
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
@@ -49,7 +51,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
@@ -93,6 +97,7 @@ fun ChatDetail(
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
     openChatDetails: () -> Unit,
+    isChatDetailsOpen: Boolean,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -114,8 +119,9 @@ fun ChatDetail(
                 actions = {
                     if (state.chat != null) {
                         IconButton(onClick = openChatDetails) {
+                            val layoutDirection = LocalLayoutDirection.current
                             Icon(
-                                imageVector = Icons.Filled.Menu,
+                                imageVector = if (isChatDetailsOpen && layoutDirection == LayoutDirection.Ltr) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight,
                                 contentDescription = "Chat details"
                             )
                         }
@@ -190,55 +196,60 @@ fun MessageList(
     userId: String,
     innerPadding: PaddingValues
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (messages.isEmpty()) {
-            Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(innerPadding),
-                text = stringResource(Res.string.no_messages),
-                style = MaterialTheme.typography.headlineLarge
-            )
-        }
-        LazyColumn(
-            reverseLayout = true,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            contentPadding = innerPadding
-        ) {
-            items(messages) { message ->
-                RichTooltipWithContent(
-                    enabledGestures = getTooltipGestures(),
-                    tooltip = {
-                        val keyValueList = listOf(
-                            Res.string.message_id to message.id,
-                            Res.string.timestamp to message.time?.let {
-                                Instant.fromEpochMilliseconds(it)
-                                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                                    .format(LocalDateTime.Formats.ISO)
-                            },
-                            Res.string.sender_id to message.senderId,
-                        ).filter { it.second != null }
-                        LazyColumn {
-                            items(keyValueList, key = { it.first }) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(text = stringResource(it.first))
-                                    Text(text = it.second!!)
+    AnimatedContent(
+        modifier = modifier,
+        targetState = messages.isEmpty()
+    ) { noMessages ->
+        if (noMessages) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(Res.string.no_messages),
+                    style = MaterialTheme.typography.headlineLarge
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = innerPadding
+            ) {
+                items(messages.sortedByDescending { it.time }, key = { it.id!! }) { message ->
+                    RichTooltipWithContent(
+                        modifier = Modifier.animateItem(),
+                        enabledGestures = getTooltipGestures(),
+                        tooltip = {
+                            val keyValueList = listOf(
+                                Res.string.message_id to message.id,
+                                Res.string.timestamp to message.time?.let {
+                                    Instant.fromEpochMilliseconds(it)
+                                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                                        .format(LocalDateTime.Formats.ISO)
+                                },
+                                Res.string.sender_id to message.senderId,
+                            ).filter { it.second != null }
+                            LazyColumn {
+                                items(keyValueList, key = { it.first }) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(text = stringResource(it.first))
+                                        Text(text = it.second!!)
+                                    }
                                 }
                             }
-                        }
-                    },
-                ) { gestureAreaModifier ->
-                    MessageItem(
-                        modifier = gestureAreaModifier,
-                        message = message,
-                        userId = userId,
-                        sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                        playAudio = playAudio,
-                        playingAudio = playingAudio,
-                        stopAudio = stopAudio,
-                        images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                    )
+                        },
+                    ) { gestureAreaModifier ->
+                        MessageItem(
+                            modifier = gestureAreaModifier,
+                            message = message,
+                            userId = userId,
+                            sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                            playAudio = playAudio,
+                            playingAudio = playingAudio,
+                            stopAudio = stopAudio,
+                            images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                        )
+                    }
                 }
             }
         }
