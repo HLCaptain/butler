@@ -120,8 +120,13 @@ fun ChatDetail(
                     if (state.chat != null) {
                         IconButton(onClick = openChatDetails) {
                             val layoutDirection = LocalLayoutDirection.current
+                            val imageVector = if (layoutDirection == LayoutDirection.Ltr) {
+                                if (isChatDetailsOpen) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
+                            } else {
+                                if (isChatDetailsOpen) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight
+                            }
                             Icon(
-                                imageVector = if (isChatDetailsOpen && layoutDirection == LayoutDirection.Ltr) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight,
+                                imageVector = imageVector,
                                 contentDescription = "Chat details"
                             )
                         }
@@ -213,42 +218,50 @@ fun MessageList(
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = innerPadding
+                contentPadding = innerPadding,
+                reverseLayout = true // From bottom to up
             ) {
                 items(messages.sortedByDescending { it.time }, key = { it.id!! }) { message ->
-                    RichTooltipWithContent(
-                        modifier = Modifier.animateItem(),
-                        enabledGestures = getTooltipGestures(),
-                        tooltip = {
-                            val keyValueList = listOf(
-                                Res.string.message_id to message.id,
-                                Res.string.timestamp to message.time?.let {
-                                    Instant.fromEpochMilliseconds(it)
-                                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                                        .format(LocalDateTime.Formats.ISO)
-                                },
-                                Res.string.sender_id to message.senderId,
-                            ).filter { it.second != null }
-                            LazyColumn {
-                                items(keyValueList, key = { it.first }) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(text = stringResource(it.first))
-                                        Text(text = it.second!!)
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = if (message.senderId == userId) Alignment.CenterEnd else Alignment.CenterStart
+                    ) {
+                        RichTooltipWithContent(
+                            modifier = Modifier.animateItem(),
+                            enabledGestures = getTooltipGestures(),
+                            tooltip = {
+                                val keyValueList = remember(message) {
+                                    listOf(
+                                        Res.string.message_id to message.id,
+                                        Res.string.timestamp to message.time?.let {
+                                            Instant.fromEpochMilliseconds(it)
+                                                .toLocalDateTime(TimeZone.currentSystemDefault())
+                                                .format(LocalDateTime.Formats.ISO)
+                                        },
+                                        Res.string.sender_id to message.senderId,
+                                    ).filter { it.second != null }
+                                }
+                                Column {
+                                    keyValueList.forEach {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(text = stringResource(it.first))
+                                            Text(text = it.second!!)
+                                        }
                                     }
                                 }
-                            }
-                        },
-                    ) { gestureAreaModifier ->
-                        MessageItem(
-                            modifier = gestureAreaModifier,
-                            message = message,
-                            userId = userId,
-                            sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                            playAudio = playAudio,
-                            playingAudio = playingAudio,
-                            stopAudio = stopAudio,
-                            images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                        )
+                            },
+                        ) { gestureAreaModifier ->
+                            MessageItem(
+                                modifier = gestureAreaModifier,
+                                message = message,
+                                userId = userId,
+                                sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                                playAudio = playAudio,
+                                playingAudio = playingAudio,
+                                stopAudio = stopAudio,
+                                images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                            )
+                        }
                     }
                 }
             }
@@ -267,17 +280,9 @@ fun MessageItem(
     images: List<ByteArray> = emptyList(),
     userId: String
 ) {
-    LaunchedEffect(images) {
-        Napier.d("Number of images for message ${message.id}: ${images.size}")
-    }
-    val sentByUser = message.senderId == userId
-    LaunchedEffect(sentByUser) {
-        Napier.d("Message ${message.id} sent by user: $sentByUser, senderId: ${message.senderId}, userId: $userId")
-    }
+    val sentByUser = remember(message, userId) { message.senderId == userId }
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp),
+        modifier = modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = if (sentByUser) Alignment.End else Alignment.Start
     ) {
@@ -314,9 +319,7 @@ fun MessageItem(
                 disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             )
-            Card(
-                colors = cardColors
-            ) {
+            Card(colors = cardColors) {
                 Text(
                     modifier = Modifier.padding(8.dp),
                     text = message.message ?: ""

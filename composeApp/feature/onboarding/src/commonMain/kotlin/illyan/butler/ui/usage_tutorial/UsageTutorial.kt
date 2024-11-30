@@ -21,7 +21,7 @@ import illyan.butler.ui.new_chat.ModelListItem
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun UsageTutorialScreen(
+fun UsageTutorial(
     onTutorialDone: () -> Unit,
 ) {
     ButlerDialogContent(

@@ -14,6 +14,7 @@ kotlin {
         implementation(projects.composeApp.domain.settings)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.feature.chat)
+        implementation(projects.composeApp.feature.auth)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)

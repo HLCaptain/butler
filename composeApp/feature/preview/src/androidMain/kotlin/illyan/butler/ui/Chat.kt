@@ -15,6 +15,7 @@ import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailState
 import illyan.butler.ui.chat_details.ChatDetails
 import illyan.butler.ui.chat_list.ChatList
+import illyan.butler.ui.home.HamburgerButton
 import illyan.butler.ui.new_chat.NewChat
 import illyan.butler.ui.new_chat.NewChatState
 import kotlinx.datetime.Clock
@@ -85,7 +86,10 @@ fun ChatDetailPreview() {
                     toggleRecord = {},
                     sendImage = {},
                     playAudio = {},
-                    stopAudio = {}
+                    stopAudio = {},
+                    openChatDetails = {},
+                    navigationIcon = { HamburgerButton() },
+                    isChatDetailsOpen = false
                 )
             }
         }

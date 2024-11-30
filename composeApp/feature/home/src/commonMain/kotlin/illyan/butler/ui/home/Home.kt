@@ -82,18 +82,12 @@ import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.profile
 import illyan.butler.ui.auth_flow.AuthFlow
-import illyan.butler.ui.auth_success.AuthSuccessIcon
 import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.error.ErrorScreen
+import illyan.butler.ui.onboard_flow.OnboardFlow
 import illyan.butler.ui.profile.ProfileDialog
-import illyan.butler.ui.select_host.SelectHost
-import illyan.butler.ui.select_host_tutorial.SelectHostTutorial
 import illyan.butler.ui.settings.UserSettings
-import illyan.butler.ui.signup_tutorial.SignUpTutorial
-import illyan.butler.ui.usage_tutorial.UsageTutorialScreen
-import illyan.butler.ui.welcome.Welcome
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -298,56 +292,7 @@ fun Home() {
                                     }
 
                                     DialogUserFlow.OnBoarding -> {
-                                        val onBoardingNavController = rememberNavController()
-                                        NavHost(
-                                            navController = onBoardingNavController,
-                                            contentAlignment = Alignment.Center,
-                                            sizeTransform = { SizeTransform(clip = false) },
-                                            startDestination = "welcome",
-                                            enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-                                            popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-                                            exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-                                            popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
-                                        ) {
-                                            composable("welcome") {
-                                                Welcome {
-                                                    onBoardingNavController.navigate("selectHostTutorial")
-                                                }
-                                            }
-                                            composable("selectHostTutorial") {
-                                                SelectHostTutorial {
-                                                    onBoardingNavController.navigate("selectHost")
-                                                }
-                                            }
-                                            composable("selectHost") {
-                                                SelectHost {
-                                                    onBoardingNavController.navigate("signUpTutorial")
-                                                }
-                                            }
-                                            composable("signUpTutorial") {
-                                                SignUpTutorial {
-                                                    onBoardingNavController.navigate("auth")
-                                                }
-                                            }
-                                            composable("auth") {
-                                                AuthFlow(
-                                                    authSuccessEnded = {
-                                                        onBoardingNavController.navigate("usageTutorial") {
-                                                            launchSingleTop = true
-                                                        }
-                                                    }
-                                                )
-                                            }
-                                            composable("authSuccess") {
-                                                AuthSuccessIcon()
-                                                LaunchedEffect(Unit) {
-                                                    delay(1000L)
-                                                }
-                                            }
-                                            composable("usageTutorial") {
-                                                UsageTutorialScreen { viewModel.setTutorialDone() }
-                                            }
-                                        }
+                                        OnboardFlow(onTutorialDone = viewModel::setTutorialDone)
                                     }
                                     else -> {}
                                 }

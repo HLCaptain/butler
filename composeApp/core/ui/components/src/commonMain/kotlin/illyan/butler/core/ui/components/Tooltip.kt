@@ -120,9 +120,9 @@ fun TooltipElevatedCard(
                 onClick()
                 if (showTooltipOnClick) tryShowTooltip()
             },
-            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current))
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp))
         ) {
-            Surface(
+            Box(
                 modifier = Modifier
                     .animateContentSize()
                     .combinedClickable(
@@ -135,7 +135,7 @@ fun TooltipElevatedCard(
                             if (showTooltipOnClick) tryShowTooltip()
                         }
                     ),
-                content = content
+                content = { content() }
             )
         }
     }
