@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -74,6 +74,7 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
+import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
@@ -182,7 +183,7 @@ fun Home() {
                 windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
             }
             var currentChat by rememberSaveable { mutableStateOf<String?>(null) }
-            LaunchedEffect(state.isUserSignedIn) { currentChat = null }
+            LaunchedEffect(state.isUserSignedIn) { if (state.isUserSignedIn == false) currentChat = null }
             val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
             NavigationSuiteScaffoldLayout(
                 layoutType = navigationSuiteLayout,
@@ -463,7 +464,7 @@ fun HamburgerButton(onClick: () -> Unit = {}) {
 }
 
 @Composable
-fun CloseButton(
+fun MenuCloseButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -472,7 +473,7 @@ fun CloseButton(
         onClick = onClick
     ) {
         Icon(
-            imageVector = Icons.Filled.Close,
+            imageVector = Icons.AutoMirrored.Rounded.MenuOpen,
             contentDescription = stringResource(Res.string.close)
         )
     }
@@ -529,7 +530,7 @@ private fun NavigationDrawerContent(
     content: @Composable () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxHeight()) {
-        CloseButton(modifier = Modifier.padding(closeButtonPadding)) { closeDrawer() }
+        MenuCloseButton(modifier = Modifier.padding(closeButtonPadding)) { closeDrawer() }
         content()
         Spacer(Modifier.weight(1f))
         bottomContent()

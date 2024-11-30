@@ -2,10 +2,15 @@ package illyan.butler.ui.chat_layout
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DrawerValue
@@ -27,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -35,6 +41,7 @@ import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.utils.BackHandler
+import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_details.ChatDetails
@@ -127,7 +134,11 @@ fun ChatLayout(
                                 )
                             }
                         }
-                        AnimatedVisibility(visible = !compact && isChatDetailsOpen) {
+                        AnimatedVisibility(
+                            visible = !compact && isChatDetailsOpen,
+                            enter = fadeIn() + expandHorizontally(),
+                            exit = fadeOut() + shrinkHorizontally()
+                        ) {
                             PermanentDrawerSheet(
                                 drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
                                 drawerContentColor = MaterialTheme.colorScheme.onSurface
@@ -151,14 +162,5 @@ fun ChatLayout(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun ReverseLayoutDirection(content: @Composable () -> Unit) {
-    CompositionLocalProvider(
-        LocalLayoutDirection provides if (LocalLayoutDirection.current == LayoutDirection.Rtl) LayoutDirection.Ltr else LayoutDirection.Rtl
-    ) {
-        content()
     }
 }
