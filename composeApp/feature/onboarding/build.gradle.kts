@@ -16,8 +16,11 @@ kotlin {
         implementation(projects.composeApp.feature.chat)
         implementation(projects.composeApp.feature.auth)
 
+        implementation(libs.material.adaptive)
+
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
+        implementation(libs.napier)
     }
 
     sourceSets.androidMain.dependencies {

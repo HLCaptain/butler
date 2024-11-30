@@ -74,7 +74,7 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
-import illyan.butler.core.ui.utils.ReverseLayoutDirection
+import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
@@ -108,20 +108,6 @@ fun Home() {
                     if (!isSignedIn) isAuthFlowEnded = false
                 }
                 isProfileDialogShowing = false
-            }
-
-            LaunchedEffect(state.isTutorialDone) {
-                if (state.isUserSignedIn == true && state.isTutorialDone == true) isAuthFlowEnded = true
-            }
-            val userFlow = remember(
-                state.isTutorialDone,
-                isAuthFlowEnded,
-                state.isUserSignedIn,
-                isProfileDialogShowing
-            ) {
-                if (state.isTutorialDone == true) {
-                    if (isAuthFlowEnded == true && state.isUserSignedIn == true && isProfileDialogShowing) null else DialogUserFlow.Auth
-                } else DialogUserFlow.OnBoarding
             }
 
             val profileNavController = rememberNavController()
@@ -220,13 +206,16 @@ fun Home() {
                     tonalElevation = 0.dp,
                     shape = RoundedCornerShape(topStart = if (isCompact) 0.dp else 24.dp)
                 ) {
-                    AnimatedContent(userFlow to state.isUserSignedIn) { (flow, userSignedIn) ->
-                        if (userSignedIn == true) {
+                    AnimatedContent(state to isAuthFlowEnded) { (state, authFlowEnded) ->
+                        if (state.isUserSignedIn == true && state.isTutorialDone == true && authFlowEnded == true) {
                             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                            val coroutineScope = rememberCoroutineScope()
                             LaunchedEffect(isCompact) {
                                 if (!isCompact) drawerState.close()
                             }
-                            val coroutineScope = rememberCoroutineScope()
+                            BackHandler(drawerState.isOpen) {
+                                coroutineScope.launch { drawerState.close() }
+                            }
                             ModalNavigationDrawer(
                                 drawerState = drawerState,
                                 gesturesEnabled = isCompact,
@@ -287,13 +276,13 @@ fun Home() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                when (flow) {
-                                    DialogUserFlow.Auth -> {
+                                when (state.isTutorialDone) {
+                                    true -> {
                                         AuthFlow(authSuccessEnded = { isAuthFlowEnded = true })
                                     }
 
-                                    DialogUserFlow.OnBoarding -> {
-                                        OnboardFlow(onTutorialDone = viewModel::setTutorialDone)
+                                    false -> {
+                                        OnboardFlow(onTutorialDone = { viewModel.setTutorialDone(); isAuthFlowEnded = true })
                                     }
                                     else -> {}
                                 }

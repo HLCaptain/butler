@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DrawerValue
@@ -32,9 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
 import dev.chrisbanes.haze.LocalHazeStyle
@@ -59,7 +55,7 @@ fun ChatLayout(
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val compact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    BackHandler(!isChatDetailsOpen || currentChat != null || !compact) {
+    BackHandler(isChatDetailsOpen) {
         isChatDetailsOpen = false
     }
     LaunchedEffect(currentChat) {
