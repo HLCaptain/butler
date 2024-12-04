@@ -4,7 +4,7 @@ kotlin = "2.1.0"
 android-minSdk = "26"
 android-compileSdk = "35"
 ksp = "2.1.0-1.0.29"
-agp = "8.7.2"
+agp = "8.7.3"
 compose = "1.7.1"
 compose-android = "1.7.5"
 ktor = "3.0.1"
@@ -102,7 +102,7 @@ filepicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" } 
 ffmpeg-kit = { module = "com.arthenica:ffmpeg-kit-full", version = "6.0-2" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.0.4" }
 haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.0.2" }
-accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version = "0.36.0" }
+permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }

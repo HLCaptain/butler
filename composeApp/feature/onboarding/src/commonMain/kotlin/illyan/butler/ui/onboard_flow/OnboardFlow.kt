@@ -164,7 +164,7 @@ fun OnboardingProgressBar(
         ) {
             Text(stringResource(Res.string.back))
         }
-        Spacer(Modifier.weight((1000 / layoutWidth - 1f).coerceAtLeast(0f)))
+        Spacer(Modifier.weight((1000 / layoutWidth - 1f).coerceAtLeast(0.1f)))
         Row(modifier = Modifier.padding(16.dp).weight(1f)) {
             for (i in 1..numberOfSteps) {
                 val animatedProgress by animateFloatAsState(
@@ -187,7 +187,7 @@ fun OnboardingProgressBar(
                 }
             }
         }
-        Spacer(Modifier.weight((1000 / layoutWidth - 1f).coerceAtLeast(0f)))
+        Spacer(Modifier.weight((1000 / layoutWidth - 1f).coerceAtLeast(0.1f)))
         val canGoForwardAlpha by animateFloatAsState(if (canGoForward) 1f else 0f)
         Button(
             onClick = onNext,
