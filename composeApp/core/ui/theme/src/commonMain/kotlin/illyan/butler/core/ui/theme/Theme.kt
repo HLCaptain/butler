@@ -7,15 +7,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import illyan.butler.core.ui.theme.ThemeSystemWindow
-import illyan.butler.core.ui.theme.canUseDynamicColors
-import illyan.butler.core.ui.theme.dynamicDarkColorScheme
-import illyan.butler.core.ui.theme.dynamicLightColorScheme
 import illyan.butler.domain.model.Theme
 
 @Composable
 fun ButlerTheme(
-    theme: Theme? = null,
+    theme: Theme? = Theme.System,
     dynamicColorEnabled: Boolean = false,
     isNight: Boolean = true,
     content: @Composable () -> Unit,
@@ -56,6 +52,7 @@ fun ButlerTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = MaterialTheme.typography,
+        shapes = MaterialTheme.shapes,
         content = content
     )
 }
