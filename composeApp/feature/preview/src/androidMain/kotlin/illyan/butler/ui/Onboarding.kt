@@ -26,7 +26,7 @@ fun SignUpTutorialPreview() {
     ButlerTheme {
         ButlerDialogSurface {
             SignUpTutorial(
-                onSignUp = {}
+                authSuccessEnded = {}
             )
         }
     }

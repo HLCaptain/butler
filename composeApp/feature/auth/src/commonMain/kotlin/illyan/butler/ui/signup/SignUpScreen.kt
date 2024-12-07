@@ -4,7 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,15 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.LoadingIndicator
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.password
 import illyan.butler.generated.resources.sign_up
 import illyan.butler.generated.resources.username
-import illyan.butler.core.ui.components.ButlerDialogContent
-import illyan.butler.core.ui.components.LoadingIndicator
-import illyan.butler.core.ui.components.smallDialogWidth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -148,7 +148,7 @@ fun SignUpButtons(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(
+        ButlerMediumSolidButton(
             onClick = signUp,
             enabled = true
         ) {

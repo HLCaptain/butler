@@ -26,14 +26,21 @@ actual fun ChatDetailBottomBar(
     isRecording: Boolean,
     toggleRecord: () -> Unit
 ) {
+    var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
 
     val galleryPermissionState = rememberPermissionState(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
     } else {
         Manifest.permission.READ_EXTERNAL_STORAGE
-    })
+    }) {
+        if (it) {
+            showAppRationaleWithPermission = null
+            isFilePickerShown = true
+        }
+    }
     val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+
     MessageField(
         modifier = modifier,
         sendMessage = sendMessage,
@@ -45,13 +52,15 @@ actual fun ChatDetailBottomBar(
         recordAudioAccessGranted = recordAudioPermissionState.status.isGranted,
         recordAudioEnabled = true,
         requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
-        requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission }
+        requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission },
+        isFilePickerShown = isFilePickerShown,
+        setFilePickerShown = { isFilePickerShown = it }
     )
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,
         onDismissDialog = { showAppRationaleWithPermission = null },
     ) {
-        val permissionState = remember(showAppRationaleWithPermission, galleryPermissionState, recordAudioPermissionState) {
+        val permissionState = remember(showAppRationaleWithPermission, galleryPermissionState.status, recordAudioPermissionState.status) {
             when (showAppRationaleWithPermission) {
                 galleryPermissionState.permission -> galleryPermissionState
                 recordAudioPermissionState.permission -> recordAudioPermissionState

@@ -15,7 +15,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.core.view.WindowCompat
 
 @SuppressLint("NewApi")
@@ -23,8 +23,9 @@ import androidx.core.view.WindowCompat
 actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
     val dynamicDarkColorScheme = dynamicDarkColorScheme()
     val dynamicLightColorScheme = dynamicLightColorScheme()
+    val canUseDynamicColors = canUseDynamicColors()
     val colorScheme = remember(isDark, isDynamicColors) {
-        if (isDynamicColors && canUseDynamicColors()) {
+        if (isDynamicColors && canUseDynamicColors) {
             if (isDark) dynamicDarkColorScheme else dynamicLightColorScheme
         } else if (isDark) {
             DarkColors
@@ -32,11 +33,10 @@ actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
             LightColors
         }
     }
-    val view = LocalView.current
-    if (!view.isInEditMode) {
+    if (!LocalInspectionMode.current) {
         val activity = LocalContext.current as ComponentActivity
         SideEffect {
-            WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars = !isDark
+            WindowCompat.getInsetsController(activity.window, activity.window.decorView).isAppearanceLightStatusBars = !isDark
         }
         LaunchedEffect(colorScheme) {
             activity.enableEdgeToEdge(
@@ -53,8 +53,9 @@ actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
     }
 }
 
+@Composable
 actual fun canUseDynamicColors(): Boolean {
-    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    return LocalInspectionMode.current || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 }
 
 @RequiresApi(Build.VERSION_CODES.S)

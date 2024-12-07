@@ -15,14 +15,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,8 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerDialogSurface
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerMediumTextButton
+import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.core.ui.components.LocalDialogDismissRequest
+import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
+import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.core.utils.randomUUID
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
@@ -55,10 +59,6 @@ import illyan.butler.generated.resources.settings
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
-import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.core.ui.components.MenuButton
-import illyan.butler.core.ui.components.TooltipElevatedCard
-import illyan.butler.core.ui.theme.ButlerTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -173,11 +173,11 @@ fun ProfileButtons(
                 .align(Alignment.Bottom),
             horizontalArrangement = Arrangement.End
         ) {
-            TextButton(onClick = { onDialogClosed() }) {
+            ButlerMediumTextButton(onClick = { onDialogClosed() }) {
                 Text(text = stringResource(Res.string.close))
             }
             if (isUserSignedIn == true) {
-                TextButton(
+                ButlerMediumTextButton(
                     enabled = !isUserSigningOut,
                     onClick = onSignOut,
                 ) {
@@ -191,7 +191,7 @@ fun ProfileButtons(
 //                    }
 //                }
             } else if (isUserSignedIn == false) {
-                Button(
+                ButlerMediumSolidButton(
                     onClick = onLogin
                 ) {
                     Text(text = stringResource(Res.string.login))

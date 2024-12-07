@@ -3,7 +3,6 @@ package illyan.butler.ui.usage_tutorial
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
@@ -56,7 +56,7 @@ fun UsageTutorial(
             }
         },
         buttons = {
-            Button(
+            ButlerMediumSolidButton(
                 modifier = Modifier.align(Alignment.End),
                 onClick = onTutorialDone
             ) {

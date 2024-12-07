@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.largeDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.butler_logo
@@ -47,7 +47,7 @@ fun Welcome(onNext: () -> Unit) {
                 style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center
             )
-            Button(onClick = onNext) {
+            ButlerMediumSolidButton(onClick = onNext) {
                 Text(text = stringResource(Res.string.next))
             }
         }

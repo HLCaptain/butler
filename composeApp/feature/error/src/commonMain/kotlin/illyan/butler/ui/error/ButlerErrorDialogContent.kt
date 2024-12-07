@@ -9,13 +9,14 @@ import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.generated.resources.Res
@@ -62,10 +63,8 @@ fun ButlerErrorDialogContent(
         Text(HttpStatusCode.fromValue(errorResponse.httpStatusCode).description)
     },
     buttons: (@Composable ColumnScope.() -> Unit)? = {
-        Button(
-            content = {
-                Text(stringResource(Res.string.close))
-            },
+        ButlerMediumSolidButton(
+            text = { Text(stringResource(Res.string.close)) },
             onClick = onClose
         )
     }
@@ -98,8 +97,8 @@ fun ButlerErrorDialogContent(
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            TextButton(
-                content = { Text(stringResource(Res.string.close)) },
+            ButlerMediumTextButton(
+                text = { Text(stringResource(Res.string.close)) },
                 onClick = onClose
             )
             val clipboardManager = LocalClipboardManager.current

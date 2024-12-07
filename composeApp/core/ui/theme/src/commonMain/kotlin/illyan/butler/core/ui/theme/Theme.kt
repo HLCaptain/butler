@@ -28,8 +28,9 @@ fun ButlerTheme(
     }
     val dynamicLightColorScheme = dynamicLightColorScheme()
     val dynamicDarkColorScheme = dynamicDarkColorScheme()
+    val canUseDynamicColors = canUseDynamicColors()
     val targetColorScheme = remember(theme, dynamicColorEnabled, isNight, isSystemInDarkTheme, isDark) {
-        if (dynamicColorEnabled && canUseDynamicColors()) {
+        if (dynamicColorEnabled && canUseDynamicColors) {
             when (theme) {
                 Theme.Dark -> dynamicDarkColorScheme
                 Theme.Light -> dynamicLightColorScheme

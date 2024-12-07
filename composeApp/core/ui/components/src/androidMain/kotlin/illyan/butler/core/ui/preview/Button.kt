@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.PreviewDynamicColors
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerButtonDefaults
@@ -287,6 +288,46 @@ private fun ButlerLargeInvertedButtonPreviews(
 @Composable
 private fun ButlerSmallPrimaryButtonPreviews() {
     ButlerTheme {
+        Row {
+            Column {
+                ButlerSmallButtonPreviews(
+                    solidButtonColors = ButlerButtonDefaults.solidButtonPrimaryColors(),
+                    outlinedButtonColors = ButlerButtonDefaults.outlinedButtonPrimaryColors(),
+                    outlinedBorderStroke = ButlerButtonDefaults.outlinedButtonPrimaryBorder(true),
+                    textButtonColors = ButlerButtonDefaults.textButtonPrimaryColors()
+                )
+                ButlerSmallButtonPreviews(
+                    solidButtonColors = ButlerButtonDefaults.solidButtonPrimaryColors(),
+                    outlinedButtonColors = ButlerButtonDefaults.outlinedButtonPrimaryColors(),
+                    outlinedBorderStroke = ButlerButtonDefaults.outlinedButtonPrimaryBorder(false),
+                    textButtonColors = ButlerButtonDefaults.textButtonPrimaryColors(),
+                    enabled = false
+                )
+            }
+            Column {
+                ButlerSmallInvertedButtonPreviews(
+                    invertedSolidButtonColors = ButlerButtonDefaults.solidButtonPrimaryInvertedColors(),
+                    invertedOutlinedButtonColors = ButlerButtonDefaults.outlinedButtonPrimaryInvertedColors(),
+                    invertedOutlinedBorderStroke = ButlerButtonDefaults.outlinedButtonPrimaryInvertedBorder(true),
+                    invertedTextButtonColors = ButlerButtonDefaults.textButtonPrimaryInvertedColors()
+                )
+                ButlerSmallInvertedButtonPreviews(
+                    invertedSolidButtonColors = ButlerButtonDefaults.solidButtonPrimaryInvertedColors(),
+                    invertedOutlinedButtonColors = ButlerButtonDefaults.outlinedButtonPrimaryInvertedColors(),
+                    invertedOutlinedBorderStroke = ButlerButtonDefaults.outlinedButtonPrimaryInvertedBorder(false),
+                    invertedTextButtonColors = ButlerButtonDefaults.textButtonPrimaryInvertedColors(),
+                    enabled = false
+                )
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@PreviewDynamicColors
+@Composable
+private fun ButlerSmallPrimaryButtonDynamicPreviews() {
+    ButlerTheme(dynamicColorEnabled = true) {
         Row {
             Column {
                 ButlerSmallButtonPreviews(

@@ -1,6 +1,5 @@
 package illyan.butler.ui.onboard_flow
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.EaseInOutQuart
 import androidx.compose.animation.core.animateFloatAsState
@@ -20,20 +19,14 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,11 +38,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import illyan.butler.core.ui.components.ButlerSmallSolidButton
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.next
-import illyan.butler.ui.auth_flow.AuthFlow
-import illyan.butler.ui.select_host.SelectHost
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorial
 import illyan.butler.ui.signup_tutorial.SignUpTutorial
 import illyan.butler.ui.usage_tutorial.UsageTutorial
@@ -59,6 +51,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun OnboardFlow(
+    authSuccessEnded: () -> Unit,
     onTutorialDone: () -> Unit,
 ) {
     val navController = rememberNavController()
@@ -94,12 +87,13 @@ fun OnboardFlow(
                 }
                 composable("selectHostTutorial") {
                     SelectHostTutorial {
-                        navController.navigate("selectHost")
+                        navController.navigate("signUpTutorial")
                     }
                 }
                 composable("signUpTutorial") {
                     SignUpTutorial {
-                        navController.navigate("auth")
+                        authSuccessEnded()
+                        navController.navigate("usageTutorial")
                     }
                 }
                 composable("usageTutorial") {
@@ -157,7 +151,7 @@ fun OnboardingProgressBar(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         val canGoBackAlpha by animateFloatAsState(if (canGoBack) 1f else 0f)
-        Button(
+        ButlerSmallSolidButton(
             onClick = onBack,
             enabled = canGoBack,
             modifier = Modifier.alpha(canGoBackAlpha)
@@ -189,7 +183,7 @@ fun OnboardingProgressBar(
         }
         Spacer(Modifier.weight((1000 / layoutWidth - 1f).coerceAtLeast(0.1f)))
         val canGoForwardAlpha by animateFloatAsState(if (canGoForward) 1f else 0f)
-        Button(
+        ButlerSmallSolidButton(
             onClick = onNext,
             enabled = canGoForward,
             modifier = Modifier.alpha(canGoForwardAlpha)

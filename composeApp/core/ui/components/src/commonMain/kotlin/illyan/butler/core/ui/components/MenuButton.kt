@@ -5,7 +5,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +16,7 @@ fun MenuButton(
     enabled: Boolean = true,
     content: @Composable (RowScope.() -> Unit)
 ) {
-    TextButton(
+    ButlerMediumTextButton(
         modifier = modifier,
         onClick = onClick,
         enabled = enabled

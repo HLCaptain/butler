@@ -14,21 +14,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import illyan.butler.ui.auth_success.AuthSuccessIcon
-import illyan.butler.ui.login.LoginScreen
+import illyan.butler.ui.login.Login
 import illyan.butler.ui.select_host.SelectHost
 import illyan.butler.ui.signup.SignUp
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 
 @Serializable
-private data class SignUp(
-    val email: String,
-    val password: String,
-)
+sealed class AuthFlowDestination {
+    @Serializable
+    data object Login : AuthFlowDestination()
+
+    @Serializable
+    data class SignUp(
+        val email: String,
+        val password: String,
+    ) : AuthFlowDestination()
+
+    @Serializable
+    data object AuthSuccess : AuthFlowDestination()
+
+    @Serializable
+    data object SelectHost : AuthFlowDestination()
+}
 
 @Composable
 fun AuthFlow(
-    authSuccess: () -> Unit = {},
     authSuccessEnded: () -> Unit
 ) {
     val authNavController = rememberNavController()
@@ -37,38 +48,37 @@ fun AuthFlow(
         navController = authNavController,
         contentAlignment = Alignment.Center,
         sizeTransform = { SizeTransform() },
-        startDestination = "login",
+        startDestination = AuthFlowDestination.Login,
         enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
         popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
         exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
         popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
     ) {
-        composable("login") {
-            LoginScreen(
-                onSignUp = { email, password -> authNavController.navigate(SignUp(email, password)) },
-                onSelectHost = { authNavController.navigate("selectHost") },
-                onAuthenticated = { authNavController.navigate("authSuccess") { launchSingleTop = true } }
+        composable<AuthFlowDestination.Login> {
+            Login(
+                onSignUp = { email, password -> authNavController.navigate(AuthFlowDestination.SignUp(email, password)) },
+                onSelectHost = { authNavController.navigate(AuthFlowDestination.SelectHost) },
+                onAuthenticated = { authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true } }
             )
         }
-        composable("selectHost") {
+        composable<AuthFlowDestination.SelectHost> {
             SelectHost {
                 authNavController.navigateUp()
             }
         }
-        composable<SignUp> {
-            val (email, password) = it.toRoute<SignUp>()
+        composable<AuthFlowDestination.SignUp> {
+            val (email, password) = it.toRoute<AuthFlowDestination.SignUp>()
             SignUp(
                 initialEmail = email,
                 initialPassword = password,
                 onSignUpSuccessful = {
-                    authNavController.navigate("authSuccess") { launchSingleTop = true }
+                    authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true }
                 }
             )
         }
-        composable("authSuccess") {
+        composable<AuthFlowDestination.AuthSuccess> {
             AuthSuccessIcon()
             LaunchedEffect(Unit) {
-                authSuccess()
                 delay(1000L)
                 authSuccessEnded()
             }

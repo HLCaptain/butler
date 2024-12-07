@@ -5,9 +5,12 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerButtonDefaults
+import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerLargeSolidButton
+import illyan.butler.core.ui.components.LoadingIndicator
+import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
@@ -28,23 +37,17 @@ import illyan.butler.generated.resources.password
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.sign_in_anonymously
 import illyan.butler.generated.resources.sign_up
-import illyan.butler.core.ui.components.ButlerDialogContent
-import illyan.butler.core.ui.components.LoadingIndicator
-import illyan.butler.core.ui.components.MenuButton
-import illyan.butler.core.ui.components.smallDialogWidth
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 
 @Composable
-fun LoginScreen(
+fun Login(
     onSignUp: (String, String) -> Unit,
     onSelectHost: () -> Unit,
     onAuthenticated: () -> Unit
 ) {
-    val screenModel = koinViewModel<LoginViewModel>()
-    val state by screenModel.state.collectAsState()
+    val viewModel = koinViewModel<LoginViewModel>()
+    val state by viewModel.state.collectAsState()
 
     LaunchedEffect(state.isSignedIn) {
         if (state.isSignedIn == true) onAuthenticated()
@@ -53,7 +56,7 @@ fun LoginScreen(
     LoginDialogContent(
         isUserSigningIn = state.isSigningIn,
         signInAnonymously = {}, // TODO: Implement sign in anonymously
-        signInWithEmailAndPassword = screenModel::signInWithEmailAndPassword,
+        signInWithEmailAndPassword = viewModel::signInWithEmailAndPassword,
         navigateToSignUp = onSignUp,
         selectHost = onSelectHost
     )
@@ -88,7 +91,7 @@ fun LoginDialogContent(
                     Text(text = stringResource(Res.string.login))
                 },
                 text = {
-                    LoginScreen(
+                    Login(
                         emailChanged = { email = it },
                         passwordChanged = { password = it }
                     )
@@ -107,9 +110,8 @@ fun LoginDialogContent(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
-private fun LoginScreen(
+private fun Login(
     modifier: Modifier = Modifier,
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {}
@@ -140,7 +142,6 @@ private fun LoginScreen(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LoginButtons(
     modifier: Modifier = Modifier,
@@ -150,18 +151,23 @@ fun LoginButtons(
     selectHost: (() -> Unit)? = null
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AnimatedVisibility(
             visible = signInWithEmailAndPassword != null
         ) {
-            Button(
+            ButlerLargeSolidButton(
                 onClick = signInWithEmailAndPassword ?: {},
                 enabled = true
             ) {
-                Text(text = stringResource(Res.string.login))
+                Spacer(modifier = Modifier.weight(1f))
+                ButlerButtonDefaults.ButtonRow(
+                    text = { Text(text = stringResource(Res.string.login)) },
+                    trailingIcon = { Icon(imageVector = Icons.AutoMirrored.Rounded.Login, contentDescription = null) }
+                )
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
 

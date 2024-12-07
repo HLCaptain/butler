@@ -398,6 +398,8 @@ fun MessageField(
     sendMessage: (String) -> Unit,
     isRecording: Boolean = false,
     toggleRecord: () -> Unit,
+    isFilePickerShown: Boolean,
+    setFilePickerShown: (Boolean) -> Unit,
     sendImage: (String) -> Unit,
     galleryAccessGranted: Boolean = false,
     galleryEnabled: Boolean = false,
@@ -435,11 +437,10 @@ fun MessageField(
                 }
             }
         }
-        var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
         AnimatedVisibility(visible = galleryEnabled) {
             IconButton(onClick = {
                 if (galleryAccessGranted) {
-                    isFilePickerShown = true
+                    setFilePickerShown(true)
                 } else {
                     requestGalleryAccess()
                 }
@@ -455,7 +456,7 @@ fun MessageField(
             show = isFilePickerShown,
             fileExtensions = listOf("jpg", "jpeg", "png"),
         ) { platformFile ->
-            isFilePickerShown = false
+            setFilePickerShown(false)
             platformFile?.path?.let(sendImage)
         }
         var textMessage by rememberSaveable { mutableStateOf("") }

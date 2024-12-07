@@ -1,12 +1,12 @@
 package illyan.butler.ui.permission
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.permission_request_generic_description
@@ -51,10 +51,10 @@ fun PermissionRequestScreen(
         text = { Text(description) },
         buttons = {
             Row {
-                TextButton(onClick = onDismiss) {
+                ButlerMediumTextButton(onClick = onDismiss) {
                     Text(stringResource(Res.string.close))
                 }
-                Button(onClick = onRequestPermission) {
+                ButlerMediumSolidButton(onClick = onRequestPermission) {
                     Text(requestPermissionText)
                 }
             }
