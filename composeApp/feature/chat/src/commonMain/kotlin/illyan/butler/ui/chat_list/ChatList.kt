@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalAbsoluteTonalElevation
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
@@ -33,7 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import illyan.butler.core.ui.utils.ensureContrastWith
+import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.delete_chat
@@ -90,7 +91,7 @@ fun ChatCard(
     val backgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current)
     val cardContainerColor by animateColorAsState(
         if (selected) {
-            MaterialTheme.colorScheme.primaryContainer.ensureContrastWith(backgroundColor, 0.5)
+            MaterialTheme.colorScheme.primaryContainer.lowerContrastWithBlendTo(backgroundColor, 1.15)
         } else {
             backgroundColor
         }
@@ -121,7 +122,7 @@ fun ChatCard(
                     onCheckedChange = { showMenu = it },
                     colors = IconButtonDefaults.iconToggleButtonColors().copy(
                         checkedContentColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        contentColor = LocalContentColor.current
                     )
                 ) {
                     Icon(
