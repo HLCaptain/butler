@@ -3,10 +3,6 @@ package illyan.butler.ui.chat_detail
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +39,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -62,10 +57,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
+import com.materialkolor.ktx.blend
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
@@ -104,26 +99,17 @@ fun ChatDetail(
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
     openChatDetails: () -> Unit,
-    isChatDetailsOpen: Boolean,
+    isChatDetailsOpenRatio: Float,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
-    val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
-    val surfaceColor by animateColorAsState(
-        targetValue = if (isChatDetailsOpen) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else MaterialTheme.colorScheme.surface,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-    )
+    val surfaceColor = MaterialTheme.colorScheme.surface.blend(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp), isChatDetailsOpenRatio)
     Surface(color = surfaceColor) {
-        val roundedCornerRadius by animateDpAsState(
-            targetValue = if (isChatDetailsOpen && !isCompact) 24.dp else 0.dp,
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-            label = "Top end rounded corner radius"
-        )
         Scaffold(
             modifier = Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .clip(RoundedCornerShape(topEnd = roundedCornerRadius)),
+                .clip(RoundedCornerShape(24.dp * isChatDetailsOpenRatio)),
             topBar = {
                 CenterAlignedTopAppBar(
                     modifier = Modifier.hazeChild(hazeState),
@@ -141,9 +127,9 @@ fun ChatDetail(
                             IconButton(onClick = openChatDetails) {
                                 val layoutDirection = LocalLayoutDirection.current
                                 val imageVector = if (layoutDirection == LayoutDirection.Ltr) {
-                                    if (isChatDetailsOpen) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
+                                    if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
                                 } else {
-                                    if (isChatDetailsOpen) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight
+                                    if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight
                                 }
                                 Icon(
                                     imageVector = imageVector,
@@ -156,6 +142,7 @@ fun ChatDetail(
                 )
             },
             bottomBar = {
+                var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
                 if (state.chat?.id != null) {
                     ChatDetailBottomBar(
                         modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
@@ -163,6 +150,8 @@ fun ChatDetail(
                         sendImage = sendImage,
                         isRecording = state.isRecording,
                         toggleRecord = toggleRecord,
+                        isFilePickerShown = isFilePickerShown,
+                        showFilePicker = { isFilePickerShown = it }
                     )
                 }
             },
@@ -205,7 +194,9 @@ expect fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (String) -> Unit,
     isRecording: Boolean = false,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    isFilePickerShown: Boolean,
+    showFilePicker: (Boolean) -> Unit
 )
 
 @Composable

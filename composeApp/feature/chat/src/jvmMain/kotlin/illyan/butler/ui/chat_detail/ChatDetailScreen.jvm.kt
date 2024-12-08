@@ -9,7 +9,9 @@ actual fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (String) -> Unit,
     isRecording: Boolean,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    isFilePickerShown: Boolean,
+    showFilePicker: (Boolean) -> Unit,
 ) {
     MessageField(
         modifier = modifier,
@@ -22,6 +24,8 @@ actual fun ChatDetailBottomBar(
         recordAudioAccessGranted = true, // Desktop doesn't need permission
         recordAudioEnabled = true, // Desktop doesn't need permission
         requestGalleryAccess = {},
-        requestRecordAudioAccess = {}
+        requestRecordAudioAccess = {},
+        isFilePickerShown = isFilePickerShown,
+        setFilePickerShown = showFilePicker
     )
 }

@@ -32,6 +32,7 @@ kotlin {
         implementation(libs.korge.audio)
         implementation(libs.korge.io)
         implementation(libs.filepicker)
+        implementation(libs.material.kolors)
     }
 
     sourceSets.androidMain.dependencies {

@@ -1,6 +1,5 @@
 package illyan.butler.ui.chat_list
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,7 +38,6 @@ import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.delete_chat
 import illyan.butler.generated.resources.new_chat
-import illyan.butler.generated.resources.no_chats
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -50,30 +48,18 @@ fun ChatList(
     openChat: (String) -> Unit,
     deleteChat: (String) -> Unit,
 ) {
-    AnimatedContent(
-        targetState = chats.isEmpty(),
-    ) { noChats ->
-        if (noChats) {
-            Text(
-                modifier = modifier.padding(start = 16.dp),
-                text = stringResource(Res.string.no_chats),
-                style = MaterialTheme.typography.headlineLarge
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(8.dp)
+    ) {
+        items(chats, key = { it.id!! }) { chat ->
+            ChatCard(
+                modifier = Modifier.animateItem(),
+                chat = chat,
+                selected = chat.id == selectedChat,
+                openChat = { openChat(chat.id!!) },
+                deleteChat = { deleteChat(chat.id!!) }
             )
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(chats, key = { it.id!! }) { chat ->
-                    ChatCard(
-                        modifier = Modifier.animateItem(),
-                        chat = chat,
-                        selected = chat.id == selectedChat,
-                        openChat = { openChat(chat.id!!) },
-                        deleteChat = { deleteChat(chat.id!!) }
-                    )
-                }
-            }
         }
     }
 }
@@ -104,7 +90,7 @@ fun ChatCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(vertical = 4.dp, horizontal = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

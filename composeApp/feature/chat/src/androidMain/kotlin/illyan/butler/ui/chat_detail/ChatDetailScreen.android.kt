@@ -24,9 +24,10 @@ actual fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (String) -> Unit,
     isRecording: Boolean,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    isFilePickerShown: Boolean,
+    showFilePicker: (Boolean) -> Unit
 ) {
-    var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
 
     val galleryPermissionState = rememberPermissionState(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -36,7 +37,7 @@ actual fun ChatDetailBottomBar(
     }) {
         if (it) {
             showAppRationaleWithPermission = null
-            isFilePickerShown = true
+            showFilePicker(true)
         }
     }
     val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
@@ -54,7 +55,7 @@ actual fun ChatDetailBottomBar(
         requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
         requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission },
         isFilePickerShown = isFilePickerShown,
-        setFilePickerShown = { isFilePickerShown = it }
+        setFilePickerShown = showFilePicker
     )
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,

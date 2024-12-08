@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.DismissibleDrawerSheet
+import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.PermanentDrawerSheet
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberDrawerState
@@ -28,9 +28,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
 import dev.chrisbanes.haze.LocalHazeStyle
@@ -47,6 +50,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun ChatLayout(
+    modifier: Modifier = Modifier,
     currentChat: String?,
     selectChat: (String?) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
@@ -72,18 +76,36 @@ fun ChatLayout(
     LaunchedEffect(compact, isChatDetailsOpen) {
         if (compact && isChatDetailsOpen) drawerState.open() else drawerState.close()
     }
+    var drawerContentWidthInPixels by remember { mutableStateOf(0) }
+    var permanentDrawerWidthInPixels by remember { mutableStateOf(0) }
+    val drawerOpenRatio = remember(
+        compact,
+        drawerState.currentOffset,
+        drawerContentWidthInPixels,
+        permanentDrawerWidthInPixels
+    ) {
+        (if (compact) {
+            (drawerState.currentOffset / drawerContentWidthInPixels) + 1
+        } else {
+            permanentDrawerWidthInPixels / drawerContentWidthInPixels.toFloat()
+        }.takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
+    }
     ReverseLayoutDirection {
         CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
-            ModalNavigationDrawer(
+            DismissibleNavigationDrawer(
                 drawerState = drawerState,
                 drawerContent = {
-                    ModalDrawerSheet(
+                    DismissibleDrawerSheet(
                         drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                        drawerContentColor = MaterialTheme.colorScheme.onSurface
+                        drawerContentColor = MaterialTheme.colorScheme.onSurface,
+                        drawerShape = RectangleShape,
                     ) {
                         ReverseLayoutDirection {
                             Box(modifier = Modifier.fillMaxHeight()) {
                                 ChatDetails(
+                                    modifier = Modifier.onSizeChanged {
+                                        drawerContentWidthInPixels = it.width
+                                    },
                                     chatId = currentChat,
                                     actions = {
                                         IconButton(
@@ -92,13 +114,13 @@ fun ChatLayout(
                                         ) {
                                             Icon(Icons.Rounded.Close, contentDescription = null)
                                         }
-                                    }
+                                    },
                                 )
                             }
                         }
                     }
                 },
-                gesturesEnabled = compact && drawerState.isOpen
+                gesturesEnabled = isChatDetailsOpen
             ) {
                 ReverseLayoutDirection {
                     val viewModel = koinViewModel<ChatDetailViewModel>()
@@ -106,7 +128,7 @@ fun ChatLayout(
                     LaunchedEffect(currentChat) {
                         currentChat?.let { viewModel.loadChat(it) }
                     }
-                    Row {
+                    Row(modifier = modifier) {
                         AnimatedContent(
                             modifier = Modifier.weight(1f),
                             targetState = currentChat != null
@@ -121,7 +143,7 @@ fun ChatLayout(
                                     stopAudio = viewModel::stopAudio,
                                     navigationIcon = navigationIcon,
                                     openChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
-                                    isChatDetailsOpen = isChatDetailsOpen
+                                    isChatDetailsOpenRatio = drawerOpenRatio
                                 )
                             } else {
                                 NewChat(
@@ -131,6 +153,9 @@ fun ChatLayout(
                             }
                         }
                         AnimatedVisibility(
+                            modifier = Modifier.onSizeChanged {
+                                permanentDrawerWidthInPixels = it.width
+                            },
                             visible = !compact && isChatDetailsOpen,
                             enter = fadeIn() + expandHorizontally(),
                             exit = fadeOut() + shrinkHorizontally()
@@ -141,6 +166,9 @@ fun ChatLayout(
                             ) {
                                 Box(modifier = Modifier.fillMaxHeight()) {
                                     ChatDetails(
+                                        modifier = Modifier.onSizeChanged {
+                                            drawerContentWidthInPixels = it.width
+                                        },
                                         chatId = currentChat,
                                         actions = {
                                             IconButton(

@@ -89,7 +89,7 @@ fun ChatDetailPreview() {
                     stopAudio = {},
                     openChatDetails = {},
                     navigationIcon = { HamburgerButton() },
-                    isChatDetailsOpen = false
+                    isChatDetailsOpenRatio = 0.0f
                 )
             }
         }
@@ -131,7 +131,8 @@ fun ChatListPreview() {
                         )
                     ),
                     deleteChat = {},
-                    openChat = {}
+                    openChat = {},
+                    selectedChat = "1",
                 )
             }
         }

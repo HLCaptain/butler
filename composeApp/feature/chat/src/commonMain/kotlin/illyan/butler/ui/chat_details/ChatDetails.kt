@@ -28,6 +28,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ChatDetails(
+    modifier: Modifier = Modifier,
     chatId: String?,
     actions: @Composable () -> Unit = {}
 ) {
@@ -37,6 +38,7 @@ fun ChatDetails(
         screenModel.loadChat(chatId)
     }
     ChatDetails(
+        modifier = modifier,
         chat = state.chat,
         currentUserId = state.userId,
         actions = actions
@@ -45,13 +47,14 @@ fun ChatDetails(
 
 @Composable
 fun ChatDetails(
+    modifier: Modifier = Modifier,
     chat: DomainChat?,
     currentUserId: String?,
     actions: @Composable () -> Unit = {},
 ) {
     Box {
         ButlerDialogContent(
-            modifier = Modifier.mediumDialogSize(),
+            modifier = modifier.mediumDialogSize(),
             title = {
                 Text(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
