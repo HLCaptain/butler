@@ -60,7 +60,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
-import com.materialkolor.ktx.blend
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
@@ -104,12 +103,17 @@ fun ChatDetail(
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
-    val surfaceColor = MaterialTheme.colorScheme.surface.blend(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp), isChatDetailsOpenRatio)
-    Surface(color = surfaceColor) {
+    Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
         Scaffold(
             modifier = Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .clip(RoundedCornerShape(24.dp * isChatDetailsOpenRatio)),
+                .clip(
+                    RoundedCornerShape(
+                        topEnd = 24.dp * isChatDetailsOpenRatio,
+                        bottomEnd = 24.dp * isChatDetailsOpenRatio
+                    )
+                ),
+            containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 CenterAlignedTopAppBar(
                     modifier = Modifier.hazeChild(hazeState),

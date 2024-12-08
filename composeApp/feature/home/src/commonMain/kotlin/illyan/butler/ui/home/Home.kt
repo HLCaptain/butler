@@ -298,7 +298,12 @@ fun Home() {
                                     color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
                                 ) {
                                     ChatLayout(
-                                        modifier = Modifier.clip(RoundedCornerShape(if (isCompact) 24.dp * drawerOpenRatio else 24.dp)),
+                                        modifier = Modifier.clip(
+                                            RoundedCornerShape(
+                                                topStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp,
+                                                bottomStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp
+                                            )
+                                        ),
                                         currentChat = currentChat,
                                         selectChat = { currentChat = it },
                                         navigationIcon = {

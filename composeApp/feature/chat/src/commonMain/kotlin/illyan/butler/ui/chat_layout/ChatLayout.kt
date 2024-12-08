@@ -84,11 +84,11 @@ fun ChatLayout(
         drawerContentWidthInPixels,
         permanentDrawerWidthInPixels
     ) {
-        (if (compact) {
-            (drawerState.currentOffset / drawerContentWidthInPixels) + 1
-        } else {
+        ((if (compact)
+                (drawerState.currentOffset / drawerContentWidthInPixels) + 1
+        else {
             permanentDrawerWidthInPixels / drawerContentWidthInPixels.toFloat()
-        }.takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
+        }).takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
     }
     ReverseLayoutDirection {
         CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
