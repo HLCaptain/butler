@@ -29,11 +29,11 @@ class ChatDetailsViewModel(
         _currentChat,
         authManager.signedInUserId
     ) { chat, userId ->
-        ChatDetailsScreenState(
+        ChatDetailsState(
             chat = chat,
             userId = userId
         )
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, ChatDetailsScreenState())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, ChatDetailsState())
     fun loadChat(chatId: String?) {
         _currentChatId.update { chatId }
     }

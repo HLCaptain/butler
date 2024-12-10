@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,18 +21,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
-import illyan.butler.core.ui.components.MenuButton
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun SelectHostScreen(selectedHost: () -> Unit) {
+fun SelectHost(onSelectHostSuccessful: () -> Unit) {
     val viewModel = koinViewModel<SelectHostViewModel>()
     val state by viewModel.state.collectAsState()
 
@@ -52,7 +52,7 @@ fun SelectHostScreen(selectedHost: () -> Unit) {
         if (state.isConnected == true && triedToConnect) {
             triedToConnect = false // Tried to connect from last successful connection
             Napier.d("Connected to host: ${state.currentHost}")
-            if (!isTestingOnly) selectedHost()
+            if (!isTestingOnly) onSelectHostSuccessful()
         }
     }
 
@@ -86,7 +86,7 @@ fun SelectHostDialogContent(
             )
         },
         text = {
-            SelectHostScreen(
+            SelectHost(
                 state = state,
                 hostUrlChanged = { hostUrl = it }
             )
@@ -102,15 +102,16 @@ fun SelectHostDialogContent(
 }
 
 @Composable
-fun SelectHostScreen(
+fun SelectHost(
     modifier: Modifier = Modifier,
     state: SelectHostState,
     hostUrlChanged: (String) -> Unit = {}
 ) {
     var hostUrl by rememberSaveable { mutableStateOf(state.currentHost) }
-    OutlinedTextField(
+    ButlerTextField(
         modifier = modifier,
         value = hostUrl ?: "",
+        isOutlined = false,
         enabled = true,
         onValueChange = {
             hostUrl = it
@@ -149,7 +150,7 @@ fun SelectHostButtons(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Button(
+        ButlerMediumSolidButton(
             onClick = selectHost,
             enabled = true
         ) {
@@ -161,16 +162,4 @@ fun SelectHostButtons(
             text = stringResource(Res.string.test_connection)
         )
     }
-}
-
-@Composable
-fun SelectHostScreenPreview() {
-    SelectHostDialogContent(
-        state = SelectHostState(
-            isConnecting = false,
-            isConnected = null,
-            currentHost = "http://localhost:8080"
-        ),
-        testAndSelectHost = {}
-    )
 }

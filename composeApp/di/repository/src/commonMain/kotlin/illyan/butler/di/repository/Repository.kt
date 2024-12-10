@@ -6,9 +6,6 @@ import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.model.ModelMemoryRepository
 import illyan.butler.data.model.ModelNetworkRepository
 import illyan.butler.data.model.ModelRepository
-import illyan.butler.data.permission.MemoryPermissionRepository
-import illyan.butler.data.permission.PermissionRepository
-import illyan.butler.data.permission.getPlatformPermissionRepository
 import illyan.butler.data.settings.AppMemoryRepository
 import illyan.butler.data.settings.AppRepository
 import illyan.butler.data.settings.AppSettingsRoomRepository
@@ -106,13 +103,4 @@ fun provideResourceRepository(
     resourceMemoryRepository
 } else {
     resourceStoreRepository
-}
-
-@Single
-fun providePermissionRepository(
-    memoryPermissionRepository: MemoryPermissionRepository
-): PermissionRepository = if (BuildConfig.USE_MEMORY_DB) {
-    memoryPermissionRepository
-} else {
-    getPlatformPermissionRepository()
 }

@@ -14,20 +14,13 @@ kotlin {
         implementation(projects.composeApp.domain.settings)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.feature.chat)
+        implementation(projects.composeApp.feature.auth)
 
-        implementation(compose.runtime)
-        implementation(compose.runtimeSaveable)
-        implementation(compose.ui)
-        implementation(compose.foundation)
-        implementation(compose.materialIconsExtended)
-        implementation(compose.material3)
-        implementation(compose.components.resources)
-        implementation(compose.preview)
-        implementation(compose.uiTooling)
-        implementation(compose.uiUtil)
+        implementation(libs.material.adaptive)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
+        implementation(libs.napier)
     }
 
     sourceSets.androidMain.dependencies {

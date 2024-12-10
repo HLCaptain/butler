@@ -3,15 +3,13 @@ package illyan.butler.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
+import illyan.butler.chat.ChatManager
 import illyan.butler.config.AppManager
 import illyan.butler.core.utils.randomUUID
+import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
-import illyan.butler.domain.model.Permission
-import illyan.butler.domain.model.PermissionStatus
 import illyan.butler.error.ErrorManager
-import illyan.butler.permission.PermissionManager
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,42 +25,36 @@ import org.koin.android.annotation.KoinViewModel
 class HomeViewModel(
     authManager: AuthManager,
     private val appManager: AppManager,
+    private val chatManager: ChatManager,
     errorManager: ErrorManager,
-    private val permissionManager: PermissionManager,
 ) : ViewModel() {
     private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
     private val _appErrors = MutableStateFlow<List<DomainErrorEvent>>(listOf())
-
-    private val _permissionStatuses = permissionManager.permissionStates.stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        emptyMap()
-    )
 
     val state = combine(
         authManager.isUserSignedIn,
         appManager.isTutorialDone,
         _serverErrors,
         _appErrors,
-        _permissionStatuses
+        chatManager.userChats
     ) { flows ->
         val isUserSignedIn = flows[0] as? Boolean
         val isTutorialDone = flows[1] as? Boolean
         val serverErrors = flows[2] as List<Pair<String, DomainErrorResponse>>
         val appErrors = flows[3] as List<DomainErrorEvent>
-        val permissionStatuses = flows[4] as Map<Permission, PermissionStatus?>
-        if (isTutorialDone == null || isUserSignedIn == null) return@combine HomeScreenState()
-        HomeScreenState(
+        val userChats = flows[4] as List<DomainChat>
+        if (isTutorialDone == null || isUserSignedIn == null) return@combine HomeState()
+        HomeState(
             isUserSignedIn = isUserSignedIn,
             isTutorialDone = isTutorialDone,
             serverErrors = serverErrors,
             appErrors = appErrors,
-            permissionStatuses = permissionStatuses
+            userChats = userChats
         )
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        HomeScreenState()
+        HomeState()
     )
 
     init {
@@ -108,6 +100,12 @@ class HomeViewModel(
     fun setTutorialDone() {
         viewModelScope.launch(Dispatchers.IO) {
             appManager.setTutorialDone()
+        }
+    }
+
+    fun deleteChat(chatId: String) {
+        viewModelScope.launch {
+            chatManager.deleteChat(chatId)
         }
     }
 }

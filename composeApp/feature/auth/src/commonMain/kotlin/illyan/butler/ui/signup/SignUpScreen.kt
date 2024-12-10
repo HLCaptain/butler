@@ -4,8 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,25 +16,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.LoadingIndicator
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.password
 import illyan.butler.generated.resources.sign_up
 import illyan.butler.generated.resources.username
-import illyan.butler.core.ui.components.ButlerDialogContent
-import illyan.butler.core.ui.components.LoadingIndicator
-import illyan.butler.core.ui.components.smallDialogWidth
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 
 @Composable
-fun SignUpScreen(
+fun SignUp(
     initialEmail: String = "",
     initialPassword: String = "",
-    signedUp: () -> Unit
+    onSignUpSuccessful: () -> Unit
 ) {
     val screenModel = koinViewModel<SignUpViewModel>()
     val state by screenModel.state.collectAsState()
@@ -47,7 +45,7 @@ fun SignUpScreen(
     // Go back when user is authenticated
     // Login button should navigate to LoginScreen. Go back if it is already on the stack.
     LaunchedEffect(state.isSignedIn) {
-        if (state.isSignedIn == true) signedUp()
+        if (state.isSignedIn == true) onSignUpSuccessful()
     }
 
     SignUpDialogContent(
@@ -90,7 +88,7 @@ fun SignUpDialogContent(
                     )
                 },
                 text = {
-                    SignUpScreen(
+                    SignUp(
                         username = username,
                         email = email,
                         password = password,
@@ -109,7 +107,7 @@ fun SignUpDialogContent(
 }
 
 @Composable
-fun SignUpScreen(
+fun SignUp(
     modifier: Modifier = Modifier,
     username: String,
     email: String,
@@ -119,19 +117,19 @@ fun SignUpScreen(
     passwordChanged: (String) -> Unit = {}
 ) {
     Column(modifier = modifier) {
-        OutlinedTextField(
+        ButlerTextField(
             value = username,
             enabled = true,
             onValueChange = userNameChanged,
             label = { Text(text = stringResource(Res.string.username)) }
         )
-        OutlinedTextField(
+        ButlerTextField(
             value = email,
             enabled = true,
             onValueChange = emailChanged,
             label = { Text(text = stringResource(Res.string.email)) }
         )
-        OutlinedTextField(
+        ButlerTextField(
             value = password,
             enabled = true,
             onValueChange = passwordChanged,
@@ -150,7 +148,7 @@ fun SignUpButtons(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(
+        ButlerMediumSolidButton(
             onClick = signUp,
             enabled = true
         ) {

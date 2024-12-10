@@ -46,12 +46,10 @@ import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
@@ -60,10 +58,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,6 +78,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerMediumTextButton
+import illyan.butler.core.ui.components.ButlerSmallTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
@@ -115,19 +114,27 @@ import illyan.butler.generated.resources.turn_on
 import illyan.butler.generated.resources.turn_on_analytics
 import illyan.butler.generated.resources.turn_on_analytics_description
 import illyan.butler.generated.resources.user_id
-import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.random.Random
 
 @Composable
 fun UserSettings() {
-    val screenModel = koinViewModel<UserSettingsViewModel>()
-    val state by screenModel.state.collectAsState()
-    LaunchedEffect(state) {
-        Napier.d("UserSettingsScreen: $state")
-    }
+    val viewModel = koinViewModel<UserSettingsViewModel>()
+    val state by viewModel.state.collectAsState()
+    UserSettings(
+        state = state,
+        onThemeChange = viewModel::setTheme,
+        setDynamicColorEnabled = viewModel::setDynamicColorEnabled
+    )
+}
+
+@Composable
+fun UserSettings(
+    state: UserSettingsState,
+    onThemeChange: (Theme) -> Unit = {},
+    setDynamicColorEnabled: (Boolean) -> Unit = {},
+) {
     UserSettingsDialogContent(
         preferences = state.userPreferences,
 //        arePreferencesSynced = arePreferencesSynced,
@@ -135,11 +142,11 @@ fun UserSettings() {
 //        shouldSyncPreferences = shouldSyncPreferences,
 //        showAnalyticsRequestDialog = showAnalyticsRequestDialog,
 //        onShouldSyncChanged = screenModel::setPreferencesSync,
-        onThemeChange = screenModel::setTheme,
+        onThemeChange = onThemeChange,
 //        setAnalytics = screenModel::setAnalytics,
 //        setFreeDriveAutoStart = screenModel::setFreeDriveAutoStart,
 //        setAdVisibility = screenModel::setAdVisibility,
-        setDynamicColorEnabled = screenModel::setDynamicColorEnabled,
+        setDynamicColorEnabled = setDynamicColorEnabled,
 //        navigateToDataSettings = { destinationsNavigator.navigate(DataSettingsDialogScreenDestination) },
 //        navigateToMLSettings = { destinationsNavigator.navigate(MLSettingsDialogScreenDestination) },
     )
@@ -205,7 +212,6 @@ fun UserSettingsDialogContent(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AnalyticsRequestDialogContent(
     modifier: Modifier = Modifier,
@@ -259,7 +265,6 @@ fun AnalyticsRequestDialogContent(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AnalyticsRequestButtons(
     modifier: Modifier = Modifier,
@@ -269,16 +274,16 @@ fun AnalyticsRequestButtons(
     Row(
         modifier = modifier
     ) {
-        TextButton(onClick = onDismiss) {
+        ButlerMediumTextButton(onClick = onDismiss) {
             Text(text = stringResource(Res.string.dismiss))
         }
-        Button(onClick = onTurnOnAnalytics) {
+        ButlerMediumSolidButton(onClick = onTurnOnAnalytics) {
             Text(text = stringResource(Res.string.turn_on))
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalResourceApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UserSettingsTitle(
     arePreferencesSynced: Boolean = false,
@@ -314,7 +319,6 @@ fun UserSettingsTitle(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun SyncPreferencesLabel(
     arePreferencesSynced: Boolean,
@@ -352,7 +356,6 @@ private fun SyncPreferencesLabel(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun UserSettingsButtons(
     modifier: Modifier = Modifier,
@@ -379,7 +382,6 @@ fun UserSettingsButtons(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
 private fun SyncPreferencesButton(
     canSyncPreferences: Boolean,
     onShouldSyncChanged: (Boolean) -> Unit,
@@ -469,7 +471,6 @@ private fun SyncPreferencesButton(
 //    )
 //}
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ClientLabel(
     clientUUID: String?,
@@ -544,7 +545,6 @@ fun SettingLabel(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun UserSettings(
     modifier: Modifier = Modifier,
@@ -562,11 +562,8 @@ fun UserSettings(
         label = "User Settings Screen"
     ) {
         if (it && preferences != null) {
-            // TODO: extract 0.5f to a constant per dialog parts
             LazyColumn(
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
-            // TODO: disabled buttons blend in too much, find a way to make list pleasing to the eye
-//                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
             ) {
                 item {
                     BooleanSetting(
@@ -777,7 +774,7 @@ fun BasicSetting(
     modifier = modifier,
     title = screenName,
     label = {
-        TextButton(onClick = onClick) {
+        ButlerSmallTextButton(onClick = onClick) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
