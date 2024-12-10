@@ -9,7 +9,6 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.smallDialogWidth
@@ -108,9 +108,10 @@ fun SelectHost(
     hostUrlChanged: (String) -> Unit = {}
 ) {
     var hostUrl by rememberSaveable { mutableStateOf(state.currentHost) }
-    OutlinedTextField(
+    ButlerTextField(
         modifier = modifier,
         value = hostUrl ?: "",
+        isOutlined = false,
         enabled = true,
         onValueChange = {
             hostUrl = it

@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerButtonDefaults
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.smallDialogWidth
@@ -116,11 +116,15 @@ private fun Login(
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {}
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
         var email by rememberSaveable { mutableStateOf("") }
-        OutlinedTextField(
+        ButlerTextField(
             modifier = Modifier.fillMaxWidth(),
             value = email,
+            isOutlined = false,
             enabled = true,
             onValueChange = {
                 email = it
@@ -129,10 +133,11 @@ private fun Login(
             label = { Text(text = stringResource(Res.string.email)) }
         )
         var password by rememberSaveable { mutableStateOf("") }
-        OutlinedTextField(
+        ButlerTextField(
             modifier = Modifier.fillMaxWidth(),
             value = password,
             enabled = true,
+            isOutlined = false,
             onValueChange = {
                 password = it
                 passwordChanged(it)

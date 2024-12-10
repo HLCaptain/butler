@@ -6,6 +6,7 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -47,7 +48,7 @@ import illyan.butler.ui.chat_details.ChatDetails
 import illyan.butler.ui.new_chat.NewChat
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalHazeMaterialsApi::class)
+@OptIn(ExperimentalHazeMaterialsApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ChatLayout(
     modifier: Modifier = Modifier,
@@ -120,7 +121,7 @@ fun ChatLayout(
                         }
                     }
                 },
-                gesturesEnabled = isChatDetailsOpen
+                gesturesEnabled = isChatDetailsOpen && compact
             ) {
                 ReverseLayoutDirection {
                     val viewModel = koinViewModel<ChatDetailViewModel>()
@@ -183,6 +184,35 @@ fun ChatLayout(
                             }
                         }
                     }
+                    // Area to open and close the chat details if not in compact mode
+                    // Capture gestures to open and close the chat details
+//                    var dragStartX by remember { mutableStateOf(-1f) }
+//                    val density = LocalDensity.current
+//                    val dragThreshold = 24.dp
+//                    Box(
+//                        modifier = Modifier
+//                            .fillMaxHeight()
+//                            .offset(x = 12.dp)
+//                            .width(64.dp)
+//                            .onDrag(
+//                                enabled = !compact,
+//                                onDragStart = { dragStartX = it.x },
+//                                onDrag = { offset ->
+//                                    if (dragStartX != -1f) {
+//                                        with(density) {
+//                                            val delta = offset.x - dragStartX
+//                                            if (delta > dragThreshold.toPx()) {
+//                                                isChatDetailsOpen = true
+//                                            } else if (delta < -dragThreshold.toPx()) {
+//                                                isChatDetailsOpen = false
+//                                            }
+//                                        }
+//                                    }
+//                                },
+//                                onDragEnd = { dragStartX = -1f },
+//                                onDragCancel = { dragStartX = -1f }
+//                        )
+//                    )
                 }
             }
         }

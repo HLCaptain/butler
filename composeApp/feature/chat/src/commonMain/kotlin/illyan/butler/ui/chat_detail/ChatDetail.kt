@@ -34,7 +34,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,6 +62,7 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
@@ -455,13 +455,12 @@ fun MessageField(
             platformFile?.path?.let(sendImage)
         }
         var textMessage by rememberSaveable { mutableStateOf("") }
-        OutlinedTextField(
+        ButlerTextField(
             modifier = Modifier
                 .padding(horizontal = 4.dp)
                 .weight(1f, fill = true),
             value = textMessage,
             onValueChange = { textMessage = it },
-            shape = RoundedCornerShape(16.dp),
             placeholder = { Text(stringResource(Res.string.send_message)) },
             maxLines = 1
         )

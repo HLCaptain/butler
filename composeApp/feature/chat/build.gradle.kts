@@ -17,7 +17,8 @@ kotlin {
         implementation(projects.composeApp.domain.audio)
         implementation(projects.composeApp.feature.permission)
 
-        implementation(compose.material3AdaptiveNavigationSuite)
+//        implementation(compose.material3AdaptiveNavigationSuite)
+        implementation(libs.material.adaptive.navigation.suite)
         implementation(libs.material.adaptive)
         implementation(libs.material.adaptive.navigation)
         implementation(libs.material.adaptive.layout)

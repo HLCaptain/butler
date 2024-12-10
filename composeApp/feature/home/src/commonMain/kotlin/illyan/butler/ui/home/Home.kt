@@ -275,6 +275,14 @@ fun Home() {
                                                         }
                                                     )
 
+                                                    AnimatedVisibility(
+                                                        visible = state.userChats.isEmpty(),
+                                                        enter = fadeIn(),
+                                                        exit = fadeOut()
+                                                    ) {
+                                                        EmptyChatNavDrawerItem()
+                                                    }
+
                                                     ChatList(
                                                         chats = state.userChats,
                                                         deleteChat = {
@@ -395,7 +403,7 @@ private fun VerticalNavBar(
     ) { isCompact ->
         if (isCompact) {
             HomeNavRail(
-                navigateToNewChat = navigateToNewChat,
+                navigateToNewChat = { navigateToNewChat(); navRailExpanded = false },
                 expandNavRail = { navRailExpanded = true },
                 bottomContent = {
                     NavRailItem(
@@ -418,7 +426,7 @@ private fun VerticalNavBar(
                 chats = chats,
                 deleteChat = deleteChat,
                 onProfileClick = { setProfileDialogShowing(true) },
-                navigateToNewChat = navigateToNewChat,
+                navigateToNewChat = { navigateToNewChat(); navRailExpanded = false },
                 closeDrawer = { navRailExpanded = false },
                 currentChat = currentChat
             )
@@ -579,24 +587,12 @@ private fun HomePermanentNavigationDrawerSheet(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         onClick = navigateToNewChat
                     )
-                    AnimatedVisibility(chats.isEmpty()) {
-                        Column(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(imageVector = Icons.Rounded.ArrowUpward, contentDescription = null)
-                            Text(
-                                text = stringResource(Res.string.create_new_chat),
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = stringResource(Res.string.no_chats),
-                                style = MaterialTheme.typography.headlineSmall
-                            )
-                            Spacer(modifier = Modifier.weight(3f))
-                        }
+                    AnimatedVisibility(
+                        visible = chats.isEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        EmptyChatNavDrawerItem()
                     }
                     ChatList(
                         modifier = Modifier,
@@ -608,6 +604,31 @@ private fun HomePermanentNavigationDrawerSheet(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun EmptyChatNavDrawerItem(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(imageVector = Icons.Rounded.ArrowUpward, contentDescription = null)
+        Text(
+            text = stringResource(Res.string.create_new_chat),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = stringResource(Res.string.no_chats),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.weight(3f))
     }
 }
 

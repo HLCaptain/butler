@@ -4,7 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
@@ -117,19 +117,19 @@ fun SignUp(
     passwordChanged: (String) -> Unit = {}
 ) {
     Column(modifier = modifier) {
-        OutlinedTextField(
+        ButlerTextField(
             value = username,
             enabled = true,
             onValueChange = userNameChanged,
             label = { Text(text = stringResource(Res.string.username)) }
         )
-        OutlinedTextField(
+        ButlerTextField(
             value = email,
             enabled = true,
             onValueChange = emailChanged,
             label = { Text(text = stringResource(Res.string.email)) }
         )
-        OutlinedTextField(
+        ButlerTextField(
             value = password,
             enabled = true,
             onValueChange = passwordChanged,
