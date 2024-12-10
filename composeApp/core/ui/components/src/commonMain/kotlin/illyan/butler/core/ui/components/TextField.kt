@@ -5,6 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -37,18 +40,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.utils.animatePaddingValuesAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ButlerTextField(
     modifier: Modifier = Modifier,
     isOutlined: Boolean = true,
+    isCompact: Boolean = false,
     value: String,
     onValueChange: (String) -> Unit = {},
     enabled: Boolean = true,
@@ -83,7 +89,7 @@ fun ButlerTextField(
     singleLine: Boolean = true,
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
-    shape: Shape = ButlerTextFieldDefaults.Shape,
+    shape: Shape = if (isCompact) ButlerTextFieldDefaults.CompactShape else ButlerTextFieldDefaults.Shape,
     colors: TextFieldColors = if (isOutlined) ButlerTextFieldDefaults.outlinedTextFieldColors() else ButlerTextFieldDefaults.butlerTextFieldColors(),
     interactionSource: MutableInteractionSource? = null
 ) {
@@ -101,12 +107,23 @@ fun ButlerTextField(
         }
     }
     val mergedTextStyle = textStyle.merge(TextStyle(color = textColor))
-    CompositionLocalProvider(LocalTextSelectionColors provides colors.textSelectionColors) {
+    val contentPadding by animatePaddingValuesAsState(
+        targetValue = if (isCompact) PaddingValues(
+            start = if (leadingIcon != null) 0.dp else ButlerTextFieldDefaults.CompactContentPadding,
+            end = if (trailingIcon != null) 0.dp else ButlerTextFieldDefaults.CompactContentPadding
+        )
+        else if (label == null) TextFieldDefaults.contentPaddingWithoutLabel()
+        else TextFieldDefaults.contentPaddingWithLabel(),
+    )
+    CompositionLocalProvider(
+        LocalTextSelectionColors provides colors.textSelectionColors,
+        LocalMinimumInteractiveComponentSize provides if (isCompact) 42.dp else LocalMinimumInteractiveComponentSize.current
+    ) {
         BasicTextField(
             value = value,
             modifier = modifier.defaultMinSize(
                 minWidth = if (isOutlined) OutlinedTextFieldDefaults.MinWidth else TextFieldDefaults.MinWidth,
-                minHeight = if (isOutlined) OutlinedTextFieldDefaults.MinHeight else TextFieldDefaults.MinHeight
+                minHeight = if (isCompact) 42.dp else if (isOutlined) OutlinedTextFieldDefaults.MinHeight else TextFieldDefaults.MinHeight
             ),
             onValueChange = onValueChange,
             enabled = enabled,
@@ -126,17 +143,18 @@ fun ButlerTextField(
                     visualTransformation = visualTransformation,
                     innerTextField = innerTextField,
                     placeholder = placeholder,
-                    label = label,
+                    label = if (isCompact) null else label, // no label in compact mode
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
                     prefix = prefix,
                     suffix = suffix,
-                    supportingText = supportingText,
+                    supportingText = if (isCompact) null else supportingText, // no supporting text in compact mode
                     shape = shape,
                     singleLine = singleLine,
                     enabled = enabled,
                     isError = isError,
                     interactionSource = interactionSource,
+                    contentPadding = contentPadding,
                     colors = colors,
                     container = {
                         if (isOutlined) {
@@ -156,6 +174,7 @@ fun ButlerTextField(
                                 focusedIndicatorLineThickness = Dp.Unspecified,
                                 unfocusedIndicatorLineThickness = Dp.Unspecified,
                                 shape = shape,
+                                colors = colors,
                                 interactionSource = interactionSource
                             )
                         }
@@ -227,8 +246,11 @@ fun ButlerConfidentialTextField(
 
 object ButlerTextFieldDefaults {
     val Shape = RoundedCornerShape(12.dp)
+    val CompactShape = RoundedCornerShape(100)
+    val CompactContentPadding: Dp @Composable get() = TextFieldDefaults.contentPaddingWithLabel().calculateStartPadding(LocalLayoutDirection.current)
     val UnfocusedBorderThickness = 1.dp
     val FocusedBorderThickness = 2.dp
+    val BaseAlpha = 0.6f
 
     @Composable
     fun outlinedTextFieldColors(): TextFieldColors = TextFieldDefaults.colors().copy(
@@ -244,21 +266,21 @@ object ButlerTextFieldDefaults {
         disabledLeadingIconColor = MaterialTheme.colorScheme.surfaceVariant,
         disabledTrailingIconColor = MaterialTheme.colorScheme.surfaceVariant,
         unfocusedContainerColor = Color.Transparent,
-        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
-        unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
         unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-        unfocusedPrefixColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        unfocusedSuffixColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        unfocusedSupportingTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        unfocusedPrefixColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        unfocusedSuffixColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        unfocusedSupportingTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
         focusedIndicatorColor = MaterialTheme.colorScheme.primary,
         focusedContainerColor = Color.Transparent,
-        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        focusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
+        focusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
         focusedTextColor = MaterialTheme.colorScheme.onSurface,
-        focusedSupportingTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        focusedSupportingTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
         focusedPrefixColor = MaterialTheme.colorScheme.onSurface,
         focusedSuffixColor = MaterialTheme.colorScheme.onSurface,
         focusedLeadingIconColor = MaterialTheme.colorScheme.onSurface,
@@ -267,7 +289,7 @@ object ButlerTextFieldDefaults {
         errorIndicatorColor = MaterialTheme.colorScheme.error,
         errorContainerColor = Color.Transparent,
         errorCursorColor = MaterialTheme.colorScheme.surface,
-        errorPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        errorPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = BaseAlpha),
         errorPrefixColor = MaterialTheme.colorScheme.error,
         errorSuffixColor = MaterialTheme.colorScheme.error,
         errorSupportingTextColor = MaterialTheme.colorScheme.error,
@@ -282,10 +304,10 @@ object ButlerTextFieldDefaults {
 
     @Composable
     fun butlerTextFieldColors() = outlinedTextFieldColors().copy(
-        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-        disabledContainerColor = MaterialTheme.colorScheme.surface,
-        focusedContainerColor = MaterialTheme.colorScheme.surface,
-        errorContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = BaseAlpha),
+        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = BaseAlpha / 2),
+        errorContainerColor = MaterialTheme.colorScheme.error.copy(alpha = BaseAlpha / 4),
         unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
     )
 }
