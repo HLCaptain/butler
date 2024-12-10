@@ -1,6 +1,9 @@
 package illyan.butler.core.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -47,6 +51,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.utils.animateCornerBasedShapeAsState
 import illyan.butler.core.ui.utils.animatePaddingValuesAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,15 +120,23 @@ fun ButlerTextField(
         else if (label == null) TextFieldDefaults.contentPaddingWithoutLabel()
         else TextFieldDefaults.contentPaddingWithLabel(),
     )
+    val minimumInteractiveComponentSize by animateDpAsState(
+        targetValue = if (isCompact) ButlerTextFieldDefaults.CompactMinInteractiveComponentSize else LocalMinimumInteractiveComponentSize.current,
+        animationSpec = tween(150, easing = LinearEasing)
+    )
+    val animatedShape by animateCornerBasedShapeAsState(
+        targetValue = if (shape is CornerBasedShape) shape else RoundedCornerShape(0.dp),
+        animationSpec = tween(150, easing = LinearEasing)
+    )
     CompositionLocalProvider(
         LocalTextSelectionColors provides colors.textSelectionColors,
-        LocalMinimumInteractiveComponentSize provides if (isCompact) 42.dp else LocalMinimumInteractiveComponentSize.current
+        LocalMinimumInteractiveComponentSize provides minimumInteractiveComponentSize
     ) {
         BasicTextField(
             value = value,
             modifier = modifier.defaultMinSize(
                 minWidth = if (isOutlined) OutlinedTextFieldDefaults.MinWidth else TextFieldDefaults.MinWidth,
-                minHeight = if (isCompact) 42.dp else if (isOutlined) OutlinedTextFieldDefaults.MinHeight else TextFieldDefaults.MinHeight
+                minHeight = if (isCompact) ButlerTextFieldDefaults.CompactMinInteractiveComponentSize else if (isOutlined) OutlinedTextFieldDefaults.MinHeight else TextFieldDefaults.MinHeight
             ),
             onValueChange = onValueChange,
             enabled = enabled,
@@ -142,14 +155,14 @@ fun ButlerTextField(
                     value = value,
                     visualTransformation = visualTransformation,
                     innerTextField = innerTextField,
-                    placeholder = placeholder,
+                    placeholder = if (isCompact) placeholder ?: label else placeholder,
                     label = if (isCompact) null else label, // no label in compact mode
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
                     prefix = prefix,
                     suffix = suffix,
                     supportingText = if (isCompact) null else supportingText, // no supporting text in compact mode
-                    shape = shape,
+                    shape = if (shape is CornerBasedShape) animatedShape else shape,
                     singleLine = singleLine,
                     enabled = enabled,
                     isError = isError,
@@ -164,7 +177,7 @@ fun ButlerTextField(
                                 focusedBorderThickness = ButlerTextFieldDefaults.FocusedBorderThickness,
                                 unfocusedBorderThickness = ButlerTextFieldDefaults.UnfocusedBorderThickness,
                                 colors = colors,
-                                shape = shape,
+                                shape = if (shape is CornerBasedShape) animatedShape else shape,
                                 interactionSource = interactionSource
                             )
                         } else {
@@ -173,7 +186,7 @@ fun ButlerTextField(
                                 isError = isError,
                                 focusedIndicatorLineThickness = Dp.Unspecified,
                                 unfocusedIndicatorLineThickness = Dp.Unspecified,
-                                shape = shape,
+                                shape = if (shape is CornerBasedShape) animatedShape else shape,
                                 colors = colors,
                                 interactionSource = interactionSource
                             )
@@ -245,8 +258,9 @@ fun ButlerConfidentialTextField(
 )
 
 object ButlerTextFieldDefaults {
+    val CompactMinInteractiveComponentSize = 40.dp // Minimum height due to BasicTextField
     val Shape = RoundedCornerShape(12.dp)
-    val CompactShape = RoundedCornerShape(100)
+    val CompactShape = RoundedCornerShape(CompactMinInteractiveComponentSize / 2)
     val CompactContentPadding: Dp @Composable get() = TextFieldDefaults.contentPaddingWithLabel().calculateStartPadding(LocalLayoutDirection.current)
     val UnfocusedBorderThickness = 1.dp
     val FocusedBorderThickness = 2.dp

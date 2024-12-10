@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -46,8 +47,18 @@ fun animatePaddingValuesAsState(
         animationSpec = animationSpec,
         typeConverter = object: TwoWayConverter<PaddingValues, AnimationVector4D> {
         override val convertFromVector: (AnimationVector4D) -> PaddingValues
-            get() = { PaddingValues(it.v1.dp, it.v2.dp, it.v3.dp, it.v4.dp) }
+            get() = { PaddingValues(
+                it.v1.dp.coerceAtLeast(0.dp),
+                it.v2.dp.coerceAtLeast(0.dp),
+                it.v3.dp.coerceAtLeast(0.dp),
+                it.v4.dp.coerceAtLeast(0.dp)
+            ) }
         override val convertToVector: (PaddingValues) -> AnimationVector4D
-            get() = { AnimationVector4D(it.calculateStartPadding(LayoutDirection.Ltr).value, it.calculateTopPadding().value, it.calculateEndPadding(LayoutDirection.Ltr).value, it.calculateBottomPadding().value) }
+            get() = { AnimationVector4D(
+                it.calculateStartPadding(LayoutDirection.Ltr).value.coerceAtLeast(0f),
+                it.calculateTopPadding().value.coerceAtLeast(0f),
+                it.calculateEndPadding(LayoutDirection.Ltr).value.coerceAtLeast(0f),
+                it.calculateBottomPadding().value.coerceAtLeast(0f)
+            ) }
     })
 }
