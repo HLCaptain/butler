@@ -17,6 +17,7 @@ kotlin {
         implementation(projects.composeApp.feature.auth)
 
         implementation(libs.material.adaptive)
+        implementation(libs.material.adaptive.layout)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)

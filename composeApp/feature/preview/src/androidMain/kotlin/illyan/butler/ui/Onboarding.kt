@@ -1,10 +1,12 @@
 package illyan.butler.ui
 
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.theme.ButlerTheme
+import illyan.butler.ui.select_host.SelectHostState
 import illyan.butler.ui.select_host_tutorial.SelectHostTutorial
+import illyan.butler.ui.select_host_tutorial.SelectHostTutorialContent
 import illyan.butler.ui.signup_tutorial.SignUpTutorial
 import illyan.butler.ui.welcome.Welcome
 
@@ -12,9 +14,11 @@ import illyan.butler.ui.welcome.Welcome
 @Composable
 fun SelectHostTutorialPreview() {
     ButlerTheme {
-        ButlerDialogSurface {
-            SelectHostTutorial(
-                navigateToHostSelection = {}
+        Surface {
+            SelectHostTutorialContent(
+                state = SelectHostState(),
+                testAndSelectHost = {},
+                testHost = {}
             )
         }
     }
@@ -24,7 +28,7 @@ fun SelectHostTutorialPreview() {
 @Composable
 fun SignUpTutorialPreview() {
     ButlerTheme {
-        ButlerDialogSurface {
+        Surface {
             SignUpTutorial(
                 authSuccessEnded = {}
             )
@@ -36,7 +40,7 @@ fun SignUpTutorialPreview() {
 @Composable
 fun WelcomePreview() {
     ButlerTheme {
-        ButlerDialogSurface {
+        Surface {
             Welcome(
                 onNext = {}
             )
