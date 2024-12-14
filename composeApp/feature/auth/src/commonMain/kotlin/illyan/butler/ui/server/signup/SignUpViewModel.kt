@@ -1,4 +1,4 @@
-package illyan.butler.ui.signup
+package illyan.butler.ui.server.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

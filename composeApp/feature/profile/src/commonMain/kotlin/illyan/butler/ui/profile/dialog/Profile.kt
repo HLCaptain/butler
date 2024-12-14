@@ -1,4 +1,4 @@
-package illyan.butler.ui.profile
+package illyan.butler.ui.profile.dialog
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade

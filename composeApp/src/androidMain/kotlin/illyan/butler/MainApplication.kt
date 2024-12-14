@@ -4,7 +4,6 @@ import android.app.Application
 import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
-import illyan.butler.config.ConfigDomainModule
 import illyan.butler.core.local.room.RoomCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
@@ -22,10 +21,10 @@ import illyan.butler.model.ModelManager
 import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
+import illyan.butler.ui.home.HomeFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
-import illyan.butler.ui.ProfileFeatureModule
+import illyan.butler.ui.profile.ProfileFeatureModule
 import illyan.butler.ui.error.ErrorFeatureModule
-import illyan.butler.ui.HomeFeatureModule
 import illyan.butler.ui.permission.PermissionFeatureModule
 import illyan.butler.ui.theme.ThemeFeatureModule
 import illyan.butler.utils.initNapier
@@ -58,7 +57,6 @@ class MainApplication : Application() {
                 AudioDomainModule().module,
                 AuthDomainModule().module,
                 ChatDomainModule().module,
-                ConfigDomainModule().module,
                 HostDomainModule().module,
                 module { singleOf(::ModelManager) },
                 SettingsDomainModule().module

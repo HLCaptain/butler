@@ -93,13 +93,13 @@ import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
 import illyan.butler.generated.resources.profile
-import illyan.butler.ui.auth_flow.AuthFlow
+import illyan.butler.ui.server.auth_flow.AuthFlow
 import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.error.ErrorScreen
 import illyan.butler.ui.onboard_flow.OnboardFlow
-import illyan.butler.ui.profile.ProfileDialog
-import illyan.butler.ui.settings.UserSettings
+import illyan.butler.ui.profile.dialog.ProfileDialog
+import illyan.butler.ui.profile.settings.UserSettings
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -215,7 +215,7 @@ fun Home() {
                 }
             ) {
                 Surface(tonalElevation = 0.dp) {
-                    val showHome = remember(state, isAuthFlowEnded) { state.isUserSignedIn == true && state.isTutorialDone == true && isAuthFlowEnded == true }
+                    val showHome = remember(state, isAuthFlowEnded) { state.isUserSignedIn == true && isAuthFlowEnded == true }
                     AnimatedContent(showHome) { isHome ->
                         if (isHome) {
                             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -331,20 +331,10 @@ fun Home() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                when {
-                                    state.isTutorialDone == true && isAuthFlowEnded == false -> {
-                                        AuthFlow(authSuccessEnded = { isAuthFlowEnded = true })
-                                    }
-
-                                    state.isTutorialDone == false -> {
-                                        OnboardFlow(
-                                            authSuccessEnded = { isAuthFlowEnded = true },
-                                            onTutorialDone = viewModel::setTutorialDone
-                                        )
-                                    }
-
-                                    else -> {}
-                                }
+//                                AuthFlow(authSuccessEnded = { isAuthFlowEnded = true })
+                                OnboardFlow(
+                                    authSuccessEnded = { isAuthFlowEnded = true },
+                                )
                             }
                         }
                     }

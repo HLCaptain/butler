@@ -17,14 +17,7 @@ class AppMemoryRepository : AppRepository {
     private val _firstSignInHappenedYet = MutableStateFlow(false)
     override val firstSignInHappenedYet: StateFlow<Boolean?> = _firstSignInHappenedYet.asStateFlow()
 
-    private val _isTutorialDone = MutableStateFlow(false)
-    override val isTutorialDone = _isTutorialDone.asStateFlow()
     override val currentHost = MutableStateFlow<String?>(null).asStateFlow()
-
-    override suspend fun setTutorialDone(isTutorialDone: Boolean) {
-        Napier.d { "Setting tutorial done to $isTutorialDone" }
-        _isTutorialDone.update { isTutorialDone }
-    }
 
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
         Napier.d { "Setting user preferences to $preferences" }

@@ -1,4 +1,4 @@
-package illyan.butler.ui
+package illyan.butler.ui.profile
 
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module

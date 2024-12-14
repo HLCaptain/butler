@@ -48,7 +48,7 @@ import illyan.butler.ui.chat_details.ChatDetails
 import illyan.butler.ui.new_chat.NewChat
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalHazeMaterialsApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun ChatLayout(
     modifier: Modifier = Modifier,

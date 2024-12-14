@@ -4,11 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.theme.ButlerTheme
-import illyan.butler.ui.login.LoginDialogContent
-import illyan.butler.ui.select_host.SelectHostDialogContent
-import illyan.butler.ui.select_host.SelectHostState
-import illyan.butler.ui.signup.SignUpDialogContent
-import illyan.butler.ui.signup.SignUpScreenState
+import illyan.butler.ui.server.login.LoginDialogContent
+import illyan.butler.ui.server.select_host.SelectHostDialogContent
+import illyan.butler.ui.server.select_host.SelectHostState
+import illyan.butler.ui.server.signup.SignUpDialogContent
+import illyan.butler.ui.server.signup.SignUpScreenState
 
 @PreviewLightDark
 @Composable

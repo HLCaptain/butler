@@ -38,7 +38,6 @@ kotlin {
         implementation(projects.composeApp.domain.audio)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.chat)
-        implementation(projects.composeApp.domain.config)
         implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.domain.model)

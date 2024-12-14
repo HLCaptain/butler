@@ -1,4 +1,4 @@
-package illyan.butler.ui.select_host
+package illyan.butler.ui.server.select_host
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

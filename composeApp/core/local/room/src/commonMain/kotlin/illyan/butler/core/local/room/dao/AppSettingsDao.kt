@@ -32,9 +32,6 @@ interface AppSettingsDao {
     @Query("UPDATE app_settings SET hostUrl = :hostUrl")
     suspend fun updateHostUrl(hostUrl: String): Int
 
-    @Query("UPDATE app_settings SET isTutorialDone = :isTutorialDone")
-    suspend fun updateTutorialDone(isTutorialDone: Boolean): Int
-
     @Query("UPDATE app_settings SET firstSignInHappenedYet = :firstSignInHappenedYet")
     suspend fun updateFirstSignInHappenedYet(firstSignInHappenedYet: Boolean): Int
 

@@ -5,7 +5,6 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,10 +20,10 @@ import illyan.butler.generated.resources.day_night_cycle
 import illyan.butler.generated.resources.light
 import illyan.butler.generated.resources.system
 import illyan.butler.generated.resources.theme
-import illyan.butler.ui.profile.ProfileDialogContent
-import illyan.butler.ui.settings.AnalyticsRequestDialogContent
-import illyan.butler.ui.settings.DropdownSetting
-import illyan.butler.ui.settings.UserSettingsDialogContent
+import illyan.butler.ui.profile.dialog.ProfileDialogContent
+import illyan.butler.ui.profile.settings.AnalyticsRequestDialogContent
+import illyan.butler.ui.profile.settings.DropdownSetting
+import illyan.butler.ui.profile.settings.UserSettingsDialogContent
 import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
 

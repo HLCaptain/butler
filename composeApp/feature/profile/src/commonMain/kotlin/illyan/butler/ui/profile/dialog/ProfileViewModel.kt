@@ -1,9 +1,8 @@
-package illyan.butler.ui.profile
+package illyan.butler.ui.profile.dialog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
-import illyan.butler.config.AppManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
@@ -14,7 +13,6 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class ProfileViewModel(
     private val authManager: AuthManager,
-    private val appManager: AppManager,
 ): ViewModel() {
     val isUserSignedIn = authManager.isUserSignedIn
         .stateIn(
@@ -73,7 +71,6 @@ class ProfileViewModel(
 
     fun resetTutorialAndSignOut() {
         viewModelScope.launch(Dispatchers.IO) {
-            appManager.resetTutorial()
             authManager.signOut()
         }
     }

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-package illyan.butler.ui.login
+package illyan.butler.ui.server.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

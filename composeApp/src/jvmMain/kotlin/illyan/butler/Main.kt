@@ -5,7 +5,6 @@ import androidx.compose.ui.window.application
 import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
-import illyan.butler.config.ConfigDomainModule
 import illyan.butler.core.local.room.RoomCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
@@ -18,19 +17,19 @@ import illyan.butler.data.settings.SettingsDataModule
 import illyan.butler.data.user.UserDataModule
 import illyan.butler.di.RepositoryModule
 import illyan.butler.error.ErrorManager
-import illyan.butler.model.ModelManager
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.app_name
 import illyan.butler.generated.resources.butler_logo
 import illyan.butler.host.HostDomainModule
+import illyan.butler.model.ModelManager
 import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
-import illyan.butler.ui.error.ErrorFeatureModule
-import illyan.butler.ui.HomeFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
+import illyan.butler.ui.error.ErrorFeatureModule
+import illyan.butler.ui.home.HomeFeatureModule
 import illyan.butler.ui.permission.PermissionFeatureModule
-import illyan.butler.ui.ProfileFeatureModule
+import illyan.butler.ui.profile.ProfileFeatureModule
 import illyan.butler.ui.theme.ThemeFeatureModule
 import illyan.butler.utils.initNapier
 import org.jetbrains.compose.resources.painterResource
@@ -56,7 +55,6 @@ fun main() = application {
             AudioDomainModule().module,
             AuthDomainModule().module,
             ChatDomainModule().module,
-            ConfigDomainModule().module,
             HostDomainModule().module,
             module { singleOf(::ModelManager) },
             SettingsDomainModule().module

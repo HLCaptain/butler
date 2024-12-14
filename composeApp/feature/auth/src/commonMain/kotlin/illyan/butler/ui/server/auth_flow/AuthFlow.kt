@@ -1,4 +1,4 @@
-package illyan.butler.ui.auth_flow
+package illyan.butler.ui.server.auth_flow
 
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -14,9 +14,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import illyan.butler.ui.auth_success.AuthSuccessIcon
-import illyan.butler.ui.login.Login
-import illyan.butler.ui.select_host.SelectHost
-import illyan.butler.ui.signup.SignUp
+import illyan.butler.ui.server.login.Login
+import illyan.butler.ui.server.select_host.SelectHost
+import illyan.butler.ui.server.signup.SignUp
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 
@@ -56,7 +56,12 @@ fun AuthFlow(
     ) {
         composable<AuthFlowDestination.Login> {
             Login(
-                onSignUp = { email, password -> authNavController.navigate(AuthFlowDestination.SignUp(email, password)) },
+                onSignUp = { email, password -> authNavController.navigate(
+                    AuthFlowDestination.SignUp(
+                        email,
+                        password
+                    )
+                ) },
                 onSelectHost = { authNavController.navigate(AuthFlowDestination.SelectHost) },
                 onAuthenticated = { authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true } }
             )

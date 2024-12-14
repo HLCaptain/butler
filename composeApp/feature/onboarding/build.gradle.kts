@@ -16,7 +16,9 @@ kotlin {
         implementation(projects.composeApp.feature.chat)
         implementation(projects.composeApp.feature.auth)
 
+        implementation(libs.material.adaptive.navigation.suite)
         implementation(libs.material.adaptive)
+        implementation(libs.material.adaptive.navigation)
         implementation(libs.material.adaptive.layout)
 
         implementation(libs.kotlinx.coroutines)

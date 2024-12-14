@@ -9,6 +9,5 @@ data class RoomAppSettings(
     val clientId: String,
     val preferences: RoomPreferences,
     val firstSignInHappenedYet: Boolean,
-    val isTutorialDone: Boolean,
     val hostUrl: String,
 )

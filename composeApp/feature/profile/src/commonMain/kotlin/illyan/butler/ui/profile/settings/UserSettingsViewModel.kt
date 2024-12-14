@@ -1,4 +1,4 @@
-package illyan.butler.ui.settings
+package illyan.butler.ui.profile.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

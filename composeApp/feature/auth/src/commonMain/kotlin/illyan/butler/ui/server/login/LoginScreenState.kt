@@ -1,6 +1,6 @@
-package illyan.butler.ui.signup
+package illyan.butler.ui.server.login
 
-data class SignUpScreenState(
+data class LoginScreenState(
     val isSignedIn: Boolean? = null,
     val isSigningIn: Boolean = false
 )

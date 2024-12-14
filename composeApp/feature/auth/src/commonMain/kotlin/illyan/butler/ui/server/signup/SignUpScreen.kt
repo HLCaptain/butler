@@ -1,4 +1,4 @@
-package illyan.butler.ui.signup
+package illyan.butler.ui.server.signup
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement

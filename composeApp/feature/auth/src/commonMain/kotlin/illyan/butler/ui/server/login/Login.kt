@@ -1,4 +1,4 @@
-package illyan.butler.ui.login
+package illyan.butler.ui.server.login
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade

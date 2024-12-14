@@ -1,4 +1,4 @@
-package illyan.butler.ui.auth_flow
+package illyan.butler.ui.server.auth_flow
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

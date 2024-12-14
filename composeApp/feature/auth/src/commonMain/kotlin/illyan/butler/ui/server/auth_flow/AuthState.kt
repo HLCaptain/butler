@@ -1,4 +1,4 @@
-package illyan.butler.ui.auth_flow
+package illyan.butler.ui.server.auth_flow
 
 data class AuthState(
     val hostSelected: Boolean? = null,
