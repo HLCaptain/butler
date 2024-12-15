@@ -1,7 +1,7 @@
 package illyan.butler.data.chat
 
-import illyan.butler.domain.model.DomainChat
 import illyan.butler.data.user.UserRepository
+import illyan.butler.domain.model.DomainChat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -26,6 +26,7 @@ class ChatMemoryRepository(
     override suspend fun deleteChat(chatId: String) {
         chats.remove(chatId)
         chatStateFlows[chatId]?.update { null to false }
+        chatStateFlows.remove(chatId)
 
         val userId = userRepository.signedInUserId.first()!!
         userChats[userId] = userChats[userId]?.filterNot { it.id == chatId } ?: emptyList()
@@ -40,7 +41,7 @@ class ChatMemoryRepository(
 
     override suspend fun upsert(chat: DomainChat): String {
         val newChat = if (chat.id == null) {
-            chat.copy(id = (chats.size + 1).toString())
+            chat.copy(id = ((chats.values.maxOfOrNull { it.id?.toInt() ?: 0 } ?: 0) + 1).toString())
         } else chat
 
         chats[newChat.id!!] = newChat

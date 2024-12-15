@@ -52,14 +52,6 @@ class AppSettingsRoomRepository(
         SharingStarted.Eagerly,
         null
     )
-    override val isTutorialDone = roomAppSettings.map { it?.isTutorialDone }.stateIn(
-        CoroutineScope(Dispatchers.IO),
-        SharingStarted.Eagerly,
-        null
-    )
-    override suspend fun setTutorialDone(isTutorialDone: Boolean) {
-        appSettingsDao.updateTutorialDone(isTutorialDone)
-    }
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
         appSettingsDao.updatePreferences(preferences.toRoomModel())
     }

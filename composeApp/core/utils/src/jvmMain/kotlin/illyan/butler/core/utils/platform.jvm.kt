@@ -13,7 +13,7 @@ actual fun getSystemMetadata(): Map<String, String> {
 }
 
 actual fun getPlatformName(): String {
-    return "JVM"
+    return "Desktop"
 }
 
 actual fun getOsName(): String {

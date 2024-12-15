@@ -12,12 +12,10 @@ fun RoomAppSettings.toDomainModel() = AppSettings(
 
 fun AppSettings.toRoomModel(
     firstSignInHappenedYet: Boolean = false,
-    isTutorialDone: Boolean = false,
     hostUrl: String = "",
 ) = RoomAppSettings(
     clientId = clientId,
     preferences = preferences.toRoomModel(),
     firstSignInHappenedYet = firstSignInHappenedYet,
-    isTutorialDone = isTutorialDone,
     hostUrl = hostUrl
 )

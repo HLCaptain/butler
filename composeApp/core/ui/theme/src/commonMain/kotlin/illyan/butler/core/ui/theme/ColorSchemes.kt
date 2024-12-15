@@ -179,5 +179,3 @@ fun animateColorScheme(
     }
     return remember { derivedStateOf { getCurrentColorScheme() } }
 }
-
-val LocalTheme = compositionLocalOf<Theme?> { null }

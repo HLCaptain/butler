@@ -11,7 +11,6 @@ kotlin {
         implementation(projects.composeApp.core.utils)
         implementation(projects.composeApp.feature.theme)
         implementation(projects.composeApp.domain.auth)
-        implementation(projects.composeApp.domain.config)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.settings)
 

@@ -28,7 +28,6 @@ kotlin {
         implementation(projects.composeApp.data.chat)
         implementation(projects.composeApp.data.host)
         implementation(projects.composeApp.data.user)
-        implementation(projects.composeApp.data.permission)
         implementation(projects.composeApp.data.resource)
         implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.data.model)
@@ -39,11 +38,9 @@ kotlin {
         implementation(projects.composeApp.domain.audio)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.chat)
-        implementation(projects.composeApp.domain.config)
         implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.domain.model)
-        implementation(projects.composeApp.domain.permission)
         implementation(projects.composeApp.domain.settings)
 
         implementation(projects.composeApp.di)
@@ -120,6 +117,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
@@ -129,15 +129,6 @@ android {
     buildFeatures {
         buildConfig = true
     }
-
-//    applicationVariants.all {
-//        val variantName = name
-//        sourceSets {
-//            getByName("main") {
-//                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
-//            }
-//        }
-//    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -150,7 +141,7 @@ android {
     }
 
     dependencies {
-        implementation(libs.compose.ui.tooling)
+        debugImplementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
     }
 }
@@ -163,7 +154,11 @@ compose.desktop.application {
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
     }
     buildTypes.release.proguard {
+        version = "7.6.0"
+//        isEnabled = true
+//        optimize = true
+//        obfuscate = true
+
         configurationFiles.from(project.file("compose-desktop.pro"))
-//        obfuscate.set(true)
     }
 }

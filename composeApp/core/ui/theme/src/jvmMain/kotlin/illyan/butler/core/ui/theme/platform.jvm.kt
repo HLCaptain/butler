@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
 }
 
+@Composable
 actual fun canUseDynamicColors(): Boolean {
     return false
 }
