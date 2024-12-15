@@ -93,7 +93,6 @@ import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
 import illyan.butler.generated.resources.profile
-import illyan.butler.ui.server.auth_flow.AuthFlow
 import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.error.ErrorScreen
@@ -331,7 +330,6 @@ fun Home() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-//                                AuthFlow(authSuccessEnded = { isAuthFlowEnded = true })
                                 OnboardFlow(
                                     authSuccessEnded = { isAuthFlowEnded = true },
                                 )

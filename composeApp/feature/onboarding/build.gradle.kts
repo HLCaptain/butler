@@ -4,12 +4,14 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.illyan.butler.composeMultiplatformLibrary)
     alias(libs.plugins.illyan.butler.koinForComposeMultiplatform)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
+        implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.settings)
         implementation(projects.composeApp.domain.host)
@@ -22,6 +24,7 @@ kotlin {
         implementation(libs.material.adaptive.layout)
 
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.serialization.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.napier)
     }
