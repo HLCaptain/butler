@@ -62,6 +62,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import illyan.butler.core.ui.components.ButlerCard
+import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
@@ -333,9 +334,12 @@ fun MessageItem(
                 disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             )
-            ButlerCard(colors = cardColors) {
+            ButlerCard(
+                colors = cardColors,
+                contentPadding = ButlerCardDefaults.CompactContentPadding
+            ) {
                 Text(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier,
                     text = message.message ?: ""
                 )
             }

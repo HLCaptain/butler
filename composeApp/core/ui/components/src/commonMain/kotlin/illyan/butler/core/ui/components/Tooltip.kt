@@ -18,7 +18,6 @@
 
 package illyan.butler.core.ui.components
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.combinedClickable
@@ -27,29 +26,23 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Done
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RichTooltip
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -118,11 +111,11 @@ fun TooltipElevatedCard(
                 onClick()
                 if (showTooltipOnClick) tryShowTooltip()
             },
-            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp))
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp)),
+            contentPadding = PaddingValues(0.dp),
         ) {
             Box(
                 modifier = Modifier
-                    .animateContentSize()
                     .combinedClickable(
                         onLongClick = {
                             onLongClick()
@@ -145,7 +138,7 @@ sealed class GestureType {
     data class Hover(val delay: Duration = Duration.ZERO) : GestureType()
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlainTooltipWithContent(
     modifier: Modifier = Modifier,
@@ -215,7 +208,7 @@ fun PlainTooltipWithContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RichTooltipWithContent(
     modifier: Modifier = Modifier,
@@ -277,64 +270,11 @@ fun RichTooltipWithContent(
                 if (enabledGestures.any { it is GestureType.Hover }) Modifier.handleGestures(
                     enabled = true,
                     state = tooltipState,
-                    onShow = { priority -> tryToShowTooltip(enabledGestures.first { it is GestureType.Hover }) },
+                    onShow = { tryToShowTooltip(enabledGestures.first { it is GestureType.Hover }) },
                     onDismiss = { tryToDismissTooltip() }
                 ) else Modifier
             )
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-@Composable
-fun TooltipButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {},
-    tooltip: @Composable () -> Unit,
-    disabledTooltip: @Composable (() -> Unit)? = null,
-    showTooltipOnClick: Boolean = false,
-    onShowTooltip: () -> Unit = {},
-    onDismissTooltip: () -> Unit = {},
-    content: @Composable RowScope.() -> Unit
-) {
-    val tooltipState = remember { TooltipState() }
-    val coroutineScope = rememberCoroutineScope()
-    val tryShowTooltip = { coroutineScope.launch { tooltipState.show() } }
-    RichTooltipWithContent(
-        modifier = modifier,
-        tooltipState = tooltipState,
-        tooltip = tooltip,
-        disabledTooltip = disabledTooltip,
-        onShowTooltip = onShowTooltip,
-        onDismissTooltip = onDismissTooltip
-    ) {
-        Surface(
-            modifier = Modifier
-                .animateContentSize()
-                .combinedClickable(
-                    onLongClick = {
-                        onLongClick()
-                        if (!showTooltipOnClick) tryShowTooltip()
-                    },
-                    onClick = {
-                        onClick()
-                        if (showTooltipOnClick) tryShowTooltip()
-                    }
-                ),
-            shape = ButtonDefaults.shape,
-            color = MaterialTheme.colorScheme.primary
-        ) {
-            CompositionLocalProvider(
-                LocalContentColor provides MaterialTheme.colorScheme.onPrimary,
-                LocalTextStyle provides MaterialTheme.typography.labelLarge
-            ) {
-                Row(
-                    modifier = Modifier.padding(ButtonDefaults.ContentPadding),
-                    content = content
-                )
-            }
-        }
     }
 }
 

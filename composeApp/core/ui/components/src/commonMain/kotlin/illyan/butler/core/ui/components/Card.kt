@@ -119,13 +119,15 @@ fun ButlerExpandableCard(
     onClick: () -> Unit = {},
     isExpanded: Boolean = false,
     expandedContent: @Composable () -> Unit = {},
+    contentPadding: PaddingValues = ButlerCardDefaults.ContentPadding,
     color: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     ButlerCard(
         modifier = modifier,
         onClick = onClick,
-        colors = ButlerCardDefaults.cardColors().copy(containerColor = color)
+        colors = ButlerCardDefaults.cardColors().copy(containerColor = color),
+        contentPadding = contentPadding,
     ) {
         Column {
             content()

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.domain.model.DomainModel
@@ -141,6 +142,7 @@ fun ModelListItem(
     ButlerExpandableCard(
         onClick = { isExpanded = !isExpanded },
         isExpanded = isExpanded,
+        contentPadding = ButlerCardDefaults.CompactContentPadding,
         expandedContent = {
             Column(
                 modifier = Modifier.padding(start = 56.dp)
@@ -164,9 +166,7 @@ fun ModelListItem(
         }
     ) {
         Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

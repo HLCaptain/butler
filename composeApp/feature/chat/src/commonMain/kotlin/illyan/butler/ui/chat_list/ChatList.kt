@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -85,12 +84,11 @@ fun ChatCard(
     ButlerCard(
         modifier = modifier,
         onClick = openChat,
-        colors = CardDefaults.cardColors(containerColor = cardContainerColor)
+        colors = CardDefaults.cardColors(containerColor = cardContainerColor),
+        contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp, horizontal = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -122,7 +120,7 @@ fun ChatCard(
                     matchTextFieldWidth = false
                 ) {
                     DropdownMenuItem(
-                        onClick = deleteChat,
+                        onClick = { showMenu = false; deleteChat() },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,

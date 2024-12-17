@@ -684,10 +684,11 @@ fun AuthItemCompactFullscreen(
             animatedVisibilityScope = animatedVisibilityScope,
             resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
-        shape = RoundedCornerShape(0.dp)
+        shape = RoundedCornerShape(0.dp),
+        contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().padding(8.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -787,9 +788,10 @@ fun AuthItemExpandedFullscreen(
             resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
         shape = RoundedCornerShape(0.dp),
+        contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().padding(8.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Row(
