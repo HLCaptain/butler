@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import illyan.butler.core.ui.components.ExpandableCard
+import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
@@ -138,7 +138,7 @@ fun ModelListItem(
     isSelfHostAvailable: Boolean = true
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
-    ExpandableCard(
+    ButlerExpandableCard(
         onClick = { isExpanded = !isExpanded },
         isExpanded = isExpanded,
         expandedContent = {

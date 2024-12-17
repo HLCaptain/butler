@@ -46,7 +46,6 @@ import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -77,6 +76,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
@@ -387,7 +387,7 @@ private fun SyncPreferencesButton(
     onShouldSyncChanged: (Boolean) -> Unit,
     shouldSyncPreferences: Boolean
 ) {
-    Card(
+    ButlerCard(
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
@@ -863,7 +863,7 @@ fun SettingItem(
     title: @Composable RowScope.() -> Unit = {},
     content: @Composable RowScope.() -> Unit = {},
 ) {
-    Card(
+    ButlerCard(
         modifier = modifier.animateContentSize(),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent,

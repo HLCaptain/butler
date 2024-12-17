@@ -8,9 +8,6 @@ import androidx.room.TypeConverters
 import illyan.butler.core.local.room.dao.AppSettingsDao
 import illyan.butler.core.local.room.dao.ChatDao
 import illyan.butler.core.local.room.dao.ChatMemberDao
-import illyan.butler.data.local.room.dao.DataHistoryDao
-import illyan.butler.data.local.room.dao.MessageDao
-import illyan.butler.data.local.room.dao.ResourceDao
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.local.room.model.RoomAppSettings
 import illyan.butler.core.local.room.model.RoomChat
@@ -19,6 +16,9 @@ import illyan.butler.core.local.room.model.RoomDataHistory
 import illyan.butler.core.local.room.model.RoomMessage
 import illyan.butler.core.local.room.model.RoomResource
 import illyan.butler.core.local.room.model.RoomUser
+import illyan.butler.data.local.room.dao.DataHistoryDao
+import illyan.butler.data.local.room.dao.MessageDao
+import illyan.butler.data.local.room.dao.ResourceDao
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
@@ -33,7 +33,7 @@ expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
         RoomChatMember::class,
         RoomUser::class
     ],
-    version = 5
+    version = 6
 )
 @ConstructedBy(ButlerDatabaseCtor::class)
 @TypeConverters(Converters::class)

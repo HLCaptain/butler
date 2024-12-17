@@ -27,7 +27,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,6 +61,7 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
@@ -333,7 +333,7 @@ fun MessageItem(
                 disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             )
-            Card(colors = cardColors) {
+            ButlerCard(colors = cardColors) {
                 Text(
                     modifier = Modifier.padding(8.dp),
                     text = message.message ?: ""

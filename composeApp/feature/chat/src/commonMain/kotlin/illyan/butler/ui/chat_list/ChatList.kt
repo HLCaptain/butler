@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
@@ -82,7 +82,7 @@ fun ChatCard(
             backgroundColor
         }
     )
-    Card(
+    ButlerCard(
         modifier = modifier,
         onClick = openChat,
         colors = CardDefaults.cardColors(containerColor = cardContainerColor)

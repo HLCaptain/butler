@@ -40,7 +40,6 @@ import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Surface
@@ -73,7 +72,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.time.Duration
 
 // Values got from material3/Tooltip.kt
@@ -114,7 +112,7 @@ fun TooltipElevatedCard(
         onShowTooltip = onShowTooltip,
         onDismissTooltip = onDismissTooltip
     ) {
-        OutlinedCard(
+        ButlerOutlinedCard(
             enabled = enabled,
             onClick = {
                 onClick()

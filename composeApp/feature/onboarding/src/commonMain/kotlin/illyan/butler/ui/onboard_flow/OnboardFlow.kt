@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -32,7 +33,6 @@ import androidx.compose.material.icons.automirrored.rounded.NavigateNext
 import androidx.compose.material.icons.rounded.CloudCircle
 import androidx.compose.material.icons.rounded.CloudQueue
 import androidx.compose.material.icons.rounded.Smartphone
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,9 +55,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.window.core.layout.WindowHeightSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
+import illyan.butler.core.ui.components.ButlerCard
+import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerLargeOutlinedButton
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
-import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemDescription
@@ -69,9 +70,9 @@ import illyan.butler.ui.server.auth_flow.AuthFlow
 import kotlinx.serialization.Serializable
 
 object SizeClass {
-    val COMPACT = 0
-    val MEDIUM = 1
-    val EXPANDED = 2
+    const val COMPACT = 0
+    const val MEDIUM = 1
+    const val EXPANDED = 2
 }
 
 val WindowAdaptiveInfo.widthSizeClass: Int
@@ -200,16 +201,22 @@ fun OnboardFlow(
                         navController.currentDestination?.hasRoute<AuthItemDestination>() == true -> {
                             val index = navController.currentBackStackEntry?.toRoute<AuthItemDestination>()?.index
                             navController.navigate(
+                                Start(
+                                    windowAdaptiveInfo.widthSizeClass,
+                                    windowAdaptiveInfo.heightSizeClass
+                                )
+                            ) {
+                                popUpTo<Start> {
+                                    inclusive = true
+                                }
+                            }
+                            navController.navigate(
                                 AuthItemDestination(
                                     index ?: 0,
                                     windowAdaptiveInfo.widthSizeClass,
                                     windowAdaptiveInfo.heightSizeClass
                                 )
-                            ) {
-                                popUpTo<AuthItemDestination> {
-                                    inclusive = true
-                                }
-                            }
+                            )
                         }
                     }
                 }
@@ -244,7 +251,7 @@ fun OnboardFlow(
                 ) {
                     composable<Start> {
                         val isWidthCompact = it.toRoute<Start>().widthSizeClass == SizeClass.COMPACT
-                        val isHeightCompact = it.toRoute<Start>().heightSizeClass == SizeClass.COMPACT
+                        val isHeightCompact = it.toRoute<Start>().heightSizeClass != SizeClass.EXPANDED
                         LaunchedEffect(Unit) {
                             if (windowAdaptiveInfo.widthSizeClass != it.toRoute<Start>().widthSizeClass ||
                                 windowAdaptiveInfo.heightSizeClass != it.toRoute<Start>().heightSizeClass
@@ -409,20 +416,22 @@ fun ColumnScope.AuthItemCompactCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit
 ) = with(sharedTransitionScope) {
-    Card(
+    ButlerCard(
         modifier = modifier.weight(1f).sharedBounds(
             rememberSharedContentState(key = "card$key"),
-            animatedVisibilityScope = animatedVisibilityScope
+            animatedVisibilityScope = animatedVisibilityScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
         onClick = onClick,
-        enabled = item.enabled
+        enabled = item.enabled,
+        contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -448,6 +457,20 @@ fun ColumnScope.AuthItemCompactCard(
                             modifier = Modifier,
                             description = item.description,
                             animatedVisibilityScope = animatedVisibilityScope,
+                            key = key
+                        )
+                        ProsList(
+                            modifier = Modifier.height(0.dp),
+                            pros = item.pros,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            enabled = item.enabled,
+                            key = key
+                        )
+                        ConsList(
+                            modifier = Modifier.height(0.dp),
+                            cons = item.cons,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            enabled = item.enabled,
                             key = key
                         )
                     }
@@ -481,21 +504,23 @@ fun ColumnScope.AuthItemHorizontalCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit
 ) = with(sharedTransitionScope) {
-    Card(
+    ButlerCard(
         modifier = modifier.weight(1f).sharedBounds(
             rememberSharedContentState(key = "card$key"),
-            animatedVisibilityScope = animatedVisibilityScope
+            animatedVisibilityScope = animatedVisibilityScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
         onClick = onClick,
-        enabled = item.enabled
+        enabled = item.enabled,
+        contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AuthItemIcon(
@@ -504,6 +529,7 @@ fun ColumnScope.AuthItemHorizontalCard(
                     animatedVisibilityScope = animatedVisibilityScope,
                     key = key
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -533,16 +559,20 @@ fun ColumnScope.AuthItemHorizontalCard(
                         enabled = item.enabled,
                         key = key
                     )
-                    ButlerMediumTextButton(
-                        modifier = Modifier.sharedElement(
-                            rememberSharedContentState(key = "select-$key"),
-                            animatedVisibilityScope = animatedVisibilityScope
-                        ),
-                        onClick = onClick,
-                        enabled = item.enabled
-                    ) {
-                        Text(if (item.enabled) "Select" else "Unavailable")
-                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    modifier = Modifier.sharedElement(
+                        rememberSharedContentState(key = "select-$key"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ).padding(8.dp),
+                    onClick = onClick,
+                    enabled = item.enabled
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.NavigateNext,
+                        contentDescription = null
+                    )
                 }
             }
         }
@@ -559,13 +589,15 @@ fun RowScope.AuthItemVerticalCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit
 ) = with(sharedTransitionScope) {
-    Card(
+    ButlerCard(
         modifier = modifier.weight(1f).sharedBounds(
             rememberSharedContentState(key = "card$key"),
-            animatedVisibilityScope = animatedVisibilityScope
+            animatedVisibilityScope = animatedVisibilityScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
         onClick = onClick,
-        enabled = item.enabled
+        enabled = item.enabled,
+        contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         ReverseLayoutDirection {
             Column(
@@ -577,7 +609,7 @@ fun RowScope.AuthItemVerticalCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
-                            modifier = Modifier.padding(8.dp),
+                            modifier = Modifier,
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -597,6 +629,7 @@ fun RowScope.AuthItemVerticalCard(
                             AuthItemDescription(
                                 modifier = Modifier,
                                 description = item.description,
+                                textAlign = TextAlign.Center,
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 key = key
                             )
@@ -645,10 +678,11 @@ fun AuthItemCompactFullscreen(
     onNext: () -> Unit,
     onClose: () -> Unit
 ) = with(sharedTransitionScope) {
-    Card(
+    ButlerCard(
         modifier = modifier.sharedBounds(
             rememberSharedContentState(key = "card$key"),
-            animatedVisibilityScope = animatedVisibilityScope
+            animatedVisibilityScope = animatedVisibilityScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
         shape = RoundedCornerShape(0.dp)
     ) {
@@ -746,10 +780,11 @@ fun AuthItemExpandedFullscreen(
     onNext: () -> Unit,
     onClose: () -> Unit
 ) = with(sharedTransitionScope) {
-    Card(
+    ButlerCard(
         modifier = modifier.sharedBounds(
             rememberSharedContentState(key = "card$key"),
-            animatedVisibilityScope = animatedVisibilityScope
+            animatedVisibilityScope = animatedVisibilityScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
         ),
         shape = RoundedCornerShape(0.dp),
     ) {
@@ -851,7 +886,7 @@ object AuthItemDefaults {
                         modifier = modifier.sharedElement(
                             rememberSharedContentState(key = "con$index-$key"),
                             animatedVisibilityScope = animatedVisibilityScope
-                        ),
+                        ).skipToLookaheadSize(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(text = "-")
@@ -885,7 +920,7 @@ object AuthItemDefaults {
                         modifier = modifier.sharedElement(
                             rememberSharedContentState(key = "pro$index-$key"),
                             animatedVisibilityScope = animatedVisibilityScope
-                        ),
+                        ).skipToLookaheadSize(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(text = "+")
@@ -909,7 +944,7 @@ object AuthItemDefaults {
             modifier = modifier.sharedElement(
                 rememberSharedContentState(key = "title-$key"),
                 animatedVisibilityScope = animatedVisibilityScope
-            ),
+            ).skipToLookaheadSize(),
             text = title,
             style = MaterialTheme.typography.headlineMedium,
             textAlign = textAlign
@@ -921,6 +956,7 @@ object AuthItemDefaults {
     fun SharedTransitionScope.AuthItemDescription(
         modifier: Modifier = Modifier,
         description: String,
+        textAlign: TextAlign = TextAlign.Start,
         animatedVisibilityScope: AnimatedVisibilityScope,
         key: Int
     ) {
@@ -928,9 +964,10 @@ object AuthItemDefaults {
             modifier = modifier.sharedElement(
                 rememberSharedContentState(key = "description-$key"),
                 animatedVisibilityScope = animatedVisibilityScope
-            ),
+            ).skipToLookaheadSize(),
             text = description,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = textAlign
         )
     }
 
