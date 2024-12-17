@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -394,10 +395,10 @@ private fun SyncPreferencesButton(
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         enabled = canSyncPreferences,
-        onClick = { onShouldSyncChanged(!shouldSyncPreferences) }
+        onClick = { onShouldSyncChanged(!shouldSyncPreferences) },
+        contentPadding = PaddingValues(start = 8.dp, end = 2.dp, top = 2.dp, bottom = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(start = 8.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -740,11 +741,6 @@ fun <T : Any> DropdownSetting(
                     }
                 }
                 DropdownMenuItem(
-//                    modifier = if (value == selectedValue) {
-//                        Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(elevation = 1.dp))
-//                    } else {
-//                        Modifier
-//                    },
                     text = { Text(text = getValueName(value)) },
                     leadingIcon = (if (leadingIcon != null) leadingComposable else null) as? @Composable (() -> Unit),
                     trailingIcon = (if (trailingIcon != null) trailingComposable else null) as? @Composable (() -> Unit),
@@ -868,21 +864,12 @@ fun SettingItem(
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent,
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            focusedElevation = 0.dp,
-            disabledElevation = 0.dp,
-            draggedElevation = 0.dp,
-            hoveredElevation = 0.dp,
-        ),
         onClick = onClick,
         enabled = enabled,
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Row(
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

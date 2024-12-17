@@ -5,7 +5,6 @@ import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.MessageNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainMessage
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -14,6 +13,8 @@ import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Single
 class MessageMutableStoreBuilder(
@@ -25,7 +26,7 @@ class MessageMutableStoreBuilder(
     val store = provideMessageMutableStore(messageLocalDataSource, messageNetworkDataSource, dataHistoryLocalDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class)
+@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
 fun provideMessageMutableStore(
     messageLocalDataSource: MessageLocalDataSource,
     messageNetworkDataSource: MessageNetworkDataSource,
@@ -42,7 +43,7 @@ fun provideMessageMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is MessageKey.Write.Create -> messageLocalDataSource.upsertMessage(local.copy(id = randomUUID()))
+                is MessageKey.Write.Create -> messageLocalDataSource.upsertMessage(local.copy(id = Uuid.random().toString()))
                 is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessage(local)
                 is MessageKey.Read.ByMessageId -> messageLocalDataSource.upsertMessage(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")

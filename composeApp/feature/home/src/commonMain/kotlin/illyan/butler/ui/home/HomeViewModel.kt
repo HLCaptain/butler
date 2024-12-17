@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
@@ -19,7 +18,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @KoinViewModel
 class HomeViewModel(
     authManager: AuthManager,
@@ -55,7 +57,7 @@ class HomeViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             errorManager.serverErrors.collectLatest { response ->
-                _serverErrors.update { it + (randomUUID() to  response) }
+                _serverErrors.update { it + (Uuid.random().toString() to  response) }
             }
         }
         viewModelScope.launch(Dispatchers.IO) {

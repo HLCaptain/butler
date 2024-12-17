@@ -33,7 +33,7 @@ expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
         RoomChatMember::class,
         RoomUser::class
     ],
-    version = 6
+    version = 7
 )
 @ConstructedBy(ButlerDatabaseCtor::class)
 @TypeConverters(Converters::class)

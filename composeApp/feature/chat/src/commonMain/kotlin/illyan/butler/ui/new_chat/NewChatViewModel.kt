@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import illyan.butler.chat.ChatManager
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.model.ModelManager
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,6 +52,7 @@ class NewChatViewModel(
             val id = chatManager.startNewChat(modelId, endpoint)
             creatingNewChat.update { false }
             newChatId.update { id }
+            Napier.v { "New chat created with id: $id" }
         }
     }
 

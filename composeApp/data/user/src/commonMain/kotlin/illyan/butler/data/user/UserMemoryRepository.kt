@@ -1,20 +1,15 @@
 package illyan.butler.data.user
 
-import illyan.butler.core.utils.randomUUID
-import illyan.butler.data.user.UserRepository
 import illyan.butler.domain.model.DomainToken
 import illyan.butler.domain.model.DomainUser
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Single
 class UserMemoryRepository : UserRepository {
@@ -30,10 +25,11 @@ class UserMemoryRepository : UserRepository {
     override val signedInUserName = userData.map { it?.username }
     override val isUserSigningIn = _isUserSigningIn.asStateFlow()
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun loginWithEmailAndPassword(email: String, password: String) {
         _userData.update {
             DomainUser(
-                id = randomUUID(),
+                id = Uuid.random().toString(),
                 email = email,
                 phone = null,
                 photoUrl = null,
@@ -47,10 +43,11 @@ class UserMemoryRepository : UserRepository {
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun signUpAndLogin(email: String, password: String, userName: String) {
         _userData.update {
             DomainUser(
-                id = randomUUID(),
+                id = Uuid.random().toString(),
                 email = email,
                 phone = null,
                 photoUrl = null,

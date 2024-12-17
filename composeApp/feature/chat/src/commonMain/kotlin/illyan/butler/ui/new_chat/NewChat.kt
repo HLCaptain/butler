@@ -55,7 +55,9 @@ fun NewChat(
     val state by viewModel.state.collectAsState()
     DisposableEffect(state) {
         state.newChatId?.let { selectNewChat(it) }
-        onDispose { viewModel.clearNewChatId() }
+        onDispose {
+            state.newChatId?.let { viewModel.clearNewChatId() }
+        }
     }
     NewChat(
         state = state,

@@ -32,7 +32,7 @@ private fun generateRandomUserPreferences(): DomainPreferences {
         analyticsEnabled = Random.nextBoolean(),
         theme = Theme.entries.random(),
         dynamicColorEnabled = Random.nextBoolean(),
-//        clientId = UUID.randomUUID().toString(),
+//        clientId = UUID.Uuid.random().toString().toString(),
 //        lastUpdate = ZonedDateTime.now()
     )
 }

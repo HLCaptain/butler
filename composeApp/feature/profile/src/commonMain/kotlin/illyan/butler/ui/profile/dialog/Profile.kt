@@ -45,7 +45,6 @@ import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.email
@@ -62,6 +61,8 @@ import illyan.butler.generated.resources.user_id
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun ProfileDialog(
@@ -225,7 +226,7 @@ fun ProfileScreen(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun PreviewProfileDialogScreen(
     name: String = "Illyan",
@@ -237,7 +238,7 @@ private fun PreviewProfileDialogScreen(
             ButlerDialogSurface {
                 ProfileDialogContent(
                     modifier = Modifier,
-                    userUUID = randomUUID(),
+                    userUUID = Uuid.random().toString(),
                     userPhotoUrl = null,
                     confidentialInfo = listOf(
                         stringResource(Res.string.name) to name,
