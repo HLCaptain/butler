@@ -4,17 +4,15 @@ import illyan.butler.domain.model.DomainModel
 import illyan.butler.shared.model.llm.ModelDto
 
 fun ModelDto.toDomainModel() = DomainModel(
-    id = id,
     name = name,
-    description = description,
-    greetingMessage = greetingMessage,
-    author = author
+    id = id,
+    endpoint = endpoint,
+    ownedBy = ownedBy,
 )
 
 fun DomainModel.toNetworkModel() = ModelDto(
-    id = id,
     name = name,
-    description = description,
-    greetingMessage = greetingMessage,
-    author = author
+    id = id,
+    endpoint = endpoint,
+    ownedBy = ownedBy,
 )

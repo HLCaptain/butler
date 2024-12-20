@@ -2,8 +2,8 @@ package illyan.butler.core.local.room.datasource
 
 import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.core.local.model.DataHistory
+import illyan.butler.core.local.room.dao.DataHistoryDao
 import illyan.butler.core.local.room.model.RoomDataHistory
-import illyan.butler.data.local.room.dao.DataHistoryDao
 import org.koin.core.annotation.Single
 
 @Single

@@ -1,7 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 
 plugins {
     alias(libs.plugins.android.application)
@@ -15,13 +13,14 @@ version = libs.versions.butler.get()
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.shared)
+        implementation(projects.shared.model)
 
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.core.ui.theme)
         implementation(projects.composeApp.core.local.room)
+        implementation(projects.composeApp.core.local.datastore)
         implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.config)
 
@@ -73,6 +72,7 @@ kotlin {
         implementation(compose.desktop.common)
         implementation(compose.desktop.currentOs)
         implementation(libs.kotlinx.coroutines.swing)
+        implementation(libs.kotlinx.io)
     }
 }
 

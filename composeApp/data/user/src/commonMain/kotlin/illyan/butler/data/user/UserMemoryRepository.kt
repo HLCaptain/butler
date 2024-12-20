@@ -8,74 +8,42 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @Single
 class UserMemoryRepository : UserRepository {
-    private val _isUserSigningIn = MutableStateFlow(false)
+    private val users = MutableStateFlow<List<DomainUser>>(listOf())
 
-    private val _userData = MutableStateFlow<DomainUser?>(null)
-    override val userData: Flow<DomainUser?> = _userData.asStateFlow()
-    override val isUserSignedIn = userData.map { it != null }
-    override val signedInUserId = userData.map { it?.id }
-    override val signedInUserEmail = userData.map { it?.email }
-    override val signedInUserPhoneNumber = userData.map { it?.phone }
-    override val signedInUserPhotoURL = userData.map { it?.photoUrl }
-    override val signedInUserName = userData.map { it?.username }
-    override val isUserSigningIn = _isUserSigningIn.asStateFlow()
-
-    @OptIn(ExperimentalUuidApi::class)
-    override suspend fun loginWithEmailAndPassword(email: String, password: String) {
-        _userData.update {
-            DomainUser(
-                id = Uuid.random().toString(),
-                email = email,
-                phone = null,
-                photoUrl = null,
-                username = email,
-                displayName = email,
-                fullName = email,
-                address = null,
-                refreshToken = null,
-                accessToken = null
-            )
+    override suspend fun upsertUser(user: DomainUser) {
+        users.update { currentUsers ->
+            currentUsers.filterNot { it.id == user.id } + user
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    override suspend fun signUpAndLogin(email: String, password: String, userName: String) {
-        _userData.update {
-            DomainUser(
-                id = Uuid.random().toString(),
-                email = email,
-                phone = null,
-                photoUrl = null,
-                username = userName,
-                displayName = userName,
-                fullName = userName,
-                address = null,
-                refreshToken = null,
-                accessToken = null
-            )
+    override fun getUser(userId: String): Flow<DomainUser?> {
+        return users.map { users ->
+            users.firstOrNull { it.id == userId }
         }
     }
 
-    override suspend fun sendPasswordResetEmail(email: String) {
-        // This function would need to be modified or removed as it depends on the AuthNetworkDataSource
-    }
-
-    override suspend fun signOut() {
-        _userData.update { null }
+    override fun getAllUsers(): Flow<List<DomainUser>> {
+        return users.asStateFlow()
     }
 
     override suspend fun deleteUserData() {
-        _userData.update { null }
+        users.update { emptyList() }
     }
 
-    override suspend fun refreshUserTokens(accessToken: DomainToken?, refreshToken: DomainToken?) {
-        _userData.update {
-            it?.copy(accessToken = accessToken, refreshToken = refreshToken)
+    override suspend fun deleteUserData(userId: String) {
+        users.update { currentUsers ->
+            currentUsers.filterNot { it.id == userId }
         }
+    }
+
+    override suspend fun refreshUserTokens(
+        userId: String,
+        accessToken: DomainToken?,
+        refreshToken: DomainToken?
+    ) {
+        // Mock implementation: No-op
     }
 }

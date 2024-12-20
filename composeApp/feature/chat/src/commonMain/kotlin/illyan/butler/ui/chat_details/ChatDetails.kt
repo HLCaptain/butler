@@ -62,7 +62,13 @@ fun ChatDetails(
                 )
             },
             text = {
-                val aiMembers = chat?.members?.filter { it != currentUserId } ?: emptyList()
+                val aiMembers = listOfNotNull(
+                    chat?.chatCompletionModel,
+                    chat?.audioSpeechModel,
+                    chat?.audioTranscriptionModel,
+                    chat?.audioTranslationModel,
+                    chat?.imageGenerationsModel
+                )
                 val aiMembersString = if (aiMembers.isEmpty()) {
                     stringResource(Res.string.none)
                 } else {

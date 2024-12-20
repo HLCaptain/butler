@@ -1,9 +1,9 @@
 package illyan.butler.core.local.room.datasource
 
 import illyan.butler.core.local.datasource.MessageLocalDataSource
+import illyan.butler.core.local.room.dao.MessageDao
 import illyan.butler.core.local.room.mapping.toDomainModel
 import illyan.butler.core.local.room.mapping.toRoomModel
-import illyan.butler.data.local.room.dao.MessageDao
 import illyan.butler.domain.model.DomainMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

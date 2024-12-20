@@ -28,26 +28,18 @@ class ProfileViewModel(
             false
         )
 
-    val userPhotoUrl = authManager.signedInUserPhotoURL
+    val userPhotoUrl = authManager.signedInUserPhotoUrl
         .stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
             null
         )
 
-    val userUUID = authManager.signedInUserId
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            null
-        )
-
-    val userEmail = authManager.signedInUserEmail
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            null
-        )
+    val userUUID = authManager.signedInUserId.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        null
+    )
 
     val userPhoneNumber = authManager.signedInUserPhoneNumber
         .stateIn(
@@ -56,7 +48,14 @@ class ProfileViewModel(
             null
         )
 
-    val userName = authManager.signedInUserName
+    val userName = authManager.signedInUserDisplayName
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            null
+        )
+
+    val userEmail = authManager.signedInUserEmail
         .stateIn(
             viewModelScope,
             SharingStarted.Eagerly,

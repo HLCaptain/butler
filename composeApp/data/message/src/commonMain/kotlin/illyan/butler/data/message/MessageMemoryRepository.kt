@@ -1,7 +1,7 @@
 package illyan.butler.data.message
 
+import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.DomainMessage
-import illyan.butler.data.user.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -10,7 +10,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class MessageMemoryRepository(
-    private val userRepository: UserRepository
+    private val appRepository: AppRepository
 ) : MessageRepository {
     private val messages = mutableMapOf<String, DomainMessage>()
     private val chatMessages = mutableMapOf<String, List<DomainMessage>>()
@@ -45,7 +45,7 @@ class MessageMemoryRepository(
 
         messages[newMessage.id!!] = newMessage
         messageStateFlows[newMessage.id]?.update { newMessage to false }
-        val userId = userRepository.signedInUserId.first()!!
+        val userId = appRepository.currentSignedInUserId.first()!!
         userMessages[userId] = userMessages[userId]?.plus(newMessage) ?: listOf(newMessage)
         userMessageStateFlows[userId]?.update { userMessages[userId] to false }
 

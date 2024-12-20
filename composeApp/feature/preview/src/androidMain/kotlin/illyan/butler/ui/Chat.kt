@@ -169,24 +169,18 @@ fun NewChatPreview() {
                     availableModels = mapOf(
                         DomainModel(
                             name = "Cook GPT",
-                            id = "Cook GPT",
-                            description = "Cook GPT is a model that can provide recipes and cooking instructions",
-                            greetingMessage = "Hi, what recipe would you like to cook today?",
-                            author = "Chef AI",
+                            id = "Cook GPT",,
+                            ownedBy = "Chef AI",
                         ) to listOf("https://api.chef.ai"),
                         DomainModel(
                             name = "Bartender",
-                            id = "Bartender",
-                            description = "Bartender is a model that can provide drink recipes and cocktail instructions",
-                            greetingMessage = "Hi, what drink would you like to make today?",
-                            author = "Bartender AI",
+                            id = "Bartender",,
+                            ownedBy = "Bartender AI",
                         ) to listOf("https://api.bartender.ai"),
                         DomainModel(
                             name = "Doctor",
-                            id = "Doctor",
-                            description = "Doctor is a model that can provide medical advice and health information",
-                            greetingMessage = "Hi, what symptoms are you experiencing?",
-                            author = "Doctor AI",
+                            id = "Doctor",,
+                            ownedBy = "Doctor AI",
                         ) to listOf("https://api.doctor.ai")
                     )
                 ),

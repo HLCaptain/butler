@@ -31,6 +31,11 @@
     <string name="no_chats">No chats</string>
     <string name="chats">Chats</string>
     <string name="new_chat">New chat</string>
+    <string name="add_api_key">Add API key</string>
+    <string name="add_credentials">Add credentials</string>
+    <string name="provider_url">Provider URL</string>
+    <string name="api_key">API key</string>
+    <string name="api_key_description">API key is required to access the AI model from the provider of your choice. The key is stored on-device! You can get the API key from the AI provider's website. The key is used only in encrypted requests from the provider's URL. Check source code for proof under the <b>About</b> section under profile.</string>
     <string name="new_chat_tutorial">Expand the AI model's card to reveal multiple AI providers and select one to start a New Chat! Have fun!</string>
     <string name="create_new_chat">Create new chat</string>
     <string name="delete_chat">Delete chat</string>

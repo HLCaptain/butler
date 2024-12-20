@@ -21,9 +21,9 @@ class SignUpViewModel(
         SignUpScreenState(isUserSignedIn, isUserSigningIn)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SignUpScreenState())
 
-    fun signUpAndLogin(email: String, password: String, userName: String) {
+    fun signUpAndLogin(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            authManager.signUpAndLogin(email, password, userName)
+            authManager.signUpAndLogin(email, password)
         }
     }
 }

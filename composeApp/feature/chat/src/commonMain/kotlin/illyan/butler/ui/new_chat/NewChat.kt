@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.MenuButton
-import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
@@ -70,7 +69,7 @@ fun NewChat(
 @Composable
 fun NewChat(
     state: NewChatState,
-    selectModel: (String, String?) -> Unit,
+    selectModel: (String, String) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -115,7 +114,7 @@ fun NewChat(
 fun ModelList(
     modifier: Modifier = Modifier,
     state: NewChatState,
-    selectModel: (String, String?) -> Unit,
+    selectModel: (String, String) -> Unit,
     innerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     LazyColumn(
@@ -123,11 +122,11 @@ fun ModelList(
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        items(state.availableModels?.toList() ?: emptyList()) {
+        items(state.availableModels?.groupBy { it.id }?.toList() ?: emptyList()) { (id, models) ->
             ModelListItem(
-                model = it.first,
-                providers = it.second,
-                selectModelWithProvider = { provider -> selectModel(it.first.id, provider) }
+                modelName = models.first().displayName,
+                providers = models.map { it.endpoint },
+                selectModelWithProvider = { provider -> selectModel(id, provider) }
             )
         }
     }
@@ -135,9 +134,9 @@ fun ModelList(
 
 @Composable
 fun ModelListItem(
-    model: DomainModel,
+    modelName: String,
     providers: List<String>,
-    selectModelWithProvider: (String?) -> Unit,
+    selectModelWithProvider: (String) -> Unit,
     isSelfHostAvailable: Boolean = true
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
@@ -190,7 +189,7 @@ fun ModelListItem(
                     }
                 }
                 Text(
-                    text = model.name ?: model.id,
+                    text = modelName,
                     maxLines = 1,
                     style = MaterialTheme.typography.headlineMedium,
                     overflow = TextOverflow.Ellipsis,
@@ -198,7 +197,7 @@ fun ModelListItem(
             }
 
             MenuButton(
-                onClick = { selectModelWithProvider(null) },
+                onClick = { selectModelWithProvider("") },
                 text = stringResource(Res.string.select_self_hosted),
                 enabled = isSelfHostAvailable
             )

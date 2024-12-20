@@ -1,6 +1,6 @@
 package illyan.butler.data.chat
 
-import illyan.butler.data.user.UserRepository
+import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.DomainChat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +10,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class ChatMemoryRepository(
-    private val userRepository: UserRepository
+    private val appRepository: AppRepository
 ) : ChatRepository {
     private val chats = mutableMapOf<String, DomainChat>()
     private val userChats = mutableMapOf<String, List<DomainChat>>()
@@ -28,7 +28,7 @@ class ChatMemoryRepository(
         chatStateFlows[chatId]?.update { null to false }
         chatStateFlows.remove(chatId)
 
-        val userId = userRepository.signedInUserId.first()!!
+        val userId = appRepository.currentSignedInUserId.first()!!
         userChats[userId] = userChats[userId]?.filterNot { it.id == chatId } ?: emptyList()
         userChatStateFlows[userId]?.update { userChats[userId] to false }
     }
@@ -46,7 +46,7 @@ class ChatMemoryRepository(
 
         chats[newChat.id!!] = newChat
         chatStateFlows[newChat.id]?.update { newChat to false }
-        val userId = userRepository.signedInUserId.first()!!
+        val userId = appRepository.currentSignedInUserId.first()!!
         userChats[userId] = userChats[userId]?.plus(newChat) ?: listOf(newChat)
         userChatStateFlows[userId]?.update { userChats[userId] to false }
 

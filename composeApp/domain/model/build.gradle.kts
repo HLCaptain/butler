@@ -6,5 +6,8 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.data.model)
+        implementation(projects.composeApp.domain)
+
+        implementation(libs.kotlinx.coroutines)
     }
 }

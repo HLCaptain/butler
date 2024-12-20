@@ -48,7 +48,7 @@ class LoginViewModel(
 
     fun signInWithEmailAndPassword(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            authManager.signInWithEmailAndPassword(email, password)
+            authManager.login(email, password)
         }
     }
 }

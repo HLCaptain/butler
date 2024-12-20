@@ -4,6 +4,7 @@ import android.app.Application
 import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
+import illyan.butler.core.local.datastore.getDataStore
 import illyan.butler.core.local.room.RoomCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
@@ -21,11 +22,11 @@ import illyan.butler.model.ModelManager
 import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
-import illyan.butler.ui.home.HomeFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
-import illyan.butler.ui.profile.ProfileFeatureModule
 import illyan.butler.ui.error.ErrorFeatureModule
+import illyan.butler.ui.home.HomeFeatureModule
 import illyan.butler.ui.permission.PermissionFeatureModule
+import illyan.butler.ui.profile.ProfileFeatureModule
 import illyan.butler.ui.theme.ThemeFeatureModule
 import illyan.butler.utils.initNapier
 import org.koin.android.ext.koin.androidContext
@@ -58,8 +59,8 @@ class MainApplication : Application() {
                 AuthDomainModule().module,
                 ChatDomainModule().module,
                 HostDomainModule().module,
-                module { singleOf(::ModelManager) },
-                SettingsDomainModule().module
+                SettingsDomainModule().module,
+                module { singleOf(::ModelManager) }
             )
             val dataModules = listOf(
                 ChatDataModule().module,
@@ -72,9 +73,12 @@ class MainApplication : Application() {
             )
             val coreModules = listOf(
                 ErrorDataModule().module,
-                module { singleOf(::ErrorManager) },
                 RoomCoreModule().module,
-                KtorCoreModule().module
+                KtorCoreModule().module,
+                module {
+                    singleOf(::ErrorManager)
+                    single { getDataStore(androidContext()) }
+                },
             )
             modules(
                 *coreModules.toTypedArray(),

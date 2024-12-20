@@ -55,7 +55,7 @@ fun Login(
     // TODO: implement oath authentication
     LoginDialogContent(
         isUserSigningIn = state.isSigningIn,
-        signInAnonymously = {}, // TODO: Implement sign in anonymously
+        signInAnonymously = null, // TODO: Implement sign in anonymously
         signInWithEmailAndPassword = viewModel::signInWithEmailAndPassword,
         navigateToSignUp = onSignUp,
         selectHost = onSelectHost

@@ -5,6 +5,7 @@ import androidx.compose.ui.window.application
 import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
+import illyan.butler.core.local.datastore.getDataStore
 import illyan.butler.core.local.room.RoomCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
@@ -70,7 +71,10 @@ fun main() = application {
         )
         val coreModules = listOf(
             ErrorDataModule().module,
-            module { singleOf(::ErrorManager) },
+            module {
+                singleOf(::ErrorManager)
+                single { getDataStore() }
+            },
             RoomCoreModule().module,
             KtorCoreModule().module
         )

@@ -9,6 +9,7 @@ data class AppSettings @OptIn(ExperimentalUuidApi::class) constructor(
     val clientId: String = Uuid.random().toString(),
     val preferences: DomainPreferences = DomainPreferences.Default,
     val hostUrl: String = "",
+    val signedInUserId: String? = null
 ) {
     companion object {
         val Default = AppSettings()

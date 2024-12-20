@@ -13,14 +13,15 @@ pluginManagement {
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
 }
 
 rootProject.name = "Butler"
 
 include(":composeApp")
 include(":server")
-include(":shared")
+include(":shared:llm")
+include(":shared:model")
 
 include(":composeApp:config")
 
@@ -28,6 +29,7 @@ include(":composeApp:core:network")
 include(":composeApp:core:network:ktor")
 include(":composeApp:core:local")
 include(":composeApp:core:local:room")
+include(":composeApp:core:local:datastore")
 include(":composeApp:core:utils")
 include(":composeApp:core:ui:components")
 include(":composeApp:core:ui:resources")
@@ -36,6 +38,7 @@ include(":composeApp:core:ui:utils")
 include(":composeApp:core:sync")
 
 include(":composeApp:data:chat")
+include(":composeApp:data:credential")
 include(":composeApp:data:error")
 include(":composeApp:data:host")
 include(":composeApp:data:message")

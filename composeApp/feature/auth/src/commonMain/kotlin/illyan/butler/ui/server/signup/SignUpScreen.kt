@@ -26,7 +26,6 @@ import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.password
 import illyan.butler.generated.resources.sign_up
-import illyan.butler.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -62,7 +61,7 @@ fun SignUpDialogContent(
     state: SignUpScreenState,
     initialEmail: String,
     initialPassword: String,
-    signUp: (String, String, String) -> Unit
+    signUp: (String, String) -> Unit
 ) {
     Crossfade(
         modifier = modifier,
@@ -76,7 +75,6 @@ fun SignUpDialogContent(
                 textPaddingValues = PaddingValues()
             )
         } else {
-            var username by rememberSaveable { mutableStateOf("") }
             var email by rememberSaveable { mutableStateOf(initialEmail) }
             var password by rememberSaveable { mutableStateOf(initialPassword) }
             ButlerDialogContent(
@@ -89,16 +87,14 @@ fun SignUpDialogContent(
                 },
                 text = {
                     SignUp(
-                        username = username,
                         email = email,
                         password = password,
-                        userNameChanged = { username = it },
                         emailChanged = { email = it },
                         passwordChanged = { password = it }
                     )
                 },
                 buttons = {
-                    SignUpButtons(signUp = { signUp(email, password, username) })
+                    SignUpButtons(signUp = { signUp(email, password) })
                 },
                 containerColor = Color.Transparent,
             )
@@ -109,29 +105,26 @@ fun SignUpDialogContent(
 @Composable
 fun SignUp(
     modifier: Modifier = Modifier,
-    username: String,
     email: String,
     password: String,
-    userNameChanged: (String) -> Unit = {},
     emailChanged: (String) -> Unit = {},
     passwordChanged: (String) -> Unit = {}
 ) {
-    Column(modifier = modifier) {
-        ButlerTextField(
-            value = username,
-            enabled = true,
-            onValueChange = userNameChanged,
-            label = { Text(text = stringResource(Res.string.username)) }
-        )
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         ButlerTextField(
             value = email,
             enabled = true,
+            isOutlined = false,
             onValueChange = emailChanged,
             label = { Text(text = stringResource(Res.string.email)) }
         )
         ButlerTextField(
             value = password,
             enabled = true,
+            isOutlined = false,
             onValueChange = passwordChanged,
             label = { Text(text = stringResource(Res.string.password)) }
         )

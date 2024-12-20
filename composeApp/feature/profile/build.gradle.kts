@@ -13,6 +13,8 @@ kotlin {
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.settings)
+        implementation(projects.composeApp.data.settings)
+        implementation(projects.composeApp.data.user)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
