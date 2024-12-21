@@ -61,6 +61,7 @@ import illyan.butler.core.ui.components.ButlerLargeOutlinedButton
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
+import illyan.butler.ui.apikey.ApiKey
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemDescription
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemIcon
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemTitle
@@ -177,7 +178,7 @@ fun OnboardFlow(
                         "Access OpenAI API with custom host and API key"
                     ),
                     cons = listOf("Requires network connection", "Requires API key from provider"),
-                    enabled = false
+                    enabled = true
                 )
             )
             SharedTransitionLayout {
@@ -374,7 +375,14 @@ fun OnboardFlow(
                                 item = authItems[index],
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this@composable,
-                                onNext = { navController.navigate("hosted_server") },
+                                onNext = { navController.navigate(
+                                    when (index) {
+                                        0 -> "local_llm"
+                                        1 -> "hosted_server"
+                                        2 -> "openai_api"
+                                        else -> "local_llm"
+                                    }
+                                ) },
                                 onClose = { navController.navigateUp() }
                             )
                         } else {
@@ -384,7 +392,14 @@ fun OnboardFlow(
                                 item = authItems[index],
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this@composable,
-                                onNext = { navController.navigate("hosted_server") },
+                                onNext = { navController.navigate(
+                                    when (index) {
+                                        0 -> "local_llm"
+                                        1 -> "hosted_server"
+                                        2 -> "openai_api"
+                                        else -> "local_llm"
+                                    }
+                                ) },
                                 onClose = { navController.navigateUp() }
                             )
                         }
@@ -397,7 +412,7 @@ fun OnboardFlow(
                         AuthFlow(authSuccessEnded)
                     }
                     composable("openai_api") {
-                        Text("OpenAI API")
+                        ApiKey()
                     }
                 }
             }
@@ -843,20 +858,18 @@ fun AuthItemExpandedFullscreen(
                                 animatedVisibilityScope = animatedVisibilityScope
                             ),
                             onClick = onClose,
-                            enabled = true
-                        ) {
-                            Text("Close")
-                        }
+                            enabled = true,
+                            text = { Text("Close") }
+                        )
                         ButlerLargeSolidButton(
                             modifier = Modifier.sharedElement(
                                 rememberSharedContentState(key = "select-$key"),
                                 animatedVisibilityScope = animatedVisibilityScope
                             ),
                             onClick = onNext,
-                            enabled = item.enabled
-                        ) {
-                            Text(if (item.enabled) "Select" else "Unavailable")
-                        }
+                            enabled = item.enabled,
+                            text = { Text(if (item.enabled) "Select" else "Unavailable") }
+                        )
                     }
                 }
             }

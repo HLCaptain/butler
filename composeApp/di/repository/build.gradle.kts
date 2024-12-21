@@ -6,6 +6,7 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.config)
+        implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.error)
         implementation(projects.composeApp.data.host)
         implementation(projects.composeApp.data.user)

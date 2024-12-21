@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerElevatedCard
-import illyan.butler.core.ui.components.ButlerSolidButton
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.theme.ButlerTheme
 
 @Composable
@@ -70,7 +70,7 @@ private fun ButlerCardPreviewContent() {
             }
         }
         Text(text = "Cubilia ultricies turpis quisque, leo senectus fames, eu quisque lobortis velit tempus nullam vestibulum egestas. Etiam pretium nullam, torquent platea, aliquam sapien lacinia tincidunt suscipit. Ante elit, praesent quisque neque. Adipiscing ante lacus eleifend, platea cras sociosqu, morbi ut augue ornare primis ad.")
-        ButlerSolidButton(onClick = {}) {
+        ButlerMediumSolidButton(onClick = {}) {
             Text("Button")
         }
     }

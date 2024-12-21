@@ -4,6 +4,9 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.data.chat.ChatMemoryRepository
 import illyan.butler.data.chat.ChatRepository
 import illyan.butler.data.chat.ChatStoreRepository
+import illyan.butler.data.credential.CredentialLocalRepository
+import illyan.butler.data.credential.CredentialMemoryRepository
+import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.error.ErrorMemoryRepository
 import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.host.HostLocalRepository
@@ -103,4 +106,14 @@ fun provideResourceRepository(
     resourceMemoryRepository
 } else {
     resourceStoreRepository
+}
+
+@Single
+fun provideCredentialRepository(
+    credentialMemoryRepository: CredentialMemoryRepository,
+    credentialLocalRepository: CredentialLocalRepository
+): CredentialRepository = if (BuildConfig.USE_MEMORY_DB) {
+    credentialMemoryRepository
+} else {
+    credentialLocalRepository
 }

@@ -2,7 +2,6 @@ package illyan.butler.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -26,6 +25,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.utils.ensureContrastWith
 
@@ -42,6 +42,7 @@ fun ButlerSmallSolidButton(
     text: @Composable (RowScope.() -> Unit)
 ) {
     CompositionLocalProvider(
+        LocalTextStyle provides ButlerButtonDefaults.smallTextStyle,
         LocalMinimumInteractiveComponentSize provides ButlerButtonDefaults.SmallButtonTouchSize
     ) {
         ButlerSolidButton(
@@ -55,10 +56,10 @@ fun ButlerSmallSolidButton(
             interactionSource = interactionSource,
             content = {
                 ButlerButtonDefaults.ButtonRow(
-                    horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.SmallRowPadding),
+                    rowPadding = ButlerButtonDefaults.SmallRowPadding,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
-                    text = { ProvideTextStyle(MaterialTheme.typography.labelLarge) { text() } }
+                    text = text
                 )
             }
         )
@@ -79,6 +80,7 @@ fun ButlerSmallOutlinedButton(
     text: @Composable (RowScope.() -> Unit)
 ) {
     CompositionLocalProvider(
+        LocalTextStyle provides ButlerButtonDefaults.smallTextStyle,
         LocalMinimumInteractiveComponentSize provides ButlerButtonDefaults.SmallButtonTouchSize
     ) {
         ButlerOutlinedButton(
@@ -93,10 +95,10 @@ fun ButlerSmallOutlinedButton(
             interactionSource = interactionSource,
             content = {
                 ButlerButtonDefaults.ButtonRow(
-                    horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.SmallRowPadding),
+                    rowPadding = ButlerButtonDefaults.SmallRowPadding,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
-                    text = { ProvideTextStyle(MaterialTheme.typography.labelLarge) { text() } }
+                    text = text
                 )
             }
         )
@@ -114,24 +116,28 @@ fun ButlerMediumSolidButton(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     text: @Composable (RowScope.() -> Unit)
-) = ButlerSolidButton(
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    shape = ButlerButtonDefaults.mediumButtonShape,
-    colors = colors,
-    elevation = elevation,
-    contentPadding = ButlerButtonDefaults.MediumContentPadding,
-    interactionSource = interactionSource,
-    content = {
-        ButlerButtonDefaults.ButtonRow(
-            horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.MediumRowPadding),
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-            text = { ProvideTextStyle(MaterialTheme.typography.titleSmall) { text() } }
+) {
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.mediumTextStyle) {
+        ButlerSolidButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            shape = ButlerButtonDefaults.mediumButtonShape,
+            colors = colors,
+            elevation = elevation,
+            contentPadding = ButlerButtonDefaults.MediumContentPadding,
+            interactionSource = interactionSource,
+            content = {
+                ButlerButtonDefaults.ButtonRow(
+                    rowPadding = ButlerButtonDefaults.MediumRowPadding,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    text = text
+                )
+            }
         )
     }
-)
+}
 
 @Composable
 fun ButlerMediumOutlinedButton(
@@ -145,28 +151,32 @@ fun ButlerMediumOutlinedButton(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     text: @Composable (RowScope.() -> Unit)
-) = ButlerOutlinedButton(
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    shape = ButlerButtonDefaults.mediumButtonShape,
-    colors = colors,
-    elevation = elevation,
-    border = border,
-    contentPadding = ButlerButtonDefaults.MediumContentPadding,
-    interactionSource = interactionSource,
-    content = {
-        ButlerButtonDefaults.ButtonRow(
-            horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.MediumRowPadding),
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-            text = { ProvideTextStyle(MaterialTheme.typography.titleSmall) { text() } }
+) {
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.mediumTextStyle) {
+        ButlerOutlinedButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            shape = ButlerButtonDefaults.mediumButtonShape,
+            colors = colors,
+            elevation = elevation,
+            border = border,
+            contentPadding = ButlerButtonDefaults.MediumContentPadding,
+            interactionSource = interactionSource,
+            content = {
+                ButlerButtonDefaults.ButtonRow(
+                    rowPadding = ButlerButtonDefaults.MediumRowPadding,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    text = text
+                )
+            }
         )
     }
-)
+}
 
 @Composable
-fun ButlerOutlinedButton(
+private fun ButlerOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -201,22 +211,26 @@ fun ButlerLargeSolidButton(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     text: @Composable (RowScope.() -> Unit)
-) = ButlerLargeSolidButton(
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    colors = colors,
-    elevation = elevation,
-    interactionSource = interactionSource,
-    content = {
-        ButlerButtonDefaults.ButtonRow(
-            horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.LargeRowPadding),
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-            text = { ProvideTextStyle(MaterialTheme.typography.titleMedium) { text() } }
+) {
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.largeTextStyle) {
+        ButlerLargeSolidButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            colors = colors,
+            elevation = elevation,
+            interactionSource = interactionSource,
+            content = {
+                ButlerButtonDefaults.ButtonRow(
+                    rowPadding = ButlerButtonDefaults.LargeRowPadding,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    text = text
+                )
+            }
         )
     }
-)
+}
 
 /**
  * Only *Large* buttons can be wide with Modifier.fillMaxWidth(),
@@ -232,20 +246,24 @@ fun ButlerLargeSolidButton(
     elevation: ButtonElevation? = ButtonDefaults.buttonElevation(),
     interactionSource: MutableInteractionSource? = null,
     content: @Composable (RowScope.() -> Unit)
-) = ButlerSolidButton(
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    shape = ButlerButtonDefaults.largeButtonShape,
-    colors = colors,
-    elevation = elevation,
-    contentPadding = ButlerButtonDefaults.LargeContentPadding,
-    interactionSource = interactionSource,
-    content = content
-)
+) {
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.largeTextStyle) {
+        ButlerSolidButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            shape = ButlerButtonDefaults.largeButtonShape,
+            colors = colors,
+            elevation = elevation,
+            contentPadding = ButlerButtonDefaults.LargeContentPadding,
+            interactionSource = interactionSource,
+            content = content
+        )
+    }
+}
 
 @Composable
-fun ButlerSolidButton(
+private fun ButlerSolidButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -280,25 +298,27 @@ fun ButlerLargeOutlinedButton(
     trailingIcon: @Composable (() -> Unit)? = null,
     text: @Composable (RowScope.() -> Unit)
 ) {
-    ButlerOutlinedButton(
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        shape = ButlerButtonDefaults.largeButtonShape,
-        colors = colors,
-        elevation = elevation,
-        border = border,
-        contentPadding = ButlerButtonDefaults.LargeContentPadding,
-        interactionSource = interactionSource,
-        content = {
-            ButlerButtonDefaults.ButtonRow(
-                horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.LargeRowPadding),
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-                text = { ProvideTextStyle(MaterialTheme.typography.titleMedium) { text() } }
-            )
-        }
-    )
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.largeTextStyle) {
+        ButlerOutlinedButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            shape = ButlerButtonDefaults.largeButtonShape,
+            colors = colors,
+            elevation = elevation,
+            border = border,
+            contentPadding = ButlerButtonDefaults.LargeContentPadding,
+            interactionSource = interactionSource,
+            content = {
+                ButlerButtonDefaults.ButtonRow(
+                    rowPadding = ButlerButtonDefaults.LargeRowPadding,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    text = text
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -316,7 +336,7 @@ fun ButlerSmallTextButton(
     text: @Composable (RowScope.() -> Unit)
 ) {
     CompositionLocalProvider(
-        LocalTextStyle provides MaterialTheme.typography.labelLarge,
+        LocalTextStyle provides ButlerButtonDefaults.smallTextStyle,
         LocalMinimumInteractiveComponentSize provides ButlerButtonDefaults.SmallButtonTouchSize
     ) {
         ButlerTextButton(
@@ -332,7 +352,7 @@ fun ButlerSmallTextButton(
             interactionSource = interactionSource,
             content = {
                 ButlerButtonDefaults.ButtonRow(
-                    horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.SmallRowPadding),
+                    rowPadding = ButlerButtonDefaults.SmallRowPadding,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
                     text = text
@@ -356,7 +376,7 @@ fun ButlerMediumTextButton(
     trailingIcon: @Composable (() -> Unit)? = null,
     text: @Composable (RowScope.() -> Unit)
 ) {
-    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.titleSmall) {
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.mediumTextStyle) {
         ButlerTextButton(
             modifier = modifier,
             onClick = onClick,
@@ -370,7 +390,7 @@ fun ButlerMediumTextButton(
             interactionSource = interactionSource,
             content = {
                 ButlerButtonDefaults.ButtonRow(
-                    horizontalArrangement = Arrangement.spacedBy(ButlerButtonDefaults.MediumRowPadding),
+                    rowPadding = ButlerButtonDefaults.MediumRowPadding,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
                     text = text
@@ -394,7 +414,7 @@ fun ButlerLargeTextButton(
     trailingIcon: @Composable (() -> Unit)? = null,
     text: @Composable (RowScope.() -> Unit)
 ) {
-    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.titleMedium) {
+    CompositionLocalProvider(LocalTextStyle provides ButlerButtonDefaults.largeTextStyle) {
         ButlerTextButton(
             onClick = onClick,
             modifier = modifier,
@@ -407,13 +427,12 @@ fun ButlerLargeTextButton(
             contentPadding = ButlerButtonDefaults.LargeContentPadding,
             interactionSource = interactionSource,
             content = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    leadingIcon?.invoke()
-                    Spacer(modifier = Modifier.width(ButlerButtonDefaults.LargeRowPadding))
-                    text()
-                    Spacer(modifier = Modifier.width(ButlerButtonDefaults.LargeRowPadding))
-                    trailingIcon?.invoke()
-                }
+                ButlerButtonDefaults.ButtonRow(
+                    rowPadding = ButlerButtonDefaults.LargeRowPadding,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    text = text
+                )
             }
         )
     }
@@ -459,6 +478,10 @@ object ButlerButtonDefaults {
     val mediumButtonShape @Composable get() = MaterialTheme.shapes.medium
     val largeButtonShape @Composable get() = MaterialTheme.shapes.medium
 
+    val smallTextStyle @Composable get() = MaterialTheme.typography.labelLarge
+    val mediumTextStyle @Composable get() = MaterialTheme.typography.titleSmall
+    val largeTextStyle @Composable get() = MaterialTheme.typography.titleMedium
+
     val SmallRowPadding = 4.dp
     val MediumRowPadding = 8.dp
     val LargeRowPadding = 12.dp
@@ -470,7 +493,7 @@ object ButlerButtonDefaults {
     @Composable
     fun ButtonRow(
         modifier: Modifier = Modifier,
-        horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(MediumRowPadding),
+        rowPadding: Dp = MediumRowPadding,
         leadingIcon: @Composable (() -> Unit)? = null,
         trailingIcon: @Composable (() -> Unit)? = null,
         text: @Composable (RowScope.() -> Unit)
@@ -478,10 +501,11 @@ object ButlerButtonDefaults {
         Row(
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = horizontalArrangement
         ) {
             leadingIcon?.invoke()
+            Spacer(modifier = Modifier.width(rowPadding))
             text()
+            Spacer(modifier = Modifier.width(rowPadding))
             trailingIcon?.invoke()
         }
     }

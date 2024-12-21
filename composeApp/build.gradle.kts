@@ -25,6 +25,7 @@ kotlin {
         implementation(projects.composeApp.config)
 
         implementation(projects.composeApp.data.chat)
+        implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.host)
         implementation(projects.composeApp.data.user)
         implementation(projects.composeApp.data.resource)
@@ -54,6 +55,7 @@ kotlin {
         implementation(projects.composeApp.feature.profile)
 
         implementation(libs.napier)
+        implementation(libs.androidx.datastore.preferences)
     }
 
 

@@ -169,6 +169,7 @@ fun LoginButtons(
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 ButlerButtonDefaults.ButtonRow(
+                    rowPadding = ButlerButtonDefaults.LargeRowPadding,
                     text = { Text(text = stringResource(Res.string.login)) },
                     trailingIcon = { Icon(imageVector = Icons.AutoMirrored.Rounded.Login, contentDescription = null) }
                 )

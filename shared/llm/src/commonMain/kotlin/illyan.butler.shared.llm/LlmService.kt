@@ -20,7 +20,7 @@ import illyan.butler.shared.model.chat.MessageDto
 import illyan.butler.shared.model.chat.ResourceDto
 import io.github.aakira.napier.Napier
 import kotlinx.datetime.Clock
-import okio.source
+import kotlinx.io.asSource
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -223,7 +223,7 @@ class LlmService {
         audioFilePath.toFile().writeBytes(resource.data)
         return openAI.transcription(
             request = TranscriptionRequest(
-                audio = FileSource(name = audioFilePath.toFile().name, source = audioFilePath.source()),
+                audio = FileSource(name = audioFilePath.toFile().name, source = audioFilePath.toFile().inputStream().asSource()),
                 model = ModelId(chat.audioTranscriptionModel!!.second),
                 responseFormat = AudioResponseFormat.Text,
             )

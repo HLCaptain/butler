@@ -19,6 +19,8 @@
     <string name="close">Close</string>
     <string name="copy_stacktrace">Copy stacktrace</string>
     <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="create">Create</string>
     <string name="profile">Profile</string>
     <string name="unknown">Unknown</string>
     <string name="user_id">User ID</string>
@@ -57,6 +59,7 @@
     <string name="self_hosted">Self-hosted</string>
     <string name="select_self_hosted">Select self-hosted</string>
     <string name="test_connection">Test Connection</string>
+    <string name="test">Test</string>
     <string name="you">You</string>
     <string name="assistant">Assistant</string>
     <string name="back">Back</string>

@@ -8,6 +8,7 @@ import illyan.butler.core.local.datastore.getDataStore
 import illyan.butler.core.local.room.RoomCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
+import illyan.butler.data.credential.CredentialDataModule
 import illyan.butler.data.error.ErrorDataModule
 import illyan.butler.data.host.HostDataModule
 import illyan.butler.data.message.MessageDataModule
@@ -64,6 +65,7 @@ class MainApplication : Application() {
             )
             val dataModules = listOf(
                 ChatDataModule().module,
+                CredentialDataModule().module,
                 HostDataModule().module,
                 MessageDataModule().module,
                 ModelDataModule().module,
