@@ -16,12 +16,15 @@ interface UserDao {
     @Query("DELETE FROM users")
     suspend fun deleteAllUsers(): Int
 
-    @Query("SELECT * FROM users LIMIT 1")
-    fun getCurrentUser(): Flow<RoomUser?>
+    @Query("DELETE FROM users WHERE id = :userId")
+    suspend fun deleteUser(userId: String): Int
 
-    @Query("SELECT COUNT(*) FROM users")
-    fun isUserSignedIn(): Flow<Boolean>
+    @Query("SELECT * FROM users")
+    fun getUsers(): Flow<List<RoomUser>>
 
-    @Query("UPDATE users SET accessToken = :accessToken, refreshToken = :refreshToken")
-    suspend fun updateTokens(accessToken: RoomToken?, refreshToken: RoomToken?): Int
+    @Query("SELECT * FROM users WHERE id = :userId")
+    fun getUser(userId: String): Flow<RoomUser?>
+
+    @Query("UPDATE users SET accessToken = :accessToken, refreshToken = :refreshToken WHERE id = :userId")
+    suspend fun updateTokens(userId: String, accessToken: RoomToken?, refreshToken: RoomToken?): Int
 }

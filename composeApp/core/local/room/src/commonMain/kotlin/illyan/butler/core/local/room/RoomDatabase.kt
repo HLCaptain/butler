@@ -35,10 +35,7 @@ fun getDataHistoryDao(database: ButlerDatabase) = database.dataHistoryDao()
 fun getResourceDao(database: ButlerDatabase) = database.resourceDao()
 
 @Single
-fun getChatMemberDao(database: ButlerDatabase) = database.chatMemberDao()
-
-@Single
-fun getAppSettingsDao(database: ButlerDatabase) = database.appSettingsDao()
+fun getApiKeyCredentialDao(database: ButlerDatabase) = database.apiKeyCredentialDao()
 
 @Single
 fun getUserDao(database: ButlerDatabase) = database.userDao()

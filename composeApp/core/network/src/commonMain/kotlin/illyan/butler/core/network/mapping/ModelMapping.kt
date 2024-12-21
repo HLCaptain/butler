@@ -6,15 +6,13 @@ import illyan.butler.shared.model.llm.ModelDto
 fun ModelDto.toDomainModel() = DomainModel(
     name = name,
     id = id,
-    description = description,
-    greetingMessage = greetingMessage,
-    author = author
+    ownedBy = ownedBy,
+    endpoint = endpoint
 )
 
 fun DomainModel.toNetworkModel() = ModelDto(
     name = name,
     id = id,
-    description = description,
-    greetingMessage = greetingMessage,
-    author = author
+    ownedBy = ownedBy,
+    endpoint = endpoint
 )

@@ -3,8 +3,8 @@ package illyan.butler.ui.new_chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.chat.ChatManager
-import illyan.butler.domain.model.DomainModel
 import illyan.butler.model.ModelManager
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,15 +19,13 @@ class NewChatViewModel(
     private val modelManager: ModelManager,
     private val chatManager: ChatManager
 ) : ViewModel() {
-    private val availableModels = MutableStateFlow(emptyMap<DomainModel, List<String>>())
+    private val availableModels = modelManager.getAvailableModels().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
     private val creatingNewChat = MutableStateFlow(false)
     private val newChatId = MutableStateFlow<String?>(null)
-
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            availableModels.update { modelManager.getAvailableModels() }
-        }
-    }
 
     val state = combine(
         availableModels,
@@ -45,12 +43,13 @@ class NewChatViewModel(
         initialValue = NewChatState()
     )
 
-    fun createChatWithModel(modelId: String, endpoint: String? = null) {
+    fun createChatWithModel(modelId: String, endpoint: String) {
         viewModelScope.launch(Dispatchers.IO) {
             creatingNewChat.update { true }
             val id = chatManager.startNewChat(modelId, endpoint)
             creatingNewChat.update { false }
             newChatId.update { id }
+            Napier.v { "New chat created with id: $id" }
         }
     }
 

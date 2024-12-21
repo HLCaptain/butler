@@ -1,8 +1,10 @@
 package illyan.butler.server.data.schema
 
-object Users : NanoIdTable() {
+import org.jetbrains.exposed.dao.id.UUIDTable
+
+object Users : UUIDTable() {
     val email = text("email").uniqueIndex()
-    val username = text("username").uniqueIndex()
+    val username = text("username").nullable()
     val displayName = text("displayName").nullable()
     val phone = text("phone").nullable()
     val fullName = text("fullName").nullable()

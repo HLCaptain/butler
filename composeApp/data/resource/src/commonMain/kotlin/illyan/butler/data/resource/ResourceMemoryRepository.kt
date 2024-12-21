@@ -1,11 +1,12 @@
 package illyan.butler.data.resource
 
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Single
 class ResourceMemoryRepository : ResourceRepository {
@@ -14,8 +15,9 @@ class ResourceMemoryRepository : ResourceRepository {
         return resources.getOrPut(resourceId) { MutableStateFlow(null to true) }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun upsert(resource: DomainResource): String {
-        val resourceWithId = if (resource.id == null) resource.copy(id = randomUUID()) else resource
+        val resourceWithId = if (resource.id == null) resource.copy(id = Uuid.random().toString()) else resource
         resources.getOrPut(resourceWithId.id!!) { MutableStateFlow(null to true) }.update { resourceWithId to false }
         return resourceWithId.id!!
     }

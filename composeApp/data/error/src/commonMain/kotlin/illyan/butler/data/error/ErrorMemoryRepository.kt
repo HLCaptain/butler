@@ -3,7 +3,6 @@ package illyan.butler.data.error
 import illyan.butler.core.utils.getOsName
 import illyan.butler.core.utils.getPlatformName
 import illyan.butler.core.utils.getSystemMetadata
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.domain.model.ErrorState
@@ -16,6 +15,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Single
 class ErrorMemoryRepository : ErrorRepository {
@@ -25,10 +26,11 @@ class ErrorMemoryRepository : ErrorRepository {
     private val _serverErrorEventFlow = MutableSharedFlow<DomainErrorResponse>()
     override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun reportError(throwable: Throwable) {
         Napier.e(throwable) { "Default throwable error reported" }
         val newErrorEvent = DomainErrorEvent(
-            id = randomUUID(),
+            id = Uuid.random().toString(),
             platform = getPlatformName(),
             exception = throwable.toString().split(":").first(),
             message = throwable.message ?: "",

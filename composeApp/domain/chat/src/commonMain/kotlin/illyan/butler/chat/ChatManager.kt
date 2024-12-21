@@ -2,11 +2,11 @@ package illyan.butler.chat
 
 import illyan.butler.auth.AuthManager
 import illyan.butler.data.chat.ChatRepository
+import illyan.butler.data.message.MessageRepository
 import illyan.butler.data.resource.ResourceRepository
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
-import illyan.butler.data.message.MessageRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +21,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.io.buffered
+import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
 import org.koin.core.annotation.Single
-import kotlinx.io.files.Path
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Single
@@ -91,12 +91,12 @@ class ChatManager(
     fun getMessagesByChatFlow(chatId: String) = userMessages.map { messages -> messages.filter { it.chatId == chatId } }
     fun getResourcesByMessageFlow(messageId: String) = messageResources.map { resources -> resources[messageId] }
 
-    suspend fun startNewChat(modelId: String, endpoint: String? = null): String {
+    suspend fun startNewChat(modelId: String, endpoint: String): String {
         return authManager.signedInUserId.first()?.let { userId ->
             chatRepository.upsert(
                 DomainChat(
-                    members = listOf(userId, modelId),
-                    aiEndpoints = endpoint?.let { mapOf(modelId to it) } ?: emptyMap()
+                    ownerId = userId,
+                    chatCompletionModel = endpoint to modelId
                 )
             )
         } ?: throw IllegalArgumentException("User not signed in")

@@ -24,7 +24,7 @@ class IdentityService(
         newUser: UserRegistrationDto,
         tokenConfiguration: TokenConfiguration
     ): UserLoginResponseDto {
-        val user = registerUser(newUser.userName, newUser.email, newUser.password)
+        val user = registerUser(newUser.email, newUser.password)
         return UserLoginResponseDto(user, generateUserTokens(user.id!!, tokenConfiguration))
     }
 
@@ -84,8 +84,8 @@ class IdentityService(
         TODO("Not yet implemented")
     }
 
-    suspend fun registerUser(username: String, email: String, password: String): UserDto {
-        return createUser(UserDto(null, email, username)).also {
+    suspend fun registerUser(email: String, password: String): UserDto {
+        return createUser(UserDto(null, email)).also {
             userDatabase.upsertPasswordForUser(it.id!!, password)
         }
     }

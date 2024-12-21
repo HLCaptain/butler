@@ -11,7 +11,7 @@ kotlin {
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.domain)
-        implementation(projects.shared)
+        implementation(projects.shared.model)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.store)

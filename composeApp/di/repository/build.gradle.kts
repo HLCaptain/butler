@@ -6,6 +6,7 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.config)
+        implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.error)
         implementation(projects.composeApp.data.host)
         implementation(projects.composeApp.data.user)
@@ -14,7 +15,6 @@ kotlin {
         implementation(projects.composeApp.data.message)
         implementation(projects.composeApp.data.resource)
         implementation(projects.composeApp.data.settings)
-        implementation(projects.composeApp.data.permission)
         implementation(projects.composeApp.domain.error)
 
         implementation(projects.composeApp.core.network.ktor)

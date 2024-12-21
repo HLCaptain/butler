@@ -7,16 +7,24 @@ fun RoomChat.toDomainModel() = DomainChat(
     id = id,
     created = created,
     name = name,
-    members = members,
-    aiEndpoints = aiEndpoints,
-    summary = summary
+    ownerId = ownerId,
+    chatCompletionModel = chatCompletionModel,
+    audioTranscriptionModel = audioTranscriptionModel,
+    audioTranslationModel = audioTranslationModel,
+    imageGenerationsModel = imageGenerationsModel,
+    audioSpeechModel = audioSpeechModel,
+    summary = summary,
 )
 
 fun DomainChat.toRoomModel() = RoomChat(
     id = id!!,
-    created = created!!,
+    created = created,
     name = name,
-    members = members,
-    aiEndpoints = aiEndpoints,
-    summary = summary
+    ownerId = ownerId,
+    chatCompletionModel = chatCompletionModel,
+    audioTranscriptionModel = audioTranscriptionModel,
+    audioTranslationModel = audioTranslationModel,
+    imageGenerationsModel = imageGenerationsModel,
+    audioSpeechModel = audioSpeechModel,
+    summary = summary,
 )

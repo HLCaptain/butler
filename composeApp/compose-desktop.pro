@@ -11,6 +11,10 @@
 -keep class org.jetbrains.skiko.** { *; }
 -keep class io.ktor.** { *; }
 
+# FileKit https://github.com/vinceglb/FileKit
+-keep class com.sun.jna.** { *; }
+-keep class * implements com.sun.jna.** { *; }
+
 -assumenosideeffects public class androidx.compose.runtime.ComposerKt {
     void sourceInformation(androidx.compose.runtime.Composer,java.lang.String);
     void sourceInformationMarkerStart(androidx.compose.runtime.Composer,int,java.lang.String);

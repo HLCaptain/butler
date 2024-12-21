@@ -7,7 +7,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.core.utils)
         implementation(projects.composeApp.domain)
-        implementation(projects.shared)
+        implementation(projects.shared.model)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.ktor.core)

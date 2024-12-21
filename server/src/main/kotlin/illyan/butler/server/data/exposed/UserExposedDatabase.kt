@@ -22,6 +22,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.koin.core.annotation.Single
 import org.springframework.security.crypto.password.PasswordEncoder
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 @Single
 class UserExposedDatabase(
@@ -42,26 +45,29 @@ class UserExposedDatabase(
             } catch (e: Exception) {
                 throw throw ApiException(StatusCode.UserAlreadyExists)
             }
-            user.copy(id = userId.value)
+            user.copy(id = userId.value.toString())
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun getUser(userId: String): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
-            Users.selectAll().where { Users.id eq userId }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
+            Users.selectAll().where { Users.id eq Uuid.parse(userId).toJavaUuid() }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun updateUser(user: UserDto): UserDto {
         return newSuspendedTransaction(dispatcher, database) {
-            val isUserUpdated = Users.update({ Users.id eq user.id!! }) { setUser(it, user) } > 0
+            val isUserUpdated = Users.update({ Users.id eq Uuid.parse(user.id!!).toJavaUuid() }) { setUser(it, user) } > 0
             if (isUserUpdated) user else throw ApiException(StatusCode.UserNotFound)
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun deleteUser(userId: String) {
         newSuspendedTransaction(dispatcher, database) {
-            Users.deleteWhere { id eq userId }
+            Users.deleteWhere { id eq Uuid.parse(userId).toJavaUuid() }
         }
     }
 
@@ -106,7 +112,7 @@ class UserExposedDatabase(
     }
 
     private fun ResultRow.toUserDto() = UserDto(
-        id = this[Users.id].value,
+        id = this[Users.id].value.toString(),
         email = this[Users.email],
         username = this[Users.username],
         displayName = this[Users.displayName],

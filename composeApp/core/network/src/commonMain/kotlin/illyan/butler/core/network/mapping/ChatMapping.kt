@@ -7,16 +7,24 @@ fun ChatDto.toDomainModel() = DomainChat(
     id = id,
     created = created,
     name = name,
-    members = members,
-    aiEndpoints = aiEndpoints,
-    summary = summary
+    ownerId = ownerId,
+    chatCompletionModel = chatCompletionModel,
+    audioTranscriptionModel = audioTranscriptionModel,
+    audioTranslationModel = audioTranslationModel,
+    imageGenerationsModel = imageGenerationsModel,
+    audioSpeechModel = audioSpeechModel,
+    summary = summary,
 )
 
 fun DomainChat.toNetworkModel() = ChatDto(
     id = id,
     created = created,
     name = name,
-    members = members,
-    aiEndpoints = aiEndpoints,
-    summary = summary
+    ownerId = ownerId,
+    chatCompletionModel = chatCompletionModel,
+    audioTranscriptionModel = audioTranscriptionModel,
+    audioTranslationModel = audioTranslationModel,
+    imageGenerationsModel = imageGenerationsModel,
+    audioSpeechModel = audioSpeechModel,
+    summary = summary,
 )

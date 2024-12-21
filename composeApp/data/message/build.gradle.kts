@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.illyan.butler.kotlinMultiplatformLibrary)
     alias(libs.plugins.illyan.butler.koinForKotlinMultiplatform)
@@ -13,8 +11,9 @@ kotlin {
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.data.user)
+        implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.domain)
-        implementation(projects.shared)
+        implementation(projects.shared.model)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.store)

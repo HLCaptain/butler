@@ -1,7 +1,7 @@
 package illyan.butler.server.endpoints
 
-import illyan.butler.server.data.service.ModelHealthService
-import illyan.butler.server.data.service.toModelDto
+import illyan.butler.shared.llm.ModelHealthService
+import illyan.butler.shared.llm.toModelDto
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond

@@ -51,13 +51,13 @@ interface ChatDao {
     @Query("DELETE FROM chats WHERE id IN(:ids)")
     suspend fun deleteChatsWithIds(ids: List<String>)
 
-    @Query("DELETE FROM chats WHERE id IN (SELECT chatId FROM chat_members WHERE userId = :userId)")
+    @Query("DELETE FROM chats WHERE ownerId = :userId")
     suspend fun deleteChatsByUserId(userId: String)
 
     @Query("SELECT * FROM chats WHERE id = :id")
     fun getChatById(id: String): Flow<RoomChat?>
 
-    @Query("SELECT chats.* FROM chats JOIN chat_members ON chats.id = chat_members.chatId WHERE chat_members.userId = :userId")
+    @Query("SELECT * FROM chats WHERE ownerId = :userId")
     fun getChatsByUser(userId: String): Flow<List<RoomChat>>
 
     @Query("SELECT * FROM chats WHERE id IN(:ids)")

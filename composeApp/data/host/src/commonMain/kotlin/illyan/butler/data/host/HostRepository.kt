@@ -1,12 +1,8 @@
 package illyan.butler.data.host
 
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 interface HostRepository {
-    val isConnectingToHost: StateFlow<Boolean>
-    val currentHost: StateFlow<String?>
-
-    suspend fun testAndSelectHost(url: String): Boolean
-    suspend fun testHost(url: String): Boolean
-    suspend fun selectHostWithoutTest(url: String)
+    val currentHost: Flow<String?>
+    suspend fun upsertHostUrl(url: String?)
 }

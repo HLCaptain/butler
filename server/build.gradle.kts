@@ -38,7 +38,12 @@ repositories {
 }
 
 dependencies {
-    implementation(projects.shared)
+    implementation(projects.shared.model)
+    implementation(projects.shared.llm)
+
+    // Kotlin
+    implementation(libs.kotlinx.datetime)
+
     // Ktor Core
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.protobuf)
@@ -78,6 +83,7 @@ dependencies {
 
     // Security
     implementation(libs.commons.codec)
+    implementation(libs.spring.security.crypto)
 
     // Ktor Client
     implementation(libs.ktor.core)
@@ -88,8 +94,6 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.ktor.client.websockets)
-
-    implementation(libs.kotlinx.datetime)
 
     // OpenTelemetry
     implementation(libs.opentelemetry.api)
@@ -110,9 +114,6 @@ dependencies {
     implementation(libs.napier)
 
     implementation(libs.openai.client)
-
-    implementation(libs.nanoid)
-    implementation(libs.spring.security.crypto)
 }
 
 ksp {

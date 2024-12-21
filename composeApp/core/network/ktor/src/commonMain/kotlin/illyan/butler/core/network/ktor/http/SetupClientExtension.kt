@@ -34,7 +34,6 @@ import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -78,15 +77,16 @@ fun HttpClientConfig<*>.setupClient(
             // loadTokens run every time a request is made.
             loadTokens {
                 Napier.v { "Loading tokens" }
-                if (!userDao.isUserSignedIn().first()) {
+                val signedInUserId = appRepository.currentSignedInUserId.first()
+                if (signedInUserId == null) {
                     Napier.d { "User is not signed in" }
                     null
                 } else {
-                    val currentUser = userDao.getCurrentUser().filterNotNull().first()
-                    val accessMillis = currentUser.accessToken?.tokenExpirationMillis
-                    val refreshMillis = currentUser.refreshToken?.tokenExpirationMillis
-                    val accessToken = currentUser.accessToken?.token
-                    val refreshToken = currentUser.refreshToken?.token
+                    val currentUser = userDao.getUser(signedInUserId).first()
+                    val accessMillis = currentUser?.accessToken?.tokenExpirationMillis
+                    val refreshMillis = currentUser?.refreshToken?.tokenExpirationMillis
+                    val accessToken = currentUser?.accessToken?.token
+                    val refreshToken = currentUser?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
                     if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
                         Napier.d { "No access or refresh token found in app settings" }
@@ -105,12 +105,13 @@ fun HttpClientConfig<*>.setupClient(
                 }
             }
             refreshTokens {
-                if (userDao.isUserSignedIn().first()) {
-                    val currentUser = userDao.getCurrentUser().filterNotNull().first()
-                    val accessMillis = currentUser.accessToken?.tokenExpirationMillis
-                    val refreshMillis = currentUser.refreshToken?.tokenExpirationMillis
-                    val accessToken = currentUser.accessToken?.token
-                    val refreshToken = currentUser.refreshToken?.token
+                val signedInUserId = appRepository.currentSignedInUserId.first()
+                if (signedInUserId != null) {
+                    val currentUser = userDao.getUser(signedInUserId).first()
+                    val accessMillis = currentUser?.accessToken?.tokenExpirationMillis
+                    val refreshMillis = currentUser?.refreshToken?.tokenExpirationMillis
+                    val accessToken = currentUser?.accessToken?.token
+                    val refreshToken = currentUser?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
                     if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
                         Napier.d { "No access or refresh token found in app settings" }
@@ -126,6 +127,7 @@ fun HttpClientConfig<*>.setupClient(
                             oldTokens?.refreshToken?.let { bearerAuth(it) }
                         }.body<UserTokensResponse>().run {
                             userDao.updateTokens(
+                                signedInUserId,
                                 RoomToken(accessToken, accessTokenExpirationMillis),
                                 RoomToken(refreshToken, refreshTokenExpirationMillis)
                             )
@@ -142,9 +144,6 @@ fun HttpClientConfig<*>.setupClient(
             }
         }
     }
-
-    //    developmentMode = isDebugBuild()
-    developmentMode = true
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes

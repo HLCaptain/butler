@@ -5,14 +5,19 @@ import android.media.MediaRecorder
 import android.os.Build
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
-import illyan.butler.audio.AudioRecorder
+import io.github.aakira.napier.Napier
 import korlibs.audio.sound.AudioData
 import korlibs.audio.sound.readAudioData
-import korlibs.io.file.std.resourcesVfs
+import korlibs.io.android.withAndroidContext
+import korlibs.io.file.std.applicationVfs
+import korlibs.io.file.std.toVfs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
+import java.io.File
 
 @Single
 class AndroidAudioRecorder(private val context: Context) : AudioRecorder {
@@ -21,34 +26,37 @@ class AndroidAudioRecorder(private val context: Context) : AudioRecorder {
     override val isRecording = MutableStateFlow(recorder != null)
 
     override suspend fun startRecording() {
-        recorder = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()).apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-            audioPath = "${Clock.System.now().toEpochMilliseconds()}_recording"
-            resourcesVfs[audioPath].writeBytes(byteArrayOf())
-            setOutputFile(audioPath)
-            prepare()
-            isRecording.update { true }
-            start()
-        }
+        recorder =
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()).apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                audioPath = "${context.filesDir}/${Clock.System.now().toEpochMilliseconds()}_recording"
+                withAndroidContext(context) {
+                    File("$audioPath.3gp").createNewFile()
+                }
+                setOutputFile("$audioPath.3gp")
+                prepare()
+                start()
+                isRecording.update { true }
+            }
     }
 
-    override suspend fun stopRecording(): AudioData {
+    override suspend fun stopRecording(): AudioData = withContext(Dispatchers.IO) {
         if (recorder == null) throw IllegalStateException("Recording is not started")
         recorder?.apply {
             stop()
-            isRecording.update { false }
             release()
+            isRecording.update { false }
         }
         recorder = null
         // Convert audio file to WAV
 
         val session = FFmpegKit.execute("-i $audioPath.3gp $audioPath.wav")
         if (ReturnCode.isSuccess(session.returnCode).not()) {
-            throw IllegalStateException("Failed to convert audio file to WAV")
+            Napier.e("Failed to convert audio file to WAV\n${session.output}")
         }
 
-        return resourcesVfs["$audioPath.wav"].readAudioData()
+        File("$audioPath.wav").toVfs().readAudioData()
     }
 }

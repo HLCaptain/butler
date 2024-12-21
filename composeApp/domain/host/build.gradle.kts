@@ -5,8 +5,14 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.core.network)
+
         implementation(projects.composeApp.data.host)
+        implementation(projects.composeApp.data.credential)
+
+        implementation(projects.composeApp.domain)
 
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.openai.client)
     }
 }
