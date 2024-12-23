@@ -419,6 +419,7 @@ fun NewApiKeyCredential(
     var name by rememberSaveable { mutableStateOf("") }
     var providerUrl by rememberSaveable { mutableStateOf("") }
     var apiKey by rememberSaveable { mutableStateOf("") }
+
     ButlerCard(
         modifier = modifier.sharedBounds(
             sharedContentState = rememberSharedContentState("new_api_key_bounds"),
@@ -436,47 +437,15 @@ fun NewApiKeyCredential(
                 modifier = modifier.width(IntrinsicSize.Max),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ButlerTextField(
-                    value = name,
-                    isOutlined = false,
-                    onValueChange = { name = it },
-                    label = {
-                        Text(
-                            modifier = Modifier.sharedElement(
-                                state = rememberSharedContentState("new_api_key_name"),
-                                animatedVisibilityScope = animationScope
-                            ).skipToLookaheadSize(),
-                            text = stringResource(Res.string.name)
-                        )
-                    },
-                )
-                ButlerTextField(
-                    value = providerUrl,
-                    isOutlined = false,
-                    onValueChange = { providerUrl = it },
-                    label = {
-                        Text(
-                            modifier = Modifier.sharedElement(
-                                state = rememberSharedContentState("new_api_key_provider_url"),
-                                animatedVisibilityScope = animationScope
-                            ).skipToLookaheadSize(),
-                            text = stringResource(Res.string.provider_url)
-                        )
-                    },
-                )
-                ButlerTextField(
-                    value = apiKey,
-                    isOutlined = false,
-                    onValueChange = { apiKey = it },
-                    label = {
-                        Text(
-                            modifier = Modifier.sharedElement(
-                                state = rememberSharedContentState("new_api_key_api_key"),
-                                animatedVisibilityScope = animationScope
-                            ).skipToLookaheadSize(),
-                            text = stringResource(Res.string.api_key)
-                        )
-                    },
+                ApiKeyItemFields(
+                    name = name,
+                    providerUrl = providerUrl,
+                    apiKey = apiKey,
+                    onNameChanged = { name = it },
+                    onProviderUrlChanged = { providerUrl = it },
+                    onApiKeyChanged = { apiKey = it },
+                    sharedTransitionScope = sharedTransitionScope,
+                    animationScope = animationScope
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -564,5 +533,68 @@ fun NewApiKeyCredential(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun ApiKeyItemFields(
+    modifier: Modifier = Modifier,
+    name: String,
+    providerUrl: String,
+    apiKey: String,
+    onNameChanged: (String) -> Unit,
+    onProviderUrlChanged: (String) -> Unit,
+    onApiKeyChanged: (String) -> Unit,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(8.dp),
+    sharedTransitionScope: SharedTransitionScope,
+    animationScope: AnimatedContentScope,
+) = with(sharedTransitionScope) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = verticalArrangement
+    ) {
+        ButlerTextField(
+            value = name,
+            isOutlined = false,
+            onValueChange = onNameChanged,
+            label = {
+                Text(
+                    modifier = Modifier.sharedElement(
+                        state = rememberSharedContentState("new_api_key_name"),
+                        animatedVisibilityScope = animationScope
+                    ).skipToLookaheadSize(),
+                    text = stringResource(Res.string.name)
+                )
+            },
+        )
+        ButlerTextField(
+            value = providerUrl,
+            isOutlined = false,
+            onValueChange = onProviderUrlChanged,
+            label = {
+                Text(
+                    modifier = Modifier.sharedElement(
+                        state = rememberSharedContentState("new_api_key_provider_url"),
+                        animatedVisibilityScope = animationScope
+                    ).skipToLookaheadSize(),
+                    text = stringResource(Res.string.provider_url)
+                )
+            },
+        )
+        ButlerTextField(
+            value = apiKey,
+            isOutlined = false,
+            onValueChange = onApiKeyChanged,
+            label = {
+                Text(
+                    modifier = Modifier.sharedElement(
+                        state = rememberSharedContentState("new_api_key_api_key"),
+                        animatedVisibilityScope = animationScope
+                    ).skipToLookaheadSize(),
+                    text = stringResource(Res.string.api_key)
+                )
+            },
+        )
     }
 }
