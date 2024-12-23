@@ -97,6 +97,7 @@ fun ButlerElevatedCard(
 ) {
     onClick?.let {
         ElevatedCard(
+            modifier = modifier,
             colors = colors,
             enabled = enabled,
             onClick = it,

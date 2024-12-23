@@ -2,26 +2,34 @@ package illyan.butler.ui.apikey
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -31,10 +39,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +62,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -63,6 +81,8 @@ import illyan.butler.generated.resources.add_api_key
 import illyan.butler.generated.resources.add_credentials
 import illyan.butler.generated.resources.api_key
 import illyan.butler.generated.resources.back
+import illyan.butler.generated.resources.delete
+import illyan.butler.generated.resources.edit
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.provider_url
 import illyan.butler.generated.resources.save
@@ -76,7 +96,8 @@ import org.koin.compose.viewmodel.koinViewModel
 data class ApiKeyCredentialEditItem(
     val name: String?,
     val providerUrl: String,
-    val apiKey: String
+    val apiKey: String,
+    val index: Int
 )
 
 @Serializable
@@ -97,7 +118,8 @@ fun ApiKey(
         credentials = apiKeyCredentials,
         models = models.toMap(),
         createNewCredential = viewModel::addApiKeyCredential,
-        testApiKeyCredential = viewModel::testEndpointForCredentials
+        testApiKeyCredential = viewModel::testEndpointForCredentials,
+        deleteCredential = viewModel::deleteApiKeyCredential
     )
 }
 
@@ -108,9 +130,10 @@ fun ApiKeyCredential(
     credentials: List<ApiKeyCredential>?,
     models: Map<ApiKeyCredential, List<DomainModel>>,
     createNewCredential: (ApiKeyCredential) -> Unit = {},
-    testApiKeyCredential: (ApiKeyCredential) -> Unit = {}
+    testApiKeyCredential: (ApiKeyCredential) -> Unit = {},
+    deleteCredential: (ApiKeyCredential) -> Unit = {}
 ) {
-    val animationTime = 2000
+    val animationTime = 500
     SharedTransitionLayout {
         val navController = rememberNavController()
         NavHost(
@@ -144,21 +167,39 @@ fun ApiKeyCredential(
                 ApiKeyCredentialList(
                     credentials = credentials,
                     createNewCredential = { navController.navigate(NewApiKeyCredential) },
+                    editCredential = { index ->
+                        credentials?.getOrNull(index)?.let {
+                            navController.navigate(ApiKeyCredentialEditItem(it.name, it.providerUrl, it.apiKey, index))
+                        }
+                    },
+                    deleteCredential = deleteCredential,
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animationScope = this@composable
                 )
             }
             composable<ApiKeyCredentialEditItem> {
-                val item = remember {
+                val (item, index) = remember(credentials) {
+                    val editItem = it.toRoute<ApiKeyCredentialEditItem>()
                     ApiKeyCredential(
-                        name = it.toRoute<ApiKeyCredentialEditItem>().name,
-                        providerUrl = it.toRoute<ApiKeyCredentialEditItem>().providerUrl,
-                        apiKey = it.toRoute<ApiKeyCredentialEditItem>().apiKey
-                    )
+                        name = editItem.name,
+                        providerUrl = editItem.providerUrl,
+                        apiKey = editItem.apiKey
+                    ) to editItem.index
                 }
                 EditApiKeyCredential(
                     item = item,
                     models = models[item] ?: emptyList(),
+                    testCredential = {
+                        testApiKeyCredential(it)
+                    },
+                    saveCredential = {
+                        createNewCredential(it)
+                        navController.navigateUp()
+                    },
+                    onBack = { navController.navigateUp() },
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animationScope = this@composable,
+                    key = index
                 )
             }
             composable<NewApiKeyCredential> {
@@ -187,15 +228,17 @@ fun ApiKeyCredential(
 fun ApiKeyCredentialList(
     modifier: Modifier = Modifier,
     credentials: List<ApiKeyCredential>?,
-    createNewCredential: () -> Unit = {},
-    editCredential: (ApiKeyCredential) -> Unit = {},
+    createNewCredential: () -> Unit,
+    editCredential: (Int) -> Unit,
+    deleteCredential: (ApiKeyCredential) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animationScope: AnimatedContentScope
-) = with(sharedTransitionScope) {
+) {
     val lazyGridState = rememberLazyGridState()
+    val minCellSize = 128.dp
     LazyVerticalGrid(
         modifier = modifier,
-        columns = GridCells.Adaptive(128.dp),
+        columns = GridCells.Adaptive(minCellSize),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -203,26 +246,30 @@ fun ApiKeyCredentialList(
     ) {
         item("new_api_key") {
             NewApiKeyCredentialGridItem(
+                modifier = Modifier.animateItem().sizeIn(minWidth = minCellSize, minHeight = minCellSize),
                 createNewCredential = createNewCredential,
                 sharedTransitionScope = sharedTransitionScope,
                 animationScope = animationScope
             )
         }
         if (credentials.isNullOrEmpty()) {
-            item(key = "no_api_keys") {
-                NoApiKeyCredentialGridItem(lazyGridState = lazyGridState)
+            item(
+                key = "no_api_keys",
+                span = { GridItemSpan(currentLineSpan = this.maxCurrentLineSpan) }
+            ) {
+                NoApiKeyCredentialGridItem(
+                    modifier = Modifier.animateItem().sizeIn(minWidth = minCellSize, minHeight = minCellSize),
+                    lazyGridState = lazyGridState
+                )
             }
         } else {
-            itemsIndexed(credentials, key = { _, item -> item.providerUrl }) { index, item  ->
+            itemsIndexed(credentials.distinctBy { it.providerUrl }, key = { _, item -> item.providerUrl }) { index, item  ->
                 ApiKeyCredentialGridItem(
-                    modifier = Modifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState("api_key_bounds_$index"),
-                        animatedVisibilityScope = animationScope,
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                    ),
+                    modifier = Modifier.animateItem().sizeIn(minWidth = minCellSize, minHeight = minCellSize),
                     item = item,
                     key = index,
-                    editItem = { editCredential(item) },
+                    editItem = { editCredential(index) },
+                    deleteItem = { deleteCredential(item) },
                     sharedTransitionScope = sharedTransitionScope,
                     animationScope = animationScope
                 )
@@ -231,59 +278,65 @@ fun ApiKeyCredentialList(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NoApiKeyCredentialGridItem(
     modifier: Modifier = Modifier,
     lazyGridState: LazyGridState
 ) {
-    SharedTransitionLayout {
-        AnimatedContent(
-            modifier = modifier,
-            targetState = lazyGridState.layoutInfo.maxSpan
-        ) { maxSpan ->
-            val nestedAnimatedScope = this // Nested scope to animate elements in SharedTransition
-            if (maxSpan > 1) {
+    AnimatedContent(
+        targetState = lazyGridState.layoutInfo.maxSpan > 1,
+        transitionSpec = {
+            val slideSpec = spring<IntOffset>(stiffness = Spring.StiffnessMediumLow, dampingRatio = (Spring.DampingRatioMediumBouncy + Spring.DampingRatioLowBouncy) / 2)
+            if (targetState) {
+                // Multiple spans in a row, arrow pointing to start
+                slideIntoContainer(
+                    animationSpec = slideSpec,
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start
+                ) + fadeIn() togetherWith fadeOut(tween(0))
+            } else {
+                // Single row, arrow pointing up
+                slideIntoContainer(
+                    animationSpec = slideSpec,
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up
+                ) + fadeIn() togetherWith fadeOut(tween(0))
+            }
+        }
+    ) { multiSpan ->
+        if (multiSpan) {
+            Box(
+                modifier = modifier.fillMaxHeight(),
+                contentAlignment = Alignment.CenterStart
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        modifier = Modifier.size(64.dp).sharedElement(
-                            state = rememberSharedContentState("no_api_keys_icon"),
-                            animatedVisibilityScope = nestedAnimatedScope
-                        ),
+                        modifier = Modifier.size(64.dp),
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = null
                     )
                     Text(
-                        modifier = Modifier.sharedElement(
-                            state = rememberSharedContentState("no_api_keys_text"),
-                            animatedVisibilityScope = nestedAnimatedScope
-                        ).skipToLookaheadSize(),
                         text = stringResource(Res.string.add_credentials)
                     )
                 }
-            } else {
+            }
+        } else {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.TopCenter
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        modifier = Modifier.size(64.dp).sharedElement(
-                            state = rememberSharedContentState("no_api_keys_icon"),
-                            animatedVisibilityScope = nestedAnimatedScope
-                        ),
+                        modifier = Modifier.size(64.dp),
                         imageVector = Icons.Rounded.ArrowUpward,
                         contentDescription = null
                     )
                     Text(
-                        modifier = Modifier.sharedElement(
-                            state = rememberSharedContentState("no_api_keys_text"),
-                            animatedVisibilityScope = nestedAnimatedScope
-                        ).skipToLookaheadSize(),
                         text = stringResource(Res.string.add_credentials)
                     )
                 }
@@ -301,7 +354,7 @@ fun NewApiKeyCredentialGridItem(
     animationScope: AnimatedContentScope
 ) = with(sharedTransitionScope) {
     ButlerElevatedCard(
-        modifier = modifier.sharedBounds(
+        modifier = Modifier.sharedBounds(
             sharedContentState = rememberSharedContentState("new_api_key_bounds"),
             animatedVisibilityScope = animationScope,
             resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
@@ -310,7 +363,7 @@ fun NewApiKeyCredentialGridItem(
         contentPadding = PaddingValues(0.dp)
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().sharedBounds(
+            modifier = modifier.fillMaxSize().sharedBounds(
                 sharedContentState = rememberSharedContentState("new_api_key_button_bounds"),
                 animatedVisibilityScope = animationScope,
                 resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
@@ -341,28 +394,32 @@ fun NewApiKeyCredentialGridItem(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ApiKeyCredentialGridItem(
     modifier: Modifier = Modifier,
     item: ApiKeyCredential,
     key: Int,
     editItem: () -> Unit = {},
+    deleteItem: () -> Unit = {},
     sharedTransitionScope: SharedTransitionScope,
     animationScope: AnimatedContentScope
 ) = with(sharedTransitionScope) {
-    Box {
-        ButlerCard(
-            modifier = Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState("api_key_bounds_$key"),
-                animatedVisibilityScope = animationScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-            ),
-            onClick = editItem
+    var showMenu by rememberSaveable { mutableStateOf(false) }
+    ButlerCard(
+        modifier = Modifier.sharedBounds(
+            sharedContentState = rememberSharedContentState("api_key_bounds_$key"),
+            animatedVisibilityScope = animationScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+        ),
+        onClick = { showMenu = false; editItem() },
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Box(
+            modifier = modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = modifier,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
@@ -370,39 +427,195 @@ fun ApiKeyCredentialGridItem(
                         state = rememberSharedContentState("api_key_name_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
-                    text = item.name ?: stringResource(Res.string.unknown),
+                    text = item.name.takeIf { !it.isNullOrBlank() } ?: stringResource(Res.string.unknown),
                 )
                 Text(
                     modifier = Modifier.sharedElement(
                         state = rememberSharedContentState("api_key_provider_url_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
-                    text = item.providerUrl,
+                    text = item.providerUrl.takeIf { it.isNotBlank() } ?: stringResource(Res.string.unknown),
                 )
             }
-        }
-        IconButton(
-            modifier = Modifier.align(Alignment.TopEnd),
-            onClick = editItem,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Edit,
-                contentDescription = null
-            )
+            ExposedDropdownMenuBox(
+                modifier = Modifier.align(Alignment.TopEnd),
+                expanded = showMenu,
+                onExpandedChange = { showMenu = it }
+            ) {
+                IconToggleButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    checked = showMenu,
+                    onCheckedChange = { showMenu = it },
+                    colors = IconButtonDefaults.iconToggleButtonColors().copy(
+                        checkedContentColor = MaterialTheme.colorScheme.primary,
+                        contentColor = LocalContentColor.current
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = null
+                    )
+                }
+                ExposedDropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    matchTextFieldWidth = false
+                ) {
+                    DropdownMenuItem(
+                        onClick = { showMenu = false; editItem() },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Edit,
+                                contentDescription = null
+                            )
+                        },
+                        text = { Text(stringResource(Res.string.edit)) }
+                    )
+                    DropdownMenuItem(
+                        onClick = { showMenu = false; deleteItem() },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Delete,
+                                contentDescription = null
+                            )
+                        },
+                        text = { Text(stringResource(Res.string.delete)) }
+                    )
+                }
+            }
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun EditApiKeyCredential(
     modifier: Modifier = Modifier,
     item: ApiKeyCredential,
+    key: Int,
     models: List<DomainModel>,
+    sharedTransitionScope: SharedTransitionScope,
+    animationScope: AnimatedContentScope,
     saveCredential: (ApiKeyCredential) -> Unit = {},
-) {
-    var name by rememberSaveable(item.name) { mutableStateOf(item.name) }
+    testCredential: (ApiKeyCredential) -> Unit = {},
+    onBack: () -> Unit
+) = with(sharedTransitionScope) {
+    var name by rememberSaveable(item.name) { mutableStateOf(item.name ?: "") }
     var providerUrl by rememberSaveable(item.providerUrl) { mutableStateOf(item.providerUrl) }
     var apiKey by rememberSaveable(item.apiKey) { mutableStateOf(item.apiKey) }
+
+    ButlerCard(
+        modifier = modifier.sharedBounds(
+            sharedContentState = rememberSharedContentState("api_key_bounds_$key"),
+            animatedVisibilityScope = animationScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+        ),
+        shape = RoundedCornerShape(0.dp),
+        contentPadding = ButlerCardDefaults.CompactContentPadding
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = modifier.width(IntrinsicSize.Max),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ApiKeyItemFields(
+                    name = name,
+                    providerUrl = providerUrl,
+                    apiKey = apiKey,
+                    onNameChanged = { name = it },
+                    onProviderUrlChanged = { providerUrl = it },
+                    onApiKeyChanged = { apiKey = it },
+                    sharedTransitionScope = sharedTransitionScope,
+                    animationScope = animationScope
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ButlerMediumOutlinedButton(
+                        onClick = {
+                            testCredential(ApiKeyCredential(name, providerUrl, apiKey))
+                        },
+                        text = {
+                            Text(
+                                text = stringResource(Res.string.test)
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier.sharedElement(
+                                    state = rememberSharedContentState("new_api_key_test_icon"),
+                                    animatedVisibilityScope = animationScope
+                                ),
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    ButlerMediumSolidButton(
+                        modifier = Modifier.sharedBounds(
+                            sharedContentState = rememberSharedContentState("new_api_key_button_bounds"),
+                            animatedVisibilityScope = animationScope,
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                        ).then(with(animationScope) {
+                            Modifier.animateEnterExit(
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            )
+                        }),
+                        onClick = {
+                            saveCredential(ApiKeyCredential(name, providerUrl, apiKey))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier.sharedElement(
+                                    state = rememberSharedContentState("new_api_key_icon"),
+                                    animatedVisibilityScope = animationScope
+                                ),
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = null
+                            )
+                        },
+                        text = {
+                            Text(
+                                modifier = Modifier.sharedElement(
+                                    state = rememberSharedContentState("new_api_key_text"),
+                                    animatedVisibilityScope = animationScope
+                                ).skipToLookaheadSize(),
+                                text = stringResource(Res.string.save)
+                            )
+                        }
+                    )
+                }
+                ButlerMediumOutlinedButton(
+                    onClick = onBack,
+                    text = {
+                        Text(
+                            text = stringResource(Res.string.back)
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                )
+                Column {
+                    models.forEach { model ->
+                        Text(
+                            text = model.displayName
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -434,8 +647,9 @@ fun NewApiKeyCredential(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = modifier.width(IntrinsicSize.Max),
+                modifier = modifier.width(IntrinsicSize.Min),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 ApiKeyItemFields(
                     name = name,
@@ -448,7 +662,6 @@ fun NewApiKeyCredential(
                     animationScope = animationScope
                 )
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     ButlerMediumOutlinedButton(
@@ -543,6 +756,7 @@ fun ApiKeyItemFields(
     name: String,
     providerUrl: String,
     apiKey: String,
+    key: Int? = null,
     onNameChanged: (String) -> Unit,
     onProviderUrlChanged: (String) -> Unit,
     onApiKeyChanged: (String) -> Unit,
@@ -551,49 +765,43 @@ fun ApiKeyItemFields(
     animationScope: AnimatedContentScope,
 ) = with(sharedTransitionScope) {
     Column(
-        modifier = modifier,
+        modifier = modifier.width(IntrinsicSize.Min),
         verticalArrangement = verticalArrangement
     ) {
         ButlerTextField(
+            modifier = Modifier.sharedElement(
+                state = rememberSharedContentState(key?.let { "api_key_name_$it" } ?: "new_api_key_name"),
+                animatedVisibilityScope = animationScope
+            ),
             value = name,
             isOutlined = false,
             onValueChange = onNameChanged,
             label = {
-                Text(
-                    modifier = Modifier.sharedElement(
-                        state = rememberSharedContentState("new_api_key_name"),
-                        animatedVisibilityScope = animationScope
-                    ).skipToLookaheadSize(),
-                    text = stringResource(Res.string.name)
-                )
+                Text(text = stringResource(Res.string.name))
             },
         )
         ButlerTextField(
+            modifier = Modifier.sharedElement(
+                state = rememberSharedContentState(key?.let { "api_key_provider_url_$it" } ?: "new_api_key_provider_url"),
+                animatedVisibilityScope = animationScope
+            ),
             value = providerUrl,
             isOutlined = false,
             onValueChange = onProviderUrlChanged,
             label = {
-                Text(
-                    modifier = Modifier.sharedElement(
-                        state = rememberSharedContentState("new_api_key_provider_url"),
-                        animatedVisibilityScope = animationScope
-                    ).skipToLookaheadSize(),
-                    text = stringResource(Res.string.provider_url)
-                )
+                Text(text = stringResource(Res.string.provider_url))
             },
         )
         ButlerTextField(
+            modifier = Modifier.sharedElement(
+                state = rememberSharedContentState(key?.let { "api_key_api_key_$it" } ?: "new_api_key_api_key"),
+                animatedVisibilityScope = animationScope
+            ),
             value = apiKey,
             isOutlined = false,
             onValueChange = onApiKeyChanged,
             label = {
-                Text(
-                    modifier = Modifier.sharedElement(
-                        state = rememberSharedContentState("new_api_key_api_key"),
-                        animatedVisibilityScope = animationScope
-                    ).skipToLookaheadSize(),
-                    text = stringResource(Res.string.api_key)
-                )
+                Text(text = stringResource(Res.string.api_key))
             },
         )
     }

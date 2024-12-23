@@ -75,4 +75,8 @@ class HostManager(
     suspend fun selectHostWithoutTest(url: String) {
         hostRepository.upsertHostUrl(url)
     }
+
+    suspend fun deleteApiKeyCredential(apiKeyCredential: ApiKeyCredential) {
+        credentialRepository.deleteApiKeyCredentialByUrl(apiKeyCredential.providerUrl)
+    }
 }

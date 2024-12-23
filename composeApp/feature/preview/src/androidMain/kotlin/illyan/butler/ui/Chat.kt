@@ -34,10 +34,9 @@ fun ChatDetailPreview() {
                         chat = DomainChat(
                             id = "1",
                             created = Clock.System.now().minus(3.days).toEpochMilliseconds(),
-                            members = listOf("1", "Cook GPT"),
                             name = "Chat 1",
-                            aiEndpoints = mapOf("Cook GPT" to "https://api.chef.ai"),
                             summary = "Chat 1 summary",
+                            ownerId = "1",
                         ),
                         messages = listOf(
                             DomainMessage(
@@ -108,26 +107,23 @@ fun ChatListPreview() {
                         DomainChat(
                             id = "1",
                             created = Clock.System.now().minus(3.days).toEpochMilliseconds(),
-                            members = listOf("1", "Cook GPT"),
                             name = "Chat 1",
-                            aiEndpoints = mapOf("Cook GPT" to "https://api.chef.ai"),
                             summary = "Chat 1 summary",
+                            ownerId = "1",
                         ),
                         DomainChat(
                             id = "2",
                             created = Clock.System.now().minus(2.days).toEpochMilliseconds(),
-                            members = listOf("1", "Cook GPT"),
                             name = "Chat 2",
-                            aiEndpoints = mapOf("Cook GPT" to "https://api.chef.ai"),
                             summary = "Chat 2 summary",
+                            ownerId = "1",
                         ),
                         DomainChat(
                             id = "3",
                             created = Clock.System.now().minus(1.days).toEpochMilliseconds(),
-                            members = listOf("1", "Cook GPT"),
                             name = "Chat 3",
-                            aiEndpoints = mapOf("Cook GPT" to "https://api.chef.ai"),
                             summary = "Chat 3 summary",
+                            ownerId = "1",
                         )
                     ),
                     deleteChat = {},
@@ -148,10 +144,9 @@ fun ChatDetailsPreview() {
                 chat = DomainChat(
                     id = "1",
                     created = Clock.System.now().minus(3.days).toEpochMilliseconds(),
-                    members = listOf("1", "Cook GPT"),
                     name = "Chat 1",
-                    aiEndpoints = mapOf("Cook GPT" to "https://api.chef.ai"),
                     summary = "Chat 1 summary",
+                    ownerId = "1",
                 ),
                 currentUserId = "1"
             )
@@ -166,22 +161,25 @@ fun NewChatPreview() {
         Surface {
             NewChat(
                 state = NewChatState(
-                    availableModels = mapOf(
+                    availableModels = listOf(
                         DomainModel(
                             name = "Cook GPT",
-                            id = "Cook GPT",,
+                            id = "Cook GPT",
                             ownedBy = "Chef AI",
-                        ) to listOf("https://api.chef.ai"),
+                            endpoint = "https://api.chef.ai"
+                        ),
                         DomainModel(
                             name = "Bartender",
-                            id = "Bartender",,
+                            id = "Bartender",
                             ownedBy = "Bartender AI",
-                        ) to listOf("https://api.bartender.ai"),
+                            endpoint = "https://api.bartender.ai"
+                        ),
                         DomainModel(
                             name = "Doctor",
-                            id = "Doctor",,
+                            id = "Doctor",
                             ownedBy = "Doctor AI",
-                        ) to listOf("https://api.doctor.ai")
+                            endpoint = "https://api.doctor.ai"
+                        )
                     )
                 ),
                 selectModel = { _, _ -> }

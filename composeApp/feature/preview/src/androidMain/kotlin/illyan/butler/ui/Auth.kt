@@ -1,5 +1,8 @@
 package illyan.butler.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -40,7 +43,7 @@ fun SignUpPreview() {
                 ),
                 initialEmail = "illyan@butler.com",
                 initialPassword = "password",
-                signUp = { _, _, _ -> }
+                signUp = { _, _ -> }
             )
         }
     }
@@ -64,12 +67,26 @@ fun SelectHostPreview() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @PreviewLightDark
 @Composable
 fun ApiKeyCredentialListPreview() {
-    ButlerTheme {
-        Surface {
-            ApiKeyCredentialList()
+    SharedTransitionLayout {
+        AnimatedContent(true) {
+            if (it) {
+                ButlerTheme {
+                    Surface {
+                        ApiKeyCredentialList(
+                            credentials = emptyList(),
+                            editCredential = {},
+                            deleteCredential = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animationScope = this@AnimatedContent,
+                            createNewCredential = {}
+                        )
+                    }
+                }
+            }
         }
     }
 }

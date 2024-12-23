@@ -41,6 +41,8 @@
     <string name="new_chat_tutorial">Expand the AI model's card to reveal multiple AI providers and select one to start a New Chat! Have fun!</string>
     <string name="create_new_chat">Create new chat</string>
     <string name="delete_chat">Delete chat</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
     <string name="chat_details">Chat details</string>
     <string name="chat_name_is_x">Chat name: %s</string>
     <string name="chat_id_is_x">Chat ID: %s</string>

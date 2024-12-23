@@ -34,4 +34,10 @@ class ApiKeyViewModel(private val hostManager: HostManager) : ViewModel() {
             hostManager.addApiKeyCredential(credential)
         }
     }
+
+    fun deleteApiKeyCredential(apiKeyCredential: ApiKeyCredential) {
+        viewModelScope.launch {
+            hostManager.deleteApiKeyCredential(apiKeyCredential)
+        }
+    }
 }
