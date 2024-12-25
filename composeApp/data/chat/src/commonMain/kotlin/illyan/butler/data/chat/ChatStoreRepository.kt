@@ -3,6 +3,7 @@ package illyan.butler.data.chat
 import illyan.butler.domain.model.DomainChat
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -27,7 +28,7 @@ class ChatStoreRepository(
         userChatStore.clear(ChatKey.Delete.ByUserId(userId))
     }
 
-    override fun getChatFlow(chatId: String, deviceOnly: Boolean): Flow<Pair<DomainChat?, Boolean>> {
+    override fun getChatFlow(chatId: String, deviceOnly: Boolean): Flow<DomainChat?> {
         return chatMutableStore.stream<StoreReadResponse<DomainChat>>(
             StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), !deviceOnly)
         ).map {
@@ -35,11 +36,11 @@ class ChatStoreRepository(
             Napier.d("Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Chat is $data")
-            data to (it is StoreReadResponse.Loading)
+            data
         }
     }
 
-    override fun getUserChatsFlow(userId: String, deviceOnly: Boolean): Flow<Pair<List<DomainChat>?, Boolean>> {
+    override fun getUserChatsFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainChat>> {
         return userChatStore.stream(
             StoreReadRequest.cached(ChatKey.Read.ByUserId(userId), !deviceOnly)
         ).map {
@@ -47,8 +48,8 @@ class ChatStoreRepository(
             Napier.d("Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Chats are $data")
-            data to (it is StoreReadResponse.Loading)
-        }
+            data
+        }.filterNotNull()
     }
 
     @OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)

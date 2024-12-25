@@ -18,6 +18,7 @@ import illyan.butler.data.resource.ResourceDataModule
 import illyan.butler.data.settings.SettingsDataModule
 import illyan.butler.data.user.UserDataModule
 import illyan.butler.di.RepositoryModule
+import illyan.butler.di.coroutines.CoroutineModule
 import illyan.butler.di.datasource.DataSourceModule
 import illyan.butler.error.ErrorManager
 import illyan.butler.generated.resources.Res
@@ -73,7 +74,6 @@ fun main() = application {
             UserDataModule().module
         )
         val coreModules = listOf(
-            ErrorDataModule().module,
             module {
                 singleOf(::ErrorManager)
                 single { getDataStore() }
@@ -83,6 +83,8 @@ fun main() = application {
             DataSourceModule().module
         )
         modules(
+            ErrorDataModule().module,
+            CoroutineModule().module, // Must be after ErrorDataModule
             *coreModules.toTypedArray(),
             *dataModules.toTypedArray(),
             RepositoryModule().module,

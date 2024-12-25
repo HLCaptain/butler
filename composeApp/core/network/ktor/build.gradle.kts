@@ -5,6 +5,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.domain)
@@ -12,7 +14,6 @@ kotlin {
         implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.domain.error)
-        implementation(projects.shared.model)
 
         implementation(libs.ktor.core)
         implementation(libs.ktor.auth)
@@ -25,5 +26,6 @@ kotlin {
 
         implementation(libs.kotlinx.datetime)
         implementation(libs.napier)
+        implementation(libs.openai.client)
     }
 }

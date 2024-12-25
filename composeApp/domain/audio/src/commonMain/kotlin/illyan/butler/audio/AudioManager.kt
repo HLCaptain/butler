@@ -34,19 +34,17 @@ class AudioManager(
         audioRecorder.startRecording()
     }
 
-    suspend fun stopRecording(): String {
+    suspend fun stopRecording(): DomainResource {
         if (audioRecorder == null) throw IllegalStateException("Audio recording is not supported")
         val audioData = audioRecorder.stopRecording()
-        return resourceRepository.upsert(
-            DomainResource(
-                type = Wav.toString(),
-                data = audioData.toWav()
-            )
+        return DomainResource(
+            type = Wav.toString(),
+            data = audioData.toWav()
         )
     }
 
-    suspend fun playAudio(audioId: String) {
-        val resource = resourceRepository.getResourceFlow(audioId).first { !it.second }.first!!
+    suspend fun playAudio(audioId: String, deviceOnly: Boolean) {
+        val resource = resourceRepository.getResourceFlow(audioId, deviceOnly).first()!!
         val audioData = when (resource.type) {
             "audio/wav" -> WAV.decode(resource.data)
             "audio/mp3" -> MP3.decode(resource.data)

@@ -17,6 +17,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -109,8 +110,8 @@ class ChatDetailViewModel(
         if (!audioManager.canRecordAudio) return
         viewModelScope.launch {
             if (state.value.isRecording) {
-                val audioId = audioManager.stopRecording()
-                chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, senderId, audioId) }
+                val audioResource = audioManager.stopRecording()
+                chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, senderId, audioResource = audioResource) }
             } else {
                 audioManager.startRecording()
             }
@@ -128,7 +129,7 @@ class ChatDetailViewModel(
 
     fun playAudio(audioId: String) {
         viewModelScope.launch {
-            audioManager.playAudio(audioId)
+            audioManager.playAudio(audioId, deviceOnly = state.value.chat?.ownerId == authManager.clientId.first())
         }
     }
 

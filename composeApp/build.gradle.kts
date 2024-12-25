@@ -44,6 +44,7 @@ kotlin {
         implementation(projects.composeApp.domain.settings)
 
         implementation(projects.composeApp.di)
+        implementation(projects.composeApp.di.coroutines)
         implementation(projects.composeApp.di.datasource)
         implementation(projects.composeApp.di.repository)
         implementation(projects.composeApp.feature.theme)

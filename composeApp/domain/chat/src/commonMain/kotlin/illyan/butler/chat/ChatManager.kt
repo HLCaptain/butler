@@ -1,45 +1,78 @@
 package illyan.butler.chat
 
 import illyan.butler.auth.AuthManager
+import illyan.butler.core.network.ktor.http.di.provideOpenAIClient
+import illyan.butler.core.network.mapping.toDomainModel
+import illyan.butler.core.network.mapping.toNetworkModel
 import illyan.butler.data.chat.ChatRepository
+import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.message.MessageRepository
 import illyan.butler.data.resource.ResourceRepository
+import illyan.butler.di.KoinNames
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
+import illyan.butler.shared.llm.LlmService
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Single
 class ChatManager(
+    @Named(KoinNames.CoroutineScopeIO) private val coroutineScopeIO: CoroutineScope,
     private val authManager: AuthManager,
     private val chatRepository: ChatRepository,
     private val messageRepository: MessageRepository,
     private val resourceRepository: ResourceRepository,
+    private val credentialRepository: CredentialRepository
 ) {
     val userChats = authManager.signedInUserId.flatMapLatest { loadChats(it, false) }
     val deviceChats = authManager.clientId.flatMapLatest { loadChats(it, true) }
     private val userMessages = authManager.signedInUserId.flatMapLatest { loadMessages(it, false) }
     private val deviceMessages = authManager.clientId.flatMapLatest { loadMessages(it, true) }
 
+    private val llmService = LlmService(
+        getResource = { resourceRepository.getResourceFlow(it, true).filterNotNull().first().toNetworkModel() },
+        createResource = { chatId, modelId, resource ->
+            val id = resourceRepository.upsert(resource.toDomainModel(), true)
+            sendMessageWithResourceIds(chatId, modelId, resourceIds = listOf(id))
+            resource.copy(id = id)
+        },
+        upsertMessage = { message ->
+            val id = sendMessageWithResourceIds(message.chatId, message.senderId, message.message, message.resourceIds)
+            message.copy(id = id)
+        },
+        getOpenAIClient = { endpoint ->
+            val credential = try {
+                credentialRepository.apiKeyCredentials.first()?.first { it.providerUrl == endpoint }!!
+            } catch (e: NoSuchElementException) {
+                Napier.e("No API key credential found for endpoint $endpoint", e)
+                throw e
+            }
+            provideOpenAIClient(credential)
+        }
+    )
+
     private val userResources = userMessages.flatMapLatest { messages ->
         // map to Flow<Map<String?, List<DomainResource?>>>
         combine(messages.filter { it.resourceIds.isNotEmpty() }.groupBy { it.id }.mapValues { (_, messages) ->
             combine(messages.map { message ->
-                combine(message.resourceIds.map { loadResource(it) }) { it.toList() }
+                combine(message.resourceIds.map { loadResource(it, false) }) { it.toList() }
             }) { flows -> flows.toList().flatten().distinctBy { it?.id } }
         }.map { (key, value) -> value.map { key to it } }) { resources ->
             resources.toList().toMap()
@@ -50,7 +83,7 @@ class ChatManager(
         // map to Flow<Map<String?, List<DomainResource?>>>
         combine(messages.filter { it.resourceIds.isNotEmpty() }.groupBy { it.id }.mapValues { (_, messages) ->
             combine(messages.map { message ->
-                combine(message.resourceIds.map { loadResource(it) }) { it.toList() }
+                combine(message.resourceIds.map { loadResource(it, true) }) { it.toList() }
             }) { flows -> flows.toList().flatten().distinctBy { it?.id } }
         }.map { (key, value) -> value.map { key to it } }) { resources ->
             resources.toList().toMap()
@@ -63,7 +96,7 @@ class ChatManager(
             return flowOf(emptyList())
         }
         Napier.v { "Loading chats for user $userId" }
-        return chatRepository.getUserChatsFlow(userId, deviceOnly).filterNot { it.second }.map { it.first ?: emptyList() }
+        return chatRepository.getUserChatsFlow(userId, deviceOnly)
     }
 
     private fun loadMessages(userId: String?, deviceOnly: Boolean): Flow<List<DomainMessage>> {
@@ -72,11 +105,11 @@ class ChatManager(
             return flowOf(emptyList())
         }
         Napier.v { "Loading messages for user $userId" }
-        return messageRepository.getUserMessagesFlow(userId, deviceOnly).filterNot { it.second }.map { it.first ?: emptyList() }
+        return messageRepository.getUserMessagesFlow(userId, deviceOnly)
     }
 
-    private fun loadResource(resourceId: String): Flow<DomainResource?> {
-        return resourceRepository.getResourceFlow(resourceId).filterNot { it.second }.map { it.first }
+    private fun loadResource(resourceId: String, deviceOnly: Boolean): Flow<DomainResource?> {
+        return resourceRepository.getResourceFlow(resourceId, deviceOnly)
     }
 
     fun getChatFlow(chatId: String) = combine(userChats, deviceChats) { user, device -> (user + device).firstOrNull { it.id == chatId } }
@@ -97,6 +130,14 @@ class ChatManager(
         )
     }
 
+    private suspend fun answerOpenAIChat(chatId: String) {
+        val previousChats = chatRepository.getUserChatsFlow(authManager.clientId.filterNotNull().first(), true).first()
+        llmService.answerChat(
+            chat = previousChats.first { it.id == chatId }.toNetworkModel(),
+            previousChats = previousChats.filter { it.id != chatId }.map { it.toNetworkModel() }
+        )
+    }
+
     suspend fun nameChat(
         chatId: String,
         name: String,
@@ -106,37 +147,74 @@ class ChatManager(
         }
     }
 
-    suspend fun sendMessage(
+    suspend fun sendMessageWithResources(
         chatId: String,
         senderId: String,
         message: String? = null,
-        resourceIds: List<String> = emptyList(),
-    ) {
-        messageRepository.upsert(
+        resources: List<DomainResource>,
+    ): String {
+        resources.forEach { resource ->
+            resourceRepository.upsert(resource, deviceOnly = authManager.clientId.first() == senderId)
+        }
+        return messageRepository.upsert(
             DomainMessage(
                 chatId = chatId,
                 senderId = senderId,
                 message = message,
-                resourceIds = resourceIds
+                resourceIds = resources.map { it.id!! }
             ),
             deviceOnly = authManager.clientId.first() == senderId
-        )
+        ).also {
+            if (authManager.clientId.first() == senderId) {
+                coroutineScopeIO.launch {
+                    answerOpenAIChat(chatId)
+                }
+            }
+        }
     }
 
-    suspend fun sendAudioMessage(chatId: String, audioId: String, senderId: String) {
-        sendMessage(chatId, senderId, resourceIds = listOf(audioId))
+    suspend fun sendMessage(
+        chatId: String,
+        senderId: String,
+        message: String,
+    ) = sendMessageWithResourceIds(chatId, senderId, message, emptyList())
+
+    suspend fun sendMessageWithResourceIds(
+        chatId: String,
+        senderId: String,
+        message: String? = null,
+        resourceIds: List<String>,
+    ) = messageRepository.upsert(
+        DomainMessage(
+            chatId = chatId,
+            senderId = senderId,
+            message = message,
+            resourceIds = resourceIds
+        ),
+        deviceOnly = authManager.clientId.first() == senderId
+    ).also {
+        if (authManager.clientId.first() == senderId) {
+            coroutineScopeIO.launch {
+                answerOpenAIChat(chatId)
+            }
+        }
     }
 
-    suspend fun sendImageMessage(chatId: String, imagePath: String, senderId: String) {
+    suspend fun sendAudioMessage(chatId: String, senderId: String, audioResource: DomainResource): String {
+        return sendMessageWithResources(chatId, senderId, resources = listOf(audioResource))
+    }
+
+    suspend fun sendImageMessage(chatId: String, imagePath: String, senderId: String): String {
         val path = Path(imagePath)
         val imageContent = SystemFileSystem.source(path).buffered().readByteArray()
         val imageId = resourceRepository.upsert(
             DomainResource(
                 type = "image/${path.name.substringAfterLast('.').lowercase()}",
                 data = imageContent
-            )
+            ),
+            deviceOnly = authManager.clientId.first() == senderId
         )
-        sendMessage(chatId, senderId, resourceIds = listOf(imageId))
+        return sendMessageWithResourceIds(chatId, senderId, resourceIds = listOf(imageId))
     }
 
     suspend fun deleteChat(chatId: String) {

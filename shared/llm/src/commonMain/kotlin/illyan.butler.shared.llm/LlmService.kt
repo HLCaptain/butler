@@ -24,13 +24,14 @@ import kotlinx.io.asSource
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-class LlmService {
+class LlmService(
+    private val getResource: suspend (resourceId: String) -> ResourceDto,
+    private val createResource: suspend (chatId: String, modelId: String, resource: ResourceDto) -> ResourceDto,
+    private val upsertMessage: suspend (message: MessageDto) -> MessageDto,
+    private val getOpenAIClient: suspend (endpoint: String) -> OpenAI
+) {
     suspend fun answerChat(
         chat: ChatDto,
-        getResource: suspend (resourceId: String) -> ResourceDto,
-        createResource: suspend (modelId: String, resource: ResourceDto) -> ResourceDto,
-        upsertMessage: suspend (message: MessageDto) -> MessageDto,
-        getClient: suspend (endpoint: String) -> OpenAI,
         previousChats: List<ChatDto> = emptyList(),
         regenerateMessage: MessageDto? = null
     ) {
@@ -46,8 +47,8 @@ class LlmService {
         val resources = messages.map { message -> message.resourceIds.map { getResource(it) } }.flatten()
         val conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId, resources)
         if (lastMessage.senderId != chat.ownerId) {
-            generateSummaryForChatIfNeeded(chat, conversation, getClient)
-            generateNewChatNameIfNeeded(chat, conversation, getClient)
+            generateSummaryForChatIfNeeded(chat, conversation)
+            generateNewChatNameIfNeeded(chat, conversation)
             return
         }
 
@@ -55,18 +56,16 @@ class LlmService {
             // Last message is simple text
             // Answer with simple text
             Napier.v("Last message is simple text, answering with text")
-            val answer = answerChatWithTextAndContext(chat, conversation, previousChats, getClient)
+            val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
             upsertMessage(generateNewMessage(regenerateMessage, chat, answer))
             val newConversation = conversation + listOf(MessageDto(senderId = chatModelId, message = answer, chatId = chat.id!!)).toConversation(chat.ownerId)
             generateNewChatNameIfNeeded(
                 chat,
                 newConversation,
-                getClient
             )
             generateSummaryForChatIfNeeded(
                 chat,
                 newConversation,
-                getClient
             )
         } else {
             // Describe image
@@ -76,23 +75,21 @@ class LlmService {
                 when (resource.type.split("/").first()) {
                     "image" -> {
                         Napier.v("Resource is an image, answering with text")
-                        val answer = answerChatWithTextAndContext(chat, conversation, previousChats, getClient)
+                        val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
                         upsertMessage(generateNewMessage(regenerateMessage, chat, answer))
                         val newConversation = conversation + listOf(MessageDto(senderId = chatModelId, message = answer, chatId = chat.id!!)).toConversation(chat.ownerId)
                         generateNewChatNameIfNeeded(
                             chat,
                             newConversation,
-                            getClient
                         )
                         generateSummaryForChatIfNeeded(
                             chat,
                             newConversation,
-                            getClient
                         )
                     }
                     "audio" -> {
                         Napier.v("Resource is audio, transcribing and answering with text and audio")
-                        val speechToTextContent = transcribeAudio(chat, resource, getClient)
+                        val speechToTextContent = transcribeAudio(chat, resource)
                         val modifiedConversation = conversation.toMutableList()
                         val lastMessageContent = ((modifiedConversation.lastOrNull()?.content?.let { "$it\n\n" } ?: "") + speechToTextContent).trim('\n', ' ')
                         modifiedConversation.removeLast()
@@ -105,11 +102,11 @@ class LlmService {
                         )
                         // Append transcription to last message
                         upsertMessage(lastMessage.copy(message = lastMessageContent))
-                        val answer = answerChatWithTextAndContext(chat, modifiedConversation, previousChats, getClient)
-                        val audioResource = generateSpeechFromText(chat, answer, getClient)
+                        val answer = answerChatWithTextAndContext(chat, modifiedConversation, previousChats)
+                        val audioResource = generateSpeechFromText(chat, answer)
                         // Upload resource
                         // Send message with resourceId
-                        val newResourceId = createResource(chatModelId, audioResource).id!!
+                        val newResourceId = createResource(chat.id!!, chatModelId, audioResource).id!!
                         upsertMessage(generateNewMessage(regenerateMessage, chat, answer, listOf(newResourceId)))
                         val additionalConversation = listOf(
                             MessageDto(
@@ -122,12 +119,10 @@ class LlmService {
                         generateNewChatNameIfNeeded(
                             chat,
                             modifiedConversation + additionalConversation,
-                            getClient
                         )
                         generateSummaryForChatIfNeeded(
                             chat,
                             modifiedConversation + additionalConversation,
-                            getClient
                         )
                     }
                     else -> Napier.v { "Resource type ${resource.type} not supported" }
@@ -153,12 +148,11 @@ class LlmService {
     private suspend fun generateSummaryForChatIfNeeded(
         chat: ChatDto,
         conversation: List<ChatMessage>,
-        getClient: suspend (endpoint: String) -> OpenAI
     ): String {
         if (!chat.summary.isNullOrBlank()) return chat.summary!!
         val newChatSummaryPrompt = "\n\nPlease provide a summary of this conversation. No more than 200 characters. ANSWER WITH ONLY THE SUMMARY, NOTHING ELSE."
         val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatSummaryPrompt))
-        return answerChatWithText(chat.chatCompletionModel!!.second, chat.chatCompletionModel!!.first, newConversation, getClient)
+        return answerChatWithText(chat.chatCompletionModel!!.second, chat.chatCompletionModel!!.first, newConversation)
     }
 
     /**
@@ -167,22 +161,20 @@ class LlmService {
     private suspend fun generateNewChatNameIfNeeded(
         chat: ChatDto,
         conversation: List<ChatMessage>,
-        getClient: suspend (endpoint: String) -> OpenAI
     ): String {
         if (!chat.name.isNullOrBlank()) return chat.name!!
         val newChatNamePrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 60 characters. ANSWER WITH ONLY THE NAME, NOTHING ELSE."
         val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatNamePrompt))
-        return answerChatWithText(chat.chatCompletionModel!!.second, chat.chatCompletionModel!!.first, newConversation, getClient)
+        return answerChatWithText(chat.chatCompletionModel!!.second, chat.chatCompletionModel!!.first, newConversation)
     }
 
     private suspend fun answerChatWithTextAndContext(
         chat: ChatDto,
         conversation: List<ChatMessage>,
         previousChats: List<ChatDto>,
-        getClient: suspend (endpoint: String) -> OpenAI
     ): String {
         val chatSummaries = previousChats.mapNotNull { it.summary }
-        val openAI = getClient(chat.chatCompletionModel!!.first)
+        val openAI = getOpenAIClient(chat.chatCompletionModel!!.first)
         return openAI.chatCompletion(
             request = ChatCompletionRequest(
                 model = ModelId(chat.chatCompletionModel!!.second),
@@ -198,9 +190,8 @@ class LlmService {
         modelId: String,
         endpoint: String,
         conversation: List<ChatMessage>,
-        getClient: suspend (endpoint: String) -> OpenAI,
     ): String {
-        return getClient(endpoint).chatCompletion(
+        return getOpenAIClient(endpoint).chatCompletion(
             request = ChatCompletionRequest(
                 model = ModelId(modelId),
                 messages = conversation
@@ -211,12 +202,11 @@ class LlmService {
     private suspend fun transcribeAudio(
         chat: ChatDto,
         resource: ResourceDto,
-        getClient: suspend (endpoint: String) -> OpenAI
     ): String {
         // get chat history with chatId
         // transcribe audio with whisper or other speech to text model
         // answer the transcribed text
-        val openAI = getClient(chat.audioTranscriptionModel!!.first)
+        val openAI = getOpenAIClient(chat.audioTranscriptionModel!!.first)
         val type = resource.type.split("/").last()
         // Create tmp file for audio
         val audioFilePath = kotlin.io.path.createTempFile("${resource.id}_audio_file", ".$type")
@@ -233,11 +223,10 @@ class LlmService {
     private suspend fun generateSpeechFromText(
         chat: ChatDto,
         text: String,
-        getClient: suspend (endpoint: String) -> OpenAI
     ): ResourceDto {
         // generate audio from text
         // return audio resource
-        val openAI = getClient(chat.audioSpeechModel!!.first)
+        val openAI = getOpenAIClient(chat.audioSpeechModel!!.first)
         return ResourceDto(
             type = "audio/mp3",
             data = openAI.speech(

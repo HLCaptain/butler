@@ -13,8 +13,6 @@ import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @Single
 class ResourceMutableStoreBuilder(
@@ -26,7 +24,7 @@ class ResourceMutableStoreBuilder(
     val store = provideResourceMutableStore(resourceLocalDataSource, resourceNetworkDataSource, dataHistoryLocalDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
+@OptIn(ExperimentalStoreApi::class)
 fun provideResourceMutableStore(
     resourceLocalDataSource: ResourceLocalDataSource,
     resourceNetworkDataSource: ResourceNetworkDataSource,
@@ -43,8 +41,7 @@ fun provideResourceMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is ResourceKey.Write.Create -> resourceLocalDataSource.upsertResource(local.copy(id = Uuid.random().toString()))
-                is ResourceKey.Write.Upsert -> resourceLocalDataSource.upsertResource(local)
+                ResourceKey.Write.Create, ResourceKey.Write.Upsert, ResourceKey.Write.DeviceOnly -> resourceLocalDataSource.upsertResource(local)
                 is ResourceKey.Read.ByResourceId -> resourceLocalDataSource.upsertResource(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
@@ -70,6 +67,7 @@ fun provideResourceMutableStore(
                     resourceLocalDataSource.replaceResource(it.id!!, it)
                 }
                 is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(output)
+                is ResourceKey.Write.DeviceOnly -> output // Don't sync to network
             }
             UpdaterResult.Success.Typed(newResource)
         },

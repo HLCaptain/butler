@@ -2,8 +2,8 @@ package illyan.butler.data.message
 
 import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.DomainMessage
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
@@ -16,25 +16,25 @@ class MessageMemoryRepository(
     private val chatMessages = mutableMapOf<String, List<DomainMessage>>()
     private val userMessages = mutableMapOf<String, List<DomainMessage>>()
 
-    private val messageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<DomainMessage?, Boolean>>>()
-    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): StateFlow<Pair<DomainMessage?, Boolean>> {
+    private val messageStateFlows = mutableMapOf<String, MutableStateFlow<DomainMessage?>>()
+    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): Flow<DomainMessage?> {
         return messageStateFlows.getOrPut(messageId) {
-            MutableStateFlow(messages[messageId] to false)
+            MutableStateFlow(messages[messageId])
         }
     }
 
-    private val chatMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
+    private val chatMessageStateFlows = mutableMapOf<String, MutableStateFlow<List<DomainMessage>>>()
 
-    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
         return chatMessageStateFlows.getOrPut(chatId) {
-            MutableStateFlow(chatMessages[chatId] to false)
+            MutableStateFlow(chatMessages[chatId]!!)
         }
     }
 
-    private val userMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    private val userMessageStateFlows = mutableMapOf<String, MutableStateFlow<List<DomainMessage>>>()
+    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
         return userMessageStateFlows.getOrPut(userId) {
-            MutableStateFlow(userMessages[userId] to false)
+            MutableStateFlow(userMessages.getOrPut(userId) { emptyList() })
         }
     }
 
@@ -44,14 +44,14 @@ class MessageMemoryRepository(
         } else message
 
         messages[newMessage.id!!] = newMessage
-        messageStateFlows[newMessage.id]?.update { newMessage to false }
+        messageStateFlows[newMessage.id]?.update { newMessage }
         val userId = if (deviceOnly) {
             appRepository.appSettings.first()!!.clientId
         } else {
             appRepository.currentSignedInUserId.first()!!
         }
         userMessages[userId] = userMessages[userId]?.plus(newMessage) ?: listOf(newMessage)
-        userMessageStateFlows[userId]?.update { userMessages[userId] to false }
+        userMessageStateFlows[userId]?.update { userMessages[userId]!! }
 
         return newMessage.id!!
     }

@@ -3,6 +3,7 @@ package illyan.butler.data.message
 import illyan.butler.domain.model.DomainMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -25,7 +26,7 @@ class MessageStoreRepository(
     private val userMessageStore = userMessageStoreBuilder.store
 
     @OptIn(ExperimentalStoreApi::class)
-    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): Flow<Pair<DomainMessage?, Boolean>> {
+    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): Flow<DomainMessage?> {
         return messageMutableStore.stream<StoreReadResponse<DomainMessage>>(
             StoreReadRequest.cached(MessageKey.Read.ByMessageId(messageId), !deviceOnly)
         ).map {
@@ -33,11 +34,11 @@ class MessageStoreRepository(
             Napier.d("Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Message: $data")
-            data to (it is StoreReadResponse.Loading)
+            data
         }
     }
 
-    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): Flow<Pair<List<DomainMessage>?, Boolean>> {
+    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
         return chatMessageMutableStore.stream(
             StoreReadRequest.cached(MessageKey.Read.ByChatId(chatId), !deviceOnly)
         ).map {
@@ -45,8 +46,8 @@ class MessageStoreRepository(
             Napier.d("Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
-            data to (it is StoreReadResponse.Loading)
-        }
+            data
+        }.filterNotNull()
     }
 
     @OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
@@ -59,7 +60,7 @@ class MessageStoreRepository(
         ) as? StoreWriteResponse.Success.Typed<DomainMessage>)?.value?.id!!
     }
 
-    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): Flow<Pair<List<DomainMessage>?, Boolean>> {
+    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
         return userMessageStore.stream(
             StoreReadRequest.cached(MessageKey.Read.ByUserId(userId), !deviceOnly)
         ).map {
@@ -67,7 +68,7 @@ class MessageStoreRepository(
             Napier.d("Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
-            data to (it is StoreReadResponse.Loading)
-        }
+            data
+        }.filterNotNull()
     }
 }

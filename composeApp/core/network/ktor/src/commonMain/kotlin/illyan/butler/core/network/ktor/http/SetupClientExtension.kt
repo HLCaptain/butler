@@ -8,6 +8,7 @@ import illyan.butler.shared.model.response.UserTokensResponse
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIOEngineConfig
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.ServerResponseException
@@ -29,6 +30,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
+import io.ktor.network.tls.CIOCipherSuites
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +40,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
+
+fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
+    engine {
+        https
+        https {
+            serverName = null
+            cipherSuites = CIOCipherSuites.SupportedSuites
+        }
+    }
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 fun HttpClientConfig<*>.setupClient(

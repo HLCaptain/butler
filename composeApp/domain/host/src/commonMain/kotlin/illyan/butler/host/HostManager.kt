@@ -1,8 +1,7 @@
 package illyan.butler.host
 
-import com.aallam.openai.client.OpenAI
-import com.aallam.openai.client.OpenAIHost
 import illyan.butler.core.network.datasource.HostNetworkDataSource
+import illyan.butler.core.network.ktor.http.di.provideOpenAIClient
 import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.host.HostRepository
 import illyan.butler.domain.model.ApiKeyCredential
@@ -49,10 +48,7 @@ class HostManager(
     suspend fun testApiKeyCredentials(credential: ApiKeyCredential): List<DomainModel> {
         return try {
             withTimeout(5000) {
-                OpenAI(
-                    token = credential.apiKey,
-                    host = OpenAIHost(baseUrl = credential.providerUrl)
-                ).models().map {
+                provideOpenAIClient(credential).models().map {
                     DomainModel(
                         name = null,
                         id = it.id.id,
