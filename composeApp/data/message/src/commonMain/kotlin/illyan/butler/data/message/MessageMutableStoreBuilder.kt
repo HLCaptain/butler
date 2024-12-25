@@ -13,8 +13,6 @@ import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @Single
 class MessageMutableStoreBuilder(
@@ -26,7 +24,7 @@ class MessageMutableStoreBuilder(
     val store = provideMessageMutableStore(messageLocalDataSource, messageNetworkDataSource, dataHistoryLocalDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
+@OptIn(ExperimentalStoreApi::class)
 fun provideMessageMutableStore(
     messageLocalDataSource: MessageLocalDataSource,
     messageNetworkDataSource: MessageNetworkDataSource,
@@ -43,8 +41,7 @@ fun provideMessageMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is MessageKey.Write.Create -> messageLocalDataSource.upsertMessage(local.copy(id = Uuid.random().toString()))
-                is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessage(local)
+                MessageKey.Write.Create, MessageKey.Write.Upsert, MessageKey.Write.DeviceOnly -> messageLocalDataSource.upsertMessage(local)
                 is MessageKey.Read.ByMessageId -> messageLocalDataSource.upsertMessage(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
@@ -67,6 +64,7 @@ fun provideMessageMutableStore(
                     messageLocalDataSource.replaceMessage(it.id!!, it)
                 }
                 is MessageKey.Write.Upsert -> messageNetworkDataSource.upsert(output)
+                is MessageKey.Write.DeviceOnly -> output // Do not upload device-only messages
             }
             UpdaterResult.Success.Typed(newMessage)
         },

@@ -10,6 +10,8 @@ import org.koin.core.annotation.Single
 class ModelManager(
     private val modelRepository: ModelRepository
 ) {
+    fun getAvailableModelsFromServer() = modelRepository.getAvailableModelsFromServer()
+    fun getAvailableModelsFromProviders() = modelRepository.getAvailableModelsFromProviders()
     fun getAvailableModels(): Flow<List<DomainModel>> {
         return combine(
             modelRepository.getAvailableModelsFromServer(),

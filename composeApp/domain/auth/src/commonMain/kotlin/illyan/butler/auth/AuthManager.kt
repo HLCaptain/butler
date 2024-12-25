@@ -30,11 +30,10 @@ class AuthManager(
     private val chatLocalDataSource: ChatLocalDataSource,
     private val messageLocalDataSource: MessageLocalDataSource,
 ) {
+    val clientId = appRepository.appSettings.map { it?.clientId }
     val isUserSignedIn = appRepository.isUserSignedIn
     val signedInUserId = appRepository.currentSignedInUserId
-    val signedInUser = signedInUserId.map {
-        it?.let { userRepository.getUser(it).first() }
-    }
+    val signedInUser = signedInUserId.map { it?.let { userRepository.getUser(it).first() } }
     val signedInUserPhotoUrl = signedInUser.map { it?.photoUrl }
     val signedInUserDisplayName = signedInUser.map { it?.displayName }
     val signedInUserPhoneNumber = signedInUser.map { it?.phone }

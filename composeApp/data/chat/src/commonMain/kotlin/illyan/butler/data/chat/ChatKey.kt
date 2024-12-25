@@ -9,6 +9,7 @@ sealed class ChatKey {
     sealed class Write : ChatKey() {
         data object Create : Write()
         data object Upsert : Write()
+        data object DeviceOnly : Write()
     }
 
     sealed class Delete : ChatKey() {

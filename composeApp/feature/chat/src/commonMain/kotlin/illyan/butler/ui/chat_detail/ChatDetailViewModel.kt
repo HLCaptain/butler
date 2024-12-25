@@ -38,6 +38,8 @@ class ChatDetailViewModel(
         .flatMapLatest { chatId -> chatId?.let { chatManager.getChatFlow(chatId) } ?: flowOf(null) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val isChatDeviceOnly = combine(chat, authManager.clientId) { chat, client -> chat?.ownerId == client }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
         .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(emptyList()) }
@@ -62,18 +64,15 @@ class ChatDetailViewModel(
     val state = combine(
         chat,
         messages,
-        authManager.signedInUserId,
         audioManager.isRecording,
         audioManager.playingAudioId,
         resources,
     ) { flows ->
         val chat = flows[0] as? DomainChat
         val messages = flows[1] as? List<DomainMessage>
-        val userId = flows[2] as? String
-//        Napier.v { "User ID: $userId" }
-        val recording = flows[3] as? Boolean ?: false
-        val playing = flows[4] as? String
-        val resources = flows[5] as? List<DomainResource>
+        val recording = flows[2] as? Boolean ?: false
+        val playing = flows[3] as? String
+        val resources = flows[4] as? List<DomainResource>
 //        Napier.v("Gallery permission: $galleryPermission")
         Napier.v("Resources: $resources")
         val sounds = resources?.filter { it.type.startsWith("audio") }
@@ -85,7 +84,6 @@ class ChatDetailViewModel(
         ChatDetailState(
             chat = chat,
             messages = messages,
-            userId = userId,
             isRecording = recording,
             playingAudio = playing,
             sounds = sounds,
@@ -103,26 +101,26 @@ class ChatDetailViewModel(
 
     fun sendMessage(message: String) {
         viewModelScope.launch {
-            chat.value?.id?.let { chatManager.sendMessage(it, message) }
+            chat.value?.let { chatManager.sendMessage(it.id!!, it.ownerId, message) }
         }
     }
 
-    fun toggleRecording() {
+    fun toggleRecording(senderId: String) {
         if (!audioManager.canRecordAudio) return
         viewModelScope.launch {
             if (state.value.isRecording) {
                 val audioId = audioManager.stopRecording()
-                chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, audioId) }
+                chatIdStateFlow.value?.let { chatManager.sendAudioMessage(it, senderId, audioId) }
             } else {
                 audioManager.startRecording()
             }
         }
     }
 
-    fun sendImage(path: String) {
+    fun sendImage(path: String, senderId: String) {
         viewModelScope.launch {
             chatIdStateFlow.value?.let {
-                chatManager.sendImageMessage(it, path)
+                chatManager.sendImageMessage(it, senderId, path)
                 Napier.d("Image sent: $path")
             }
         }

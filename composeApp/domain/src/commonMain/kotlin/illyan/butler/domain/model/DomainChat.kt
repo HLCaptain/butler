@@ -12,4 +12,3 @@ data class DomainChat(
     val audioSpeechModel: Pair<String, String>? = null, // URL to Model ID eg. https://api.openai.com/v1/ to tts-1
     val summary: String? = null
 )
-

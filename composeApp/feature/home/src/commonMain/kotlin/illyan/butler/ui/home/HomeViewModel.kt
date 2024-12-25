@@ -8,6 +8,7 @@ import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.error.ErrorManager
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,21 +33,37 @@ class HomeViewModel(
     private val _appErrors = MutableStateFlow<List<DomainErrorEvent>>(listOf())
 
     val state = combine(
-        authManager.isUserSignedIn,
+        authManager.signedInUserId,
+        authManager.clientId,
         _serverErrors,
         _appErrors,
-        chatManager.userChats
+        chatManager.userChats,
+        chatManager.deviceChats
     ) { flows ->
-        val isUserSignedIn = flows[0] as? Boolean
-        val serverErrors = flows[1] as List<Pair<String, DomainErrorResponse>>
-        val appErrors = flows[2] as List<DomainErrorEvent>
-        val userChats = flows[3] as List<DomainChat>
-        if (isUserSignedIn == null) return@combine HomeState()
+        val signedInUserId = flows[0] as String?
+        val clientId = flows[1] as String?
+        val serverErrors = flows[2] as List<Pair<String, DomainErrorResponse>>
+        val appErrors = flows[3] as List<DomainErrorEvent>
+        val userChats = flows[4] as List<DomainChat>
+        val deviceChats = flows[5] as List<DomainChat>
+        Napier.v {
+            """
+            HomeViewModel:
+            signedInUserId: $signedInUserId
+            clientId: $clientId
+            serverErrors: $serverErrors
+            appErrors: $appErrors
+            userChats: $userChats
+            deviceChats: $deviceChats
+            """.trimIndent()
+        }
         HomeState(
-            isUserSignedIn = isUserSignedIn,
+            signedInUserId = signedInUserId,
+            clientId = clientId,
             serverErrors = serverErrors,
             appErrors = appErrors,
-            userChats = userChats
+            userChats = userChats,
+            deviceChats = deviceChats
         )
     }.stateIn(
         viewModelScope,
@@ -57,7 +74,7 @@ class HomeViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             errorManager.serverErrors.collectLatest { response ->
-                _serverErrors.update { it + (Uuid.random().toString() to  response) }
+                _serverErrors.update { it + (Uuid.random().toString() to response) }
             }
         }
         viewModelScope.launch(Dispatchers.IO) {

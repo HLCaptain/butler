@@ -3,6 +3,7 @@ package illyan.butler.ui.apikey
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -10,8 +11,10 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -37,6 +40,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Delete
@@ -47,13 +51,17 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,7 +92,9 @@ import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.delete
 import illyan.butler.generated.resources.edit
 import illyan.butler.generated.resources.name
+import illyan.butler.generated.resources.next
 import illyan.butler.generated.resources.provider_url
+import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.save
 import illyan.butler.generated.resources.test
 import illyan.butler.generated.resources.unknown
@@ -109,32 +119,40 @@ data object ApiKeyCredentialList
 @Composable
 fun ApiKey(
     modifier: Modifier = Modifier,
+    onBack: () -> Unit,
+    onNext: () -> Unit
 ) {
     val viewModel = koinViewModel<ApiKeyViewModel>()
     val apiKeyCredentials by viewModel.apiKeyCredentials.collectAsState()
     val models by viewModel.modelsForCredential.collectAsState()
-    ApiKeyCredential(
+    ApiKeyScaffold(
         modifier = modifier,
         credentials = apiKeyCredentials,
         models = models.toMap(),
         createNewCredential = viewModel::addApiKeyCredential,
         testApiKeyCredential = viewModel::testEndpointForCredentials,
-        deleteCredential = viewModel::deleteApiKeyCredential
+        deleteCredential = viewModel::deleteApiKeyCredential,
+        onBack = onBack,
+        onNext = onNext
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ApiKeyCredential(
+fun ApiKeyScaffold(
     modifier: Modifier = Modifier,
     credentials: List<ApiKeyCredential>?,
     models: Map<ApiKeyCredential, List<DomainModel>>,
     createNewCredential: (ApiKeyCredential) -> Unit = {},
     testApiKeyCredential: (ApiKeyCredential) -> Unit = {},
-    deleteCredential: (ApiKeyCredential) -> Unit = {}
+    deleteCredential: (ApiKeyCredential) -> Unit = {},
+    onBack: () -> Unit,
+    onNext: () -> Unit
 ) {
     val animationTime = 500
-    SharedTransitionLayout {
+    SharedTransitionLayout(
+        modifier = Modifier
+    ) {
         val navController = rememberNavController()
         NavHost(
             modifier = modifier,
@@ -164,18 +182,60 @@ fun ApiKeyCredential(
             }
         ) {
             composable<ApiKeyCredentialList> {
-                ApiKeyCredentialList(
-                    credentials = credentials,
-                    createNewCredential = { navController.navigate(NewApiKeyCredential) },
-                    editCredential = { index ->
-                        credentials?.getOrNull(index)?.let {
-                            navController.navigate(ApiKeyCredentialEditItem(it.name, it.providerUrl, it.apiKey, index))
-                        }
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text(text = stringResource(Res.string.add_credentials)) },
+                            navigationIcon = {
+                                IconButton(onClick = onBack) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = null
+                                    )
+                                }
+                            }
+                        )
                     },
-                    deleteCredential = deleteCredential,
-                    sharedTransitionScope = this@SharedTransitionLayout,
-                    animationScope = this@composable
-                )
+                    floatingActionButton = {
+                        AnimatedVisibility(
+                            visible = credentials?.isNotEmpty() == true,
+                            enter = expandVertically(expandFrom = Alignment.Bottom),
+                            exit = shrinkVertically(shrinkTowards = Alignment.Bottom)
+                        ) {
+                            ButlerMediumSolidButton(
+                                onClick = onNext,
+                                text = { Text(text = stringResource(Res.string.next)) },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+                    ApiKeyCredentialList(
+                        modifier = Modifier.padding(innerPadding),
+                        credentials = credentials,
+                        createNewCredential = { navController.navigate(NewApiKeyCredential) },
+                        editCredential = { index ->
+                            credentials?.getOrNull(index)?.let {
+                                navController.navigate(
+                                    ApiKeyCredentialEditItem(
+                                        it.name,
+                                        it.providerUrl,
+                                        it.apiKey,
+                                        index
+                                    )
+                                )
+                            }
+                        },
+                        deleteCredential = deleteCredential,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animationScope = this@composable
+                    )
+                }
             }
             composable<ApiKeyCredentialEditItem> {
                 val (item, index) = remember(credentials) {
@@ -246,7 +306,8 @@ fun ApiKeyCredentialList(
     ) {
         item("new_api_key") {
             NewApiKeyCredentialGridItem(
-                modifier = Modifier.animateItem().sizeIn(minWidth = minCellSize, minHeight = minCellSize),
+                modifier = Modifier.animateItem()
+                    .sizeIn(minWidth = minCellSize, minHeight = minCellSize),
                 createNewCredential = createNewCredential,
                 sharedTransitionScope = sharedTransitionScope,
                 animationScope = animationScope
@@ -258,14 +319,18 @@ fun ApiKeyCredentialList(
                 span = { GridItemSpan(currentLineSpan = this.maxCurrentLineSpan) }
             ) {
                 NoApiKeyCredentialGridItem(
-                    modifier = Modifier.animateItem().sizeIn(minWidth = minCellSize, minHeight = minCellSize),
+                    modifier = Modifier.animateItem()
+                        .sizeIn(minWidth = minCellSize, minHeight = minCellSize),
                     lazyGridState = lazyGridState
                 )
             }
         } else {
-            itemsIndexed(credentials.distinctBy { it.providerUrl }, key = { _, item -> item.providerUrl }) { index, item  ->
+            itemsIndexed(
+                credentials.distinctBy { it.providerUrl },
+                key = { _, item -> item.providerUrl }) { index, item ->
                 ApiKeyCredentialGridItem(
-                    modifier = Modifier.animateItem().sizeIn(minWidth = minCellSize, minHeight = minCellSize),
+                    modifier = Modifier.animateItem()
+                        .sizeIn(minWidth = minCellSize, minHeight = minCellSize),
                     item = item,
                     key = index,
                     editItem = { editCredential(index) },
@@ -286,7 +351,10 @@ fun NoApiKeyCredentialGridItem(
     AnimatedContent(
         targetState = lazyGridState.layoutInfo.maxSpan > 1,
         transitionSpec = {
-            val slideSpec = spring<IntOffset>(stiffness = Spring.StiffnessMediumLow, dampingRatio = (Spring.DampingRatioMediumBouncy + Spring.DampingRatioLowBouncy) / 2)
+            val slideSpec = spring<IntOffset>(
+                stiffness = Spring.StiffnessMediumLow,
+                dampingRatio = (Spring.DampingRatioMediumBouncy + Spring.DampingRatioLowBouncy) / 2
+            )
             if (targetState) {
                 // Multiple spans in a row, arrow pointing to start
                 slideIntoContainer(
@@ -419,22 +487,37 @@ fun ApiKeyCredentialGridItem(
             modifier = modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 32.dp),
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    top = 16.dp,
+                    bottom = 16.dp,
+                    end = 32.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                Text(
+                    text = stringResource(Res.string.name),
+                    style = MaterialTheme.typography.labelMedium
+                )
                 Text(
                     modifier = Modifier.sharedElement(
                         state = rememberSharedContentState("api_key_name_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
-                    text = item.name.takeIf { !it.isNullOrBlank() } ?: stringResource(Res.string.unknown),
+                    text = item.name.takeIf { !it.isNullOrBlank() }
+                        ?: stringResource(Res.string.unknown),
+                )
+                Text(
+                    text = stringResource(Res.string.provider_url),
+                    style = MaterialTheme.typography.labelMedium
                 )
                 Text(
                     modifier = Modifier.sharedElement(
                         state = rememberSharedContentState("api_key_provider_url_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
-                    text = item.providerUrl.takeIf { it.isNotBlank() } ?: stringResource(Res.string.unknown),
+                    text = item.providerUrl.takeIf { it.isNotBlank() }
+                        ?: stringResource(Res.string.unknown),
                 )
             }
             ExposedDropdownMenuBox(
@@ -632,6 +715,20 @@ fun NewApiKeyCredential(
     var name by rememberSaveable { mutableStateOf("") }
     var providerUrl by rememberSaveable { mutableStateOf("") }
     var apiKey by rememberSaveable { mutableStateOf("") }
+    var apiKeyFieldBlank by rememberSaveable { mutableStateOf(false) }
+    var providerUrlFieldBlank by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(providerUrl) {
+        if (providerUrlFieldBlank && providerUrl.isNotBlank()) {
+            providerUrlFieldBlank = false
+        }
+    }
+
+    LaunchedEffect(apiKey) {
+        if (apiKeyFieldBlank && apiKey.isNotBlank()) {
+            apiKeyFieldBlank = false
+        }
+    }
 
     ButlerCard(
         modifier = modifier.sharedBounds(
@@ -655,6 +752,8 @@ fun NewApiKeyCredential(
                     name = name,
                     providerUrl = providerUrl,
                     apiKey = apiKey,
+                    showApiKeyError = apiKeyFieldBlank,
+                    showProviderUrlError = providerUrlFieldBlank,
                     onNameChanged = { name = it },
                     onProviderUrlChanged = { providerUrl = it },
                     onApiKeyChanged = { apiKey = it },
@@ -700,6 +799,9 @@ fun NewApiKeyCredential(
                             )
                         }),
                         onClick = {
+                            if (apiKey.isBlank()) apiKeyFieldBlank = true
+                            if (providerUrl.isBlank()) providerUrlFieldBlank = true
+                            if (apiKey.isBlank() || providerUrl.isBlank()) return@ButlerMediumSolidButton
                             saveCredential(ApiKeyCredential(name, providerUrl, apiKey))
                         },
                         leadingIcon = {
@@ -753,10 +855,12 @@ fun NewApiKeyCredential(
 @Composable
 fun ApiKeyItemFields(
     modifier: Modifier = Modifier,
+    key: Int? = null,
     name: String,
     providerUrl: String,
     apiKey: String,
-    key: Int? = null,
+    showProviderUrlError: Boolean = false,
+    showApiKeyError: Boolean = false,
     onNameChanged: (String) -> Unit,
     onProviderUrlChanged: (String) -> Unit,
     onApiKeyChanged: (String) -> Unit,
@@ -770,7 +874,8 @@ fun ApiKeyItemFields(
     ) {
         ButlerTextField(
             modifier = Modifier.sharedElement(
-                state = rememberSharedContentState(key?.let { "api_key_name_$it" } ?: "new_api_key_name"),
+                state = rememberSharedContentState(key?.let { "api_key_name_$it" }
+                    ?: "new_api_key_name"),
                 animatedVisibilityScope = animationScope
             ),
             value = name,
@@ -782,7 +887,8 @@ fun ApiKeyItemFields(
         )
         ButlerTextField(
             modifier = Modifier.sharedElement(
-                state = rememberSharedContentState(key?.let { "api_key_provider_url_$it" } ?: "new_api_key_provider_url"),
+                state = rememberSharedContentState(key?.let { "api_key_provider_url_$it" }
+                    ?: "new_api_key_provider_url"),
                 animatedVisibilityScope = animationScope
             ),
             value = providerUrl,
@@ -791,10 +897,17 @@ fun ApiKeyItemFields(
             label = {
                 Text(text = stringResource(Res.string.provider_url))
             },
+            isError = showProviderUrlError,
+            supportingText = if (showProviderUrlError) {
+                {
+                    Text(text = stringResource(Res.string.required))
+                }
+            } else null
         )
         ButlerTextField(
             modifier = Modifier.sharedElement(
-                state = rememberSharedContentState(key?.let { "api_key_api_key_$it" } ?: "new_api_key_api_key"),
+                state = rememberSharedContentState(key?.let { "api_key_api_key_$it" }
+                    ?: "new_api_key_api_key"),
                 animatedVisibilityScope = animationScope
             ),
             value = apiKey,
@@ -803,6 +916,12 @@ fun ApiKeyItemFields(
             label = {
                 Text(text = stringResource(Res.string.api_key))
             },
+            isError = showApiKeyError,
+            supportingText = if (showApiKeyError) {
+                {
+                    Text(text = stringResource(Res.string.required))
+                }
+            } else null
         )
     }
 }

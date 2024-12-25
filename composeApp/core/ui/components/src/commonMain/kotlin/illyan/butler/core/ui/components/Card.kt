@@ -164,19 +164,27 @@ object ButlerCardDefaults {
     )
 
     @Composable
-    fun elevatedCardColors(): CardColors = CardDefaults.elevatedCardColors().copy(
-        containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        disabledContentColor = MaterialTheme.colorScheme.surfaceVariant,
-        disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp).copy(alpha = 0.5f)
+    fun elevatedCardColors(
+        containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+        contentColor: Color = MaterialTheme.colorScheme.onSurface,
+        disabledContentColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    ): CardColors = CardDefaults.elevatedCardColors().copy(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        disabledContentColor = disabledContentColor,
+        disabledContainerColor = containerColor.copy(alpha = 0.5f)
     )
 
     @Composable
-    fun cardColors(): CardColors = CardDefaults.cardColors().copy(
-        containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        disabledContentColor = MaterialTheme.colorScheme.surfaceVariant,
-        disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp).copy(alpha = 0.5f)
+    fun cardColors(
+        containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+        contentColor: Color = MaterialTheme.colorScheme.onSurface,
+        disabledContentColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    ): CardColors = CardDefaults.cardColors().copy(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        disabledContentColor = disabledContentColor,
+        disabledContainerColor = containerColor.copy(alpha = 0.5f)
     )
 
     @Composable

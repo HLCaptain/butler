@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material3.HorizontalDivider
@@ -34,6 +35,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
 import illyan.butler.generated.resources.password
+import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.sign_in_anonymously
 import illyan.butler.generated.resources.sign_up
@@ -54,6 +56,7 @@ fun Login(
     }
     // TODO: implement oath authentication
     LoginDialogContent(
+        modifier = Modifier.imePadding(),
         isUserSigningIn = state.isSigningIn,
         signInAnonymously = null, // TODO: Implement sign in anonymously
         signInWithEmailAndPassword = viewModel::signInWithEmailAndPassword,
@@ -85,20 +88,36 @@ fun LoginDialogContent(
         } else {
             var email by rememberSaveable { mutableStateOf("") }
             var password by rememberSaveable { mutableStateOf("") }
+            var isEmailBlank by rememberSaveable { mutableStateOf(false) }
+            var isPasswordBlank by rememberSaveable { mutableStateOf(false) }
             ButlerDialogContent(
                 modifier = Modifier.smallDialogWidth(),
                 title = {
                     Text(text = stringResource(Res.string.login))
                 },
                 text = {
-                    Login(
-                        emailChanged = { email = it },
-                        passwordChanged = { password = it }
+                    LoginFields(
+                        email = email,
+                        password = password,
+                        emailChanged = { email = it; isEmailBlank = false },
+                        passwordChanged = { password = it; isPasswordBlank = false },
+                        emailError = if (isEmailBlank) { { Text(text = stringResource(Res.string.required)) } } else null,
+                        passwordError = if (isPasswordBlank) { { Text(text = stringResource(Res.string.required)) } } else null
                     )
                 },
                 buttons = {
                     LoginButtons(
-                        signInWithEmailAndPassword = { signInWithEmailAndPassword(email, password) },
+                        signInWithEmailAndPassword = {
+                            if (email.isBlank()) {
+                                isEmailBlank = true
+                            }
+                            if (password.isBlank()) {
+                                isPasswordBlank = true
+                            }
+                            if (email.isNotBlank() && password.isNotBlank()) {
+                                signInWithEmailAndPassword(email, password)
+                            }
+                        },
                         signInAnonymously = signInAnonymously,
                         navigateToSignUp = { navigateToSignUp(email, password) },
                         selectHost = selectHost
@@ -111,37 +130,37 @@ fun LoginDialogContent(
 }
 
 @Composable
-private fun Login(
+private fun LoginFields(
     modifier: Modifier = Modifier,
+    email: String,
+    password: String,
     emailChanged: (String) -> Unit = {},
-    passwordChanged: (String) -> Unit = {}
+    passwordChanged: (String) -> Unit = {},
+    emailError: (@Composable () -> Unit)? = null,
+    passwordError: (@Composable () -> Unit)? = null
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        var email by rememberSaveable { mutableStateOf("") }
         ButlerTextField(
             modifier = Modifier.fillMaxWidth(),
             value = email,
             isOutlined = false,
             enabled = true,
-            onValueChange = {
-                email = it
-                emailChanged(it)
-            },
+            onValueChange = emailChanged,
+            isError = emailError != null,
+            supportingText = emailError,
             label = { Text(text = stringResource(Res.string.email)) }
         )
-        var password by rememberSaveable { mutableStateOf("") }
         ButlerTextField(
             modifier = Modifier.fillMaxWidth(),
             value = password,
             enabled = true,
             isOutlined = false,
-            onValueChange = {
-                password = it
-                passwordChanged(it)
-            },
+            onValueChange = passwordChanged,
+            isError = passwordError != null,
+            supportingText = passwordError,
             label = { Text(text = stringResource(Res.string.password)) }
         )
     }

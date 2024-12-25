@@ -1,10 +1,12 @@
 package illyan.butler.ui.new_chat
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,6 +29,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,12 +39,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
+import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.utils.plus
+import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.select_self_hosted
+import illyan.butler.generated.resources.server
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -69,7 +77,7 @@ fun NewChat(
 @Composable
 fun NewChat(
     state: NewChatState,
-    selectModel: (String, String) -> Unit,
+    selectModel: (String, String, String) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -89,45 +97,58 @@ fun NewChat(
             )
         },
     ) { innerPadding ->
-        Crossfade(
-            targetState = state.availableModels
-        ) { models ->
-            if (models == null) {
-                Text(
-                    text = stringResource(Res.string.loading),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            } else if (models.isNotEmpty()) {
-                ModelList(
-                    state = state,
-                    selectModel = selectModel,
-                    innerPadding = innerPadding
-                )
-            } else {
-                Text("No models available")
-            }
-        }
+        ModelList(
+            serverModels = state.serverModels,
+            providerModels = state.providerModels,
+            localModels = state.localModels,
+            selectServerModel = { modelId, provider -> state.userId?.let { selectModel(modelId, provider, it) } },
+            selectProviderModel = { modelId, provider -> state.clientId?.let { selectModel(modelId, provider, it) } },
+            selectLocalModel = { modelId -> state.clientId?.let { selectModel(modelId, "", it) } }, // TODO: support local models properly
+            innerPadding = innerPadding
+        )
     }
 }
 
 @Composable
 fun ModelList(
     modifier: Modifier = Modifier,
-    state: NewChatState,
-    selectModel: (String, String) -> Unit,
+    serverModels: List<DomainModel>?,
+    providerModels: List<DomainModel>?,
+    localModels: List<DomainModel>?,
+    selectServerModel: (String, String) -> Unit,
+    selectProviderModel: (String, String) -> Unit,
+    selectLocalModel: (String) -> Unit,
     innerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxHeight().padding(top = innerPadding.calculateTopPadding()),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items(state.availableModels?.groupBy { it.id }?.toList() ?: emptyList()) { (id, models) ->
-            ModelListItem(
-                modelName = models.first().displayName,
-                providers = models.map { it.endpoint },
-                selectModelWithProvider = { provider -> selectModel(id, provider) }
+    Crossfade(
+        targetState = Triple(serverModels, providerModels, localModels),
+    ) { (server, provider, local) ->
+        if (server == null && provider == null && local == null) {
+            Text(
+                text = stringResource(Res.string.loading),
+                style = MaterialTheme.typography.headlineSmall,
             )
+        } else if (!server.isNullOrEmpty() || !provider.isNullOrEmpty() || !local.isNullOrEmpty()) {
+            val models = remember(server, provider, local) { server.orEmpty().plus(provider.orEmpty()).plus(local.orEmpty()) }
+            LazyColumn(
+                modifier = modifier.fillMaxHeight().consumeWindowInsets(innerPadding),
+                contentPadding = PaddingValues(12.dp) + innerPadding,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(models.groupBy { it.id }.toList()) { (id, models) ->
+                    ModelListItem(
+                        modelName = models.first().displayName,
+                        providers = models.mapNotNull { if (provider?.contains(it) == true) it.endpoint else null },
+                        server = models.mapNotNull { if (server?.contains(it) == true) it.endpoint else null },
+                        selectModelWithProvider = { provider -> selectProviderModel(id, provider) },
+                        selectModelFromServerWithProvider = { provider -> selectServerModel(id, provider) },
+                        selectLocalModel = { selectLocalModel(id) },
+                        isSelfHostAvailable = local?.any { it.id == id } == true,
+                    )
+                }
+            }
+        } else {
+            Text("No models available")
         }
     }
 }
@@ -136,8 +157,11 @@ fun ModelList(
 fun ModelListItem(
     modelName: String,
     providers: List<String>,
+    server: List<String>,
     selectModelWithProvider: (String) -> Unit,
-    isSelfHostAvailable: Boolean = true
+    selectModelFromServerWithProvider: (String) -> Unit,
+    selectLocalModel: () -> Unit,
+    isSelfHostAvailable: Boolean = false
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     ButlerExpandableCard(
@@ -150,15 +174,52 @@ fun ModelListItem(
             ) {
                 providers.forEach { provider ->
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = provider,
-                            style = MaterialTheme.typography.bodyMedium,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f, fill = false),
+                                text = provider,
+                                style = MaterialTheme.typography.bodyMedium,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            AnimatedVisibility(visible = provider in providers) {
+                                ButlerTag { Text(text = stringResource(Res.string.api)) }
+                            }
+                        }
                         MenuButton(
                             onClick = { selectModelWithProvider(provider) },
+                            text = stringResource(Res.string.select_host)
+                        )
+                    }
+                }
+                server.forEach { provider ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f, fill = false),
+                                text = provider,
+                                style = MaterialTheme.typography.bodyMedium,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            AnimatedVisibility(visible = provider in server) {
+                                ButlerTag { Text(text = stringResource(Res.string.server)) }
+                            }
+                        }
+                        MenuButton(
+                            onClick = { selectModelFromServerWithProvider(provider) },
                             text = stringResource(Res.string.select_host)
                         )
                     }
@@ -189,6 +250,7 @@ fun ModelListItem(
                     }
                 }
                 Text(
+                    modifier = Modifier.weight(1f),
                     text = modelName,
                     maxLines = 1,
                     style = MaterialTheme.typography.headlineMedium,
@@ -197,7 +259,7 @@ fun ModelListItem(
             }
 
             MenuButton(
-                onClick = { selectModelWithProvider("") },
+                onClick = selectLocalModel,
                 text = stringResource(Res.string.select_self_hosted),
                 enabled = isSelfHostAvailable
             )

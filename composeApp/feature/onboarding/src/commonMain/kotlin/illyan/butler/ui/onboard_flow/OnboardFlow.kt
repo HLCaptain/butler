@@ -412,7 +412,10 @@ fun OnboardFlow(
                         AuthFlow(authSuccessEnded)
                     }
                     composable("openai_api") {
-                        ApiKey()
+                        ApiKey(
+                            onBack = { navController.navigateUp() },
+                            onNext = authSuccessEnded
+                        )
                     }
                 }
             }

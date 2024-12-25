@@ -5,8 +5,11 @@ import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 
 data class HomeState(
-    val isUserSignedIn: Boolean? = null,
+    val signedInUserId: String? = null,
+    val clientId: String? = null,
     val serverErrors: List<Pair<String, DomainErrorResponse>> = listOf(),
     val appErrors: List<DomainErrorEvent> = listOf(),
     val userChats: List<DomainChat> = listOf(),
+    val deviceChats: List<DomainChat> = listOf(),
+    val localChats: List<DomainChat> = listOf(),
 )

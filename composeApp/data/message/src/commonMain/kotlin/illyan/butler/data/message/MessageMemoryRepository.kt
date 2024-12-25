@@ -17,7 +17,7 @@ class MessageMemoryRepository(
     private val userMessages = mutableMapOf<String, List<DomainMessage>>()
 
     private val messageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<DomainMessage?, Boolean>>>()
-    override fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>> {
+    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): StateFlow<Pair<DomainMessage?, Boolean>> {
         return messageStateFlows.getOrPut(messageId) {
             MutableStateFlow(messages[messageId] to false)
         }
@@ -25,27 +25,31 @@ class MessageMemoryRepository(
 
     private val chatMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
 
-    override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return chatMessageStateFlows.getOrPut(chatId) {
             MutableStateFlow(chatMessages[chatId] to false)
         }
     }
 
     private val userMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    override fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
         return userMessageStateFlows.getOrPut(userId) {
             MutableStateFlow(userMessages[userId] to false)
         }
     }
 
-    override suspend fun upsert(message: DomainMessage): String {
+    override suspend fun upsert(message: DomainMessage, deviceOnly: Boolean): String {
         val newMessage = if (message.id == null) {
             message.copy(id = (messages.size + 1).toString())
         } else message
 
         messages[newMessage.id!!] = newMessage
         messageStateFlows[newMessage.id]?.update { newMessage to false }
-        val userId = appRepository.currentSignedInUserId.first()!!
+        val userId = if (deviceOnly) {
+            appRepository.appSettings.first()!!.clientId
+        } else {
+            appRepository.currentSignedInUserId.first()!!
+        }
         userMessages[userId] = userMessages[userId]?.plus(newMessage) ?: listOf(newMessage)
         userMessageStateFlows[userId]?.update { userMessages[userId] to false }
 

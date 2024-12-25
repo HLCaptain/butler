@@ -17,6 +17,7 @@ import illyan.butler.data.resource.ResourceDataModule
 import illyan.butler.data.settings.SettingsDataModule
 import illyan.butler.data.user.UserDataModule
 import illyan.butler.di.RepositoryModule
+import illyan.butler.di.datasource.DataSourceModule
 import illyan.butler.error.ErrorManager
 import illyan.butler.host.HostDomainModule
 import illyan.butler.model.ModelManager
@@ -77,6 +78,7 @@ class MainApplication : Application() {
                 ErrorDataModule().module,
                 RoomCoreModule().module,
                 KtorCoreModule().module,
+                DataSourceModule().module,
                 module {
                     singleOf(::ErrorManager)
                     single { getDataStore(androidContext()) }

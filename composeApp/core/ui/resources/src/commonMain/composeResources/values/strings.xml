@@ -29,6 +29,7 @@
     <string name="copied_to_clipboard">Copied to Clipboard!</string>
     <string name="description">Description</string>
     <string name="type">Type</string>
+    <string name="required">Required</string>
     <string name="next">Next</string>
     <string name="no_chats">No chats</string>
     <string name="chats">Chats</string>
@@ -61,6 +62,7 @@
     <string name="self_hosted">Self-hosted</string>
     <string name="select_self_hosted">Select self-hosted</string>
     <string name="test_connection">Test Connection</string>
+    <string name="host_connection_error">Host connection error</string>
     <string name="test">Test</string>
     <string name="you">You</string>
     <string name="assistant">Assistant</string>
@@ -77,6 +79,10 @@
     <string name="last_update">Last update</string>
     <string name="theme">Theme</string>
     <string name="system">System</string>
+    <string name="device_only">Device-Only</string>
+    <string name="api">API</string>
+    <string name="sync_available">Sync Available</string>
+    <string name="server">Server</string>
     <string name="dark">Dark</string>
     <string name="light">Light</string>
     <string name="day_night_cycle">Day-Night Cycle</string>

@@ -10,6 +10,7 @@ sealed class MessageKey {
     sealed class Write : MessageKey() {
         data object Create : Write()
         data object Upsert : Write()
+        data object DeviceOnly : Write()
     }
 
     sealed class Delete : MessageKey() {

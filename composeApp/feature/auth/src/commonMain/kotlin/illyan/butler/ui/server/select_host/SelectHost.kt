@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -27,6 +28,8 @@ import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.host_connection_error
+import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_connection
 import io.github.aakira.napier.Napier
@@ -55,8 +58,8 @@ fun SelectHost(onSelectHostSuccessful: () -> Unit) {
             if (!isTestingOnly) onSelectHostSuccessful()
         }
     }
-
     SelectHostDialogContent(
+        modifier = Modifier.imePadding(),
         state = state,
         testAndSelectHost = {
             isTestingOnly = false
@@ -76,7 +79,8 @@ fun SelectHostDialogContent(
     testAndSelectHost: (String) -> Unit,
     testHost: (String) -> Unit = {},
 ) {
-    var hostUrl by rememberSaveable { mutableStateOf(state.currentHost) }
+    var hostUrl by rememberSaveable { mutableStateOf(state.currentHost ?: "") }
+    var isHostBlank by rememberSaveable { mutableStateOf(false) }
     ButlerDialogContent(
         modifier = modifier.smallDialogWidth(),
         title = {
@@ -88,13 +92,31 @@ fun SelectHostDialogContent(
         text = {
             SelectHost(
                 state = state,
-                hostUrlChanged = { hostUrl = it }
+                hostUrl = hostUrl,
+                hostUrlChanged = { hostUrl = it; isHostBlank = false },
+                hostError = if (isHostBlank) { {
+                    Text(text = stringResource(Res.string.required))
+                } } else if (!state.isConnecting && state.isConnected == false) { {
+                    Text(text = stringResource(Res.string.host_connection_error))
+                } } else null
             )
         },
         buttons = {
             SelectHostButtons(
-                selectHost = { testAndSelectHost(hostUrl ?: "") },
-                testConnection = { testHost(hostUrl ?: "") }
+                selectHost = {
+                    if (hostUrl.isBlank()) {
+                        isHostBlank = true
+                    } else {
+                        testAndSelectHost(hostUrl)
+                    }
+                },
+                testConnection = {
+                    if (hostUrl.isBlank()) {
+                        isHostBlank = true
+                    } else {
+                        testHost(hostUrl)
+                    }
+                }
             )
         },
         containerColor = Color.Transparent,
@@ -104,19 +126,18 @@ fun SelectHostDialogContent(
 @Composable
 fun SelectHost(
     modifier: Modifier = Modifier,
+    hostUrl: String,
     state: SelectHostState,
-    hostUrlChanged: (String) -> Unit = {}
+    hostUrlChanged: (String) -> Unit = {},
+    hostError: (@Composable () -> Unit)? = null,
 ) {
-    var hostUrl by rememberSaveable { mutableStateOf(state.currentHost) }
     ButlerTextField(
         modifier = modifier,
-        value = hostUrl ?: "",
+        value = hostUrl,
         isOutlined = false,
         enabled = true,
-        onValueChange = {
-            hostUrl = it
-            hostUrlChanged(it)
-        },
+        onValueChange = hostUrlChanged,
+        isError = hostError != null || (!state.isConnecting && state.isConnected == false),
         trailingIcon = {
             Crossfade(targetState = state) {
                 if (it.isConnecting) {
@@ -136,7 +157,8 @@ fun SelectHost(
                     }
                 }
             }
-        }
+        },
+        supportingText = hostError,
     )
 }
 

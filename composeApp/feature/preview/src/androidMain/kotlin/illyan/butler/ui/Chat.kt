@@ -75,7 +75,6 @@ fun ChatDetailPreview() {
                                 chatId = "1",
                             )
                         ).sortedByDescending { it.time },
-                        userId = "1",
                         isRecording = false,
                         sounds = emptyMap(),
                         playingAudio = null,
@@ -83,7 +82,7 @@ fun ChatDetailPreview() {
                     ),
                     sendMessage = {},
                     toggleRecord = {},
-                    sendImage = {},
+                    sendImage = { _, _ -> },
                     playAudio = {},
                     stopAudio = {},
                     openChatDetails = {},
@@ -129,6 +128,7 @@ fun ChatListPreview() {
                     deleteChat = {},
                     openChat = {},
                     selectedChat = "1",
+                    deviceOnlyChatIds = listOf("2")
                 )
             }
         }
@@ -161,7 +161,7 @@ fun NewChatPreview() {
         Surface {
             NewChat(
                 state = NewChatState(
-                    availableModels = listOf(
+                    serverModels = listOf(
                         DomainModel(
                             name = "Cook GPT",
                             id = "Cook GPT",
@@ -182,7 +182,7 @@ fun NewChatPreview() {
                         )
                     )
                 ),
-                selectModel = { _, _ -> }
+                selectModel = { _, _, _ -> },
             )
         }
     }

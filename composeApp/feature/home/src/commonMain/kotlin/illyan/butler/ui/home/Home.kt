@@ -110,15 +110,8 @@ fun Home() {
     val state by viewModel.state.collectAsState()
     Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
         Column(modifier = Modifier.statusBarsPadding()) {
-            var isProfileDialogShowing by rememberSaveable { mutableStateOf(false) }
-            var isAuthFlowEnded by rememberSaveable { mutableStateOf(state.isUserSignedIn) }
-            LaunchedEffect(state.isUserSignedIn) {
-                state.isUserSignedIn?.let { isSignedIn ->
-                    if (isAuthFlowEnded == null) isAuthFlowEnded = isSignedIn
-                    if (!isSignedIn) isAuthFlowEnded = false
-                }
-                isProfileDialogShowing = false
-            }
+            var isProfileDialogShowing by rememberSaveable(state.signedInUserId) { mutableStateOf(false) }
+            var isAuthFlowEnded by rememberSaveable(state.signedInUserId) { mutableStateOf(state.signedInUserId != null) }
 
             val profileNavController = rememberNavController()
             val animationTime = 200
@@ -178,8 +171,7 @@ fun Home() {
             val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
                 windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
             }
-            var currentChat by rememberSaveable { mutableStateOf<String?>(null) }
-            LaunchedEffect(state.isUserSignedIn) { if (state.isUserSignedIn == false) currentChat = null }
+            var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<String?>(null) }
             val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
             NavigationSuiteScaffoldLayout(
                 layoutType = navigationSuiteLayout,
@@ -188,34 +180,32 @@ fun Home() {
                         targetState = navigationSuiteLayout,
                         transitionSpec = { slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() }
                     ) { _ ->
-                        if (state.isUserSignedIn == true) {
-                            AnimatedVisibility(
-                                visible = !isCompact,
-                                enter = slideInHorizontally { -it } + fadeIn(),
-                                exit = slideOutHorizontally { it } + fadeOut()
-                            ) {
-                                VerticalNavBar(
-                                    modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
-                                    compact = isVerticalNavBarCompact,
-                                    chats = state.userChats,
-                                    isProfileDialogShowing = isProfileDialogShowing,
-                                    setProfileDialogShowing = { isProfileDialogShowing = it },
-                                    navigateToNewChat = { currentChat = null },
-                                    selectChat = { currentChat = it },
-                                    deleteChat = {
-                                        viewModel.deleteChat(it)
-                                        if (currentChat == it) currentChat = null
-                                    },
-                                    currentChat = currentChat
-                                )
-                            }
+                        AnimatedVisibility(
+                            visible = !isCompact && isAuthFlowEnded,
+                            enter = slideInHorizontally { -it } + fadeIn(),
+                            exit = slideOutHorizontally { it } + fadeOut()
+                        ) {
+                            VerticalNavBar(
+                                modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
+                                compact = isVerticalNavBarCompact,
+                                userChats = state.userChats,
+                                deviceChats = state.deviceChats,
+                                isProfileDialogShowing = isProfileDialogShowing,
+                                setProfileDialogShowing = { isProfileDialogShowing = it },
+                                navigateToNewChat = { currentChat = null },
+                                selectChat = { currentChat = it },
+                                deleteChat = {
+                                    viewModel.deleteChat(it)
+                                    if (currentChat == it) currentChat = null
+                                },
+                                currentChat = currentChat
+                            )
                         }
                     }
                 }
             ) {
                 Surface(tonalElevation = 0.dp) {
-                    val showHome = remember(state, isAuthFlowEnded) { state.isUserSignedIn == true && isAuthFlowEnded == true }
-                    AnimatedContent(showHome) { isHome ->
+                    AnimatedContent(isAuthFlowEnded) { isHome ->
                         if (isHome) {
                             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                             var drawerContentWidthInPixels by remember { mutableStateOf(0) }
@@ -275,7 +265,7 @@ fun Home() {
                                                     )
 
                                                     AnimatedVisibility(
-                                                        visible = state.userChats.isEmpty(),
+                                                        visible = (state.userChats + state.deviceChats).isEmpty(),
                                                         enter = fadeIn(),
                                                         exit = fadeOut()
                                                     ) {
@@ -283,7 +273,7 @@ fun Home() {
                                                     }
 
                                                     ChatList(
-                                                        chats = state.userChats,
+                                                        chats = state.userChats + state.deviceChats,
                                                         deleteChat = {
                                                             viewModel.deleteChat(it)
                                                             if (currentChat == it) currentChat = null
@@ -293,7 +283,8 @@ fun Home() {
                                                             currentChat = it
                                                             coroutineScope.launch { drawerState.close() }
                                                         },
-                                                        selectedChat = currentChat
+                                                        selectedChat = currentChat,
+                                                        deviceOnlyChatIds = state.deviceChats.map { it.id!! }
                                                     )
                                                 }
                                             }
@@ -370,7 +361,8 @@ private fun HomeNavRail(
 private fun VerticalNavBar(
     modifier: Modifier = Modifier,
     selectChat: (String?) -> Unit = {},
-    chats: List<DomainChat>,
+    userChats: List<DomainChat>,
+    deviceChats: List<DomainChat>,
     currentChat: String?,
     deleteChat: (String) -> Unit = {},
     compact: Boolean,
@@ -411,7 +403,8 @@ private fun VerticalNavBar(
                     selectChat(it)
                     navRailExpanded = false
                 },
-                chats = chats,
+                userChats = userChats,
+                deviceChats = deviceChats,
                 deleteChat = deleteChat,
                 onProfileClick = { setProfileDialogShowing(true) },
                 navigateToNewChat = { navigateToNewChat(); navRailExpanded = false },
@@ -539,7 +532,8 @@ fun MenuCloseButton(
 @Composable
 private fun HomePermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
-    chats: List<DomainChat>,
+    userChats: List<DomainChat>,
+    deviceChats: List<DomainChat>,
     currentChat: String?,
     selectChat: (String?) -> Unit = {},
     deleteChat: (String) -> Unit = {},
@@ -576,7 +570,7 @@ private fun HomePermanentNavigationDrawerSheet(
                         onClick = navigateToNewChat
                     )
                     AnimatedVisibility(
-                        visible = chats.isEmpty(),
+                        visible = (deviceChats + userChats).isEmpty(),
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -584,10 +578,11 @@ private fun HomePermanentNavigationDrawerSheet(
                     }
                     ChatList(
                         modifier = Modifier,
-                        chats = chats,
+                        chats = userChats + deviceChats,
+                        deviceOnlyChatIds = deviceChats.map { it.id!! },
                         openChat = selectChat,
                         deleteChat = deleteChat,
-                        selectedChat = currentChat
+                        selectedChat = currentChat,
                     )
                 }
             }
@@ -633,8 +628,9 @@ private fun NavigationDrawerContent(
 ) {
     Column(modifier = modifier.fillMaxHeight()) {
         MenuCloseButton(modifier = Modifier.padding(closeButtonPadding)) { closeDrawer() }
-        content()
-        Spacer(Modifier.weight(1f))
+        Column(
+            modifier = Modifier.weight(1f),
+        ) { content() }
         bottomContent()
     }
 }

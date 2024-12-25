@@ -3,11 +3,16 @@ package illyan.butler.ui.chat_detail
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -94,8 +99,8 @@ import org.jetbrains.compose.resources.stringResource
 fun ChatDetail(
     state: ChatDetailState,
     sendMessage: (String) -> Unit,
-    sendImage: (String) -> Unit,
-    toggleRecord: () -> Unit,
+    sendImage: (String, String) -> Unit,
+    toggleRecord: (String) -> Unit,
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
     openChatDetails: () -> Unit,
@@ -148,13 +153,17 @@ fun ChatDetail(
             },
             bottomBar = {
                 var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
-                if (state.chat?.id != null) {
+                AnimatedVisibility(
+                    visible = state.chat != null,
+                    enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                    exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
+                ) {
                     ChatDetailBottomBar(
                         modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
                         sendMessage = sendMessage,
-                        sendImage = sendImage,
+                        sendImage = { state.chat?.let { chat -> sendImage(it, chat.ownerId) } },
                         isRecording = state.isRecording,
-                        toggleRecord = toggleRecord,
+                        toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
                         isFilePickerShown = isFilePickerShown,
                         showFilePicker = { isFilePickerShown = it }
                     )
@@ -162,21 +171,22 @@ fun ChatDetail(
             },
         ) { innerPadding ->
             Column(modifier = Modifier.haze(hazeState)) {
-                AnimatedVisibility(state.chat?.id == null) {
-                    SelectChat()
-                }
-                if (state.chat?.id != null) {
-                    MessageList(
-                        modifier = Modifier.weight(1f, fill = true),
-                        messages = state.messages ?: emptyList(),
-                        userId = state.userId ?: "",
-                        sounds = state.sounds,
-                        playAudio = playAudio,
-                        playingAudio = state.playingAudio,
-                        stopAudio = stopAudio,
-                        images = state.images,
-                        innerPadding = innerPadding
-                    )
+                AnimatedContent(state.chat) {
+                    if (it == null) {
+                        SelectChat()
+                    } else {
+                        MessageList(
+                            modifier = Modifier.weight(1f, fill = true),
+                            messages = state.messages ?: emptyList(),
+                            userId = it.ownerId,
+                            sounds = state.sounds,
+                            playAudio = playAudio,
+                            playingAudio = state.playingAudio,
+                            stopAudio = stopAudio,
+                            images = state.images,
+                            innerPadding = innerPadding
+                        )
+                    }
                 }
             }
         }
@@ -232,6 +242,7 @@ fun MessageList(
             }
         } else {
             LazyColumn(
+                modifier = Modifier.consumeWindowInsets(innerPadding),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = innerPadding,
                 reverseLayout = true // From bottom to up

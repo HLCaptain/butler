@@ -1,5 +1,6 @@
 package illyan.butler.ui.chat_list
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerCard
+import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.delete_chat
+import illyan.butler.generated.resources.device_only
 import illyan.butler.generated.resources.new_chat
 import org.jetbrains.compose.resources.stringResource
 
@@ -43,6 +46,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ChatList(
     modifier: Modifier = Modifier,
     chats: List<DomainChat>,
+    deviceOnlyChatIds: List<String>,
     selectedChat: String?,
     openChat: (String) -> Unit,
     deleteChat: (String) -> Unit,
@@ -57,7 +61,8 @@ fun ChatList(
                 chat = chat,
                 selected = chat.id == selectedChat,
                 openChat = { openChat(chat.id!!) },
-                deleteChat = { deleteChat(chat.id!!) }
+                deleteChat = { deleteChat(chat.id!!) },
+                isDeviceOnly = chat.id in deviceOnlyChatIds
             )
         }
     }
@@ -69,6 +74,7 @@ fun ChatCard(
     modifier: Modifier = Modifier,
     chat: DomainChat,
     selected: Boolean,
+    isDeviceOnly: Boolean,
     openChat: () -> Unit,
     deleteChat: () -> Unit,
 ) {
@@ -92,10 +98,18 @@ fun ChatCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = chat.name ?: stringResource(Res.string.new_chat),
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = chat.name ?: stringResource(Res.string.new_chat),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                AnimatedVisibility(visible = isDeviceOnly) {
+                    ButlerTag { Text(text = stringResource(Res.string.device_only)) }
+                }
+            }
             ExposedDropdownMenuBox(
                 expanded = showMenu,
                 onExpandedChange = { showMenu = it }

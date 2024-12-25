@@ -10,6 +10,8 @@ import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.StoreWriteRequest
 import org.mobilenativefoundation.store.store5.StoreWriteResponse
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalStoreApi::class)
 @Single
@@ -25,9 +27,9 @@ class ChatStoreRepository(
         userChatStore.clear(ChatKey.Delete.ByUserId(userId))
     }
 
-    override fun getChatFlow(chatId: String): Flow<Pair<DomainChat?, Boolean>> {
+    override fun getChatFlow(chatId: String, deviceOnly: Boolean): Flow<Pair<DomainChat?, Boolean>> {
         return chatMutableStore.stream<StoreReadResponse<DomainChat>>(
-            StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), true)
+            StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), !deviceOnly)
         ).map {
             it.throwIfError()
             Napier.d("Read Response: ${it::class.qualifiedName}")
@@ -37,9 +39,9 @@ class ChatStoreRepository(
         }
     }
 
-    override fun getUserChatsFlow(userId: String): Flow<Pair<List<DomainChat>?, Boolean>> {
+    override fun getUserChatsFlow(userId: String, deviceOnly: Boolean): Flow<Pair<List<DomainChat>?, Boolean>> {
         return userChatStore.stream(
-            StoreReadRequest.cached(ChatKey.Read.ByUserId(userId), true)
+            StoreReadRequest.cached(ChatKey.Read.ByUserId(userId), !deviceOnly)
         ).map {
             it.throwIfError()
             Napier.d("Read Response: ${it::class.qualifiedName}")
@@ -49,12 +51,12 @@ class ChatStoreRepository(
         }
     }
 
-    @OptIn(ExperimentalStoreApi::class)
-    override suspend fun upsert(chat: DomainChat): String {
+    @OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
+    override suspend fun upsert(chat: DomainChat, deviceOnly: Boolean): String {
         val writtenChat = chatMutableStore.write(
             StoreWriteRequest.of(
-                key = if (chat.id == null) ChatKey.Write.Create else ChatKey.Write.Upsert,
-                value = chat,
+                key = if (deviceOnly) ChatKey.Write.DeviceOnly else if (chat.id == null) ChatKey.Write.Create else ChatKey.Write.Upsert,
+                value = chat.copy(id = chat.id ?: Uuid.random().toString()), // ID cannot be null on write
             )
         )
         Napier.d("Chat upserted: $writtenChat")

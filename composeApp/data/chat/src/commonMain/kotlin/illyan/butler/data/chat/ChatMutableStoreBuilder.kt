@@ -13,8 +13,6 @@ import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @Single
 class ChatMutableStoreBuilder(
@@ -26,7 +24,7 @@ class ChatMutableStoreBuilder(
     val store = provideChatMutableStore(chatLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
+@OptIn(ExperimentalStoreApi::class)
 fun provideChatMutableStore(
     chatLocalDataSource: ChatLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
@@ -43,8 +41,7 @@ fun provideChatMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is ChatKey.Write.Create -> chatLocalDataSource.upsertChat(local.copy(id = Uuid.random().toString()))
-                is ChatKey.Write.Upsert -> chatLocalDataSource.upsertChat(local)
+                ChatKey.Write.Create, ChatKey.Write.Upsert, ChatKey.Write.DeviceOnly -> chatLocalDataSource.upsertChat(local)
                 is ChatKey.Read.ByChatId -> chatLocalDataSource.upsertChat(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
@@ -65,9 +62,10 @@ fun provideChatMutableStore(
             require(key is ChatKey.Write)
             val newChat = when (key) {
                 is ChatKey.Write.Create -> chatNetworkDataSource.upsert(output.copy(id = null)).also {
-                    chatLocalDataSource.replaceChat(it.id!!, it)
+                    chatLocalDataSource.replaceChat(output.id!!, it)
                 }
                 is ChatKey.Write.Upsert -> chatNetworkDataSource.upsert(output)
+                is ChatKey.Write.DeviceOnly -> output // Do not upload device-only chats
             }
             UpdaterResult.Success.Typed(newChat)
         },

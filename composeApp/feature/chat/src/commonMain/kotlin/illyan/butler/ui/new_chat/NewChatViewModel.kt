@@ -2,7 +2,9 @@ package illyan.butler.ui.new_chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
+import illyan.butler.domain.model.DomainModel
 import illyan.butler.model.ModelManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -16,10 +18,16 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class NewChatViewModel(
-    private val modelManager: ModelManager,
+    modelManager: ModelManager,
+    authManager: AuthManager,
     private val chatManager: ChatManager
 ) : ViewModel() {
-    private val availableModels = modelManager.getAvailableModels().stateIn(
+    private val serverModels = modelManager.getAvailableModelsFromServer().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
+    private val providerModels = modelManager.getAvailableModelsFromProviders().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = null
@@ -28,14 +36,27 @@ class NewChatViewModel(
     private val newChatId = MutableStateFlow<String?>(null)
 
     val state = combine(
-        availableModels,
+        serverModels,
+        providerModels,
+        authManager.signedInUserId,
+        authManager.clientId,
         creatingNewChat,
         newChatId
-    ) { models, creating, id ->
+    ) { flows ->
+        val serverModels = flows[0] as? List<DomainModel>?
+        val providerModels = flows[1] as? List<DomainModel>?
+        val userId = flows[2] as? String?
+        val clientId = flows[3] as? String?
+        val isCreating = flows[4] as Boolean
+        val newId = flows[5] as? String
         NewChatState(
-            availableModels = models,
-            creatingChat = creating,
-            newChatId = id
+            userId = userId,
+            clientId = clientId,
+            providerModels = providerModels,
+            serverModels = serverModels,
+            localModels = emptyList(),
+            creatingChat = isCreating,
+            newChatId = newId
         )
     }.stateIn(
         scope = viewModelScope,
@@ -43,10 +64,14 @@ class NewChatViewModel(
         initialValue = NewChatState()
     )
 
-    fun createChatWithModel(modelId: String, endpoint: String) {
+    fun createChatWithModel(
+        modelId: String,
+        endpoint: String,
+        senderId: String
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             creatingNewChat.update { true }
-            val id = chatManager.startNewChat(modelId, endpoint)
+            val id = chatManager.startNewChat(modelId, endpoint, senderId)
             creatingNewChat.update { false }
             newChatId.update { id }
             Napier.v { "New chat created with id: $id" }
