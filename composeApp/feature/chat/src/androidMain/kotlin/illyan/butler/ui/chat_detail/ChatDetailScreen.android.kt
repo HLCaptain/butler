@@ -24,9 +24,7 @@ actual fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (String) -> Unit,
     isRecording: Boolean,
-    toggleRecord: () -> Unit,
-    isFilePickerShown: Boolean,
-    showFilePicker: (Boolean) -> Unit
+    toggleRecord: () -> Unit
 ) {
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -37,7 +35,6 @@ actual fun ChatDetailBottomBar(
     }) {
         if (it) {
             showAppRationaleWithPermission = null
-            showFilePicker(true)
         }
     }
     val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
@@ -54,8 +51,6 @@ actual fun ChatDetailBottomBar(
         recordAudioEnabled = true,
         requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
         requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission },
-        isFilePickerShown = isFilePickerShown,
-        setFilePickerShown = showFilePicker
     )
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,

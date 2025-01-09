@@ -192,6 +192,7 @@ fun Home() {
             }
             var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<String?>(null) }
             val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+            val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
             NavigationSuiteScaffoldLayout(
                 layoutType = navigationSuiteLayout,
                 navigationSuite = {
@@ -217,7 +218,8 @@ fun Home() {
                                     viewModel.deleteChat(it)
                                     if (currentChat == it) currentChat = null
                                 },
-                                currentChat = currentChat
+                                currentChat = currentChat,
+                                isExpanded = isExpanded
                             )
                         }
                     }
@@ -381,6 +383,7 @@ private fun HomeNavRail(
 private fun VerticalNavBar(
     modifier: Modifier = Modifier,
     selectChat: (String?) -> Unit = {},
+    isExpanded: Boolean,
     userChats: List<DomainChat>,
     deviceChats: List<DomainChat>,
     currentChat: String?,
@@ -421,7 +424,7 @@ private fun VerticalNavBar(
                 modifier = modifier.statusBarsPadding(),
                 selectChat = {
                     selectChat(it)
-                    navRailExpanded = false
+                    if (!isExpanded) navRailExpanded = false
                 },
                 userChats = userChats,
                 deviceChats = deviceChats,

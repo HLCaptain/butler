@@ -98,7 +98,7 @@ store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-a
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
 korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
-filepicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" } # TODO: switch to io.github.vinceglb:filekit-core or com.mohamedrejeb.calf:calf-file-picker
+filekit = { module = "io.github.vinceglb:filekit-compose", version = "0.8.8"}
 ffmpeg-kit = { module = "com.arthenica:ffmpeg-kit-full", version = "6.0-2" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.0.4" }
 haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.2.0" }

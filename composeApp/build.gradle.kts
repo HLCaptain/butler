@@ -156,7 +156,11 @@ compose.desktop.application {
         targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
         packageName = "Butler"
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
+        linux {
+            modules("jdk.security.auth")
+        }
     }
+
     buildTypes.release.proguard {
         version = "7.6.0"
 //        isEnabled = true

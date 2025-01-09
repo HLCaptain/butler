@@ -32,7 +32,7 @@ kotlin {
         implementation(libs.napier)
         implementation(libs.korge.audio)
         implementation(libs.korge.io)
-        implementation(libs.filepicker)
+        implementation(libs.filekit)
         implementation(libs.material.kolors)
     }
 

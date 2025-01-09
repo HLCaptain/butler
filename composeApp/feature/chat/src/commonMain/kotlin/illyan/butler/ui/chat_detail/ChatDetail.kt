@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
-import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -86,6 +85,9 @@ import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
+import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -152,21 +154,20 @@ fun ChatDetail(
                 )
             },
             bottomBar = {
-                var isFilePickerShown by rememberSaveable { mutableStateOf(false) }
                 AnimatedVisibility(
                     visible = state.chat != null,
                     enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
                     exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
                 ) {
                     ChatDetailBottomBar(
-                        modifier = Modifier.imePadding().hazeEffect(hazeState)
+                        modifier = Modifier
+                            .imePadding()
+                            .hazeEffect(hazeState)
                             .navigationBarsPadding(),
                         sendMessage = sendMessage,
                         sendImage = { state.chat?.let { chat -> sendImage(it, chat.ownerId) } },
                         isRecording = state.isRecording,
                         toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
-                        isFilePickerShown = isFilePickerShown,
-                        showFilePicker = { isFilePickerShown = it }
                     )
                 }
             },
@@ -210,9 +211,7 @@ expect fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (String) -> Unit,
     isRecording: Boolean = false,
-    toggleRecord: () -> Unit,
-    isFilePickerShown: Boolean,
-    showFilePicker: (Boolean) -> Unit
+    toggleRecord: () -> Unit
 )
 
 @Composable
@@ -409,8 +408,6 @@ fun MessageField(
     sendMessage: (String) -> Unit,
     isRecording: Boolean = false,
     toggleRecord: () -> Unit,
-    isFilePickerShown: Boolean,
-    setFilePickerShown: (Boolean) -> Unit,
     sendImage: (String) -> Unit,
     galleryAccessGranted: Boolean = false,
     galleryEnabled: Boolean = false,
@@ -448,10 +445,16 @@ fun MessageField(
                 }
             }
         }
+        val launcher = rememberFilePickerLauncher(
+            mode = PickerMode.Single,
+            type = PickerType.Image
+        ) { file ->
+            file?.path?.let { sendImage(it) }
+        }
         AnimatedVisibility(visible = galleryEnabled) {
             IconButton(onClick = {
                 if (galleryAccessGranted) {
-                    setFilePickerShown(true)
+                    launcher.launch()
                 } else {
                     requestGalleryAccess()
                 }
@@ -462,13 +465,6 @@ fun MessageField(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-        }
-        FilePicker(
-            show = isFilePickerShown,
-            fileExtensions = listOf("jpg", "jpeg", "png"),
-        ) { platformFile ->
-            setFilePickerShown(false)
-            platformFile?.path?.let(sendImage)
         }
         var textMessage by rememberSaveable { mutableStateOf("") }
         ButlerTextField(
