@@ -3,6 +3,7 @@ package illyan.butler.ui.new_chat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -46,6 +47,7 @@ import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
@@ -309,13 +311,21 @@ fun ModelListItem(
                         )
                     }
                 }
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = modelName,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.headlineMedium,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                PlainTooltipWithContent(
+                    tooltip = {
+                        Text(modelName)
+                    }
+                ) { tooltipModifier ->
+                    Box(modifier = tooltipModifier.weight(1f).padding(2.dp)) {
+                        Text(
+                            modifier = Modifier,
+                            text = modelName,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.headlineMedium,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
 
             MenuButton(

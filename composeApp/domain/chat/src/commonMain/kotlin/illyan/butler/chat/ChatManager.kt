@@ -19,6 +19,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -97,6 +98,16 @@ class ChatManager(
         }
     }
 
+    init {
+        coroutineScopeIO.launch {
+            deviceChats.collectLatest { chats ->
+                chats.forEach { chat ->
+                    chat.id?.let { answerOpenAIChat(it) }
+                }
+            }
+        }
+    }
+
     private fun loadChats(userId: String?, deviceOnly: Boolean): Flow<List<DomainChat>> {
         if (userId == null) {
             Napier.v { "User not signed in, reseting chats from ${if (deviceOnly) "Device" else "Server"}" }
@@ -138,11 +149,12 @@ class ChatManager(
     }
 
     private suspend fun answerOpenAIChat(chatId: String) {
-        val previousChats = chatRepository.getUserChatsFlow(authManager.clientId.filterNotNull().first(), true).first()
+        val clientId = authManager.clientId.filterNotNull().first()
+        val previousChats = chatRepository.getUserChatsFlow(clientId, true).first()
         val messages = deviceMessages.first()
         llmService.answerChat(
             chat = previousChats.first { it.id == chatId }.toNetworkModel().copy(
-                lastFewMessages = messages.filter { it.id == chatId }.map { it.toNetworkModel() }
+                lastFewMessages = messages.filter { it.chatId == chatId }.map { it.toNetworkModel() }
             ),
             previousChats = previousChats.filter { it.id != chatId }.map { it.toNetworkModel().copy(
                 lastFewMessages = messages.filter { message -> message.chatId == it.id }.map { m -> m.toNetworkModel() }

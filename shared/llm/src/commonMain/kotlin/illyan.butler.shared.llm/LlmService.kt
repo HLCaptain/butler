@@ -35,9 +35,13 @@ class LlmService(
         previousChats: List<ChatDto> = emptyList(),
         regenerateMessage: MessageDto? = null
     ) {
+        Napier.v("Answering chat $chat")
         val chatModelId = chat.chatCompletionModel!!.second
         val messages = chat.lastFewMessages.sortedBy { it.time }
-        if (messages.isEmpty()) return
+        if (messages.isEmpty()) {
+            Napier.v("No messages in chat, skipping")
+            return
+        }
         // Then last message is by a user
         val lastMessage = if (regenerateMessage != null) {
             messages.first { it.id == regenerateMessage.id }
@@ -49,6 +53,7 @@ class LlmService(
         if (lastMessage.senderId != chat.ownerId) {
             generateSummaryForChatIfNeeded(chat, conversation)
             generateNewChatNameIfNeeded(chat, conversation)
+            Napier.v("Last message is not by user, skipping")
             return
         }
 
