@@ -58,6 +58,7 @@
     <string name="send_message">Send message</string>
     <string name="username">Username</string>
     <string name="select_host">Select Host</string>
+    <string name="host_url">Host URL</string>
     <string name="select_host_description">Input the URL of your self-hosted service to access your account and chats!</string>
     <string name="self_hosted">Self-hosted</string>
     <string name="select_self_hosted">Select self-hosted</string>
@@ -96,6 +97,7 @@
     <string name="stop">Stop</string>
     <string name="play">Play</string>
     <string name="none">None</string>
+    <string name="no_models_to_chat_with">No models to chat with</string>
     <string name="turn_on_analytics">Turn on analytics</string>
     <string name="turn_on_analytics_description">Analytics help the development of Butler to provide a more stable and better experience. By turning on analytics, you anonymously send event data, crash logs and performance metrics to us. App restart may be required for the setting to be active.</string>
     <string name="permission_request_record_audio_title">Enable Microphone</string>
@@ -112,4 +114,6 @@
     <string name="request_permission">Request permission</string>
     <string name="healthy">Healthy</string>
     <string name="error">Error</string>
+    <string name="warning">Warning</string>
+    <string name="about">About</string>
 </resources>

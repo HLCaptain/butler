@@ -9,7 +9,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.ui.apikey.ApiKeyCredentialList
-import illyan.butler.ui.server.login.LoginDialogContent
+import illyan.butler.ui.server.login.Login
 import illyan.butler.ui.server.select_host.SelectHostDialogContent
 import illyan.butler.ui.server.select_host.SelectHostState
 import illyan.butler.ui.server.signup.SignUpDialogContent
@@ -20,7 +20,7 @@ import illyan.butler.ui.server.signup.SignUpScreenState
 fun LoginPreview() {
     ButlerTheme {
         ButlerDialogSurface {
-            LoginDialogContent(
+            Login(
                 isUserSigningIn = false,
                 signInAnonymously = {},
                 signInWithEmailAndPassword = { _, _ -> },
@@ -82,7 +82,8 @@ fun ApiKeyCredentialListPreview() {
                             deleteCredential = {},
                             sharedTransitionScope = this@SharedTransitionLayout,
                             animationScope = this@AnimatedContent,
-                            createNewCredential = {}
+                            createNewCredential = {},
+                            healthyCredentials = emptyList()
                         )
                     }
                 }

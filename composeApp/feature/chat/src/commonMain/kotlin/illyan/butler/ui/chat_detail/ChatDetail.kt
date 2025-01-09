@@ -64,8 +64,8 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerTextField
@@ -122,7 +122,7 @@ fun ChatDetail(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier.hazeChild(hazeState),
+                    modifier = Modifier.hazeEffect(hazeState),
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Transparent),
                     title = {
                         Text(
@@ -159,7 +159,8 @@ fun ChatDetail(
                     exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
                 ) {
                     ChatDetailBottomBar(
-                        modifier = Modifier.imePadding().hazeChild(hazeState).navigationBarsPadding(),
+                        modifier = Modifier.imePadding().hazeEffect(hazeState)
+                            .navigationBarsPadding(),
                         sendMessage = sendMessage,
                         sendImage = { state.chat?.let { chat -> sendImage(it, chat.ownerId) } },
                         isRecording = state.isRecording,
@@ -170,7 +171,7 @@ fun ChatDetail(
                 }
             },
         ) { innerPadding ->
-            Column(modifier = Modifier.haze(hazeState)) {
+            Column(modifier = Modifier.hazeSource(hazeState)) {
                 AnimatedContent(state.chat) {
                     if (it == null) {
                         SelectChat()

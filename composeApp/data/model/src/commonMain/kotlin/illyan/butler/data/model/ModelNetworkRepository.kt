@@ -40,7 +40,6 @@ class ModelNetworkRepository(
             }
             flow {
                 try {
-                    emit(emptyList())
                     val models = cachedOpenAIClients.getOrPut(credential) {
                         provideOpenAIClient(credential)
                     }.models().map {

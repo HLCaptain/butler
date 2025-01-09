@@ -26,9 +26,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -39,7 +42,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
@@ -64,18 +69,23 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.bundle.Bundle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -85,7 +95,9 @@ import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerElevatedCard
 import illyan.butler.core.ui.components.ButlerMediumOutlinedButton
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerOutlinedCard
 import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.domain.model.ApiKeyCredential
@@ -95,6 +107,7 @@ import illyan.butler.generated.resources.add_api_key
 import illyan.butler.generated.resources.add_credentials
 import illyan.butler.generated.resources.api_key
 import illyan.butler.generated.resources.back
+import illyan.butler.generated.resources.create
 import illyan.butler.generated.resources.delete
 import illyan.butler.generated.resources.edit
 import illyan.butler.generated.resources.error
@@ -106,6 +119,7 @@ import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.save
 import illyan.butler.generated.resources.test
 import illyan.butler.generated.resources.unknown
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -275,7 +289,28 @@ fun ApiKeyScaffold(
                 )
             }
             composable<NewApiKeyCredential> {
-                var testCredential by rememberSaveable { mutableStateOf<ApiKeyCredential?>(null) }
+                var testCredential by rememberSaveable(
+                    stateSaver = object : Saver<ApiKeyCredential?, Bundle> {
+                        override fun restore(value: Bundle): ApiKeyCredential? {
+                            val name = value.getString("name")
+                            val providerUrl = value.getString("providerUrl")
+                            val apiKey = value.getString("apiKey")
+                            return if (name != null && providerUrl != null && apiKey != null) {
+                                ApiKeyCredential(name, providerUrl, apiKey)
+                            } else {
+                                null
+                            }
+                        }
+
+                        override fun SaverScope.save(value: ApiKeyCredential?): Bundle {
+                            return Bundle().apply {
+                                putString("name", value?.name)
+                                putString("providerUrl", value?.providerUrl)
+                                putString("apiKey", value?.apiKey)
+                            }
+                        }
+                    },
+                ) { mutableStateOf(null) }
                 NewApiKeyCredential(
                     models = models[testCredential] ?: emptyList(),
                     testCredential = {
@@ -401,7 +436,7 @@ fun NoApiKeyCredentialGridItem(
                         contentDescription = null
                     )
                     Text(
-                        text = stringResource(Res.string.add_credentials)
+                        text = stringResource(Res.string.create)
                     )
                 }
             }
@@ -560,7 +595,8 @@ fun ApiKeyCredentialGridItem(
                 ExposedDropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
-                    matchTextFieldWidth = false
+                    matchTextFieldWidth = false,
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     DropdownMenuItem(
                         onClick = { showMenu = false; editItem() },
@@ -735,14 +771,64 @@ fun EditApiKeyCredential(
                         )
                     }
                 )
-                Column {
-                    models.forEach { model ->
-                        Text(
-                            text = model.displayName
-                        )
-                    }
+
+                AnimatedVisibility(visible = models.isNotEmpty()) {
+                    ApiKeyTestModelListing(
+                        modifier = Modifier.padding(vertical = 6.dp)
+                            .animateContentSize()
+                            .fillMaxWidth(),
+                        models = models
+                    )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ApiKeyTestModelListing(
+    modifier: Modifier = Modifier,
+    models: List<DomainModel>
+) {
+    ButlerOutlinedCard(
+        modifier = modifier,
+        contentPadding = PaddingValues(0.dp),
+        colors = ButlerCardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .heightIn(min = 24.dp * models.size)
+                .padding(horizontal = 8.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(Modifier.height(8.dp))
+            models.forEachIndexed { index, item ->
+                var itemVisible by remember { mutableStateOf(false) }
+                AnimatedVisibility(
+                    visible = itemVisible,
+                    enter = expandVertically(expandFrom = Alignment.Top, animationSpec = tween(50)) + fadeIn()
+                ) {
+                    PlainTooltipWithContent(
+                        tooltip = {
+                            Text(text = item.toString())
+                        }
+                    ) { tooltipModifier ->
+                        Box(modifier = tooltipModifier.padding(2.dp)) {
+                            Text(
+                                text = item.displayName,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                LaunchedEffect(Unit) {
+                    delay(index * 50L)
+                    itemVisible = true
+                }
+            }
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -809,7 +895,9 @@ fun NewApiKeyCredential(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    val testText = stringResource(Res.string.test)
                     ButlerMediumOutlinedButton(
+                        modifier = Modifier.weight(testText.length.toFloat()),
                         onClick = {
                             testCredential(ApiKeyCredential(name, providerUrl, apiKey))
                         },
@@ -819,7 +907,7 @@ fun NewApiKeyCredential(
                                     state = rememberSharedContentState("new_api_key_test_text"),
                                     animatedVisibilityScope = animationScope
                                 ).skipToLookaheadSize(),
-                                text = stringResource(Res.string.test)
+                                text = testText
                             )
                         },
                         leadingIcon = {
@@ -833,17 +921,20 @@ fun NewApiKeyCredential(
                             )
                         }
                     )
+                    val saveText = stringResource(Res.string.save)
                     ButlerMediumSolidButton(
-                        modifier = Modifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState("new_api_key_button_bounds"),
-                            animatedVisibilityScope = animationScope,
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                        ).then(with(animationScope) {
-                            Modifier.animateEnterExit(
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            )
-                        }),
+                        modifier = Modifier
+                            .weight(saveText.length.toFloat())
+                            .sharedBounds(
+                                sharedContentState = rememberSharedContentState("new_api_key_button_bounds"),
+                                animatedVisibilityScope = animationScope,
+                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                            ).then(with(animationScope) {
+                                Modifier.animateEnterExit(
+                                    enter = fadeIn(),
+                                    exit = fadeOut()
+                                )
+                            }),
                         onClick = {
                             if (apiKey.isBlank()) apiKeyFieldBlank = true
                             if (providerUrl.isBlank()) providerUrlFieldBlank = true
@@ -872,6 +963,7 @@ fun NewApiKeyCredential(
                     )
                 }
                 ButlerMediumOutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = onBack,
                     text = {
                         Text(
@@ -885,12 +977,13 @@ fun NewApiKeyCredential(
                         )
                     }
                 )
-                Column {
-                    models.forEach { model ->
-                        Text(
-                            text = model.displayName
-                        )
-                    }
+                AnimatedVisibility(visible = models.isNotEmpty()) {
+                    ApiKeyTestModelListing(
+                        modifier = Modifier.padding(vertical = 6.dp)
+                            .animateContentSize()
+                            .fillMaxWidth(),
+                        models = models
+                    )
                 }
             }
         }

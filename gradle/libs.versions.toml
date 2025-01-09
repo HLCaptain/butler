@@ -4,7 +4,7 @@ kotlin = "2.1.20-Beta1"
 android-minSdk = "26"
 android-compileSdk = "35"
 ksp = "2.1.20-Beta1-1.0.29"
-agp = "8.8.0-rc02"
+agp = "8.8.0"
 compose = "1.8.0-alpha01"
 compose-android = "1.7.6"
 ktor = "3.0.3"
@@ -101,7 +101,7 @@ korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
 filepicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" } # TODO: switch to io.github.vinceglb:filekit-core or com.mohamedrejeb.calf:calf-file-picker
 ffmpeg-kit = { module = "com.arthenica:ffmpeg-kit-full", version = "6.0-2" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.0.4" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.0.2" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.2.0" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 

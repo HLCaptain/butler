@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -199,8 +201,8 @@ fun Home() {
                     ) { _ ->
                         AnimatedVisibility(
                             visible = !isCompact && isAuthFlowEnded == true,
-                            enter = slideInHorizontally { -it } + fadeIn(),
-                            exit = slideOutHorizontally { it } + fadeOut()
+                            enter = slideInHorizontally { -it } + fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                            exit = slideOutHorizontally { -it } + fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
                         ) {
                             VerticalNavBar(
                                 modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),

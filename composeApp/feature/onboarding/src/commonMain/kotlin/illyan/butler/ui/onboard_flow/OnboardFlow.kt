@@ -229,26 +229,10 @@ fun OnboardFlow(
                         windowAdaptiveInfo.widthSizeClass,
                         windowAdaptiveInfo.heightSizeClass
                     ),
-                    enterTransition = {
-                        slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
-                            tween(animationTime)
-                        )
-                    },
-                    popEnterTransition = {
-                        slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
-                            tween(animationTime)
-                        )
-                    },
-                    exitTransition = {
-                        slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
-                            tween(animationTime)
-                        )
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
-                            tween(animationTime)
-                        )
-                    }
+                    enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+                    popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+                    exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+                    popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
                 ) {
                     composable<Start> {
                         val isWidthCompact = it.toRoute<Start>().widthSizeClass == SizeClass.COMPACT
@@ -345,7 +329,6 @@ fun OnboardFlow(
                                     }
                                 }
                             }
-
                         }
                     }
                     composable<AuthItemDestination> {
@@ -409,11 +392,14 @@ fun OnboardFlow(
                         Text("Local LLM")
                     }
                     composable("hosted_server") {
-                        AuthFlow(authSuccessEnded)
+                        AuthFlow(
+                            authSuccessEnded = authSuccessEnded,
+                            onBack = navController::navigateUp
+                        )
                     }
                     composable("openai_api") {
                         ApiKey(
-                            onBack = { navController.navigateUp() },
+                            onBack = navController::navigateUp,
                             onNext = authSuccessEnded
                         )
                     }
@@ -549,6 +535,7 @@ fun ColumnScope.AuthItemHorizontalCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(
+                    modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     AuthItemTitle(

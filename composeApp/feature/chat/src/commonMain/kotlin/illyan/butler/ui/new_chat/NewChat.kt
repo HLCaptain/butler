@@ -1,7 +1,7 @@
 package illyan.butler.ui.new_chat
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,12 +34,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.ButlerTag
+import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainModel
@@ -47,6 +52,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
+import illyan.butler.generated.resources.no_models_to_chat_with
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.self_hosted
 import illyan.butler.generated.resources.server
@@ -81,10 +87,12 @@ fun NewChat(
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val hazeState = remember { HazeState() }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
+                modifier = Modifier.hazeEffect(hazeState),
                 title = {
                     Text(
                         stringResource(Res.string.new_chat),
@@ -94,16 +102,45 @@ fun NewChat(
                 },
                 scrollBehavior = scrollBehavior,
                 navigationIcon = navigationIcon ?: {},
+                colors = TopAppBarDefaults.topAppBarColors().copy(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
+                )
             )
         },
     ) { innerPadding ->
         ModelList(
+            modifier = Modifier.hazeSource(hazeState),
             serverModels = state.serverModels,
             providerModels = state.providerModels,
             localModels = state.localModels,
-            selectServerModel = { modelId, provider -> state.userId?.let { selectModel(modelId, provider, it) } },
-            selectProviderModel = { modelId, provider -> state.clientId?.let { selectModel(modelId, provider, it) } },
-            selectLocalModel = { modelId -> state.clientId?.let { selectModel(modelId, "", it) } }, // TODO: support local models properly
+            selectServerModel = { modelId, provider ->
+                state.userId?.let {
+                    selectModel(
+                        modelId,
+                        provider,
+                        it
+                    )
+                }
+            },
+            selectProviderModel = { modelId, provider ->
+                state.clientId?.let {
+                    selectModel(
+                        modelId,
+                        provider,
+                        it
+                    )
+                }
+            },
+            selectLocalModel = { modelId ->
+                state.clientId?.let {
+                    selectModel(
+                        modelId,
+                        "",
+                        it
+                    )
+                }
+            }, // TODO: support local models properly
             innerPadding = innerPadding
         )
     }
@@ -120,43 +157,63 @@ fun ModelList(
     selectLocalModel: (String) -> Unit,
     innerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    Crossfade(
-        targetState = Triple(serverModels, providerModels, localModels),
-    ) { (server, provider, local) ->
-        if (server == null && provider == null && local == null) {
-            Text(
-                text = stringResource(Res.string.loading),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-        } else if (!server.isNullOrEmpty() || !provider.isNullOrEmpty() || !local.isNullOrEmpty()) {
-            val models = remember(server, provider, local) { server.orEmpty().plus(provider.orEmpty()).plus(local.orEmpty()) }
-            LazyColumn(
-                modifier = modifier.fillMaxHeight().consumeWindowInsets(innerPadding),
-                contentPadding = PaddingValues(12.dp) + innerPadding,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+    Column(modifier = modifier) {
+        val models = remember(serverModels, providerModels, localModels) { serverModels.orEmpty() + providerModels.orEmpty() + localModels.orEmpty() }
+        val isLoading = remember(serverModels, providerModels, localModels) { serverModels == null || providerModels == null || localModels == null }
+        val noAvailableModels = models.isEmpty() && !isLoading
+        AnimatedVisibility(visible = isLoading) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp)).consumeWindowInsets(innerPadding),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                models.groupBy { it.id }.toList().forEach { (id, models) ->
-                    items(models, key = { "${it.endpoint}/${it.id}" }) { model ->
-                        ModelListItem(
-                            modelName = model.displayName,
-                            providers = models.mapNotNull { if (provider?.contains(it) == true) it.endpoint else null },
-                            server = models.mapNotNull { if (server?.contains(it) == true) it.endpoint else null },
-                            selectModelWithProvider = { provider -> selectProviderModel(id, provider) },
-                            selectModelFromServerWithProvider = { provider -> selectServerModel(id, provider) },
-                            selectLocalModel = { selectLocalModel(id) },
-                            isSelfHostAvailable = local?.any { it.id == id } == true,
-                        )
-                    }
-                }
+                MediumCircularProgressIndicator()
+                Text(
+                    text = stringResource(Res.string.loading),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
             }
-        } else {
-            Text("No models available")
+        }
+
+        AnimatedVisibility(visible = noAvailableModels) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp)).consumeWindowInsets(innerPadding),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(Res.string.no_models_to_chat_with),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxHeight().consumeWindowInsets(innerPadding),
+            contentPadding = PaddingValues(12.dp) + innerPadding,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(models.distinctBy { it.id }, key = { it }) { model ->
+                ModelListItem(
+                    modifier = Modifier.animateItem(
+                        placementSpec = tween(0)
+                    ),
+                    modelName = model.displayName,
+                    providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                    server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                    selectModelWithProvider = { provider -> selectProviderModel(model.id, provider) },
+                    selectModelFromServerWithProvider = { provider -> selectServerModel(model.id, provider) },
+                    selectLocalModel = { selectLocalModel(model.id) },
+                    isSelfHostAvailable = localModels?.any { it.id == model.id } == true,
+                )
+            }
         }
     }
 }
 
 @Composable
 fun ModelListItem(
+    modifier: Modifier = Modifier,
     modelName: String,
     providers: List<String>,
     server: List<String>,
@@ -167,12 +224,13 @@ fun ModelListItem(
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     ButlerExpandableCard(
+        modifier = modifier,
         onClick = { isExpanded = !isExpanded },
         isExpanded = isExpanded,
         contentPadding = ButlerCardDefaults.CompactContentPadding,
         expandedContent = {
             Column(
-                modifier = Modifier.padding(start = 56.dp)
+                modifier = Modifier.padding(start = 52.dp)
             ) {
                 providers.forEach { provider ->
                     Row(

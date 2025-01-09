@@ -131,7 +131,8 @@ fun ChatCard(
                 ExposedDropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
-                    matchTextFieldWidth = false
+                    matchTextFieldWidth = false,
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     DropdownMenuItem(
                         onClick = { showMenu = false; deleteChat() },

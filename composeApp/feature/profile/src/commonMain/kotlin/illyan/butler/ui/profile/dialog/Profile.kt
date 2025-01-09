@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalTextStyle
@@ -45,6 +44,7 @@ import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.about
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.hidden_field_string
@@ -57,7 +57,6 @@ import illyan.butler.generated.resources.settings
 import illyan.butler.generated.resources.sign_out
 import illyan.butler.generated.resources.unknown
 import illyan.butler.generated.resources.user_id
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.uuid.ExperimentalUuidApi
@@ -134,7 +133,7 @@ fun ProfileDialogContent(
         },
         buttons = {
             ProfileButtons(
-//                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier.fillMaxWidth(),
                 isUserSignedIn = isUserSignedIn,
                 isUserSigningOut = isUserSigningOut,
                 onLogin = onShowLoginScreen,
@@ -170,7 +169,7 @@ fun ProfileButtons(
         )
         Row(
             modifier = Modifier
-//                .weight(1f)
+                .weight(1f)
                 .align(Alignment.Bottom),
             horizontalArrangement = Arrangement.End
         ) {
@@ -252,9 +251,7 @@ private fun PreviewProfileDialogScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,
-    ExperimentalResourceApi::class
-)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileTitleScreen(
     modifier: Modifier = Modifier,
@@ -264,7 +261,9 @@ fun ProfileTitleScreen(
     userPhotoUrl: String? = null,
 ) {
     val clipboard = LocalClipboardManager.current
-    FlowRow {
+    FlowRow(
+        modifier = modifier
+    ) {
         Column {
             Text(text = stringResource(Res.string.profile))
             AnimatedVisibility(visible = userUUID != null) {
@@ -433,10 +432,10 @@ fun ProfileMenu(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy((-12).dp)
     ) {
-//        MenuButton(
-//            onClick = onShowAboutScreen,
-//            text = stringResource(R.string.about)
-//        )
+        MenuButton(
+            onClick = onShowAboutScreen,
+            text = stringResource(Res.string.about)
+        )
         MenuButton(
             onClick = onShowSettingsScreen,
             text = stringResource(Res.string.settings)

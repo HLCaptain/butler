@@ -58,6 +58,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.copied_to_clipboard
 import kotlinx.coroutines.coroutineScope
@@ -147,7 +148,7 @@ fun PlainTooltipWithContent(
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-    enabledGestures: List<GestureType> = emptyList(),
+    enabledGestures: List<GestureType> = getTooltipGestures(),
     onShowTooltip: () -> Unit = {},
     onDismissTooltip: () -> Unit = {},
     content: @Composable (gestureAreaModifier: Modifier) -> Unit

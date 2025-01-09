@@ -54,7 +54,8 @@ class NewChatViewModel(
             clientId = clientId,
             providerModels = providerModels,
             serverModels = serverModels,
-            localModels = emptyList(),
+            // Local models are not yet implemented, so we give back null for now
+            localModels = if (providerModels == null || serverModels == null) null else emptyList(),
             creatingChat = isCreating,
             newChatId = newId
         )

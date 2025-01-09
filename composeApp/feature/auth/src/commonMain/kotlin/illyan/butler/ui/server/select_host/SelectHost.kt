@@ -2,9 +2,13 @@ package illyan.butler.ui.server.select_host
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -20,8 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import illyan.butler.core.ui.components.ButlerDialogContent
+import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MenuButton
@@ -29,6 +32,7 @@ import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.host_connection_error
+import illyan.butler.generated.resources.host_url
 import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.test_host
@@ -37,7 +41,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun SelectHost(onSelectHostSuccessful: () -> Unit) {
+fun SelectHost(
+    modifier: Modifier = Modifier,
+    onSelectHostSuccessful: () -> Unit
+) {
     val viewModel = koinViewModel<SelectHostViewModel>()
     val state by viewModel.state.collectAsState()
 
@@ -59,7 +66,7 @@ fun SelectHost(onSelectHostSuccessful: () -> Unit) {
         }
     }
     SelectHostDialogContent(
-        modifier = Modifier.imePadding(),
+        modifier = modifier.padding(16.dp).imePadding(),
         state = state,
         testAndSelectHost = {
             isTestingOnly = false
@@ -81,46 +88,40 @@ fun SelectHostDialogContent(
 ) {
     var hostUrl by rememberSaveable { mutableStateOf(state.currentHost ?: "") }
     var isHostBlank by rememberSaveable { mutableStateOf(false) }
-    ButlerDialogContent(
-        modifier = modifier.mediumDialogWidth(),
-        title = {
-            Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                text = stringResource(Res.string.select_host)
-            )
-        },
-        text = {
-            SelectHost(
-                state = state,
-                hostUrl = hostUrl,
-                hostUrlChanged = { hostUrl = it; isHostBlank = false },
-                hostError = if (isHostBlank) { {
-                    Text(text = stringResource(Res.string.required))
-                } } else if (!state.isConnecting && state.isConnected == false) { {
-                    Text(text = stringResource(Res.string.host_connection_error))
-                } } else null
-            )
-        },
-        buttons = {
-            SelectHostButtons(
-                selectHost = {
-                    if (hostUrl.isBlank()) {
-                        isHostBlank = true
-                    } else {
-                        testAndSelectHost(hostUrl)
-                    }
-                },
-                testConnection = {
-                    if (hostUrl.isBlank()) {
-                        isHostBlank = true
-                    } else {
-                        testHost(hostUrl)
-                    }
+    Column(
+        modifier = modifier.mediumDialogWidth().width(IntrinsicSize.Max),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        SelectHost(
+            modifier = Modifier,
+            state = state,
+            hostUrl = hostUrl,
+            hostUrlChanged = { hostUrl = it; isHostBlank = false },
+            hostError = if (isHostBlank) { {
+                Text(text = stringResource(Res.string.required))
+            } } else if (!state.isConnecting && state.isConnected == false) { {
+                Text(text = stringResource(Res.string.host_connection_error))
+            } } else null
+        )
+        SelectHostButtons(
+            modifier = Modifier,
+            selectHost = {
+                if (hostUrl.isBlank()) {
+                    isHostBlank = true
+                } else {
+                    testAndSelectHost(hostUrl)
                 }
-            )
-        },
-        containerColor = Color.Transparent,
-    )
+            },
+            testConnection = {
+                if (hostUrl.isBlank()) {
+                    isHostBlank = true
+                } else {
+                    testHost(hostUrl)
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -136,6 +137,7 @@ fun SelectHost(
         value = hostUrl,
         isOutlined = false,
         enabled = true,
+        label = { Text(text = stringResource(Res.string.host_url)) },
         onValueChange = hostUrlChanged,
         isError = hostError != null || (!state.isConnecting && state.isConnected == false),
         trailingIcon = {
@@ -169,7 +171,7 @@ fun SelectHostButtons(
     testConnection: () -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ButlerMediumSolidButton(
@@ -178,6 +180,7 @@ fun SelectHostButtons(
         ) {
             Text(text = stringResource(Res.string.select_host))
         }
+        Spacer(modifier = Modifier.width(16.dp))
         MenuButton(
             onClick = testConnection,
             enabled = true,
