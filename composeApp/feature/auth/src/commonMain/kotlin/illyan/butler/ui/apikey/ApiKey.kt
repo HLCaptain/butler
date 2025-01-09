@@ -154,7 +154,7 @@ fun ApiKey(
         healthyCredentials = healthyCredentials,
         models = models.toMap(),
         createNewCredential = viewModel::addApiKeyCredential,
-        testApiKeyCredential = viewModel::testEndpointForCredentials,
+        testApiKeyCredential = viewModel::testEndpointForCredential,
         deleteCredential = viewModel::deleteApiKeyCredential,
         onBack = onBack,
         onNext = onNext

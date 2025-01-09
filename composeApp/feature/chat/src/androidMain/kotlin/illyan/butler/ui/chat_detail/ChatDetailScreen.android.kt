@@ -16,6 +16,9 @@ import illyan.butler.generated.resources.open_app_settings
 import illyan.butler.generated.resources.permission_request_denied_description
 import illyan.butler.generated.resources.permission_request_denied_title
 import illyan.butler.ui.permission.PermissionRequestScreen
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
+import io.github.vinceglb.filekit.core.PickerType
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -27,7 +30,12 @@ actual fun ChatDetailBottomBar(
     toggleRecord: () -> Unit
 ) {
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
-
+    val launcher = rememberFilePickerLauncher(
+        mode = PickerMode.Single,
+        type = PickerType.Image
+    ) { file ->
+        file?.path?.let { sendImage(it) }
+    }
     val galleryPermissionState = rememberPermissionState(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
     } else {
@@ -35,6 +43,7 @@ actual fun ChatDetailBottomBar(
     }) {
         if (it) {
             showAppRationaleWithPermission = null
+            launcher.launch()
         }
     }
     val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)

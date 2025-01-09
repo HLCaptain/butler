@@ -45,7 +45,7 @@ class HostManager(
     /**
      * @return List of models available on the provider with given credentials
      */
-    suspend fun testApiKeyCredentials(credential: ApiKeyCredential): List<DomainModel> {
+    suspend fun testApiKeyCredential(credential: ApiKeyCredential): List<DomainModel> {
         return try {
             withTimeout(5000) {
                 provideOpenAIClient(credential).models().map {
@@ -55,8 +55,6 @@ class HostManager(
                         ownedBy = it.ownedBy,
                         endpoint = credential.providerUrl
                     )
-                }.also {
-                    credentialRepository.upsertApiKeyCredential(credential)
                 }
             }
         } catch (e: Exception) {

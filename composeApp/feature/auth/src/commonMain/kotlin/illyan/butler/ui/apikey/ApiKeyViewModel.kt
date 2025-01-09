@@ -32,9 +32,9 @@ class ApiKeyViewModel(
 
     val modelsForCredential = MutableStateFlow<Map<ApiKeyCredential, List<DomainModel>>>(emptyMap())
 
-    fun testEndpointForCredentials(credential: ApiKeyCredential) {
+    fun testEndpointForCredential(credential: ApiKeyCredential) {
         viewModelScope.launch {
-            val models = hostManager.testApiKeyCredentials(credential)
+            val models = hostManager.testApiKeyCredential(credential)
             modelsForCredential.update { it + (credential to models) }
         }
     }

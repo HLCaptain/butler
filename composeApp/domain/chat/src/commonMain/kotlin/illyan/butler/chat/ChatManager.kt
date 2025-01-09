@@ -100,9 +100,10 @@ class ChatManager(
 
     init {
         coroutineScopeIO.launch {
-            deviceChats.collectLatest { chats ->
+            deviceMessages.collectLatest { messages ->
+                val chats = deviceChats.first()
                 chats.forEach { chat ->
-                    chat.id?.let { answerOpenAIChat(it) }
+                    chat.id?.let { answerOpenAIChat(it, messages) }
                 }
             }
         }
@@ -148,10 +149,10 @@ class ChatManager(
         )
     }
 
-    private suspend fun answerOpenAIChat(chatId: String) {
+    private suspend fun answerOpenAIChat(chatId: String, previousMessages: List<DomainMessage> = emptyList()) {
         val clientId = authManager.clientId.filterNotNull().first()
         val previousChats = chatRepository.getUserChatsFlow(clientId, true).first()
-        val messages = deviceMessages.first()
+        val messages = (previousMessages + deviceMessages.first()).distinctBy { it.id }
         llmService.answerChat(
             chat = previousChats.first { it.id == chatId }.toNetworkModel().copy(
                 lastFewMessages = messages.filter { it.chatId == chatId }.map { it.toNetworkModel() }
