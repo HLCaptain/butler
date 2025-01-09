@@ -11,6 +11,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.auth)
+        implementation(projects.composeApp.domain.model)
         implementation(projects.composeApp.domain.host)
 
         implementation(libs.kotlinx.coroutines)

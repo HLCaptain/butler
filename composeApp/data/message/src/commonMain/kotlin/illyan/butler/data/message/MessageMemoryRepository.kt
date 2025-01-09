@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
@@ -40,7 +41,10 @@ class MessageMemoryRepository(
 
     override suspend fun upsert(message: DomainMessage, deviceOnly: Boolean): String {
         val newMessage = if (message.id == null) {
-            message.copy(id = (messages.size + 1).toString())
+            message.copy(
+                id = (messages.size + 1).toString(),
+                time = Clock.System.now().toEpochMilliseconds()
+            )
         } else message
 
         messages[newMessage.id!!] = newMessage

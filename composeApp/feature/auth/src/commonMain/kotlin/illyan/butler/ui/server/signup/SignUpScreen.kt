@@ -21,7 +21,7 @@ import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.LoadingIndicator
-import illyan.butler.core.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.login
@@ -72,7 +72,7 @@ fun SignUpDialogContent(
     ) { userSignedIn ->
         if (userSignedIn) {
             ButlerDialogContent(
-                modifier = Modifier.smallDialogWidth(),
+                modifier = Modifier.mediumDialogWidth(),
                 text = { LoadingIndicator() },
                 textPaddingValues = PaddingValues()
             )
@@ -80,7 +80,7 @@ fun SignUpDialogContent(
             var email by rememberSaveable { mutableStateOf(initialEmail) }
             var password by rememberSaveable { mutableStateOf(initialPassword) }
             ButlerDialogContent(
-                modifier = Modifier.smallDialogWidth(),
+                modifier = Modifier.mediumDialogWidth(),
                 title = {
                     Text(
                         modifier = Modifier.align(Alignment.CenterHorizontally),

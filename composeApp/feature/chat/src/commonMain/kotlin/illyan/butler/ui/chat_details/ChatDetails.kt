@@ -40,7 +40,6 @@ fun ChatDetails(
     ChatDetails(
         modifier = modifier,
         chat = state.chat,
-        currentUserId = state.userId,
         actions = actions
     )
 }
@@ -49,7 +48,6 @@ fun ChatDetails(
 fun ChatDetails(
     modifier: Modifier = Modifier,
     chat: DomainChat?,
-    currentUserId: String?,
     actions: @Composable () -> Unit = {},
 ) {
     Box {

@@ -4,10 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -43,7 +45,9 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Refresh
@@ -82,6 +86,8 @@ import illyan.butler.core.ui.components.ButlerElevatedCard
 import illyan.butler.core.ui.components.ButlerMediumOutlinedButton
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.SmallCircularProgressIndicator
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
@@ -91,6 +97,8 @@ import illyan.butler.generated.resources.api_key
 import illyan.butler.generated.resources.back
 import illyan.butler.generated.resources.delete
 import illyan.butler.generated.resources.edit
+import illyan.butler.generated.resources.error
+import illyan.butler.generated.resources.healthy
 import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.next
 import illyan.butler.generated.resources.provider_url
@@ -124,10 +132,12 @@ fun ApiKey(
 ) {
     val viewModel = koinViewModel<ApiKeyViewModel>()
     val apiKeyCredentials by viewModel.apiKeyCredentials.collectAsState()
+    val healthyCredentials by viewModel.healthyCredentials.collectAsState()
     val models by viewModel.modelsForCredential.collectAsState()
     ApiKeyScaffold(
         modifier = modifier,
         credentials = apiKeyCredentials,
+        healthyCredentials = healthyCredentials,
         models = models.toMap(),
         createNewCredential = viewModel::addApiKeyCredential,
         testApiKeyCredential = viewModel::testEndpointForCredentials,
@@ -142,6 +152,7 @@ fun ApiKey(
 fun ApiKeyScaffold(
     modifier: Modifier = Modifier,
     credentials: List<ApiKeyCredential>?,
+    healthyCredentials: List<ApiKeyCredential>?,
     models: Map<ApiKeyCredential, List<DomainModel>>,
     createNewCredential: (ApiKeyCredential) -> Unit = {},
     testApiKeyCredential: (ApiKeyCredential) -> Unit = {},
@@ -218,6 +229,7 @@ fun ApiKeyScaffold(
                     ApiKeyCredentialList(
                         modifier = Modifier.padding(innerPadding),
                         credentials = credentials,
+                        healthyCredentials = healthyCredentials,
                         createNewCredential = { navController.navigate(NewApiKeyCredential) },
                         editCredential = { index ->
                             credentials?.getOrNull(index)?.let {
@@ -288,6 +300,7 @@ fun ApiKeyScaffold(
 fun ApiKeyCredentialList(
     modifier: Modifier = Modifier,
     credentials: List<ApiKeyCredential>?,
+    healthyCredentials: List<ApiKeyCredential>?,
     createNewCredential: () -> Unit,
     editCredential: (Int) -> Unit,
     deleteCredential: (ApiKeyCredential) -> Unit,
@@ -329,10 +342,12 @@ fun ApiKeyCredentialList(
                 credentials.distinctBy { it.providerUrl },
                 key = { _, item -> item.providerUrl }) { index, item ->
                 ApiKeyCredentialGridItem(
-                    modifier = Modifier.animateItem()
+                    modifier = Modifier
+                        .animateItem()
                         .sizeIn(minWidth = minCellSize, minHeight = minCellSize),
                     item = item,
                     key = index,
+                    healthy = healthyCredentials?.contains(item),
                     editItem = { editCredential(index) },
                     deleteItem = { deleteCredential(item) },
                     sharedTransitionScope = sharedTransitionScope,
@@ -470,6 +485,7 @@ fun ApiKeyCredentialGridItem(
     key: Int,
     editItem: () -> Unit = {},
     deleteItem: () -> Unit = {},
+    healthy: Boolean? = false,
     sharedTransitionScope: SharedTransitionScope,
     animationScope: AnimatedContentScope
 ) = with(sharedTransitionScope) {
@@ -568,6 +584,34 @@ fun ApiKeyCredentialGridItem(
                     )
                 }
             }
+
+            Crossfade(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 8.dp, bottom = 8.dp)
+                    .animateContentSize(),
+                targetState = healthy
+            ) {
+                Row(
+                    modifier = Modifier,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (healthy == null) {
+                        SmallCircularProgressIndicator()
+                    } else {
+                        Text(
+                            text = stringResource(if (healthy) Res.string.healthy else Res.string.error),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        Icon(
+                            modifier = Modifier.size(16.dp),
+                            imageVector = if (healthy) Icons.Rounded.Done else Icons.Rounded.Close,
+                            contentDescription = null,
+                            tint = if (healthy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -603,10 +647,11 @@ fun EditApiKeyCredential(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = modifier.width(IntrinsicSize.Max),
+                modifier = modifier.mediumDialogWidth().width(IntrinsicSize.Max),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ApiKeyItemFields(
+                    modifier = Modifier.fillMaxWidth(),
                     name = name,
                     providerUrl = providerUrl,
                     apiKey = apiKey,
@@ -620,15 +665,13 @@ fun EditApiKeyCredential(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    val testTitle = stringResource(Res.string.test)
                     ButlerMediumOutlinedButton(
+                        modifier = Modifier.weight(testTitle.length.toFloat()),
                         onClick = {
                             testCredential(ApiKeyCredential(name, providerUrl, apiKey))
                         },
-                        text = {
-                            Text(
-                                text = stringResource(Res.string.test)
-                            )
-                        },
+                        text = { Text(text = testTitle) },
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier.sharedElement(
@@ -640,6 +683,7 @@ fun EditApiKeyCredential(
                             )
                         }
                     )
+                    val saveTitle = stringResource(Res.string.save)
                     ButlerMediumSolidButton(
                         modifier = Modifier.sharedBounds(
                             sharedContentState = rememberSharedContentState("new_api_key_button_bounds"),
@@ -650,7 +694,7 @@ fun EditApiKeyCredential(
                                 enter = fadeIn(),
                                 exit = fadeOut()
                             )
-                        }),
+                        }).weight(saveTitle.length.toFloat()),
                         onClick = {
                             saveCredential(ApiKeyCredential(name, providerUrl, apiKey))
                         },
@@ -670,16 +714,18 @@ fun EditApiKeyCredential(
                                     state = rememberSharedContentState("new_api_key_text"),
                                     animatedVisibilityScope = animationScope
                                 ).skipToLookaheadSize(),
-                                text = stringResource(Res.string.save)
+                                text = saveTitle
                             )
                         }
                     )
                 }
+                val backTitle = stringResource(Res.string.back)
                 ButlerMediumOutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = onBack,
                     text = {
                         Text(
-                            text = stringResource(Res.string.back)
+                            text = backTitle
                         )
                     },
                     leadingIcon = {
@@ -744,7 +790,7 @@ fun NewApiKeyCredential(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = modifier.width(IntrinsicSize.Min),
+                modifier = modifier.width(IntrinsicSize.Max),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -869,11 +915,11 @@ fun ApiKeyItemFields(
     animationScope: AnimatedContentScope,
 ) = with(sharedTransitionScope) {
     Column(
-        modifier = modifier.width(IntrinsicSize.Min),
+        modifier = modifier.width(IntrinsicSize.Max),
         verticalArrangement = verticalArrangement
     ) {
         ButlerTextField(
-            modifier = Modifier.sharedElement(
+            modifier = Modifier.fillMaxWidth().sharedElement(
                 state = rememberSharedContentState(key?.let { "api_key_name_$it" }
                     ?: "new_api_key_name"),
                 animatedVisibilityScope = animationScope
@@ -886,7 +932,7 @@ fun ApiKeyItemFields(
             },
         )
         ButlerTextField(
-            modifier = Modifier.sharedElement(
+            modifier = Modifier.fillMaxWidth().sharedElement(
                 state = rememberSharedContentState(key?.let { "api_key_provider_url_$it" }
                     ?: "new_api_key_provider_url"),
                 animatedVisibilityScope = animationScope

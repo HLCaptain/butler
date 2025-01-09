@@ -20,7 +20,6 @@ package illyan.butler.ui.profile.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -88,7 +87,7 @@ import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.TooltipElevatedCard
-import illyan.butler.core.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.Theme
@@ -171,7 +170,7 @@ fun UserSettingsDialogContent(
     navigateToMLSettings: () -> Unit = {},
 ) {
     Crossfade(
-        modifier = modifier.animateContentSize().smallDialogWidth(),
+        modifier = modifier.mediumDialogWidth(),
         targetState = showAnalyticsRequestDialog,
         label = "User Settings Dialog Content",
     ) {
@@ -403,7 +402,6 @@ private fun SyncPreferencesButton(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                modifier = Modifier.animateContentSize(),
                 text = stringResource(
                     if (shouldSyncPreferences) {
                         Res.string.syncing
@@ -506,7 +504,6 @@ fun SettingLabel(
         modifier = modifier,
         settingIndicator = {
             Crossfade(
-                modifier = Modifier.animateContentSize(),
                 targetState = settingText,
                 label = "Setting label text loading indicator",
             ) {
@@ -641,7 +638,6 @@ fun BooleanSetting(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Crossfade(
-                modifier = Modifier.animateContentSize(),
                 targetState = value,
                 label = "Boolean setting text"
             ) { enabled ->
@@ -688,7 +684,6 @@ fun <T : Any> DropdownSetting(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Crossfade(
-                modifier = Modifier.animateContentSize(),
                 targetState = selectedValue,
                 label = "Dropdown setting text",
             ) { state ->
@@ -800,7 +795,6 @@ fun BasicSetting(
         onClick = onClick,
         title = {
             Text(
-                modifier = Modifier.animateContentSize(),
                 text = title,
                 style = titleStyle,
                 fontWeight = titleWeight,
@@ -841,7 +835,6 @@ fun SettingItem(
     enabled = enabled,
     title = {
         Text(
-            modifier = Modifier.animateContentSize(),
             text = settingName,
             style = titleStyle,
             fontWeight = titleWeight,
@@ -860,7 +853,6 @@ fun SettingItem(
     content: @Composable RowScope.() -> Unit = {},
 ) {
     ButlerCard(
-        modifier = modifier.animateContentSize(),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent,
         ),

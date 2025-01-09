@@ -74,8 +74,6 @@ class ChatDetailViewModel(
         val recording = flows[2] as? Boolean ?: false
         val playing = flows[3] as? String
         val resources = flows[4] as? List<DomainResource>
-//        Napier.v("Gallery permission: $galleryPermission")
-        Napier.v("Resources: $resources")
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate {
                 it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
@@ -121,7 +119,7 @@ class ChatDetailViewModel(
     fun sendImage(path: String, senderId: String) {
         viewModelScope.launch {
             chatIdStateFlow.value?.let {
-                chatManager.sendImageMessage(it, senderId, path)
+                chatManager.sendImageMessage(it, path, senderId)
                 Napier.d("Image sent: $path")
             }
         }

@@ -5,6 +5,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
@@ -55,7 +56,10 @@ class MessageStoreRepository(
         return (messageMutableStore.write(
             StoreWriteRequest.of(
                 key = if (deviceOnly) MessageKey.Write.DeviceOnly else if (message.id == null) MessageKey.Write.Create else MessageKey.Write.Upsert,
-                value = message.copy(id = message.id ?: Uuid.random().toString()), // ID cannot be null on write
+                value = message.copy(
+                    id = message.id ?: Uuid.random().toString(), // ID cannot be null on write
+                    time = if (deviceOnly) message.time ?: Clock.System.now().toEpochMilliseconds() else message.time
+                ),
             )
         ) as? StoreWriteResponse.Success.Typed<DomainMessage>)?.value?.id!!
     }

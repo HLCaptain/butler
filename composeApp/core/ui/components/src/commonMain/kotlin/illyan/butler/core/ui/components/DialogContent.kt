@@ -164,7 +164,7 @@ fun Modifier.dialogWidth(
 )
 
 fun Modifier.smallDialogWidth() = dialogWidth(max = 320.dp)
-fun Modifier.mediumDialogWidth() = dialogWidth(max = 360.dp)
+fun Modifier.mediumDialogWidth() = dialogWidth(max = 420.dp)
 fun Modifier.largeDialogWidth() = dialogWidth(max = DialogMaxWidth)
 
 val DialogMinHeight = 200.dp

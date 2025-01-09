@@ -4,11 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
+import illyan.butler.data.credential.CredentialRepository
+import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.error.ErrorManager
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,7 @@ import kotlin.uuid.Uuid
 class HomeViewModel(
     authManager: AuthManager,
     private val chatManager: ChatManager,
+    credentialRepository: CredentialRepository,
     errorManager: ErrorManager,
 ) : ViewModel() {
     private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
@@ -38,7 +40,8 @@ class HomeViewModel(
         _serverErrors,
         _appErrors,
         chatManager.userChats,
-        chatManager.deviceChats
+        chatManager.deviceChats,
+        credentialRepository.apiKeyCredentials
     ) { flows ->
         val signedInUserId = flows[0] as String?
         val clientId = flows[1] as String?
@@ -46,24 +49,15 @@ class HomeViewModel(
         val appErrors = flows[3] as List<DomainErrorEvent>
         val userChats = flows[4] as List<DomainChat>
         val deviceChats = flows[5] as List<DomainChat>
-        Napier.v {
-            """
-            HomeViewModel:
-            signedInUserId: $signedInUserId
-            clientId: $clientId
-            serverErrors: $serverErrors
-            appErrors: $appErrors
-            userChats: $userChats
-            deviceChats: $deviceChats
-            """.trimIndent()
-        }
+        val credentials = flows[6] as List<ApiKeyCredential>? ?: emptyList()
         HomeState(
             signedInUserId = signedInUserId,
             clientId = clientId,
             serverErrors = serverErrors,
             appErrors = appErrors,
             userChats = userChats,
-            deviceChats = deviceChats
+            deviceChats = deviceChats,
+            credentials = credentials
         )
     }.stateIn(
         viewModelScope,

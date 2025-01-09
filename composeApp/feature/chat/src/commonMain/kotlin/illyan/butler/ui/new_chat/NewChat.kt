@@ -48,7 +48,7 @@ import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.select_host
-import illyan.butler.generated.resources.select_self_hosted
+import illyan.butler.generated.resources.self_hosted
 import illyan.butler.generated.resources.server
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -135,16 +135,18 @@ fun ModelList(
                 contentPadding = PaddingValues(12.dp) + innerPadding,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(models.groupBy { it.id }.toList()) { (id, models) ->
-                    ModelListItem(
-                        modelName = models.first().displayName,
-                        providers = models.mapNotNull { if (provider?.contains(it) == true) it.endpoint else null },
-                        server = models.mapNotNull { if (server?.contains(it) == true) it.endpoint else null },
-                        selectModelWithProvider = { provider -> selectProviderModel(id, provider) },
-                        selectModelFromServerWithProvider = { provider -> selectServerModel(id, provider) },
-                        selectLocalModel = { selectLocalModel(id) },
-                        isSelfHostAvailable = local?.any { it.id == id } == true,
-                    )
+                models.groupBy { it.id }.toList().forEach { (id, models) ->
+                    items(models, key = { "${it.endpoint}/${it.id}" }) { model ->
+                        ModelListItem(
+                            modelName = model.displayName,
+                            providers = models.mapNotNull { if (provider?.contains(it) == true) it.endpoint else null },
+                            server = models.mapNotNull { if (server?.contains(it) == true) it.endpoint else null },
+                            selectModelWithProvider = { provider -> selectProviderModel(id, provider) },
+                            selectModelFromServerWithProvider = { provider -> selectServerModel(id, provider) },
+                            selectLocalModel = { selectLocalModel(id) },
+                            isSelfHostAvailable = local?.any { it.id == id } == true,
+                        )
+                    }
                 }
             }
         } else {
@@ -260,7 +262,7 @@ fun ModelListItem(
 
             MenuButton(
                 onClick = selectLocalModel,
-                text = stringResource(Res.string.select_self_hosted),
+                text = stringResource(Res.string.self_hosted),
                 enabled = isSelfHostAvailable
             )
         }

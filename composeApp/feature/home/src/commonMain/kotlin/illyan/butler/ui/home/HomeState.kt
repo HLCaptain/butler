@@ -1,5 +1,6 @@
 package illyan.butler.ui.home
 
+import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
@@ -12,4 +13,5 @@ data class HomeState(
     val userChats: List<DomainChat> = listOf(),
     val deviceChats: List<DomainChat> = listOf(),
     val localChats: List<DomainChat> = listOf(),
+    val credentials: List<ApiKeyCredential> = listOf(),
 )

@@ -99,6 +99,7 @@ import illyan.butler.ui.error.ErrorScreen
 import illyan.butler.ui.onboard_flow.OnboardFlow
 import illyan.butler.ui.profile.dialog.ProfileDialog
 import illyan.butler.ui.profile.settings.UserSettings
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -111,8 +112,16 @@ fun Home() {
     Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
         Column(modifier = Modifier.statusBarsPadding()) {
             var isProfileDialogShowing by rememberSaveable(state.signedInUserId) { mutableStateOf(false) }
-            var isAuthFlowEnded by rememberSaveable(state.signedInUserId) { mutableStateOf(state.signedInUserId != null) }
-
+            var initialLoadingDelayPassed by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                delay(100)
+                initialLoadingDelayPassed = true
+            }
+            var isAuthFlowEnded by rememberSaveable(
+                state.signedInUserId,
+                state.credentials,
+                initialLoadingDelayPassed
+            ) { mutableStateOf(if (initialLoadingDelayPassed) (state.signedInUserId != null || state.credentials.isNotEmpty()) else null) }
             val profileNavController = rememberNavController()
             val animationTime = 200
             ButlerDialog(
@@ -133,12 +142,20 @@ fun Home() {
                     popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
                 ) {
                     composable("profile") {
-                        ProfileDialog {
-                            profileNavController.navigate("settings")
-                        }
+                        ProfileDialog(
+                            onShowSettingsScreen = { profileNavController.navigate("settings") },
+                            onLogin = {
+                                isAuthFlowEnded = false
+                                isProfileDialogShowing = false
+                            },
+                            onAbout = { profileNavController.navigate("about") }
+                        )
                     }
                     composable("settings") {
                         UserSettings()
+                    }
+                    composable("about") {
+                        Text("About")
                     }
                 }
             }
@@ -181,7 +198,7 @@ fun Home() {
                         transitionSpec = { slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() }
                     ) { _ ->
                         AnimatedVisibility(
-                            visible = !isCompact && isAuthFlowEnded,
+                            visible = !isCompact && isAuthFlowEnded == true,
                             enter = slideInHorizontally { -it } + fadeIn(),
                             exit = slideOutHorizontally { it } + fadeOut()
                         ) {
@@ -206,6 +223,7 @@ fun Home() {
             ) {
                 Surface(tonalElevation = 0.dp) {
                     AnimatedContent(isAuthFlowEnded) { isHome ->
+                        if (isHome == null) return@AnimatedContent
                         if (isHome) {
                             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                             var drawerContentWidthInPixels by remember { mutableStateOf(0) }

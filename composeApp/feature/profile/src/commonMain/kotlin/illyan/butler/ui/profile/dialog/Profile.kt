@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -43,7 +42,7 @@ import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.core.ui.components.LocalDialogDismissRequest
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
-import illyan.butler.core.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
@@ -67,6 +66,8 @@ import kotlin.uuid.Uuid
 @Composable
 fun ProfileDialog(
     onShowSettingsScreen: () -> Unit = {},
+    onLogin: () -> Unit,
+    onAbout: () -> Unit,
 ) {
     val viewModel = koinViewModel<ProfileViewModel>()
     val userUUID by viewModel.userUUID.collectAsState()
@@ -89,8 +90,8 @@ fun ProfileDialog(
         confidentialInfo = confidentialInfo,
         showConfidentialInfoInitially = false,
         onSignOut = viewModel::signOut,
-//        onShowLoginScreen = { navigator.push(LoginScreen()) },
-//        onShowAboutScreen = { navigator.push(AboutDialogScreen) },
+        onShowLoginScreen = onLogin,
+        onShowAboutScreen = onAbout,
         onShowSettingsScreen = onShowSettingsScreen,
         resetTutorialAndSignOut = viewModel::resetTutorialAndSignOut
     )
@@ -113,7 +114,7 @@ fun ProfileDialogContent(
 ) {
     var showConfidentialInfo by remember { mutableStateOf(showConfidentialInfoInitially) }
     ButlerDialogContent(
-        modifier = modifier.smallDialogWidth(),
+        modifier = modifier.mediumDialogWidth(),
         title = {
             ProfileTitleScreen(
                 userUUID = userUUID,
@@ -143,11 +144,10 @@ fun ProfileDialogContent(
                 resetTutorialAndSignOut = resetTutorialAndSignOut
             )
         },
-        containerColor = Color.Transparent,
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalResourceApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileButtons(
     modifier: Modifier = Modifier,

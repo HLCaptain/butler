@@ -1,5 +1,6 @@
 package illyan.butler.core.network.ktor.http
 
+import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.local.room.model.RoomToken
 import illyan.butler.data.settings.AppRepository
@@ -43,7 +44,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 
 fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
     engine {
-        https
         https {
             serverName = null
             cipherSuites = CIOCipherSuites.SupportedSuites
@@ -61,10 +61,11 @@ fun HttpClientConfig<*>.setupClient(
     HttpResponseValidator {
         handleResponseExceptionWithRequest { throwable, _ ->
             Napier.e(throwable) { "Error in response" }
+
             when (throwable) {
                 is ServerResponseException -> errorManager.reportError(throwable.response)
                 is ClientRequestException -> errorManager.reportError(throwable.response)
-                else -> errorManager.reportError(throwable)
+                else -> Napier.e { "Unhandled exception: $throwable" } // Do not report, just log
             }
         }
     }
@@ -191,7 +192,7 @@ fun HttpClientConfig<*>.setupClient(
     install(fallbackPlugin) {
         val fallbackContentType = ContentType.Application.Json
         val defaultContentType = ContentType.Application.ProtoBuf
-        supportedContentTypes = if (developmentMode) {
+        supportedContentTypes = if (BuildConfig.DEBUG) {
             listOf(fallbackContentType)
         } else {
             listOf(defaultContentType, fallbackContentType)

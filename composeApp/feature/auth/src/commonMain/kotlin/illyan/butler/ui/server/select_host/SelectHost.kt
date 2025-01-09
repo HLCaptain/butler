@@ -26,12 +26,12 @@ import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
-import illyan.butler.core.ui.components.smallDialogWidth
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.host_connection_error
 import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.select_host
-import illyan.butler.generated.resources.test_connection
+import illyan.butler.generated.resources.test_host
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -82,7 +82,7 @@ fun SelectHostDialogContent(
     var hostUrl by rememberSaveable { mutableStateOf(state.currentHost ?: "") }
     var isHostBlank by rememberSaveable { mutableStateOf(false) }
     ButlerDialogContent(
-        modifier = modifier.smallDialogWidth(),
+        modifier = modifier.mediumDialogWidth(),
         title = {
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -181,7 +181,7 @@ fun SelectHostButtons(
         MenuButton(
             onClick = testConnection,
             enabled = true,
-            text = stringResource(Res.string.test_connection)
+            text = stringResource(Res.string.test_host)
         )
     }
 }

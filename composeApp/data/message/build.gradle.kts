@@ -16,6 +16,7 @@ kotlin {
         implementation(projects.shared.model)
 
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.datetime)
         implementation(libs.store)
         implementation(libs.napier)
     }

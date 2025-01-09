@@ -70,6 +70,7 @@ class NewChatViewModel(
         senderId: String
     ) {
         viewModelScope.launch(Dispatchers.IO) {
+            Napier.v { "Creating new chat with modelId: $modelId, endpoint: $endpoint, senderId: $senderId" }
             creatingNewChat.update { true }
             val id = chatManager.startNewChat(modelId, endpoint, senderId)
             creatingNewChat.update { false }

@@ -12,6 +12,10 @@ import org.koin.core.annotation.Single
 @Single
 class ModelHttpDataSource(private val client: HttpClient) : ModelNetworkDataSource {
     override suspend fun fetchAll(): List<DomainModel> {
-        return client.get("/models").body<List<ModelDto>>().map { it.toDomainModel() }
+        return try {
+            client.get("/models").body<List<ModelDto>>().map { it.toDomainModel() }
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 }

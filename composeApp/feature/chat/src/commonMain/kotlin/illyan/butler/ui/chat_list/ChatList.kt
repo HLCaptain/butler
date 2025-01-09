@@ -53,7 +53,7 @@ fun ChatList(
 ) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(8.dp)
+        contentPadding = PaddingValues(8.dp),
     ) {
         items(chats, key = { it.id!! }) { chat ->
             ChatCard(

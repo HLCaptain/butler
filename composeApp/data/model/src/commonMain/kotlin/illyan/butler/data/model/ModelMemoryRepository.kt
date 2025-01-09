@@ -1,5 +1,6 @@
 package illyan.butler.data.model
 
+import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -49,4 +50,6 @@ class ModelMemoryRepository : ModelRepository {
     )
     override fun getAvailableModelsFromServer(): Flow<List<DomainModel>> = flowOf(availableModelsFromServer)
     override fun getAvailableModelsFromProviders(): Flow<List<DomainModel>> = flowOf(availableModelsFromProviders)
+    override val healthyHostCredentials: Flow<List<ApiKeyCredential>>
+        get() = flowOf(emptyList())
 }

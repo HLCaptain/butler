@@ -6,6 +6,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,6 +44,7 @@ sealed class AuthFlowDestination {
     data object SelectHost : AuthFlowDestination()
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthFlow(
     authSuccessEnded: () -> Unit
@@ -49,56 +53,64 @@ fun AuthFlow(
     val state by viewModel.state.collectAsState()
     val authNavController = rememberNavController()
     val animationTime = 200
-    NavHost(
-        navController = authNavController,
-        contentAlignment = Alignment.Center,
-        sizeTransform = { SizeTransform() },
-        startDestination = if (state.hostSelected == true) AuthFlowDestination.Login else AuthFlowDestination.SelectHost,
-        enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-        popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-        exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-        popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
-    ) {
-        composable<AuthFlowDestination.Login> {
-            Login(
-                onSignUp = { email, password -> authNavController.navigate(
-                    AuthFlowDestination.SignUp(
-                        email,
-                        password
-                    )
-                ) },
-                onSelectHost = { authNavController.navigate(AuthFlowDestination.SelectHost) },
-                onAuthenticated = { authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true } }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {},
             )
         }
-        composable<AuthFlowDestination.SelectHost> {
-            SelectHost {
-                if (authNavController.previousBackStackEntry == null) {
-                    // This was the first screen, so we navigate to the login screen
-                    authNavController.navigate(AuthFlowDestination.Login) {
-                        launchSingleTop = true
+    ) {
+        NavHost(
+            navController = authNavController,
+            contentAlignment = Alignment.Center,
+            sizeTransform = { SizeTransform() },
+            startDestination = if (state.hostSelected == true) AuthFlowDestination.Login else AuthFlowDestination.SelectHost,
+            enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+            popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+            exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+            popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+        ) {
+            composable<AuthFlowDestination.Login> {
+                Login(
+                    onSignUp = { email, password -> authNavController.navigate(
+                        AuthFlowDestination.SignUp(
+                            email,
+                            password
+                        )
+                    ) },
+                    onSelectHost = { authNavController.navigate(AuthFlowDestination.SelectHost) },
+                    onAuthenticated = { authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true } }
+                )
+            }
+            composable<AuthFlowDestination.SelectHost> {
+                SelectHost {
+                    if (authNavController.previousBackStackEntry == null) {
+                        // This was the first screen, so we navigate to the login screen
+                        authNavController.navigate(AuthFlowDestination.Login) {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        // This screen was navigated to from another screen, so we just navigate back
+                        authNavController.navigateUp()
                     }
-                } else {
-                    // This screen was navigated to from another screen, so we just navigate back
-                    authNavController.navigateUp()
                 }
             }
-        }
-        composable<AuthFlowDestination.SignUp> {
-            val (email, password) = it.toRoute<AuthFlowDestination.SignUp>()
-            SignUp(
-                initialEmail = email,
-                initialPassword = password,
-                onSignUpSuccessful = {
-                    authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true }
+            composable<AuthFlowDestination.SignUp> {
+                val (email, password) = it.toRoute<AuthFlowDestination.SignUp>()
+                SignUp(
+                    initialEmail = email,
+                    initialPassword = password,
+                    onSignUpSuccessful = {
+                        authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true }
+                    }
+                )
+            }
+            composable<AuthFlowDestination.AuthSuccess> {
+                AuthSuccessIcon()
+                LaunchedEffect(Unit) {
+                    delay(1000L)
+                    authSuccessEnded()
                 }
-            )
-        }
-        composable<AuthFlowDestination.AuthSuccess> {
-            AuthSuccessIcon()
-            LaunchedEffect(Unit) {
-                delay(1000L)
-                authSuccessEnded()
             }
         }
     }

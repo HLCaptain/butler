@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
@@ -42,7 +43,10 @@ class ChatMemoryRepository(
 
     override suspend fun upsert(chat: DomainChat, deviceOnly: Boolean): String {
         val newChat = if (chat.id == null) {
-            chat.copy(id = ((chats.values.maxOfOrNull { it.id?.toInt() ?: 0 } ?: 0) + 1).toString())
+            chat.copy(
+                id = ((chats.values.maxOfOrNull { it.id?.toInt() ?: 0 } ?: 0) + 1).toString(),
+                created = Clock.System.now().toEpochMilliseconds()
+            )
         } else chat
 
         chats[newChat.id!!] = newChat

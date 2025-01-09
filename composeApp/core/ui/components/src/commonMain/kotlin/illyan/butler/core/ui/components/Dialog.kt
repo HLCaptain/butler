@@ -53,7 +53,7 @@ private fun DialogContent(
             val sizeModifier = if (isDialogFullscreen) {
                 Modifier.animateContentSize().fillMaxSize()
             } else {
-                Modifier.animateContentSize(tween(0)).dialogSize(
+                Modifier.dialogSize(
                     screenDimensionsDp.second,
                     screenDimensionsDp.first,
                     minWidth = 0.dp,

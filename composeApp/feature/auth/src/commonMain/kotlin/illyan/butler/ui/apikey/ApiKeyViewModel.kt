@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.host.HostManager
+import illyan.butler.model.ModelManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -13,8 +14,17 @@ import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
-class ApiKeyViewModel(private val hostManager: HostManager) : ViewModel() {
+class ApiKeyViewModel(
+    private val hostManager: HostManager,
+    private val modelManager: ModelManager
+) : ViewModel() {
     val apiKeyCredentials = hostManager.currentCredentials.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        null
+    )
+
+    val healthyCredentials = modelManager.healthyHostCredentials.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
         null

@@ -5,6 +5,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
@@ -57,7 +58,10 @@ class ChatStoreRepository(
         val writtenChat = chatMutableStore.write(
             StoreWriteRequest.of(
                 key = if (deviceOnly) ChatKey.Write.DeviceOnly else if (chat.id == null) ChatKey.Write.Create else ChatKey.Write.Upsert,
-                value = chat.copy(id = chat.id ?: Uuid.random().toString()), // ID cannot be null on write
+                value = chat.copy(
+                    id = chat.id ?: Uuid.random().toString(), // ID cannot be null on write
+                    created = if (deviceOnly) chat.created ?: Clock.System.now().toEpochMilliseconds() else chat.created
+                ),
             )
         )
         Napier.d("Chat upserted: $writtenChat")

@@ -7,8 +7,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Single
 
@@ -22,7 +22,21 @@ class AppSettingsLocalRepository(
         val signedInUserKey = stringPreferencesKey("signed_in_user")
     }
     override val appSettings: Flow<AppSettings?> = datastore.data.map { preferences ->
-        preferences[appSettingsKey]?.let { Json.decodeFromString(it) }
+        if (preferences[appSettingsKey] != null) {
+            try {
+                Json.decodeFromString(preferences[appSettingsKey]!!)
+            } catch (e: Exception) {
+                datastore.edit { datastorePreferences ->
+                    datastorePreferences[appSettingsKey] = Json.encodeToString(AppSettings.Default)
+                }
+                null
+            }
+        } else {
+            datastore.edit { datastorePreferences ->
+                datastorePreferences[appSettingsKey] = Json.encodeToString(AppSettings.Default)
+            }
+            null
+        }
     }
     override val currentHost: Flow<String?> = datastore.data.map { preferences ->
         preferences[hostKey]
@@ -33,7 +47,9 @@ class AppSettingsLocalRepository(
 
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
         datastore.edit { datastorePreferences ->
-            datastorePreferences[appSettingsKey] = Json.encodeToString(preferences)
+            appSettings.first()?.copy(preferences = preferences)?.let {
+                datastorePreferences[appSettingsKey] = Json.encodeToString(it)
+            }
         }
     }
 
