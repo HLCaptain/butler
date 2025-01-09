@@ -193,7 +193,7 @@ fun ModelList(
             contentPadding = PaddingValues(12.dp) + innerPadding,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            items(models.distinctBy { it.id }, key = { it }) { model ->
+            items(models.distinctBy { it.id }, key = { it.id }) { model ->
                 ModelListItem(
                     modifier = Modifier.animateItem(
                         placementSpec = tween(0)
