@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
@@ -62,6 +63,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
+import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -125,7 +129,10 @@ fun ChatDetail(
             topBar = {
                 CenterAlignedTopAppBar(
                     modifier = Modifier.hazeEffect(hazeState),
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Transparent),
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    ),
                     title = {
                         Text(
                             state.chat?.name ?: stringResource(Res.string.new_chat),
@@ -241,6 +248,10 @@ fun MessageList(
                 )
             }
         } else {
+            val scrollState = rememberScrollState()
+            LaunchedEffect(messages) {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
             LazyColumn(
                 modifier = Modifier.consumeWindowInsets(innerPadding),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -349,10 +360,18 @@ fun MessageItem(
                 colors = cardColors,
                 contentPadding = ButlerCardDefaults.CompactContentPadding
             ) {
-                Text(
-                    modifier = Modifier,
-                    text = message.message ?: ""
-                )
+                if (sentByUser) {
+                    Text(
+                        modifier = Modifier,
+                        text = message.message ?: ""
+                    )
+                } else {
+                    Markdown(
+                        content = message.message ?: "",
+                        colors = markdownColor(),
+                        typography = markdownTypography()
+                    )
+                }
             }
         }
     }

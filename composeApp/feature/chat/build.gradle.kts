@@ -33,6 +33,7 @@ kotlin {
         implementation(libs.korge.audio)
         implementation(libs.korge.io)
         implementation(libs.filekit)
+        implementation(libs.markdown)
         implementation(libs.material.kolors)
     }
 

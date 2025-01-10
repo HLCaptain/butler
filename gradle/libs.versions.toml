@@ -100,6 +100,7 @@ korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
 filekit = { module = "io.github.vinceglb:filekit-compose", version = "0.8.8"}
 ffmpeg-kit = { module = "com.arthenica:ffmpeg-kit-full", version = "6.0-2" }
+markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.29.0" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.0.4" }
 haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.2.0" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
