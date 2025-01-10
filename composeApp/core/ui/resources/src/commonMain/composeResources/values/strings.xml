@@ -52,6 +52,7 @@
     <string name="message_id">Message ID</string>
     <string name="timestamp">Timestamp</string>
     <string name="select">Select</string>
+    <string name="search">Search</string>
     <string name="select_chat">Select chat!</string>
     <string name="send">Send</string>
     <string name="sender_id">Sender ID</string>

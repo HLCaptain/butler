@@ -1,22 +1,39 @@
 package illyan.butler.ui.new_chat
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,9 +41,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,16 +54,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowWidthSizeClass
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.ButlerTag
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.PlainTooltipWithContent
@@ -52,9 +76,11 @@ import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
+import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_models_to_chat_with
+import illyan.butler.generated.resources.search
 import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.self_hosted
 import illyan.butler.generated.resources.server
@@ -81,7 +107,7 @@ fun NewChat(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun NewChat(
     state: NewChatState,
@@ -89,7 +115,20 @@ fun NewChat(
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    var searchFilter by rememberSaveable { mutableStateOf("") }
     val hazeState = remember { HazeState() }
+    val serverModels = remember(searchFilter, state.serverModels) {
+        if (searchFilter.isBlank()) state.serverModels else
+        state.serverModels?.filter { it.displayName.contains(searchFilter, ignoreCase = true) || it.id.contains(searchFilter, ignoreCase = true) }
+    }
+    val providerModels = remember(searchFilter, state.providerModels) {
+        if (searchFilter.isBlank()) state.providerModels else
+        state.providerModels?.filter { it.displayName.contains(searchFilter, ignoreCase = true) || it.id.contains(searchFilter, ignoreCase = true) }
+    }
+    val localModels = remember(searchFilter, state.localModels) {
+        if (searchFilter.isBlank()) state.localModels else
+        state.localModels?.filter { it.displayName.contains(searchFilter, ignoreCase = true) || it.id.contains(searchFilter, ignoreCase = true) }
+    }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -107,15 +146,116 @@ fun NewChat(
                 colors = TopAppBarDefaults.topAppBarColors().copy(
                     containerColor = Color.Transparent,
                     scrolledContainerColor = Color.Transparent,
-                )
+                ),
             )
         },
+        floatingActionButton = {
+            val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+            var isTextFieldFocused by remember { mutableStateOf(false) }
+            Column(Modifier.consumeWindowInsets(WindowInsets.systemBars)) {
+                SharedTransitionLayout(
+                    modifier = Modifier // FAB spacing
+                ) {
+                    AnimatedContent(
+                        targetState = isTextFieldFocused to isCompact,
+                    ) { (focused, compact) ->
+                        if (focused) {
+                            val focusRequester = remember { FocusRequester() }
+                            LaunchedEffect(Unit) {
+                                focusRequester.requestFocus()
+                            }
+                            Row(
+                                modifier = Modifier.padding(start = 24.dp).then(
+                                    if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)
+                                ),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilledIconButton(
+                                    onClick = { isTextFieldFocused = false },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                        contentDescription = stringResource(Res.string.close)
+                                    )
+                                }
+                                ButlerTextField(
+                                    modifier = Modifier.weight(1f).sharedBounds(
+                                        sharedContentState = rememberSharedContentState("search_filter"),
+                                        animatedVisibilityScope = this@AnimatedContent,
+                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                    ).focusRequester(focusRequester).hazeEffect(hazeState),
+                                    value = searchFilter,
+                                    onValueChange = { searchFilter = it },
+                                    leadingIcon = {
+                                        Icon(
+                                            modifier = Modifier.sharedElement(
+                                                rememberSharedContentState(key = "search_icon"),
+                                                animatedVisibilityScope = this@AnimatedContent
+                                            ),
+                                            imageVector = Icons.Rounded.Search,
+                                            contentDescription = stringResource(Res.string.search)
+                                        )
+                                    }
+                                )
+                            }
+                        } else if (compact) {
+                            FloatingActionButton(
+                                modifier = Modifier.sharedBounds(
+                                    sharedContentState = rememberSharedContentState("search_fab"),
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                ),
+                                onClick = { isTextFieldFocused = true },
+                            ) {
+                                Icon(
+                                    modifier = Modifier.sharedElement(
+                                        rememberSharedContentState(key = "search_icon"),
+                                        animatedVisibilityScope = this@AnimatedContent
+                                    ),
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = stringResource(Res.string.search)
+                                )
+                            }
+                        } else {
+                            ExtendedFloatingActionButton(
+                                modifier = Modifier.sharedBounds(
+                                    sharedContentState = rememberSharedContentState("search_fab"),
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                ),
+                                onClick = { isTextFieldFocused = true },
+                            ) {
+                                Row {
+                                    Icon(
+                                        modifier = Modifier.sharedElement(
+                                            rememberSharedContentState(key = "search_icon"),
+                                            animatedVisibilityScope = this@AnimatedContent
+                                        ),
+                                        imageVector = Icons.Rounded.Search,
+                                        contentDescription = stringResource(Res.string.search)
+                                    )
+                                    Text(
+                                        modifier = Modifier.sharedElement(
+                                            state = rememberSharedContentState("search_filter"),
+                                            animatedVisibilityScope = this@AnimatedContent
+                                        ).skipToLookaheadSize(),
+                                        text = stringResource(Res.string.search)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
+            }
+        }
     ) { innerPadding ->
         ModelList(
             modifier = Modifier.hazeSource(hazeState),
-            serverModels = state.serverModels,
-            providerModels = state.providerModels,
-            localModels = state.localModels,
+            serverModels = serverModels,
+            providerModels = providerModels,
+            localModels = localModels,
             selectServerModel = { modelId, provider ->
                 state.userId?.let {
                     selectModel(
@@ -189,10 +329,9 @@ fun ModelList(
                 )
             }
         }
-
         LazyColumn(
-            modifier = Modifier.fillMaxHeight().consumeWindowInsets(innerPadding),
-            contentPadding = PaddingValues(12.dp) + innerPadding,
+            modifier = Modifier.fillMaxHeight().consumeWindowInsets(innerPadding).imePadding(),
+            contentPadding = PaddingValues(12.dp) + innerPadding + PaddingValues(bottom = 56.dp + 16.dp), // Base + inner + FAB height + FAB spacing
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items(models.distinctBy { it.id }, key = { it.id }) { model ->
@@ -312,11 +451,9 @@ fun ModelListItem(
                     }
                 }
                 PlainTooltipWithContent(
-                    tooltip = {
-                        Text(modelName)
-                    }
+                    tooltip = { Text(modelName) }
                 ) { tooltipModifier ->
-                    Box(modifier = tooltipModifier.weight(1f).padding(2.dp)) {
+                    Box(modifier = tooltipModifier.weight(1f).padding(2.dp).clip(RoundedCornerShape(2.dp))) {
                         Text(
                             modifier = Modifier,
                             text = modelName,

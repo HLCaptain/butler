@@ -1,6 +1,7 @@
 package illyan.butler.core.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -54,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.utils.animateCornerBasedShapeAsState
 import illyan.butler.core.ui.utils.animatePaddingValuesAsState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ButlerTextField(
     modifier: Modifier = Modifier,

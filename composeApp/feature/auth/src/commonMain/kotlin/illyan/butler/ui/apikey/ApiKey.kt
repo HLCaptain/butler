@@ -26,25 +26,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
@@ -119,7 +119,6 @@ import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.save
 import illyan.butler.generated.resources.test
 import illyan.butler.generated.resources.unknown
-import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -273,6 +272,7 @@ fun ApiKeyScaffold(
                     ) to editItem.index
                 }
                 EditApiKeyCredential(
+                    modifier = Modifier.imePadding(),
                     item = item,
                     models = models[item] ?: emptyList(),
                     testCredential = {
@@ -312,6 +312,7 @@ fun ApiKeyScaffold(
                     },
                 ) { mutableStateOf(null) }
                 NewApiKeyCredential(
+                    modifier = Modifier.imePadding(),
                     models = models[testCredential] ?: emptyList(),
                     testCredential = {
                         testCredential = it
@@ -679,11 +680,11 @@ fun EditApiKeyCredential(
         contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().systemBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = modifier.mediumDialogWidth().width(IntrinsicSize.Max),
+                modifier = modifier.mediumDialogWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ApiKeyItemFields(
@@ -774,7 +775,7 @@ fun EditApiKeyCredential(
 
                 AnimatedVisibility(visible = models.isNotEmpty()) {
                     ApiKeyTestModelListing(
-                        modifier = Modifier.padding(vertical = 6.dp)
+                        modifier = Modifier
                             .animateContentSize()
                             .fillMaxWidth(),
                         models = models
@@ -797,38 +798,26 @@ fun ApiKeyTestModelListing(
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
         )
     ) {
-        Column(
-            modifier = Modifier
-                .heightIn(min = 24.dp * models.size)
-                .padding(horizontal = 8.dp)
-                .verticalScroll(rememberScrollState())
+        LazyColumn(
+            modifier = Modifier.heightIn(min = 24.dp * models.size),
+            contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            Spacer(Modifier.height(8.dp))
-            models.forEachIndexed { index, item ->
-                var itemVisible by remember { mutableStateOf(false) }
-                AnimatedVisibility(
-                    visible = itemVisible,
-                    enter = expandVertically(expandFrom = Alignment.Top, animationSpec = tween(50)) + fadeIn()
-                ) {
-                    PlainTooltipWithContent(
-                        tooltip = {
-                            Text(text = item.toString())
-                        }
-                    ) { tooltipModifier ->
-                        Box(modifier = tooltipModifier.padding(2.dp)) {
-                            Text(
-                                text = item.displayName,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+            items(models, key = { it.id }) {
+                PlainTooltipWithContent(
+                    modifier = Modifier.animateItem(),
+                    tooltip = { Text(text = it.toString()) }
+                ) { tooltipModifier ->
+                    Box(modifier = tooltipModifier) {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                            text = it.displayName,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
-                LaunchedEffect(Unit) {
-                    delay(index * 50L)
-                    itemVisible = true
-                }
             }
-            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -872,11 +861,10 @@ fun NewApiKeyCredential(
         contentPadding = ButlerCardDefaults.CompactContentPadding
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().systemBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = modifier.width(IntrinsicSize.Max),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -979,7 +967,7 @@ fun NewApiKeyCredential(
                 )
                 AnimatedVisibility(visible = models.isNotEmpty()) {
                     ApiKeyTestModelListing(
-                        modifier = Modifier.padding(vertical = 6.dp)
+                        modifier = Modifier
                             .animateContentSize()
                             .fillMaxWidth(),
                         models = models
