@@ -48,7 +48,9 @@ fun provideChatMutableStore(
         },
         delete = { key ->
             require(key is ChatKey.Delete.ByChatId)
-            chatNetworkDataSource.delete(key.chatId)
+            if (!key.deviceOnly) {
+                chatNetworkDataSource.delete(key.chatId)
+            }
             chatLocalDataSource.deleteChatById(key.chatId)
         },
         deleteAll = {

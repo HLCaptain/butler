@@ -13,7 +13,7 @@ sealed class ChatKey {
     }
 
     sealed class Delete : ChatKey() {
-        data class ByChatId(val chatId: String) : Delete()
-        data class ByUserId(val userId: String) : Delete()
+        data class ByChatId(val chatId: String, val deviceOnly: Boolean) : Delete()
+        data class ByUserId(val userId: String, val deviceOnly: Boolean) : Delete()
     }
 }

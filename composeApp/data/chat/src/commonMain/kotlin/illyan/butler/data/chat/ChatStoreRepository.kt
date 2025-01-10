@@ -25,8 +25,8 @@ class ChatStoreRepository(
     val chatMutableStore = chatMutableStoreBuilder.store
 
     val userChatStore = userChatStoreBuilder.store
-    override suspend fun deleteAllChats(userId: String) {
-        userChatStore.clear(ChatKey.Delete.ByUserId(userId))
+    override suspend fun deleteAllChats(userId: String, deviceOnly: Boolean) {
+        userChatStore.clear(ChatKey.Delete.ByUserId(userId, deviceOnly))
     }
 
     override fun getChatFlow(chatId: String, deviceOnly: Boolean): Flow<DomainChat?> {
@@ -73,7 +73,7 @@ class ChatStoreRepository(
         }
     }
 
-    override suspend fun deleteChat(chatId: String) {
-        chatMutableStore.clear(ChatKey.Delete.ByChatId(chatId))
+    override suspend fun deleteChat(chatId: String, deviceOnly: Boolean) {
+        chatMutableStore.clear(ChatKey.Delete.ByChatId(chatId, deviceOnly))
     }
 }

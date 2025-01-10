@@ -62,6 +62,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
+import dev.chrisbanes.haze.ExperimentalHazeApi
+import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -86,6 +88,7 @@ import illyan.butler.generated.resources.self_hosted
 import illyan.butler.generated.resources.server
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import java.util.Locale
 
 @Composable
 fun NewChat(
@@ -107,7 +110,9 @@ fun NewChat(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalHazeApi::class
+)
 @Composable
 fun NewChat(
     state: NewChatState,
@@ -133,7 +138,9 @@ fun NewChat(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                modifier = Modifier.hazeEffect(hazeState),
+                modifier = Modifier.hazeEffect(hazeState) {
+                    inputScale = HazeInputScale.None
+                },
                 title = {
                     Text(
                         stringResource(Res.string.new_chat),
@@ -161,9 +168,6 @@ fun NewChat(
                     ) { (focused, compact) ->
                         if (focused) {
                             val focusRequester = remember { FocusRequester() }
-                            LaunchedEffect(Unit) {
-                                focusRequester.requestFocus()
-                            }
                             Row(
                                 modifier = Modifier.padding(start = 24.dp).then(
                                     if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)
@@ -180,11 +184,15 @@ fun NewChat(
                                     )
                                 }
                                 ButlerTextField(
-                                    modifier = Modifier.weight(1f).sharedBounds(
-                                        sharedContentState = rememberSharedContentState("search_filter"),
-                                        animatedVisibilityScope = this@AnimatedContent,
-                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                    ).focusRequester(focusRequester).hazeEffect(hazeState),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .sharedBounds(
+                                            sharedContentState = rememberSharedContentState("search_filter"),
+                                            animatedVisibilityScope = this@AnimatedContent,
+                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                        )
+                                        .focusRequester(focusRequester)
+                                        .hazeEffect(hazeState),
                                     value = searchFilter,
                                     onValueChange = { searchFilter = it },
                                     leadingIcon = {
@@ -198,6 +206,9 @@ fun NewChat(
                                         )
                                     }
                                 )
+                                LaunchedEffect(Unit) {
+                                    focusRequester.requestFocus()
+                                }
                             }
                         } else if (compact) {
                             FloatingActionButton(
@@ -329,24 +340,73 @@ fun ModelList(
                 )
             }
         }
+        val companyCategoriesEnabled = remember(models) { models.filter { it.id.contains('/') }.size > models.size / 2 + 10 }
+        val companyModels = remember(models) {
+            // Remove the "$company/" prefix from the model IDs
+            models
+                .groupBy { it.id.substringBefore('/') }
+                .mapValues { (company, models) ->
+                    models.map { model ->
+                        model.id.removePrefix("$company/") to model
+                    }
+                }.toList().sortedBy { it.first }
+        }
         LazyColumn(
             modifier = Modifier.fillMaxHeight().consumeWindowInsets(innerPadding).imePadding(),
             contentPadding = PaddingValues(12.dp) + innerPadding + PaddingValues(bottom = 56.dp + 16.dp), // Base + inner + FAB height + FAB spacing
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            items(models.distinctBy { it.id }, key = { it.id }) { model ->
-                ModelListItem(
-                    modifier = Modifier.animateItem(
-                        placementSpec = tween(0)
-                    ),
-                    modelName = model.displayName,
-                    providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
-                    server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
-                    selectModelWithProvider = { provider -> selectProviderModel(model.id, provider) },
-                    selectModelFromServerWithProvider = { provider -> selectServerModel(model.id, provider) },
-                    selectLocalModel = { selectLocalModel(model.id) },
-                    isSelfHostAvailable = localModels?.any { it.id == model.id } == true,
-                )
+            if (companyCategoriesEnabled) {
+                companyModels.forEach { (company, models) ->
+                    item {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            text = company.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
+                            },
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
+                    }
+                    items(models.distinctBy { it.second.id }.sortedBy { it.second.id }, key = { it.second.id }) { (modelIdWithoutCompany, model) ->
+                        ModelListItem(
+                            modifier = Modifier.animateItem(placementSpec = tween(0)),
+                            modelName = model.copy(id = modelIdWithoutCompany).displayName,
+                            providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                            server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                            selectModelWithProvider = { provider ->
+                                selectProviderModel(
+                                    model.id,
+                                    provider
+                                )
+                            },
+                            selectModelFromServerWithProvider = { provider ->
+                                selectServerModel(
+                                    model.id,
+                                    provider
+                                )
+                            },
+                            selectLocalModel = { selectLocalModel(model.id) },
+                            isSelfHostAvailable = localModels?.any { it.id == model.id } == true,
+                        )
+                    }
+                }
+            } else {
+                items(models.distinctBy { it.id }.sortedBy { it.id }, key = { it.id }) { model ->
+                    ModelListItem(
+                        modifier = Modifier.animateItem(
+                            placementSpec = tween(0)
+                        ),
+                        modelName = model.displayName,
+                        providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                        server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                        selectModelWithProvider = { provider -> selectProviderModel(model.id, provider) },
+                        selectModelFromServerWithProvider = { provider -> selectServerModel(model.id, provider) },
+                        selectLocalModel = { selectLocalModel(model.id) },
+                        isSelfHostAvailable = localModels?.any { it.id == model.id } == true,
+                    )
+                }
             }
         }
     }
@@ -380,6 +440,7 @@ fun ModelListItem(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
+                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
@@ -387,6 +448,7 @@ fun ModelListItem(
                                 modifier = Modifier.weight(1f, fill = false),
                                 text = provider,
                                 style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             AnimatedVisibility(visible = provider in providers) {
@@ -451,25 +513,28 @@ fun ModelListItem(
                     }
                 }
                 PlainTooltipWithContent(
+                    onClick = {
+                        isExpanded = !isExpanded
+                    },
                     tooltip = { Text(modelName) }
                 ) { tooltipModifier ->
-                    Box(modifier = tooltipModifier.weight(1f).padding(2.dp).clip(RoundedCornerShape(2.dp))) {
+                    Box(modifier = Modifier.clip(RoundedCornerShape(6.dp))) {
                         Text(
-                            modifier = Modifier,
+                            modifier = tooltipModifier.padding(horizontal = 4.dp, vertical = 2.dp),
                             text = modelName,
                             maxLines = 1,
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineSmall,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
             }
-
-            MenuButton(
-                onClick = selectLocalModel,
-                text = stringResource(Res.string.self_hosted),
-                enabled = isSelfHostAvailable
-            )
+            if (isSelfHostAvailable) {
+                MenuButton(
+                    onClick = selectLocalModel,
+                    text = stringResource(Res.string.self_hosted)
+                )
+            }
         }
     }
 }

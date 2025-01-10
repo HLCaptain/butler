@@ -66,6 +66,8 @@ import coil3.compose.SubcomposeAsyncImageContent
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import dev.chrisbanes.haze.ExperimentalHazeApi
+import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -100,7 +102,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeApi::class)
 @Composable
 fun ChatDetail(
     state: ChatDetailState,
@@ -128,7 +130,9 @@ fun ChatDetail(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier.hazeEffect(hazeState),
+                    modifier = Modifier.hazeEffect(hazeState) {
+                        inputScale = HazeInputScale.None
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color.Transparent,
                         scrolledContainerColor = Color.Transparent

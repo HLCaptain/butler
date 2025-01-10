@@ -19,7 +19,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -100,11 +99,11 @@ class ChatManager(
 
     init {
         coroutineScopeIO.launch {
-            deviceMessages.collectLatest { messages ->
-                val chats = deviceChats.first()
-                chats.forEach { chat ->
-                    chat.id?.let { answerOpenAIChat(it, messages) }
-                }
+            // Update each chat on initialization
+            val chats = deviceChats.first()
+            val messages = deviceMessages.first()
+            chats.forEach { chat ->
+                chat.id?.let { answerOpenAIChat(it, messages) }
             }
         }
     }
@@ -245,6 +244,9 @@ class ChatManager(
     }
 
     suspend fun deleteChat(chatId: String) {
-        chatRepository.deleteChat(chatId)
+        val chatOwner = combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.ownerId
+        val deviceOnly = authManager.clientId.first() == chatOwner
+        Napier.v { "Deleting chat $chatId from ${if (deviceOnly) "Device" else "Server"}" }
+        chatRepository.deleteChat(chatId, deviceOnly)
     }
 }

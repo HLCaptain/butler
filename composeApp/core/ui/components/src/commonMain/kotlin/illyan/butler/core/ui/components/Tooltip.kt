@@ -18,7 +18,6 @@
 
 package illyan.butler.core.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -76,7 +75,7 @@ private const val TooltipFadeOutDuration = 75L
  * @param showTooltipOnClick if true, toggles tooltip visibility when
  * card is clicked instead of long clicked
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TooltipElevatedCard(
     modifier: Modifier = Modifier,
@@ -154,26 +153,20 @@ fun PlainTooltipWithContent(
     content: @Composable (gestureAreaModifier: Modifier) -> Unit
 ) {
     val tooltipState = remember { TooltipState() }
-    var willShowTooltip by rememberSaveable { mutableStateOf(false) }
-    var gestureType by remember { mutableStateOf<GestureType?>(null) }
+    val coroutineScope = rememberCoroutineScope()
     val tryToShowTooltip = { gesture: GestureType ->
-        willShowTooltip = true
-        gestureType = gesture
+        if (enabled || disabledTooltip != null) {
+            coroutineScope.launch {
+                if (gesture is GestureType.Hover && gesture.delay > Duration.ZERO) {
+                    delay(gesture.delay.inWholeMilliseconds)
+                }
+                tooltipState.show()
+                onShowTooltip()
+            }
+        }
     }
     val tryToDismissTooltip = {
-        willShowTooltip = false
-        gestureType = null
-    }
-    LaunchedEffect(willShowTooltip) {
-        if (willShowTooltip && (enabled || disabledTooltip != null)) {
-            if (gestureType is GestureType.Hover && (gestureType as GestureType.Hover).delay > Duration.ZERO) {
-                delay((gestureType as GestureType.Hover).delay.inWholeMilliseconds)
-            }
-            tooltipState.show()
-            willShowTooltip = false
-        } else {
-            tooltipState.dismiss()
-        }
+        tooltipState.dismiss()
     }
     PlainTooltipWithContent(
         modifier = modifier,

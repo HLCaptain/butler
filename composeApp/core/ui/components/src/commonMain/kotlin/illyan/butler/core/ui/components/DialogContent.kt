@@ -36,7 +36,7 @@ fun ButlerDialogContent(
     iconPaddingValues: PaddingValues = ButlerDialogIconPadding,
     titlePaddingValues: PaddingValues = ButlerDialogTitlePadding,
     textPaddingValues: PaddingValues = ButlerDialogTextPadding,
-    shape: Shape = AlertDialogDefaults.shape,
+    shape: Shape = MaterialTheme.shapes.large,
     containerColor: Color = AlertDialogDefaults.containerColor,
     iconContentColor: Color = AlertDialogDefaults.iconContentColor,
     titleContentColor: Color = AlertDialogDefaults.titleContentColor,
@@ -122,7 +122,7 @@ fun ButlerDialogContent(
 @Composable
 fun ButlerDialogSurface(
     modifier: Modifier = Modifier,
-    shape: Shape = AlertDialogDefaults.shape,
+    shape: Shape = MaterialTheme.shapes.large,
     color: Color = AlertDialogDefaults.containerColor,
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     content: @Composable () -> Unit

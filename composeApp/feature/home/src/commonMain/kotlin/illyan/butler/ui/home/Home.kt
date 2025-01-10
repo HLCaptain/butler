@@ -299,7 +299,6 @@ fun Home() {
                                                         deleteChat = {
                                                             viewModel.deleteChat(it)
                                                             if (currentChat == it) currentChat = null
-                                                            coroutineScope.launch { drawerState.close() }
                                                         },
                                                         openChat = {
                                                             currentChat = it

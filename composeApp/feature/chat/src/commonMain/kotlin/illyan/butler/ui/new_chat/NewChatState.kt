@@ -9,5 +9,5 @@ data class NewChatState(
     val serverModels: List<DomainModel>? = null,
     val localModels: List<DomainModel>? = null,
     val creatingChat: Boolean = false,
-    val newChatId: String? = null
+    val newChatId: String? = null,
 )

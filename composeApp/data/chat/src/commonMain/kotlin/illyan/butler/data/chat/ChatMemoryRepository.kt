@@ -25,7 +25,8 @@ class ChatMemoryRepository(
     }
 
     private val userChatStateFlows = mutableMapOf<String, MutableStateFlow<List<DomainChat>>>()
-    override suspend fun deleteChat(chatId: String) {
+
+    override suspend fun deleteChat(chatId: String, deviceOnly: Boolean) {
         val userId = chats[chatId]?.ownerId!!
         chats.remove(chatId)
         chatStateFlows[chatId]?.update { null }
@@ -62,7 +63,7 @@ class ChatMemoryRepository(
         return newChat.id!!
     }
 
-    override suspend fun deleteAllChats(userId: String) {
+    override suspend fun deleteAllChats(userId: String, deviceOnly: Boolean) {
         userChats.remove(userId)
         userChatStateFlows[userId]?.update { emptyList() }
     }

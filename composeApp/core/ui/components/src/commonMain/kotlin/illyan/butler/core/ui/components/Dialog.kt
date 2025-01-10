@@ -11,6 +11,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -65,7 +66,10 @@ private fun DialogContent(
                 enter = fadeIn(tween(200)) + scaleIn(tween(200), if (isDialogFullscreen) 0.4f else 0.8f),
                 exit = fadeOut(tween(100)) + scaleOut(tween(100), if (isDialogFullscreen) 0.4f else 0.8f),
             ) {
-                ButlerDialogSurface(shape = RoundedCornerShape(animatedRoundedCornerShape)) {
+                ButlerDialogSurface(
+                    shape = RoundedCornerShape(animatedRoundedCornerShape),
+                    color = MaterialTheme.colorScheme.surface,
+                ) {
                     Box(
                         modifier = sizeModifier,
                         contentAlignment = Alignment.Center,

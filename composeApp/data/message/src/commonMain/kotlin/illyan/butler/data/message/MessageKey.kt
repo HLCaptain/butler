@@ -13,8 +13,7 @@ sealed class MessageKey {
         data object DeviceOnly : Write()
     }
 
-    sealed class Delete : MessageKey() {
-        data class ByMessageId(val messageId: String) : Delete()
-        data class ByChatId(val chatId: String) : Delete()
-    }
+    data class Delete(
+        val chatId: String, val messageId: String, val deviceOnly: Boolean
+    ) : MessageKey()
 }

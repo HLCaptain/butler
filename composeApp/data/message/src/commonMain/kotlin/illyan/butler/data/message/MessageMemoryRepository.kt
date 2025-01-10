@@ -59,4 +59,16 @@ class MessageMemoryRepository(
 
         return newMessage.id!!
     }
+
+    override suspend fun delete(message: DomainMessage, deviceOnly: Boolean) {
+        messages.remove(message.id)
+        messageStateFlows[message.id]?.update { null }
+        val userId = if (deviceOnly) {
+            appRepository.appSettings.first()!!.clientId
+        } else {
+            appRepository.currentSignedInUserId.first()!!
+        }
+        userMessages[userId] = userMessages[userId]?.filter { it.id != message.id } ?: emptyList()
+        userMessageStateFlows[userId]?.update { userMessages[userId]!! }
+    }
 }

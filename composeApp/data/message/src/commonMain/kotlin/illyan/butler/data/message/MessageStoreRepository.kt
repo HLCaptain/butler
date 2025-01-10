@@ -75,4 +75,8 @@ class MessageStoreRepository(
             data
         }.filterNotNull()
     }
+
+    override suspend fun delete(message: DomainMessage, deviceOnly: Boolean) {
+        userMessageStore.clear(MessageKey.Delete(message.id!!, message.chatId, deviceOnly))
+    }
 }

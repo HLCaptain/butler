@@ -47,7 +47,10 @@ fun provideMessageMutableStore(
             }
         },
         delete = { key ->
-            require(key is MessageKey.Delete.ByMessageId)
+            require(key is MessageKey.Delete)
+            if (!key.deviceOnly) {
+                messageNetworkDataSource.delete(key.chatId, key.messageId)
+            }
             messageLocalDataSource.deleteMessageById(key.messageId)
         },
         deleteAll = {
