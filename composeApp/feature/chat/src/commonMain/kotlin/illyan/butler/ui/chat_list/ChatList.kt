@@ -11,8 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
@@ -33,6 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerCard
+import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerDropdownMenu
+import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
 import illyan.butler.domain.model.DomainChat
@@ -90,7 +91,7 @@ fun ChatCard(
     ButlerCard(
         modifier = modifier,
         onClick = openChat,
-        colors = CardDefaults.cardColors(containerColor = cardContainerColor),
+        colors = ButlerCardDefaults.cardColors(containerColor = cardContainerColor),
         contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
     ) {
         Row(
@@ -128,13 +129,12 @@ fun ChatCard(
                         contentDescription = null
                     )
                 }
-                ExposedDropdownMenu(
+                ButlerDropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
                     matchTextFieldWidth = false,
-                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
-                    DropdownMenuItem(
+                    ButlerDropdownMenuDefaults.DropdownMenuItem(
                         onClick = { showMenu = false; deleteChat() },
                         leadingIcon = {
                             Icon(
@@ -142,7 +142,10 @@ fun ChatCard(
                                 contentDescription = null
                             )
                         },
-                        text = { Text(stringResource(Res.string.delete_chat)) }
+                        content = { Text(stringResource(Res.string.delete_chat)) },
+                        colors = ButlerCardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(16.dp)
+                        )
                     )
                 }
             }

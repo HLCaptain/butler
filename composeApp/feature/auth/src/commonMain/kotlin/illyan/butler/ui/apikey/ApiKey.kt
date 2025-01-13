@@ -56,7 +56,6 @@ import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
@@ -92,6 +91,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerDropdownMenu
+import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.components.ButlerElevatedCard
 import illyan.butler.core.ui.components.ButlerMediumOutlinedButton
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
@@ -593,13 +594,12 @@ fun ApiKeyCredentialGridItem(
                         contentDescription = null
                     )
                 }
-                ExposedDropdownMenu(
+                ButlerDropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
-                    matchTextFieldWidth = false,
-                    containerColor = MaterialTheme.colorScheme.surface
+                    matchTextFieldWidth = false
                 ) {
-                    DropdownMenuItem(
+                    ButlerDropdownMenuDefaults.DropdownMenuItem(
                         onClick = { showMenu = false; editItem() },
                         leadingIcon = {
                             Icon(
@@ -607,9 +607,9 @@ fun ApiKeyCredentialGridItem(
                                 contentDescription = null
                             )
                         },
-                        text = { Text(stringResource(Res.string.edit)) }
+                        content = { Text(stringResource(Res.string.edit)) }
                     )
-                    DropdownMenuItem(
+                    ButlerDropdownMenuDefaults.DropdownMenuItem(
                         onClick = { showMenu = false; deleteItem() },
                         leadingIcon = {
                             Icon(
@@ -617,7 +617,7 @@ fun ApiKeyCredentialGridItem(
                                 contentDescription = null
                             )
                         },
-                        text = { Text(stringResource(Res.string.delete)) }
+                        content = { Text(stringResource(Res.string.delete)) }
                     )
                 }
             }

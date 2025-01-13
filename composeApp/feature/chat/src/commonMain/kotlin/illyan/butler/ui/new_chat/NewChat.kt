@@ -30,13 +30,19 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,6 +50,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,6 +75,8 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerDropdownMenu
+import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
@@ -79,12 +88,13 @@ import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.close
+import illyan.butler.generated.resources.filters
+import illyan.butler.generated.resources.free_models_only
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_models_to_chat_with
 import illyan.butler.generated.resources.search
 import illyan.butler.generated.resources.select_host
-import illyan.butler.generated.resources.self_hosted
 import illyan.butler.generated.resources.server
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -110,7 +120,8 @@ fun NewChat(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
     ExperimentalHazeApi::class
 )
 @Composable
@@ -121,18 +132,37 @@ fun NewChat(
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var searchFilter by rememberSaveable { mutableStateOf("") }
+    var freeFilterEnabled by rememberSaveable { mutableStateOf(false) }
     val hazeState = remember { HazeState() }
-    val serverModels = remember(searchFilter, state.serverModels) {
-        if (searchFilter.isBlank()) state.serverModels else
-        state.serverModels?.filter { it.displayName.contains(searchFilter, ignoreCase = true) || it.id.contains(searchFilter, ignoreCase = true) }
+    val serverModels = remember(searchFilter, freeFilterEnabled, state.serverModels) {
+        val models = if (searchFilter.isBlank()) state.serverModels else
+            state.serverModels?.filter {
+                it.displayName.contains(
+                    searchFilter,
+                    ignoreCase = true
+                ) || it.id.contains(searchFilter, ignoreCase = true)
+            }
+        if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
     }
-    val providerModels = remember(searchFilter, state.providerModels) {
-        if (searchFilter.isBlank()) state.providerModels else
-        state.providerModels?.filter { it.displayName.contains(searchFilter, ignoreCase = true) || it.id.contains(searchFilter, ignoreCase = true) }
+    val providerModels = remember(searchFilter, freeFilterEnabled, state.providerModels) {
+        val models = if (searchFilter.isBlank()) state.providerModels else
+            state.providerModels?.filter {
+                it.displayName.contains(
+                    searchFilter,
+                    ignoreCase = true
+                ) || it.id.contains(searchFilter, ignoreCase = true)
+            }
+        if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
     }
-    val localModels = remember(searchFilter, state.localModels) {
-        if (searchFilter.isBlank()) state.localModels else
-        state.localModels?.filter { it.displayName.contains(searchFilter, ignoreCase = true) || it.id.contains(searchFilter, ignoreCase = true) }
+    val localModels = remember(searchFilter, freeFilterEnabled, state.localModels) {
+        val models = if (searchFilter.isBlank()) state.localModels else
+            state.localModels?.filter {
+                it.displayName.contains(
+                    searchFilter,
+                    ignoreCase = true
+                ) || it.id.contains(searchFilter, ignoreCase = true)
+            }
+        if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
     }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -157,7 +187,8 @@ fun NewChat(
             )
         },
         floatingActionButton = {
-            val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+            val isCompact =
+                currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
             var isTextFieldFocused by remember { mutableStateOf(false) }
             Column(Modifier.consumeWindowInsets(WindowInsets.systemBars)) {
                 SharedTransitionLayout(
@@ -183,6 +214,7 @@ fun NewChat(
                                         contentDescription = stringResource(Res.string.close)
                                     )
                                 }
+                                var filtersShown by remember { mutableStateOf(false) }
                                 ButlerTextField(
                                     modifier = Modifier
                                         .weight(1f)
@@ -206,6 +238,55 @@ fun NewChat(
                                         )
                                     }
                                 )
+                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 40.dp) {
+
+                                    ExposedDropdownMenuBox(
+                                        expanded = filtersShown,
+                                        onExpandedChange = { filtersShown = it }
+                                    ) {
+                                        FilledTonalIconToggleButton(
+                                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                                            checked = filtersShown,
+                                            onCheckedChange = { filtersShown = !filtersShown },
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Tune,
+                                                contentDescription = stringResource(Res.string.filters)
+                                            )
+                                        }
+                                        ButlerDropdownMenu(
+                                            expanded = filtersShown,
+                                            onDismissRequest = { filtersShown = false },
+                                        ) {
+                                            ButlerDropdownMenuDefaults.DropdownMenuItem {
+                                                Text(
+                                                    text = stringResource(Res.string.filters),
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                )
+                                            }
+
+                                            ButlerDropdownMenuDefaults.DropdownMenuItem(
+                                                onClick = {
+                                                    freeFilterEnabled = !freeFilterEnabled
+                                                },
+                                                leadingIcon = {
+                                                    Text(text = "$")
+                                                },
+                                                trailingIcon = {
+                                                    Checkbox(
+                                                        checked = freeFilterEnabled,
+                                                        onCheckedChange = { freeFilterEnabled = it }
+                                                    )
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = stringResource(Res.string.free_models_only),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                                 LaunchedEffect(Unit) {
                                     focusRequester.requestFocus()
                                 }
@@ -237,7 +318,10 @@ fun NewChat(
                                 ),
                                 onClick = { isTextFieldFocused = true },
                             ) {
-                                Row {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Icon(
                                         modifier = Modifier.sharedElement(
                                             rememberSharedContentState(key = "search_icon"),
@@ -311,12 +395,21 @@ fun ModelList(
     innerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     Column(modifier = modifier) {
-        val models = remember(serverModels, providerModels, localModels) { serverModels.orEmpty() + providerModels.orEmpty() + localModels.orEmpty() }
-        val isLoading = remember(serverModels, providerModels, localModels) { serverModels == null || providerModels == null || localModels == null }
+        val models = remember(
+            serverModels,
+            providerModels,
+            localModels
+        ) { serverModels.orEmpty() + providerModels.orEmpty() + localModels.orEmpty() }
+        val isLoading = remember(
+            serverModels,
+            providerModels,
+            localModels
+        ) { serverModels == null || providerModels == null || localModels == null }
         val noAvailableModels = models.isEmpty() && !isLoading
         AnimatedVisibility(visible = isLoading) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp)).consumeWindowInsets(innerPadding),
+                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp))
+                    .consumeWindowInsets(innerPadding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -330,7 +423,8 @@ fun ModelList(
 
         AnimatedVisibility(visible = noAvailableModels) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp)).consumeWindowInsets(innerPadding),
+                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp))
+                    .consumeWindowInsets(innerPadding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -340,7 +434,8 @@ fun ModelList(
                 )
             }
         }
-        val companyCategoriesEnabled = remember(models) { models.filter { it.id.contains('/') }.size > models.size / 2 + 10 }
+        val companyCategoriesEnabled =
+            remember(models) { models.filter { it.id.contains('/') }.size > models.size / 2 + 10 }
         val companyModels = remember(models) {
             // Remove the "$company/" prefix from the model IDs
             models
@@ -369,12 +464,16 @@ fun ModelList(
                             style = MaterialTheme.typography.headlineMedium,
                         )
                     }
-                    items(models.distinctBy { it.second.id }.sortedBy { it.second.id }, key = { it.second.id }) { (modelIdWithoutCompany, model) ->
+                    items(
+                        models.distinctBy { it.second.id }.sortedBy { it.second.id },
+                        key = { it.second.id }) { (modelIdWithoutCompany, model) ->
                         ModelListItem(
                             modifier = Modifier.animateItem(placementSpec = tween(0)),
                             modelName = model.copy(id = modelIdWithoutCompany).displayName,
-                            providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
-                            server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                            providers = providerModels?.filter { it.id == model.id }
+                                ?.map { it.endpoint } ?: emptyList(),
+                            server = serverModels?.filter { it.id == model.id }?.map { it.endpoint }
+                                ?: emptyList(),
                             selectModelWithProvider = { provider ->
                                 selectProviderModel(
                                     model.id,
@@ -387,8 +486,7 @@ fun ModelList(
                                     provider
                                 )
                             },
-                            selectLocalModel = { selectLocalModel(model.id) },
-                            isSelfHostAvailable = localModels?.any { it.id == model.id } == true,
+                            selectLocalModel = { selectLocalModel(model.id) }
                         )
                     }
                 }
@@ -399,12 +497,23 @@ fun ModelList(
                             placementSpec = tween(0)
                         ),
                         modelName = model.displayName,
-                        providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
-                        server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
-                        selectModelWithProvider = { provider -> selectProviderModel(model.id, provider) },
-                        selectModelFromServerWithProvider = { provider -> selectServerModel(model.id, provider) },
+                        providers = providerModels?.filter { it.id == model.id }
+                            ?.map { it.endpoint } ?: emptyList(),
+                        server = serverModels?.filter { it.id == model.id }?.map { it.endpoint }
+                            ?: emptyList(),
+                        selectModelWithProvider = { provider ->
+                            selectProviderModel(
+                                model.id,
+                                provider
+                            )
+                        },
+                        selectModelFromServerWithProvider = { provider ->
+                            selectServerModel(
+                                model.id,
+                                provider
+                            )
+                        },
                         selectLocalModel = { selectLocalModel(model.id) },
-                        isSelfHostAvailable = localModels?.any { it.id == model.id } == true,
                     )
                 }
             }
@@ -420,8 +529,7 @@ fun ModelListItem(
     server: List<String>,
     selectModelWithProvider: (String) -> Unit,
     selectModelFromServerWithProvider: (String) -> Unit,
-    selectLocalModel: () -> Unit,
-    isSelfHostAvailable: Boolean = false
+    selectLocalModel: () -> Unit
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     ButlerExpandableCard(
@@ -513,6 +621,7 @@ fun ModelListItem(
                     }
                 }
                 PlainTooltipWithContent(
+                    modifier = Modifier.weight(1f, fill = false),
                     onClick = {
                         isExpanded = !isExpanded
                     },
@@ -523,17 +632,11 @@ fun ModelListItem(
                             modifier = tooltipModifier.padding(horizontal = 4.dp, vertical = 2.dp),
                             text = modelName,
                             maxLines = 1,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleLarge,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
-            }
-            if (isSelfHostAvailable) {
-                MenuButton(
-                    onClick = selectLocalModel,
-                    text = stringResource(Res.string.self_hosted)
-                )
             }
         }
     }

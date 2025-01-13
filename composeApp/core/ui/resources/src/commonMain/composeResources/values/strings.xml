@@ -53,6 +53,8 @@
     <string name="timestamp">Timestamp</string>
     <string name="select">Select</string>
     <string name="search">Search</string>
+    <string name="filters">Filters</string>
+    <string name="free_models_only">Free models only</string>
     <string name="select_chat">Select chat!</string>
     <string name="send">Send</string>
     <string name="sender_id">Sender ID</string>

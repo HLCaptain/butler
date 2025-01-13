@@ -53,7 +53,7 @@ fun ButlerTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = MaterialTheme.typography,
-        shapes = MaterialTheme.shapes,
+        shapes = butlerShapes(),
         content = content
     )
 }

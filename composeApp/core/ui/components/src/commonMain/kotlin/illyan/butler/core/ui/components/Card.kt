@@ -148,18 +148,20 @@ object ButlerCardDefaults {
     val MediumCardElevation = 2.dp
     val LargeCardElevation = 16.dp
 
+    val OutlinedCardBorderWidth = 1.dp
+
     @Composable
     fun outlinedCardColors(): CardColors = CardDefaults.outlinedCardColors()
 
     @Composable
     fun outlinedCardBorder(): BorderStroke = CardDefaults.outlinedCardBorder().copy(
-        width = 1.dp,
+        width = OutlinedCardBorderWidth,
         brush = SolidColor(MaterialTheme.colorScheme.surfaceVariant)
     )
 
     @Composable
     fun disabledOutlinedCardBorder(): BorderStroke = CardDefaults.outlinedCardBorder().copy(
-        width = 1.dp,
+        width = OutlinedCardBorderWidth,
         brush = SolidColor(MaterialTheme.colorScheme.surfaceVariant)
     )
 

@@ -62,11 +62,6 @@ fun ChatLayout(
     BackHandler(isChatDetailsOpen) {
         isChatDetailsOpen = false
     }
-    LaunchedEffect(currentChat) {
-        if (currentChat == null) {
-            isChatDetailsOpen = false
-        }
-    }
     LaunchedEffect(drawerState.isOpen) {
         // Closed by gesture in compact mode
         if (compact && !drawerState.isOpen) {
@@ -75,6 +70,11 @@ fun ChatLayout(
     }
     LaunchedEffect(compact, isChatDetailsOpen) {
         if (compact && isChatDetailsOpen) drawerState.open() else drawerState.close()
+    }
+    LaunchedEffect(currentChat) {
+        if (currentChat == null) {
+            isChatDetailsOpen = false
+        }
     }
     var drawerContentWidthInPixels by remember { mutableStateOf(0) }
     var permanentDrawerWidthInPixels by remember { mutableStateOf(0) }

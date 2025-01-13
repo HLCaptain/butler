@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Image
@@ -33,7 +35,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -77,6 +78,7 @@ import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
+import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
@@ -354,27 +356,35 @@ fun MessageItem(
             )
         }
         if (!message.message.isNullOrBlank()) {
-            val cardColors = CardDefaults.cardColors(
-                containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+            val cardColors = ButlerCardDefaults.cardColors(
+                containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             )
-            ButlerCard(
-                colors = cardColors,
-                contentPadding = ButlerCardDefaults.CompactContentPadding
-            ) {
-                if (sentByUser) {
-                    Text(
-                        modifier = Modifier,
-                        text = message.message ?: ""
-                    )
-                } else {
-                    Markdown(
-                        content = message.message ?: "",
-                        colors = markdownColor(),
-                        typography = markdownTypography()
-                    )
+            ReverseLayoutDirection(enabled = sentByUser) {
+                ButlerCard(
+                    modifier = Modifier.then(
+                        if (sentByUser) Modifier.widthIn(max = 480.dp) else Modifier
+                    ),
+                    colors = cardColors,
+                    contentPadding = ButlerCardDefaults.CompactContentPadding
+                ) {
+                    ReverseLayoutDirection(enabled = sentByUser) {
+                        SelectionContainer {
+                            if (sentByUser) {
+                                Text(
+                                    modifier = Modifier,
+                                    text = message.message ?: ""
+                                )
+                            } else {
+                                Markdown(
+                                    content = message.message ?: "",
+                                    colors = markdownColor(),
+                                    typography = markdownTypography()
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -1,12 +1,16 @@
 package illyan.butler.core.ui.utils
 
+import androidx.annotation.FloatRange
 import androidx.compose.ui.graphics.Color
 import com.materialkolor.ktx.blend
 import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.darken
 import com.materialkolor.ktx.lighten
 
-fun Color.ensureContrastWith(otherColor: Color, threshold: Double = 9.0): Color {
+fun Color.ensureContrastWith(
+    otherColor: Color,
+    @FloatRange(from = 1.0) threshold: Double = 9.0
+): Color {
     require(threshold > 1.0) { "Threshold must be greater than 1.0" }
     var modifiedColor = this
     while (modifiedColor.contrastRatio(otherColor) <= threshold) {

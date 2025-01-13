@@ -26,62 +26,50 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Done
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.components.BooleanSetting
 import illyan.butler.core.ui.components.ButlerCard
+import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
-import illyan.butler.core.ui.components.ButlerSmallTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
+import illyan.butler.core.ui.components.DropdownSetting
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
@@ -103,8 +91,6 @@ import illyan.butler.generated.resources.enabled
 import illyan.butler.generated.resources.light
 import illyan.butler.generated.resources.not_synced
 import illyan.butler.generated.resources.not_syncing
-import illyan.butler.generated.resources.off
-import illyan.butler.generated.resources.on
 import illyan.butler.generated.resources.settings
 import illyan.butler.generated.resources.synced
 import illyan.butler.generated.resources.syncing
@@ -114,7 +100,6 @@ import illyan.butler.generated.resources.turn_on
 import illyan.butler.generated.resources.turn_on_analytics
 import illyan.butler.generated.resources.turn_on_analytics_description
 import illyan.butler.generated.resources.user_id
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -144,11 +129,9 @@ fun UserSettings(
 //        onShouldSyncChanged = screenModel::setPreferencesSync,
         onThemeChange = onThemeChange,
 //        setAnalytics = screenModel::setAnalytics,
-//        setFreeDriveAutoStart = screenModel::setFreeDriveAutoStart,
 //        setAdVisibility = screenModel::setAdVisibility,
         setDynamicColorEnabled = setDynamicColorEnabled,
 //        navigateToDataSettings = { destinationsNavigator.navigate(DataSettingsDialogScreenDestination) },
-//        navigateToMLSettings = { destinationsNavigator.navigate(MLSettingsDialogScreenDestination) },
     )
 }
 
@@ -162,12 +145,10 @@ fun UserSettingsDialogContent(
     showAnalyticsRequestDialog: Boolean = false,
     onShouldSyncChanged: (Boolean) -> Unit = {},
     setAnalytics: (Boolean) -> Unit = {},
-    setFreeDriveAutoStart: (Boolean) -> Unit = {},
     setAdVisibility: (Boolean) -> Unit = {},
     setDynamicColorEnabled: (Boolean) -> Unit = {},
     navigateToDataSettings: () -> Unit = {},
     onThemeChange: (Theme) -> Unit = {},
-    navigateToMLSettings: () -> Unit = {},
 ) {
     Crossfade(
         modifier = modifier.mediumDialogWidth(),
@@ -191,11 +172,9 @@ fun UserSettingsDialogContent(
                     UserSettings(
                         preferences = preferences,
                         setAnalytics = setAnalytics,
-                        setFreeDriveAutoStart = setFreeDriveAutoStart,
                         setAdVisibility = setAdVisibility,
                         setDynamicColorEnabled = setDynamicColorEnabled,
                         onThemeChange = onThemeChange,
-                        navigateToMLSettings = navigateToMLSettings
                     )
                 },
                 buttons = {
@@ -388,9 +367,8 @@ private fun SyncPreferencesButton(
     shouldSyncPreferences: Boolean
 ) {
     ButlerCard(
-        colors = CardDefaults.cardColors(
+        colors = ButlerCardDefaults.cardColors(
             containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         enabled = canSyncPreferences,
@@ -548,11 +526,9 @@ fun UserSettings(
     modifier: Modifier = Modifier,
     preferences: DomainPreferences? = null,
     setAnalytics: (Boolean) -> Unit = {},
-    setFreeDriveAutoStart: (Boolean) -> Unit = {},
     setAdVisibility: (Boolean) -> Unit = {},
     setDynamicColorEnabled: (Boolean) -> Unit = {},
     onThemeChange: (Theme) -> Unit = {},
-    navigateToMLSettings: () -> Unit = {},
 ) {
     Crossfade(
         modifier = modifier,
@@ -565,8 +541,8 @@ fun UserSettings(
             ) {
                 item {
                     BooleanSetting(
-                        settingName = stringResource(Res.string.analytics),
-                        setValue = setAnalytics,
+                        title = stringResource(Res.string.analytics),
+                        onValueChange = setAnalytics,
                         value = preferences.analyticsEnabled
                     )
                 }
@@ -575,7 +551,7 @@ fun UserSettings(
                     DropdownSetting(
                         settingName = stringResource(Res.string.theme),
                         isDropdownOpen = isDropdownOpen,
-                        toggleDropdown = { isDropdownOpen = !isDropdownOpen },
+                        onDismissRequest = { isDropdownOpen = !isDropdownOpen },
                         selectValue = onThemeChange,
                         selectedValue = preferences.theme,
                         values = Theme.entries.toList(),
@@ -600,8 +576,8 @@ fun UserSettings(
                 item {
                     BooleanSetting(
                         value = preferences.dynamicColorEnabled,
-                        setValue = setDynamicColorEnabled,
-                        settingName = stringResource(Res.string.dynamic_color),
+                        onValueChange = setDynamicColorEnabled,
+                        title = stringResource(Res.string.dynamic_color),
                         enabledText = stringResource(Res.string.enabled),
                         disabledText = stringResource(Res.string.disabled),
                         enabled = canUseDynamicColors()
@@ -610,263 +586,6 @@ fun UserSettings(
             }
         } else {
             LoadingIndicator()
-        }
-    }
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-fun BooleanSetting(
-    value: Boolean,
-    setValue: (Boolean) -> Unit,
-    settingName: String,
-    textStyle: TextStyle = MaterialTheme.typography.labelLarge,
-    fontWeight: FontWeight = FontWeight.Normal,
-    enabledText: String = stringResource(Res.string.on),
-    disabledText: String = stringResource(Res.string.off),
-    enabled: Boolean = true,
-) {
-    SettingItem(
-        settingName = settingName,
-        onClick = { setValue(!value) },
-        titleStyle = textStyle,
-        titleWeight = fontWeight,
-        enabled = enabled,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Crossfade(
-                targetState = value,
-                label = "Boolean setting text"
-            ) { enabled ->
-                Text(
-                    text = if (enabled) enabledText else disabledText,
-                    style = textStyle,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Switch(
-                checked = value,
-                onCheckedChange = setValue,
-                enabled = enabled
-            )
-        }
-    }
-}
-
-// DropdownSetting when opened likes to shift to the start unintentionally.
-// Wrap it inside a Row or layour to prevent this.
-@Composable
-fun <T : Any> DropdownSetting(
-    selectedValue: T? = null,
-    isDropdownOpen: Boolean = false,
-    toggleDropdown: () -> Unit = {},
-    values: Iterable<T> = emptyList(),
-    getValueName: @Composable (T) -> String = { it.toString() },
-    getValueLeadingIcon: (T) -> ImageVector? = { null },
-    getValueTrailingIcon: (T) -> ImageVector? = { null },
-    selectValue: (T) -> Unit,
-    settingName: String,
-    textStyle: TextStyle = MaterialTheme.typography.labelLarge,
-    fontWeight: FontWeight = FontWeight.Normal,
-) {
-    SettingItem(
-        settingName = settingName,
-        onClick = toggleDropdown,
-        titleStyle = textStyle,
-        titleWeight = fontWeight,
-    ) {
-        Row(
-            modifier = Modifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Crossfade(
-                targetState = selectedValue,
-                label = "Dropdown setting text",
-            ) { state ->
-                state?.let {
-                    Text(
-                        text = getValueName(it),
-                        style = textStyle,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-            IconToggleButton(
-                checked = isDropdownOpen,
-                onCheckedChange = { toggleDropdown() }
-            ) {
-                Icon(
-                    imageVector = if (isDropdownOpen) {
-                        Icons.Rounded.ExpandLess
-                    } else {
-                        Icons.Rounded.ExpandMore
-                    },
-                    contentDescription = ""
-                )
-            }
-        }
-        DropdownMenu(
-            expanded = isDropdownOpen,
-            onDismissRequest = toggleDropdown,
-        ) {
-            values.forEach { value ->
-                val leadingIcon = remember { getValueLeadingIcon(value) }
-                val leadingComposable = @Composable {
-                    leadingIcon?.let {
-                        Icon(
-                            imageVector = it,
-                            contentDescription = ""
-                        )
-                    }
-                }
-                val trailingIcon = remember {
-                    val icon = getValueTrailingIcon(value)
-                    if (value == selectedValue) Icons.Rounded.Check else icon
-                }
-                val trailingComposable = @Composable {
-                    trailingIcon?.let {
-                        Icon(
-                            imageVector = it,
-                            contentDescription = ""
-                        )
-                    }
-                }
-                DropdownMenuItem(
-                    text = { Text(text = getValueName(value)) },
-                    leadingIcon = (if (leadingIcon != null) leadingComposable else null) as? @Composable (() -> Unit),
-                    trailingIcon = (if (trailingIcon != null) trailingComposable else null) as? @Composable (() -> Unit),
-                    onClick = { selectValue(value); toggleDropdown() },
-                    colors = if (value == selectedValue) {
-                        MenuDefaults.itemColors(
-                            textColor = MaterialTheme.colorScheme.primary,
-                            leadingIconColor = MaterialTheme.colorScheme.primary,
-                            trailingIconColor = MaterialTheme.colorScheme.primary,
-                        )
-                    } else {
-                        MenuDefaults.itemColors()
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun BasicSetting(
-    modifier: Modifier = Modifier,
-    screenName: String,
-    label: String,
-    onClick: () -> Unit = {}
-) = BasicSetting(
-    modifier = modifier,
-    title = screenName,
-    label = {
-        ButlerSmallTextButton(onClick = onClick) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                tint = MaterialTheme.colorScheme.onSurface,
-                contentDescription = ""
-            )
-        }
-    },
-    onClick = onClick
-)
-
-@Composable
-fun BasicSetting(
-    modifier: Modifier = Modifier,
-    title: String,
-    titleStyle: TextStyle = MaterialTheme.typography.labelLarge,
-    titleWeight: FontWeight = FontWeight.Normal,
-    label: @Composable RowScope.() -> Unit = {},
-    onClick: () -> Unit = {}
-) {
-    SettingItem(
-        modifier = modifier,
-        onClick = onClick,
-        title = {
-            Text(
-                text = title,
-                style = titleStyle,
-                fontWeight = titleWeight,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        content = label,
-    )
-}
-
-@Composable
-fun BasicSetting(
-    modifier: Modifier = Modifier,
-    title: @Composable RowScope.() -> Unit = {},
-    label: @Composable RowScope.() -> Unit = {},
-    onClick: () -> Unit = {}
-) {
-    SettingItem(
-        modifier = modifier,
-        onClick = onClick,
-        title = title,
-        content = label,
-    )
-}
-
-@Composable
-fun SettingItem(
-    modifier: Modifier = Modifier,
-    settingName: String,
-    titleStyle: TextStyle = MaterialTheme.typography.labelLarge,
-    titleWeight: FontWeight = FontWeight.Normal,
-    onClick: () -> Unit = {},
-    enabled: Boolean = true,
-    content: @Composable RowScope.() -> Unit = {},
-) = SettingItem(
-    modifier = modifier,
-    onClick = onClick,
-    enabled = enabled,
-    title = {
-        Text(
-            text = settingName,
-            style = titleStyle,
-            fontWeight = titleWeight,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    },
-    content = content
-)
-
-@Composable
-fun SettingItem(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    enabled: Boolean = true,
-    title: @Composable RowScope.() -> Unit = {},
-    content: @Composable RowScope.() -> Unit = {},
-) {
-    ButlerCard(
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent,
-        ),
-        onClick = onClick,
-        enabled = enabled,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            title()
-            Row { content() }
         }
     }
 }
