@@ -1045,7 +1045,7 @@ fun provideOpenAIClient(
     OpenAI(
         config = OpenAIConfig(
             token = credential.apiKey,
-            host = OpenAIHost(baseUrl = credential.providerUrl),
+            host = OpenAIHost(baseUrl = credential.providerUrl + if (credential.providerUrl.endsWith("/")) "" else "/"),
             engine = CIO.create {
                 https {
                     serverName = null // Dynamically infer from URL

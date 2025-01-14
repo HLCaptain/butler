@@ -96,15 +96,19 @@ android {
     }
 
     signingConfigs {
-        val debugStorePath = localProperties["DEBUG_KEY_PATH"].toString()
-        val debugKeyAlias = localProperties["DEBUG_KEY_ALIAS"].toString()
-        val debugStorePassword = localProperties["DEBUG_KEYSTORE_PASSWORD"].toString()
-        val debugKeyPassword = localProperties["DEBUG_KEY_PASSWORD"].toString()
+//        val debugStorePath = localProperties["DEBUG_KEY_PATH"].toString()
+//        val debugKeyAlias = localProperties["DEBUG_KEY_ALIAS"].toString()
+//        val debugStorePassword = localProperties["DEBUG_KEYSTORE_PASSWORD"].toString()
+//        val debugKeyPassword = localProperties["DEBUG_KEY_PASSWORD"].toString()
         getByName("debug") {
-            storeFile = file(debugStorePath)
-            keyAlias = debugKeyAlias
-            storePassword = debugStorePassword
-            keyPassword = debugKeyPassword
+//            storeFile = file(debugStorePath)
+//            keyAlias = debugKeyAlias
+//            storePassword = debugStorePassword
+//            keyPassword = debugKeyPassword
+            storeFile = file("debug.keystore")
+            keyAlias = "androiddebugkey"
+            storePassword = "android"
+            keyPassword = "android"
         }
         val releaseStorePath = localProperties["RELEASE_KEY_PATH"].toString()
         val releaseKeyAlias = localProperties["RELEASE_KEY_ALIAS"].toString()
@@ -161,6 +165,7 @@ compose.desktop.application {
 
     buildTypes.release.proguard {
         version = "7.6.0"
+        // FIXME: make JVM prod work with Proguard
 //        isEnabled = true
 //        optimize = true
 //        obfuscate = true
