@@ -1,7 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 
 plugins {
     alias(libs.plugins.android.application)
@@ -15,20 +13,21 @@ version = libs.versions.butler.get()
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.shared)
+        implementation(projects.shared.model)
 
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.core.ui.theme)
         implementation(projects.composeApp.core.local.room)
+        implementation(projects.composeApp.core.local.datastore)
         implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.config)
 
         implementation(projects.composeApp.data.chat)
+        implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.host)
         implementation(projects.composeApp.data.user)
-        implementation(projects.composeApp.data.permission)
         implementation(projects.composeApp.data.resource)
         implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.data.model)
@@ -39,14 +38,14 @@ kotlin {
         implementation(projects.composeApp.domain.audio)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.chat)
-        implementation(projects.composeApp.domain.config)
         implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.domain.model)
-        implementation(projects.composeApp.domain.permission)
         implementation(projects.composeApp.domain.settings)
 
         implementation(projects.composeApp.di)
+        implementation(projects.composeApp.di.coroutines)
+        implementation(projects.composeApp.di.datasource)
         implementation(projects.composeApp.di.repository)
         implementation(projects.composeApp.feature.theme)
         implementation(projects.composeApp.feature.home)
@@ -58,8 +57,8 @@ kotlin {
         implementation(projects.composeApp.feature.profile)
 
         implementation(libs.napier)
+        implementation(libs.androidx.datastore.preferences)
     }
-
 
     sourceSets.androidMain.dependencies {
         implementation(libs.androidx.core)
@@ -68,7 +67,6 @@ kotlin {
         implementation(libs.androidx.activity)
         implementation(libs.androidx.activity.compose)
         implementation(libs.compose.ui.tooling)
-        implementation(libs.ffmpeg.kit)
     }
 
     sourceSets.jvmMain.dependencies {
@@ -76,6 +74,7 @@ kotlin {
         implementation(compose.desktop.common)
         implementation(compose.desktop.currentOs)
         implementation(libs.kotlinx.coroutines.swing)
+        implementation(libs.kotlinx.io)
     }
 }
 
@@ -97,15 +96,19 @@ android {
     }
 
     signingConfigs {
-        val debugStorePath = localProperties["DEBUG_KEY_PATH"].toString()
-        val debugKeyAlias = localProperties["DEBUG_KEY_ALIAS"].toString()
-        val debugStorePassword = localProperties["DEBUG_KEYSTORE_PASSWORD"].toString()
-        val debugKeyPassword = localProperties["DEBUG_KEY_PASSWORD"].toString()
+//        val debugStorePath = localProperties["DEBUG_KEY_PATH"].toString()
+//        val debugKeyAlias = localProperties["DEBUG_KEY_ALIAS"].toString()
+//        val debugStorePassword = localProperties["DEBUG_KEYSTORE_PASSWORD"].toString()
+//        val debugKeyPassword = localProperties["DEBUG_KEY_PASSWORD"].toString()
         getByName("debug") {
-            storeFile = file(debugStorePath)
-            keyAlias = debugKeyAlias
-            storePassword = debugStorePassword
-            keyPassword = debugKeyPassword
+//            storeFile = file(debugStorePath)
+//            keyAlias = debugKeyAlias
+//            storePassword = debugStorePassword
+//            keyPassword = debugKeyPassword
+            storeFile = file("debug.keystore")
+            keyAlias = "androiddebugkey"
+            storePassword = "android"
+            keyPassword = "android"
         }
         val releaseStorePath = localProperties["RELEASE_KEY_PATH"].toString()
         val releaseKeyAlias = localProperties["RELEASE_KEY_ALIAS"].toString()
@@ -120,6 +123,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
@@ -129,15 +135,6 @@ android {
     buildFeatures {
         buildConfig = true
     }
-
-//    applicationVariants.all {
-//        val variantName = name
-//        sourceSets {
-//            getByName("main") {
-//                java.srcDir(File("build/generated/ksp/$variantName/kotlin"))
-//            }
-//        }
-//    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -150,7 +147,7 @@ android {
     }
 
     dependencies {
-        implementation(libs.compose.ui.tooling)
+        debugImplementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
     }
 }
@@ -161,9 +158,18 @@ compose.desktop.application {
         targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
         packageName = "Butler"
         packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
+        linux {
+            modules("jdk.security.auth")
+        }
     }
+
     buildTypes.release.proguard {
+        version = "7.6.0"
+        // FIXME: make JVM prod work with Proguard
+//        isEnabled = true
+//        optimize = true
+//        obfuscate = true
+
         configurationFiles.from(project.file("compose-desktop.pro"))
-//        obfuscate.set(true)
     }
 }

@@ -11,10 +11,12 @@ kotlin {
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.data.user)
+        implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.domain)
-        implementation(projects.shared)
+        implementation(projects.shared.model)
 
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.datetime)
         implementation(libs.store)
         implementation(libs.napier)
     }

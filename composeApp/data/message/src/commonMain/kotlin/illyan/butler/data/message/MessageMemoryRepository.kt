@@ -1,54 +1,74 @@
 package illyan.butler.data.message
 
+import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.DomainMessage
-import illyan.butler.data.user.UserRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 
 @Single
 class MessageMemoryRepository(
-    private val userRepository: UserRepository
+    private val appRepository: AppRepository
 ) : MessageRepository {
     private val messages = mutableMapOf<String, DomainMessage>()
     private val chatMessages = mutableMapOf<String, List<DomainMessage>>()
     private val userMessages = mutableMapOf<String, List<DomainMessage>>()
 
-    private val messageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<DomainMessage?, Boolean>>>()
-    override fun getMessageFlow(messageId: String): StateFlow<Pair<DomainMessage?, Boolean>> {
+    private val messageStateFlows = mutableMapOf<String, MutableStateFlow<DomainMessage?>>()
+    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): Flow<DomainMessage?> {
         return messageStateFlows.getOrPut(messageId) {
-            MutableStateFlow(messages[messageId] to false)
+            MutableStateFlow(messages[messageId])
         }
     }
 
-    private val chatMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
+    private val chatMessageStateFlows = mutableMapOf<String, MutableStateFlow<List<DomainMessage>>>()
 
-    override fun getChatMessagesFlow(chatId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
         return chatMessageStateFlows.getOrPut(chatId) {
-            MutableStateFlow(chatMessages[chatId] to false)
+            MutableStateFlow(chatMessages[chatId]!!)
         }
     }
 
-    private val userMessageStateFlows = mutableMapOf<String, MutableStateFlow<Pair<List<DomainMessage>?, Boolean>>>()
-    override fun getUserMessagesFlow(userId: String): StateFlow<Pair<List<DomainMessage>?, Boolean>> {
+    private val userMessageStateFlows = mutableMapOf<String, MutableStateFlow<List<DomainMessage>>>()
+    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
         return userMessageStateFlows.getOrPut(userId) {
-            MutableStateFlow(userMessages[userId] to false)
+            MutableStateFlow(userMessages.getOrPut(userId) { emptyList() })
         }
     }
 
-    override suspend fun upsert(message: DomainMessage): String {
+    override suspend fun upsert(message: DomainMessage, deviceOnly: Boolean): String {
         val newMessage = if (message.id == null) {
-            message.copy(id = (messages.size + 1).toString())
+            message.copy(
+                id = (messages.size + 1).toString(),
+                time = Clock.System.now().toEpochMilliseconds()
+            )
         } else message
 
         messages[newMessage.id!!] = newMessage
-        messageStateFlows[newMessage.id]?.update { newMessage to false }
-        val userId = userRepository.signedInUserId.first()!!
+        messageStateFlows[newMessage.id]?.update { newMessage }
+        val userId = if (deviceOnly) {
+            appRepository.appSettings.first()!!.clientId
+        } else {
+            appRepository.currentSignedInUserId.first()!!
+        }
         userMessages[userId] = userMessages[userId]?.plus(newMessage) ?: listOf(newMessage)
-        userMessageStateFlows[userId]?.update { userMessages[userId] to false }
+        userMessageStateFlows[userId]?.update { userMessages[userId]!! }
 
         return newMessage.id!!
+    }
+
+    override suspend fun delete(message: DomainMessage, deviceOnly: Boolean) {
+        messages.remove(message.id)
+        messageStateFlows[message.id]?.update { null }
+        val userId = if (deviceOnly) {
+            appRepository.appSettings.first()!!.clientId
+        } else {
+            appRepository.currentSignedInUserId.first()!!
+        }
+        userMessages[userId] = userMessages[userId]?.filter { it.id != message.id } ?: emptyList()
+        userMessageStateFlows[userId]?.update { userMessages[userId]!! }
     }
 }

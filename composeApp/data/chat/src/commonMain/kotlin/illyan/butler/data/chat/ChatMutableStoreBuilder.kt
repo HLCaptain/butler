@@ -5,7 +5,6 @@ import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.core.network.datasource.ChatNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainChat
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -42,15 +41,16 @@ fun provideChatMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is ChatKey.Write.Create -> chatLocalDataSource.upsertChat(local.copy(id = randomUUID()))
-                is ChatKey.Write.Upsert -> chatLocalDataSource.upsertChat(local)
+                ChatKey.Write.Create, ChatKey.Write.Upsert, ChatKey.Write.DeviceOnly -> chatLocalDataSource.upsertChat(local)
                 is ChatKey.Read.ByChatId -> chatLocalDataSource.upsertChat(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
             require(key is ChatKey.Delete.ByChatId)
-            chatNetworkDataSource.delete(key.chatId)
+            if (!key.deviceOnly) {
+                chatNetworkDataSource.delete(key.chatId)
+            }
             chatLocalDataSource.deleteChatById(key.chatId)
         },
         deleteAll = {
@@ -64,9 +64,10 @@ fun provideChatMutableStore(
             require(key is ChatKey.Write)
             val newChat = when (key) {
                 is ChatKey.Write.Create -> chatNetworkDataSource.upsert(output.copy(id = null)).also {
-                    chatLocalDataSource.replaceChat(it.id!!, it)
+                    chatLocalDataSource.replaceChat(output.id!!, it)
                 }
                 is ChatKey.Write.Upsert -> chatNetworkDataSource.upsert(output)
+                is ChatKey.Write.DeviceOnly -> output // Do not upload device-only chats
             }
             UpdaterResult.Success.Typed(newChat)
         },

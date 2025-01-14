@@ -5,12 +5,14 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.local)
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.core.network)
-        implementation(projects.composeApp.domain)
         implementation(projects.composeApp.core.utils)
-        implementation(projects.shared)
+
+        implementation(projects.composeApp.domain)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.napier)

@@ -37,10 +37,6 @@ fun provideChatMessageMutableStore(
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
-        delete = { key ->
-            require(key is MessageKey.Delete.ByChatId)
-            messageLocalDataSource.deleteAllMessagesForChat(key.chatId)
-        },
         deleteAll = {
             messageLocalDataSource.deleteAllMessages()
         }

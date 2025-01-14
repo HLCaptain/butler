@@ -1,7 +1,6 @@
 package illyan.butler.data.chat
 
 import illyan.butler.core.local.datasource.ChatLocalDataSource
-import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.ChatNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import org.koin.core.annotation.Single
@@ -12,15 +11,13 @@ import org.mobilenativefoundation.store.store5.StoreBuilder
 @Single
 class UserChatStoreBuilder(
     chatLocalDataSource: ChatLocalDataSource,
-    messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
 ) {
-    val store = provideUserChatStore(chatLocalDataSource, messageLocalDataSource, chatNetworkDataSource)
+    val store = provideUserChatStore(chatLocalDataSource, chatNetworkDataSource)
 }
 
 fun provideUserChatStore(
     chatLocalDataSource: ChatLocalDataSource,
-    messageLocalDataSource: MessageLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
 ) = StoreBuilder.from(
     fetcher = Fetcher.ofFlow { key ->

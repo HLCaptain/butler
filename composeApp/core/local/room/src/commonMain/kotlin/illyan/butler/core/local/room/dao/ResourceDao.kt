@@ -1,4 +1,4 @@
-package illyan.butler.data.local.room.dao
+package illyan.butler.core.local.room.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,7 +6,6 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import illyan.butler.core.local.room.model.RoomResource
 import kotlinx.coroutines.flow.Flow
 
 @Dao

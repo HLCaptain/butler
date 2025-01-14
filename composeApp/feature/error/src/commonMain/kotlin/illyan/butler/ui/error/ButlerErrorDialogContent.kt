@@ -11,12 +11,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.domain.model.DomainErrorEvent
 import illyan.butler.domain.model.DomainErrorResponse
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
+import illyan.butler.generated.resources.copy_stacktrace
 import illyan.butler.generated.resources.hello_x
 import io.ktor.http.HttpStatusCode
 import org.jetbrains.compose.resources.stringResource
@@ -27,59 +32,11 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ButlerErrorDialogContent(
-    modifier: Modifier,
-    error: Throwable
-) = ButlerErrorDialogContent(
-    modifier = modifier,
-    icon = {
-        Icon(
-            Icons.Rounded.Error,
-            contentDescription = "An error occurred"
-        )
-    },
-    title = {
-        Text("An error occurred")
-    },
-    text = {
-        Text(error.message ?: "An error occurred")
-    },
-    buttons = {
-        Button(
-            content = {
-                Text("Copy stacktrace")
-            },
-            onClick = {
-
-            }
-        )
-    }
-)
-
-@Composable
-fun ButlerErrorDialogContent(
     modifier: Modifier = Modifier,
-    icon: (@Composable ColumnScope.() -> Unit)? = {
-        Icon(
-            Icons.Rounded.Error,
-            contentDescription = "An error occurred"
-        )
-    },
-    title: (@Composable ColumnScope.() -> Unit)? = {
-        Text("An error occurred")
-    },
-    text: (@Composable ColumnScope.() -> Unit)? = {
-        Text("An error occurred")
-    },
-    buttons: (@Composable ColumnScope.() -> Unit)? = {
-        Button(
-            content = {
-                Text("Close")
-            },
-            onClick = {
-
-            }
-        )
-    }
+    icon: (@Composable ColumnScope.() -> Unit)? = null,
+    title: (@Composable ColumnScope.() -> Unit)? = null,
+    text: (@Composable ColumnScope.() -> Unit)? = null,
+    buttons: (@Composable ColumnScope.() -> Unit)? = null
 ) = ButlerDialogContent(
     modifier = modifier,
     icon = icon,
@@ -106,10 +63,8 @@ fun ButlerErrorDialogContent(
         Text(HttpStatusCode.fromValue(errorResponse.httpStatusCode).description)
     },
     buttons: (@Composable ColumnScope.() -> Unit)? = {
-        Button(
-            content = {
-                Text(stringResource(Res.string.close))
-            },
+        ButlerMediumSolidButton(
+            text = { Text(stringResource(Res.string.close)) },
             onClick = onClose
         )
     }
@@ -142,18 +97,15 @@ fun ButlerErrorDialogContent(
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
-                content = {
-                    Text("Close")
-                },
+            ButlerMediumTextButton(
+                text = { Text(stringResource(Res.string.close)) },
                 onClick = onClose
             )
+            val clipboardManager = LocalClipboardManager.current
             Button(
-                content = {
-                    Text("Copy stacktrace")
-                },
+                content = { Text(stringResource(Res.string.copy_stacktrace)) },
                 onClick = {
-
+                    clipboardManager.setText(buildAnnotatedString { append(errorEvent.stackTrace) })
                 }
             )
         }

@@ -1,11 +1,10 @@
 package illyan.butler.data.resource
 
 import illyan.butler.domain.model.DomainResource
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 interface ResourceRepository {
-    fun getResourceFlow(resourceId: String): StateFlow<Pair<DomainResource?, Boolean>>
-    suspend fun upsert(resource: DomainResource): String
-    suspend fun deleteResource(resourceId: String): Boolean
-    suspend fun deleteAllResources()
+    fun getResourceFlow(resourceId: String, deviceOnly: Boolean): Flow<DomainResource?>
+    suspend fun upsert(resource: DomainResource, deviceOnly: Boolean): String
+    suspend fun deleteResource(resourceId: String, deviceOnly: Boolean): Boolean
 }

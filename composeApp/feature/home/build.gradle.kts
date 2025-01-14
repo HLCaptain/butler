@@ -7,15 +7,16 @@ plugins {
 kotlin {
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.composeApp.config)
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.utils)
         implementation(projects.composeApp.core.ui.utils)
+        implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.domain)
-        implementation(projects.composeApp.domain.config)
         implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.auth)
-        implementation(projects.composeApp.domain.permission)
+        implementation(projects.composeApp.domain.chat)
         implementation(projects.composeApp.feature.auth)
         implementation(projects.composeApp.feature.chat)
         implementation(projects.composeApp.feature.onboarding)
@@ -23,7 +24,7 @@ kotlin {
         implementation(projects.composeApp.feature.error)
         implementation(projects.composeApp.feature.permission)
 
-        implementation(compose.material3AdaptiveNavigationSuite)
+        implementation(libs.material.adaptive.navigation.suite)
         implementation(libs.material.adaptive)
         implementation(libs.material.adaptive.navigation)
         implementation(libs.material.adaptive.layout)

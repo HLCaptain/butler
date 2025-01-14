@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.illyan.butler.kotlinMultiplatformLibrary)
+    alias(libs.plugins.illyan.butler.koinForKotlinMultiplatform)
 }
 
 kotlin {
@@ -8,8 +9,6 @@ kotlin {
         implementation(projects.composeApp.di)
         implementation(projects.composeApp.domain.error)
 
-        api(project.dependencies.platform(libs.koin.bom))
-        api(libs.koin.core)
-        implementation(libs.koin.annotations)
+        implementation(libs.kotlinx.coroutines)
     }
 }

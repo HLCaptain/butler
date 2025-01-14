@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.illyan.butler.kotlinMultiplatformLibrary)
     alias(libs.plugins.illyan.butler.koinForKotlinMultiplatform)
@@ -7,13 +5,15 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.config)
+        implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.settings)
         implementation(projects.composeApp.domain.error)
-        implementation(projects.shared)
 
         implementation(libs.ktor.core)
         implementation(libs.ktor.auth)
@@ -26,5 +26,6 @@ kotlin {
 
         implementation(libs.kotlinx.datetime)
         implementation(libs.napier)
+        implementation(libs.openai.client)
     }
 }

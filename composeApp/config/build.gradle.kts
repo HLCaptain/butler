@@ -13,10 +13,6 @@ kotlin {
         }
     }
     jvm()
-
-    sourceSets.commonMain.dependencies {
-
-    }
 }
 
 android {

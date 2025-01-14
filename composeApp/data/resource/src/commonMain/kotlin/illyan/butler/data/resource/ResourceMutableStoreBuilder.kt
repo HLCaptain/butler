@@ -5,7 +5,6 @@ import illyan.butler.core.local.datasource.ResourceLocalDataSource
 import illyan.butler.core.network.datasource.ResourceNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainResource
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -42,18 +41,17 @@ fun provideResourceMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is ResourceKey.Write.Create -> resourceLocalDataSource.upsertResource(local.copy(id = randomUUID()))
-                is ResourceKey.Write.Upsert -> resourceLocalDataSource.upsertResource(local)
+                ResourceKey.Write.Create, ResourceKey.Write.Upsert, ResourceKey.Write.DeviceOnly -> resourceLocalDataSource.upsertResource(local)
                 is ResourceKey.Read.ByResourceId -> resourceLocalDataSource.upsertResource(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
-            require(key is ResourceKey.Delete)
-            when (key) {
-                is ResourceKey.Delete.ByResourceId -> resourceLocalDataSource.deleteResourceById(key.resourceId)
-                is ResourceKey.Delete.All -> resourceLocalDataSource.deleteAllResources()
+            require(key is ResourceKey.Delete.ByResourceId)
+            if (!key.deviceOnly) {
+                resourceNetworkDataSource.delete(key.resourceId)
             }
+            resourceLocalDataSource.deleteResourceById(key.resourceId)
         },
         deleteAll = {
             resourceLocalDataSource.deleteAllResources()
@@ -65,10 +63,11 @@ fun provideResourceMutableStore(
         post = { key, output ->
             require(key is ResourceKey.Write)
             val newResource = when (key) {
-                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(output).also {
+                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(output.copy(id = null)).also {
                     resourceLocalDataSource.replaceResource(it.id!!, it)
                 }
                 is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(output)
+                is ResourceKey.Write.DeviceOnly -> output // Don't sync to network
             }
             UpdaterResult.Success.Typed(newResource)
         },
