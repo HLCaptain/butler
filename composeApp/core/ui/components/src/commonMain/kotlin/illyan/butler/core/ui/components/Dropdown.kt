@@ -22,19 +22,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuBoxScope
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +55,118 @@ import androidx.compose.ui.unit.max
 import androidx.compose.ui.window.PopupProperties
 import illyan.butler.core.ui.theme.ButlerSmallShapeCornerDp
 import illyan.butler.core.ui.utils.getWindowSizeInDp
+import kotlinx.coroutines.delay
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T : Any> ButlerDropdownMenuBox(
+    modifier: Modifier = Modifier,
+    selectedValue: T? = null,
+    expanded: Boolean = false,
+    searchEnabled: Boolean = false,
+    onExpandedChange: (Boolean) -> Unit = {},
+    enabled: Boolean = true,
+    isError: Boolean = false,
+    values: List<T> = emptyList(),
+    getValueName: @Composable (T) -> String = { it.toString() },
+    getValueLeadingIcon: (T) -> ImageVector? = { null },
+    getValueTrailingIcon: (T) -> ImageVector? = { null },
+    leadingIcon : @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = { IconButton(
+        onClick = { onExpandedChange(!expanded) },
+        enabled = enabled
+    ) {
+        if (expanded) {
+            Icon(imageVector = Icons.Rounded.KeyboardArrowUp, contentDescription = "Close dropdown")
+        } else {
+            Icon(imageVector = Icons.Rounded.KeyboardArrowDown, contentDescription = "Open dropdown")
+        }
+    } },
+    selectValue: (T) -> Unit,
+    settingName: String
+) {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = onExpandedChange
+    ) {
+        var searchedText by rememberSaveable(selectedValue) { mutableStateOf("") }
+        var searchFilter by rememberSaveable { mutableStateOf("") }
+        val interactionSource = remember { MutableInteractionSource() }
+        LaunchedEffect(searchedText) {
+            delay(250) // Delay to avoid searching on every key stroke on large lists
+            searchFilter = searchedText
+        }
+        ButlerTextField(
+            modifier = modifier.menuAnchor(if (searchEnabled) MenuAnchorType.PrimaryEditable else MenuAnchorType.PrimaryNotEditable),
+            enabled = enabled,
+            value = if (searchEnabled && expanded) searchedText else selectedValue?.let { getValueName(it) } ?: "",
+            onValueChange = { searchedText = it },
+            isError = isError,
+            label = { Text(text = settingName) },
+            readOnly = !searchEnabled || !expanded,
+            trailingIcon = trailingIcon,
+            leadingIcon = leadingIcon,
+            interactionSource = interactionSource,
+            colors = ButlerTextFieldDefaults.outlinedTextFieldColors().copy(
+                focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurface
+            )
+        )
+        ButlerDropdownMenu(
+            isDropdownOpen = expanded,
+            onDismissRequest = { onExpandedChange(false) },
+            values = values.filter {
+                if (searchEnabled && searchFilter.isNotBlank()) {
+                    getValueName(it).contains(searchFilter, ignoreCase = true)
+                } else {
+                    true
+                }
+            },
+            getValueLeadingIcon = getValueLeadingIcon,
+            getValueTrailingIcon = getValueTrailingIcon,
+            selectedValue = selectedValue,
+            getValueName = getValueName,
+            selectValue = selectValue
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T : Any> ExposedDropdownMenuBoxScope.ButlerDropdownMenu(
+    modifier: Modifier = Modifier,
+    isDropdownOpen: Boolean,
+    onDismissRequest: () -> Unit,
+    values: List<T>,
+    getValueLeadingIcon: (T) -> ImageVector?,
+    getValueTrailingIcon: (T) -> ImageVector?,
+    selectedValue: T?,
+    getValueName: @Composable (T) -> String,
+    selectValue: (T) -> Unit
+) {
+    val scrollState = rememberScrollState()
+    val (screenHeight, _) = getWindowSizeInDp()
+    ExposedDropdownMenu(
+        modifier = modifier.heightIn(max = max(240.dp, screenHeight - 240.dp)),
+        expanded = isDropdownOpen,
+        onDismissRequest = onDismissRequest,
+        scrollState = scrollState,
+        border = ButlerCardDefaults.outlinedCardBorder(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        ButlerDropdownMenuDefaults.DropdownMenuList(
+            values = values,
+            getValueLeadingIcon = getValueLeadingIcon,
+            getValueTrailingIcon = getValueTrailingIcon,
+            selectedValue = selectedValue,
+            getValueName = getValueName,
+            selectValue = selectValue,
+            onDismissRequest = onDismissRequest,
+            scrollState = scrollState
+        )
+    }
+}
 
 @Composable
 fun <T : Any> ButlerDropdownMenu(

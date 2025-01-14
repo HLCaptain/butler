@@ -36,7 +36,7 @@ class LlmService(
         previousChats: List<ChatDto> = emptyList(),
         regenerateMessage: MessageDto? = null
     ) {
-        Napier.v("Answering chat $chat")
+        Napier.v("Answering chat ${chat.id}")
         val chatModelId = chat.chatCompletionModel!!.second
         val messages = chat.lastFewMessages.sortedBy { it.time }
         if (messages.isEmpty()) {
@@ -199,7 +199,7 @@ class LlmService(
         // transcribe audio with whisper or other speech to text model
         // answer the transcribed text
         if (chat.audioTranscriptionModel == null) {
-            Napier.v { "No audio transcription model for chat $chat" }
+            Napier.v { "No audio transcription model for chat ${chat.id}" }
             return null
         }
         val openAI = getOpenAIClient(chat.audioTranscriptionModel!!.first)
@@ -238,7 +238,6 @@ class LlmService(
 }
 
 fun List<MessageDto>.toConversation(userId: String, resources: List<ResourceDto> = emptyList()): List<ChatMessage> {
-    val currentMessages = this
     return fold<MessageDto, MutableList<ChatMessage>>(mutableListOf()) { acc, message ->
         val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && message.senderId != userId
         val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && message.senderId == userId
@@ -251,7 +250,7 @@ fun List<MessageDto>.toConversation(userId: String, resources: List<ResourceDto>
         acc.add(message.toChatMessage(userId, resources = resources))
         acc
     }.also {
-        Napier.v { "Converted messages $currentMessages to conversation: $it" }
+        Napier.v { "Converted $size messages to conversation" }
     }
 }
 

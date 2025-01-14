@@ -47,6 +47,8 @@
     <string name="chat_details">Chat details</string>
     <string name="chat_name_is_x">Chat name: %s</string>
     <string name="chat_id_is_x">Chat ID: %s</string>
+    <string name="chat_id">Chat ID</string>
+    <string name="summary">Summary</string>
     <string name="ai_members">AI members: %s</string>
     <string name="no_messages">No messages</string>
     <string name="message_id">Message ID</string>
@@ -55,6 +57,11 @@
     <string name="search">Search</string>
     <string name="filters">Filters</string>
     <string name="free_models_only">Free models only</string>
+    <string name="chat_completion_model">Chat Completion model</string>
+    <string name="audio_speech_model">Audio Speech model</string>
+    <string name="audio_transcription_model">Audio Transcription model</string>
+    <string name="audio_translation_model">Audio Translation model</string>
+    <string name="image_generations_model">Image Generations model</string>
     <string name="select_chat">Select chat!</string>
     <string name="send">Send</string>
     <string name="sender_id">Sender ID</string>

@@ -286,4 +286,48 @@ class ChatManager(
         Napier.v { "Deleting chat $chatId from ${if (deviceOnly) "Device" else "Server"}" }
         chatRepository.deleteChat(chatId, deviceOnly)
     }
+
+    suspend fun setAudioTranscriptionModel(chatId: String, model: Pair<String, String>?) {
+        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
+            chatRepository.upsert(
+                chat.copy(
+                    audioTranscriptionModel = model
+                ),
+                deviceOnly = authManager.clientId.first() == chat.ownerId
+            )
+        }
+    }
+
+    suspend fun setAudioTranslationModel(chatId: String, model: Pair<String, String>?) {
+        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
+            chatRepository.upsert(
+                chat.copy(
+                    audioTranslationModel = model
+                ),
+                deviceOnly = authManager.clientId.first() == chat.ownerId
+            )
+        }
+    }
+
+    suspend fun setAudioSpeechModel(chatId: String, model: Pair<String, String>?) {
+        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
+            chatRepository.upsert(
+                chat.copy(
+                    audioSpeechModel = model
+                ),
+                deviceOnly = authManager.clientId.first() == chat.ownerId
+            )
+        }
+    }
+
+    suspend fun setImageGenerationsModel(chatId: String, model: Pair<String, String>?) {
+        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
+            chatRepository.upsert(
+                chat.copy(
+                    imageGenerationsModel = model
+                ),
+                deviceOnly = authManager.clientId.first() == chat.ownerId
+            )
+        }
+    }
 }
