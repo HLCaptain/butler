@@ -47,11 +47,11 @@ fun provideResourceMutableStore(
             }
         },
         delete = { key ->
-            require(key is ResourceKey.Delete)
-            when (key) {
-                is ResourceKey.Delete.ByResourceId -> resourceLocalDataSource.deleteResourceById(key.resourceId)
-                is ResourceKey.Delete.All -> resourceLocalDataSource.deleteAllResources()
+            require(key is ResourceKey.Delete.ByResourceId)
+            if (!key.deviceOnly) {
+                resourceNetworkDataSource.delete(key.resourceId)
             }
+            resourceLocalDataSource.deleteResourceById(key.resourceId)
         },
         deleteAll = {
             resourceLocalDataSource.deleteAllResources()
@@ -63,7 +63,7 @@ fun provideResourceMutableStore(
         post = { key, output ->
             require(key is ResourceKey.Write)
             val newResource = when (key) {
-                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(output).also {
+                is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(output.copy(id = null)).also {
                     resourceLocalDataSource.replaceResource(it.id!!, it)
                 }
                 is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(output)

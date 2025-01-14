@@ -36,6 +36,7 @@ import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RichTooltip
+import androidx.compose.material3.RichTooltipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -63,7 +64,6 @@ import illyan.butler.generated.resources.copied_to_clipboard
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 
@@ -81,6 +81,7 @@ fun TooltipElevatedCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
+    colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
@@ -100,6 +101,7 @@ fun TooltipElevatedCard(
         modifier = modifier,
         tooltipState = tooltipState,
         tooltip = tooltip,
+        colors = colors,
         disabledTooltip = disabledTooltip,
         enabled = enabled,
         onShowTooltip = onShowTooltip,
@@ -209,6 +211,7 @@ fun RichTooltipWithContent(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
     tooltip: @Composable () -> Unit,
+    colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
     enabledGestures: List<GestureType> = emptyList(),
@@ -242,6 +245,7 @@ fun RichTooltipWithContent(
         modifier = modifier,
         tooltipState = tooltipState,
         tooltip = tooltip,
+        colors = colors,
         disabledTooltip = disabledTooltip,
         enabled = enabled,
         onShowTooltip = onShowTooltip,
@@ -279,6 +283,7 @@ fun RichTooltipWithContent(
     tooltipState: TooltipState = remember { TooltipState() },
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
+    colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
     enabled: Boolean = true,
     onShowTooltip: () -> Unit = {},
     onDismissTooltip: () -> Unit = {},
@@ -300,7 +305,7 @@ fun RichTooltipWithContent(
     }
     TooltipBox(
         modifier = modifier,
-        tooltip = { RichTooltip { Box(content = { currentTooltip() }) } },
+        tooltip = { RichTooltip(colors = colors) { Box(content = { currentTooltip() }) } },
         state = tooltipState,
         content = content,
         enableUserInput = false,
@@ -344,7 +349,6 @@ fun PlainTooltipWithContent(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CopiedToKeyboardTooltip() {
     Row(
@@ -422,3 +426,15 @@ fun Modifier.handleGestures(
                 }
             }
     } else this
+
+object ButlerTooltipDefaults {
+    @OptIn(ExperimentalMaterial3Api::class)
+    val richTooltipColors: RichTooltipColors
+        @Composable
+        get() = TooltipDefaults.richTooltipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionContentColor = MaterialTheme.colorScheme.primary,
+        )
+}

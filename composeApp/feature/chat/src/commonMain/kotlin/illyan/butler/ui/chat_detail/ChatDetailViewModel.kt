@@ -43,23 +43,25 @@ class ChatDetailViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val messages = chatIdStateFlow
-        .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(emptyList()) }
-        .map { messages -> messages.sortedBy { it.time }.reversed() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .flatMapLatest { chatId -> chatId?.let { chatManager.getMessagesByChatFlow(chatId) } ?: flowOf(null) }
+        .map { messages -> messages?.sortedBy { it.time }?.reversed() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val resources = messages.flatMapLatest { messages ->
-        combine((messages).map { message ->
-            chatManager.getResourcesByMessageFlow(message.id!!)
-        }) { flows ->
-            val resources = flows.toList().filterNotNull().flatten()
-//            Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
-            resources
+        if (messages.isNullOrEmpty()) {
+            Napier.d("No messages to get resources from")
+            return@flatMapLatest flowOf(null)
+        }
+        Napier.d("Getting resources for messages: ${messages.map { it.id }}")
+        chatManager.getResources(messages.map { it.resourceIds }.flatten()).map { resources ->
+            Napier.d("Resources: ${resources.map { resource -> resource?.id }}")
+            resources.filterNotNull()
         }
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        emptyList()
+        null
     )
 
     val state = combine(
@@ -69,17 +71,29 @@ class ChatDetailViewModel(
         audioManager.playingAudioId,
         resources,
     ) { flows ->
-        val chat = flows[0] as? DomainChat
-        val messages = flows[1] as? List<DomainMessage>
+        val chat = flows[0] as DomainChat?
+        val messages = flows[1] as List<DomainMessage>?
         val recording = flows[2] as? Boolean ?: false
         val playing = flows[3] as? String
-        val resources = flows[4] as? List<DomainResource>
+        val resources = flows[4] as List<DomainResource>?
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate {
                 it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
             } ?: emptyMap()
         val images = resources?.filter { it.type.startsWith("image") }
             ?.associate { it.id!! to it.data } ?: emptyMap()
+        Napier.v {
+            """
+            ChatDetailState:
+            chat: ${chat?.id}
+            messages: ${messages?.map { it.id }}
+            isRecording: $recording
+            playingAudio: $playing
+            resources: ${resources?.map { it.id }}
+            sounds: ${sounds.keys}
+            images: ${images.keys}
+            """.trimIndent()
+        }
         ChatDetailState(
             chat = chat,
             messages = messages,

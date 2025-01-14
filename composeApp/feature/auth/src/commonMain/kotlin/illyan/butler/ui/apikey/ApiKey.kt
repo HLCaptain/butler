@@ -865,10 +865,12 @@ fun NewApiKeyCredential(
             contentAlignment = Alignment.Center
         ) {
             Column(
+                modifier = Modifier.mediumDialogWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 ApiKeyItemFields(
+                    modifier = Modifier.fillMaxWidth(),
                     name = name,
                     providerUrl = providerUrl,
                     apiKey = apiKey,

@@ -85,7 +85,7 @@ fun ChatDetailPreview() {
                     sendImage = { _, _ -> },
                     playAudio = {},
                     stopAudio = {},
-                    openChatDetails = {},
+                    toggleChatDetails = {},
                     navigationIcon = { HamburgerButton() },
                     isChatDetailsOpenRatio = 0.0f
                 )

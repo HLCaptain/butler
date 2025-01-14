@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -34,7 +34,6 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -74,7 +73,9 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.ButlerTooltipDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
@@ -113,7 +114,7 @@ fun ChatDetail(
     toggleRecord: (String) -> Unit,
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
-    openChatDetails: () -> Unit,
+    toggleChatDetails: () -> Unit,
     isChatDetailsOpenRatio: Float,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
@@ -149,7 +150,7 @@ fun ChatDetail(
                     navigationIcon = navigationIcon ?: {},
                     actions = {
                         if (state.chat != null) {
-                            IconButton(onClick = openChatDetails) {
+                            IconButton(onClick = toggleChatDetails) {
                                 val layoutDirection = LocalLayoutDirection.current
                                 val imageVector = if (layoutDirection == LayoutDirection.Ltr) {
                                     if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
@@ -227,6 +228,7 @@ expect fun ChatDetailBottomBar(
     toggleRecord: () -> Unit
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
@@ -254,15 +256,16 @@ fun MessageList(
                 )
             }
         } else {
-            val scrollState = rememberScrollState()
+            val lazyListState = rememberLazyListState()
             LaunchedEffect(messages) {
-                scrollState.animateScrollTo(scrollState.maxValue)
+                lazyListState.animateScrollToItem(0)
             }
             LazyColumn(
                 modifier = Modifier.consumeWindowInsets(innerPadding),
+                state = lazyListState,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = innerPadding,
-                reverseLayout = true // From bottom to up
+                reverseLayout = true, // From bottom to up
             ) {
                 items(messages.sortedByDescending { it.time }, key = { it.id!! }) { message ->
                     Box(
@@ -293,9 +296,10 @@ fun MessageList(
                                     }
                                 }
                             },
+                            colors = ButlerTooltipDefaults.richTooltipColors
                         ) { gestureAreaModifier ->
                             MessageItem(
-                                modifier = gestureAreaModifier,
+                                modifier = gestureAreaModifier.fillMaxWidth(),
                                 message = message,
                                 userId = userId,
                                 sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
@@ -344,7 +348,7 @@ fun MessageItem(
         images.forEach { image ->
             SubcomposeAsyncImage(
                 modifier = Modifier
-                    .sizeIn(maxHeight = 400.dp, maxWidth = 400.dp)
+                    .sizeIn(maxHeight = 400.dp, maxWidth = 480.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 model = image,
                 loading = { MediumCircularProgressIndicator() },
@@ -358,7 +362,7 @@ fun MessageItem(
         if (!message.message.isNullOrBlank()) {
             val cardColors = ButlerCardDefaults.cardColors(
                 containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+                contentColor = if (sentByUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                 disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )
             ReverseLayoutDirection(enabled = sentByUser) {
@@ -416,7 +420,7 @@ fun AudioMessages(
                 } else if (!isActive && progress > 0f) progress = 0f
             }
 
-            Button(onClick = { if (isActive) onStop() else onPlay(resourceId) }) {
+            ButlerMediumSolidButton(onClick = { if (isActive) onStop() else onPlay(resourceId) }) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

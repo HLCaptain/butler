@@ -3,6 +3,7 @@ package illyan.butler.ui.chat_details
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,10 +34,10 @@ fun ChatDetails(
     chatId: String?,
     actions: @Composable () -> Unit = {}
 ) {
-    val screenModel = koinViewModel<ChatDetailsViewModel>()
-    val state by screenModel.state.collectAsState()
-    LaunchedEffect(Unit) {
-        screenModel.loadChat(chatId)
+    val viewModel = koinViewModel<ChatDetailsViewModel>()
+    val state by viewModel.state.collectAsState()
+    LaunchedEffect(chatId) {
+        chatId?.let { viewModel.loadChat(it) }
     }
     ChatDetails(
         modifier = modifier,
@@ -75,13 +76,15 @@ fun ChatDetails(
                 } else {
                     aiMembers.joinToString(", ")
                 }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(stringResource(Res.string.chat_name_is_x).format(chat?.name ?: stringResource(Res.string.new_chat)))
-                    Text(stringResource(Res.string.chat_id_is_x).format(chat?.id ?: stringResource(Res.string.unknown)))
-                    Text(stringResource(Res.string.ai_members).format(aiMembersString))
-                    chat?.summary?.let { Text(it) }
+                SelectionContainer {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(stringResource(Res.string.chat_name_is_x).format(chat?.name ?: stringResource(Res.string.new_chat)))
+                        Text(stringResource(Res.string.chat_id_is_x).format(chat?.id ?: stringResource(Res.string.unknown)))
+                        Text(stringResource(Res.string.ai_members).format(aiMembersString))
+                        chat?.summary?.let { Text(it) }
+                    }
                 }
             },
             containerColor = Color.Transparent

@@ -13,9 +13,12 @@ import illyan.butler.shared.model.auth.UserLoginDto
 import illyan.butler.shared.model.auth.UserLoginResponseDto
 import illyan.butler.shared.model.auth.UserRegistrationDto
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
@@ -33,7 +36,8 @@ class AuthManager(
     val clientId = appRepository.appSettings.map { it?.clientId }
     val isUserSignedIn = appRepository.isUserSignedIn
     val signedInUserId = appRepository.currentSignedInUserId
-    val signedInUser = signedInUserId.map { it?.let { userRepository.getUser(it).first() } }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val signedInUser = signedInUserId.flatMapLatest { it?.let { userRepository.getUser(it) } ?: flowOf(null) }
     val signedInUserPhotoUrl = signedInUser.map { it?.photoUrl }
     val signedInUserDisplayName = signedInUser.map { it?.displayName }
     val signedInUserPhoneNumber = signedInUser.map { it?.phone }

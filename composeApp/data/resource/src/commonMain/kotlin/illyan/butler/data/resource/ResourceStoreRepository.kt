@@ -23,11 +23,6 @@ class ResourceStoreRepository(
     private val resourceStateFlows = mutableMapOf<String, Flow<DomainResource?>>()
 
     @OptIn(ExperimentalStoreApi::class)
-    override suspend fun deleteAllResources() {
-        resourceMutableStore.clear(ResourceKey.Delete.All)
-    }
-
-    @OptIn(ExperimentalStoreApi::class)
     override fun getResourceFlow(resourceId: String, deviceOnly: Boolean): Flow<DomainResource?> {
         return resourceStateFlows.getOrPut(resourceId) {
             resourceMutableStore.stream<StoreReadResponse<DomainResource>>(
@@ -54,8 +49,8 @@ class ResourceStoreRepository(
     }
 
     @OptIn(ExperimentalStoreApi::class)
-    override suspend fun deleteResource(resourceId: String): Boolean {
-        resourceMutableStore.clear(ResourceKey.Delete.ByResourceId(resourceId))
+    override suspend fun deleteResource(resourceId: String, deviceOnly: Boolean): Boolean {
+        resourceMutableStore.clear(ResourceKey.Delete.ByResourceId(resourceId, deviceOnly))
         return true
     }
 }

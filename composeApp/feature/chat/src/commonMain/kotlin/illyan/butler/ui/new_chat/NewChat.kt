@@ -36,7 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -199,91 +199,95 @@ fun NewChat(
                     ) { (focused, compact) ->
                         if (focused) {
                             val focusRequester = remember { FocusRequester() }
-                            Row(
-                                modifier = Modifier.padding(start = 24.dp).then(
-                                    if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)
-                                ),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            var filtersShown by rememberSaveable { mutableStateOf(false) }
+
+                            ExposedDropdownMenuBox(
+                                expanded = filtersShown,
+                                onExpandedChange = { filtersShown = it }
                             ) {
-                                FilledIconButton(
-                                    onClick = { isTextFieldFocused = false },
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                        contentDescription = stringResource(Res.string.close)
-                                    )
-                                }
-                                var filtersShown by remember { mutableStateOf(false) }
-                                ButlerTextField(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .sharedBounds(
-                                            sharedContentState = rememberSharedContentState("search_filter"),
-                                            animatedVisibilityScope = this@AnimatedContent,
-                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                Row(
+                                    modifier = Modifier.padding(start = 24.dp).then(
+                                        if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(
+                                            max = 320.dp
                                         )
-                                        .focusRequester(focusRequester)
-                                        .hazeEffect(hazeState),
-                                    value = searchFilter,
-                                    onValueChange = { searchFilter = it },
-                                    leadingIcon = {
+                                    ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    FilledIconButton(
+                                        onClick = { isTextFieldFocused = false },
+                                    ) {
                                         Icon(
-                                            modifier = Modifier.sharedElement(
-                                                rememberSharedContentState(key = "search_icon"),
-                                                animatedVisibilityScope = this@AnimatedContent
-                                            ),
-                                            imageVector = Icons.Rounded.Search,
-                                            contentDescription = stringResource(Res.string.search)
+                                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                            contentDescription = stringResource(Res.string.close)
                                         )
                                     }
-                                )
-                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 40.dp) {
-
-                                    ExposedDropdownMenuBox(
-                                        expanded = filtersShown,
-                                        onExpandedChange = { filtersShown = it }
-                                    ) {
-                                        FilledTonalIconToggleButton(
-                                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                                            checked = filtersShown,
-                                            onCheckedChange = { filtersShown = !filtersShown },
-                                        ) {
+                                    ButlerTextField(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .sharedBounds(
+                                                sharedContentState = rememberSharedContentState("search_filter"),
+                                                animatedVisibilityScope = this@AnimatedContent,
+                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                            )
+                                            .focusRequester(focusRequester)
+                                            .hazeEffect(hazeState),
+                                        value = searchFilter,
+                                        onValueChange = { searchFilter = it },
+                                        leadingIcon = {
                                             Icon(
-                                                imageVector = Icons.Rounded.Tune,
-                                                contentDescription = stringResource(Res.string.filters)
+                                                modifier = Modifier.sharedElement(
+                                                    rememberSharedContentState(key = "search_icon"),
+                                                    animatedVisibilityScope = this@AnimatedContent
+                                                ),
+                                                imageVector = Icons.Rounded.Search,
+                                                contentDescription = stringResource(Res.string.search)
                                             )
                                         }
-                                        ButlerDropdownMenu(
-                                            expanded = filtersShown,
-                                            onDismissRequest = { filtersShown = false },
-                                        ) {
-                                            ButlerDropdownMenuDefaults.DropdownMenuItem {
-                                                Text(
-                                                    text = stringResource(Res.string.filters),
-                                                    style = MaterialTheme.typography.titleSmall,
-                                                )
-                                            }
+                                    )
 
-                                            ButlerDropdownMenuDefaults.DropdownMenuItem(
-                                                onClick = {
-                                                    freeFilterEnabled = !freeFilterEnabled
-                                                },
-                                                leadingIcon = {
-                                                    Text(text = "$")
-                                                },
-                                                trailingIcon = {
-                                                    Checkbox(
-                                                        checked = freeFilterEnabled,
-                                                        onCheckedChange = { freeFilterEnabled = it }
-                                                    )
-                                                }
-                                            ) {
-                                                Text(
-                                                    text = stringResource(Res.string.free_models_only),
-                                                    style = MaterialTheme.typography.bodyMedium,
+                                    FilledIconToggleButton(
+                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable),
+                                        checked = filtersShown,
+                                        onCheckedChange = { filtersShown = !filtersShown },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Tune,
+                                            contentDescription = stringResource(Res.string.filters)
+                                        )
+                                    }
+                                }
+                                ButlerDropdownMenu(
+                                    expanded = filtersShown,
+                                    onDismissRequest = { filtersShown = false },
+                                ) {
+                                    ButlerDropdownMenuDefaults.DropdownMenuItem {
+                                        Text(
+                                            text = stringResource(Res.string.filters),
+                                            style = MaterialTheme.typography.titleSmall,
+                                        )
+                                    }
+                                    CompositionLocalProvider(
+                                        LocalMinimumInteractiveComponentSize provides 40.dp
+                                    ) {
+                                        ButlerDropdownMenuDefaults.DropdownMenuItem(
+                                            onClick = {
+                                                freeFilterEnabled = !freeFilterEnabled
+                                            },
+                                            leadingIcon = {
+                                                Text(text = "$")
+                                            },
+                                            trailingIcon = {
+                                                Checkbox(
+                                                    checked = freeFilterEnabled,
+                                                    onCheckedChange = { freeFilterEnabled = it }
                                                 )
                                             }
+                                        ) {
+                                            Text(
+                                                text = stringResource(Res.string.free_models_only),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                            )
                                         }
                                     }
                                 }

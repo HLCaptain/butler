@@ -28,7 +28,8 @@ class LlmService(
     private val getResource: suspend (resourceId: String) -> ResourceDto,
     private val createResource: suspend (chatId: String, modelId: String, resource: ResourceDto) -> ResourceDto,
     private val upsertMessage: suspend (message: MessageDto) -> MessageDto,
-    private val getOpenAIClient: suspend (endpoint: String) -> OpenAI
+    private val getOpenAIClient: suspend (endpoint: String) -> OpenAI,
+    private val upsertChat: suspend (chat: ChatDto) -> ChatDto,
 ) {
     suspend fun answerChat(
         chat: ChatDto,
@@ -56,84 +57,70 @@ class LlmService(
             Napier.v("Last message is not by user, skipping")
             return
         }
-
-        if (lastMessage.resourceIds.isEmpty()) {
+        val updatedChat = if (lastMessage.resourceIds.isEmpty()) {
             // Last message is simple text
             // Answer with simple text
             Napier.v("Last message is simple text, answering with text")
             val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
-            upsertMessage(generateNewMessage(regenerateMessage, chat, answer))
-            val newConversation = conversation + listOf(MessageDto(senderId = chatModelId, message = answer, chatId = chat.id!!)).toConversation(chat.ownerId)
-            generateNewChatNameIfNeeded(
-                chat,
-                newConversation,
-            )
-            generateSummaryForChatIfNeeded(
-                chat,
-                newConversation,
-            )
+            val newMessage = upsertMessage(generateNewMessage(regenerateMessage, chat, answer))
+            chat.copy(lastFewMessages = chat.lastFewMessages + newMessage)
         } else {
             // Describe image
             // For audio, reply with text and audio
             val lastMessageResources = lastMessage.resourceIds.mapNotNull { id -> resources.find { it.id == id } }
-            lastMessageResources.forEach { resource ->
-                when (resource.type.split("/").first()) {
+            val newChatVersions = lastMessageResources.groupBy { it.type }.map { (type, resources) ->
+                when (type.split("/").first()) {
                     "image" -> {
                         Napier.v("Resource is an image, answering with text")
                         val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
-                        upsertMessage(generateNewMessage(regenerateMessage, chat, answer))
-                        val newConversation = conversation + listOf(MessageDto(senderId = chatModelId, message = answer, chatId = chat.id!!)).toConversation(chat.ownerId)
-                        generateNewChatNameIfNeeded(
-                            chat,
-                            newConversation,
-                        )
-                        generateSummaryForChatIfNeeded(
-                            chat,
-                            newConversation,
-                        )
+                        val newMessage = upsertMessage(generateNewMessage(regenerateMessage, chat, answer))
+                        chat.copy(lastFewMessages = (chat.lastFewMessages + newMessage).distinctBy { it.id })
                     }
                     "audio" -> {
                         Napier.v("Resource is audio, transcribing and answering with text and audio")
-                        val speechToTextContent = transcribeAudio(chat, resource)
+                        val speechToTextContents = resources.map { resource ->
+                            if (resource.type.startsWith("audio")) {
+                                transcribeAudio(chat, resource)
+                            } else {
+                                null
+                            }
+                        }
+                        if (speechToTextContents.any { it == null }) {
+                            Napier.v("Failed to transcribe ${speechToTextContents.filter { it == null }.size} audio messages, skipping")
+                            return
+                        }
                         val modifiedConversation = conversation.toMutableList()
-                        val lastMessageContent = ((modifiedConversation.lastOrNull()?.content?.let { "$it\n\n" } ?: "") + speechToTextContent).trim('\n', ' ')
+                        val lastMessageContent = ((modifiedConversation.lastOrNull()?.content?.let { "$it\n\n" } ?: "") + speechToTextContents.joinToString("\n\n")).trim('\n', ' ')
                         modifiedConversation.removeLast()
                         modifiedConversation.add(
                             lastMessage.toChatMessage(
                                 userId = chat.ownerId,
                                 previousMessageContent = lastMessageContent,
-                                resources = listOf(resource)
+                                resources = resources
                             )
                         )
                         // Append transcription to last message
-                        upsertMessage(lastMessage.copy(message = lastMessageContent))
+                        val transcriptions = upsertMessage(lastMessage.copy(message = lastMessageContent))
                         val answer = answerChatWithTextAndContext(chat, modifiedConversation, previousChats)
                         val audioResource = generateSpeechFromText(chat, answer)
                         // Upload resource
                         // Send message with resourceId
                         val newResourceId = createResource(chat.id!!, chatModelId, audioResource).id!!
-                        upsertMessage(generateNewMessage(regenerateMessage, chat, answer, listOf(newResourceId)))
-                        val additionalConversation = listOf(
-                            MessageDto(
-                                senderId = chatModelId,
-                                message = answer,
-                                resourceIds = listOf(newResourceId),
-                                chatId = chat.id!!
-                            )
-                        ).toConversation(chat.ownerId, listOf(resource))
-                        generateNewChatNameIfNeeded(
-                            chat,
-                            modifiedConversation + additionalConversation,
-                        )
-                        generateSummaryForChatIfNeeded(
-                            chat,
-                            modifiedConversation + additionalConversation,
-                        )
+                        val newMessage = upsertMessage(generateNewMessage(regenerateMessage, chat, answer, listOf(newResourceId)))
+                        chat.copy(lastFewMessages = (chat.lastFewMessages + transcriptions + newMessage).distinctBy { it.id })
                     }
-                    else -> Napier.v { "Resource type ${resource.type} not supported" }
+                    else -> {
+                        Napier.v { "Resource type $type not supported" }
+                        chat
+                    }
                 }
             }
+            chat.copy(lastFewMessages = newChatVersions.flatMap { it.lastFewMessages }.distinctBy { it.id })
         }
+        val updatedConversation = updatedChat.lastFewMessages.sortedBy { it.time }.toConversation(chat.ownerId, resources)
+        val chatName = generateNewChatNameIfNeeded(updatedChat, updatedConversation)
+        val chatSummary = generateSummaryForChatIfNeeded(updatedChat, updatedConversation)
+        upsertChat(updatedChat.copy(name = chatName, summary = chatSummary))
     }
 
     private fun generateNewMessage(
@@ -207,10 +194,14 @@ class LlmService(
     private suspend fun transcribeAudio(
         chat: ChatDto,
         resource: ResourceDto,
-    ): String {
+    ): String? {
         // get chat history with chatId
         // transcribe audio with whisper or other speech to text model
         // answer the transcribed text
+        if (chat.audioTranscriptionModel == null) {
+            Napier.v { "No audio transcription model for chat $chat" }
+            return null
+        }
         val openAI = getOpenAIClient(chat.audioTranscriptionModel!!.first)
         val type = resource.type.split("/").last()
         // Create tmp file for audio
@@ -252,7 +243,7 @@ fun List<MessageDto>.toConversation(userId: String, resources: List<ResourceDto>
         val previousAndCurrentMessageFromAssistant = acc.lastOrNull()?.role == ChatRole.Assistant && message.senderId != userId
         val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && message.senderId == userId
         if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
-            val previousMessageContent = acc.last().content
+            val previousMessageContent = (acc.last().messageContent.takeIf { it is TextContent } as? TextContent)?.content
             acc.removeLast()
             acc.add(message.toChatMessage(userId, previousMessageContent, resources))
             return@fold acc
@@ -277,7 +268,7 @@ fun MessageDto.toChatMessage(
         content += ImagePart(imageData)
     }
     if (textPart.isNotBlank()) content += TextPart(textPart)
-    return if (content.size <= 1 && content[0] is TextPart) {
+    return if (content.size == 1 && content[0] is TextPart) {
         // Only text
         ChatMessage(
             role = if (userId == senderId) ChatRole.User else ChatRole.Assistant,

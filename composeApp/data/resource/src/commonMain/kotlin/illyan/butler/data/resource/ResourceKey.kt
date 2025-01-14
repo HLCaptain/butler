@@ -12,7 +12,7 @@ sealed class ResourceKey {
     }
 
     sealed class Delete : ResourceKey() {
-        data class ByResourceId(val resourceId: String) : Delete()
+        data class ByResourceId(val resourceId: String, val deviceOnly: Boolean) : Delete()
         data object All : Delete()
     }
 }

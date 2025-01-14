@@ -7,6 +7,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.data.resource)
         implementation(projects.composeApp.domain)
+        implementation(projects.composeApp.di)
         implementation(projects.shared.model)
 
         implementation(libs.kotlinx.coroutines)
@@ -14,7 +15,6 @@ kotlin {
         implementation(libs.korge.io) // Kotlin Multiplatform Audio
         implementation(libs.napier)
         implementation(libs.ktor.core)
-        implementation(libs.ffmpeg.kit)
         implementation(libs.kotlinx.datetime)
     }
 }

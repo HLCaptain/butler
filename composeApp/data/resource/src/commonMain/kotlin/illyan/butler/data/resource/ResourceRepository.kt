@@ -6,6 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface ResourceRepository {
     fun getResourceFlow(resourceId: String, deviceOnly: Boolean): Flow<DomainResource?>
     suspend fun upsert(resource: DomainResource, deviceOnly: Boolean): String
-    suspend fun deleteResource(resourceId: String): Boolean
-    suspend fun deleteAllResources()
+    suspend fun deleteResource(resourceId: String, deviceOnly: Boolean): Boolean
 }

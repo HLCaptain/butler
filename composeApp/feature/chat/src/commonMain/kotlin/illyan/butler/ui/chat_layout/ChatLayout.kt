@@ -142,7 +142,7 @@ fun ChatLayout(
                                     playAudio = viewModel::playAudio,
                                     stopAudio = viewModel::stopAudio,
                                     navigationIcon = navigationIcon,
-                                    openChatDetails = { isChatDetailsOpen = true },
+                                    toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
                                     isChatDetailsOpenRatio = drawerOpenRatio
                                 )
                             } else {

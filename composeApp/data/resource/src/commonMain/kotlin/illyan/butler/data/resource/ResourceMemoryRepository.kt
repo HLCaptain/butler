@@ -22,12 +22,7 @@ class ResourceMemoryRepository : ResourceRepository {
         return resourceWithId.id!!
     }
 
-    override suspend fun deleteAllResources() {
-        resources.values.forEach { it.update { null } }
-        resources.clear()
-    }
-
-    override suspend fun deleteResource(resourceId: String): Boolean {
+    override suspend fun deleteResource(resourceId: String, deviceOnly: Boolean): Boolean {
         return resources.remove(resourceId) != null
     }
 }

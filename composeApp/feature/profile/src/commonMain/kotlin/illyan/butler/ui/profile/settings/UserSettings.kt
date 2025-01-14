@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -448,6 +449,7 @@ private fun SyncPreferencesButton(
 //    )
 //}
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientLabel(
     clientUUID: String?,

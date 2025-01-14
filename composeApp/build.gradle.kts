@@ -60,7 +60,6 @@ kotlin {
         implementation(libs.androidx.datastore.preferences)
     }
 
-
     sourceSets.androidMain.dependencies {
         implementation(libs.androidx.core)
         implementation(libs.koin.android)
@@ -68,7 +67,6 @@ kotlin {
         implementation(libs.androidx.activity)
         implementation(libs.androidx.activity.compose)
         implementation(libs.compose.ui.tooling)
-        implementation(libs.ffmpeg.kit)
     }
 
     sourceSets.jvmMain.dependencies {
