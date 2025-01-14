@@ -150,7 +150,7 @@ fun ChatDetails(
                         }
                     }
                 }
-                items(aiMembers.toList(), key = { it.first }) { (resTitle, model) ->
+                items(aiMembers.toList(), key = { it.first.key }) { (resTitle, model) ->
                     ModelSetting(
                         modifier = Modifier.fillMaxWidth(),
                         title = stringResource(resTitle),

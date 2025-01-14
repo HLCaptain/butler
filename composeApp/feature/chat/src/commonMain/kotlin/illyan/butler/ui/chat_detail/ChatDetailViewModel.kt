@@ -130,11 +130,11 @@ class ChatDetailViewModel(
         }
     }
 
-    fun sendImage(path: String, senderId: String) {
+    fun sendImage(imageContent: ByteArray, mimeType: String, senderId: String) {
         viewModelScope.launch {
             chatIdStateFlow.value?.let {
-                chatManager.sendImageMessage(it, path, senderId)
-                Napier.d("Image sent: $path")
+                chatManager.sendImageMessage(it, imageContent, mimeType, senderId)
+                Napier.d("Image sent")
             }
         }
     }

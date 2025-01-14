@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -19,22 +20,32 @@ import illyan.butler.ui.permission.PermissionRequestScreen
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.core.extension
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 actual fun ChatDetailBottomBar(
     modifier: Modifier,
     sendMessage: (String) -> Unit,
-    sendImage: (String) -> Unit,
+    sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean,
     toggleRecord: () -> Unit
 ) {
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
     val launcher = rememberFilePickerLauncher(
         mode = PickerMode.Single,
         type = PickerType.Image
     ) { file ->
-        file?.path?.let { sendImage(it) }
+        file?.path?.let {
+            coroutineScope.launch {
+                sendImage(
+                    file.readBytes(),
+                    "image/${file.extension}"
+                )
+            }
+        }
     }
     val galleryPermissionState = rememberPermissionState(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES

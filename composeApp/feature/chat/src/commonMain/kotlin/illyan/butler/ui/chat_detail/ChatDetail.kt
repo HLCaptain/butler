@@ -50,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -97,7 +98,9 @@ import illyan.butler.generated.resources.you
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.core.extension
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -110,7 +113,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ChatDetail(
     state: ChatDetailState,
     sendMessage: (String) -> Unit,
-    sendImage: (String, String) -> Unit,
+    sendImage: (ByteArray, String, String) -> Unit,
     toggleRecord: (String) -> Unit,
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
@@ -179,7 +182,7 @@ fun ChatDetail(
                             .hazeEffect(hazeState)
                             .navigationBarsPadding(),
                         sendMessage = sendMessage,
-                        sendImage = { state.chat?.let { chat -> sendImage(it, chat.ownerId) } },
+                        sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
                         isRecording = state.isRecording,
                         toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
                     )
@@ -223,7 +226,7 @@ private fun SelectChat() {
 expect fun ChatDetailBottomBar(
     modifier: Modifier = Modifier,
     sendMessage: (String) -> Unit,
-    sendImage: (String) -> Unit,
+    sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean = false,
     toggleRecord: () -> Unit
 )
@@ -445,7 +448,7 @@ fun MessageField(
     sendMessage: (String) -> Unit,
     isRecording: Boolean = false,
     toggleRecord: () -> Unit,
-    sendImage: (String) -> Unit,
+    sendImage: (ByteArray, String) -> Unit,
     galleryAccessGranted: Boolean = false,
     galleryEnabled: Boolean = false,
     recordAudioAccessGranted: Boolean = false,
@@ -482,11 +485,19 @@ fun MessageField(
                 }
             }
         }
+        val coroutineScope = rememberCoroutineScope()
         val launcher = rememberFilePickerLauncher(
             mode = PickerMode.Single,
             type = PickerType.Image
         ) { file ->
-            file?.path?.let { sendImage(it) }
+            file?.let {
+                coroutineScope.launch {
+                    sendImage(
+                        file.readBytes(),
+                        "image/${file.extension}"
+                    )
+                }
+            }
         }
         AnimatedVisibility(visible = galleryEnabled) {
             IconButton(onClick = {

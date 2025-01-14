@@ -105,14 +105,16 @@ fun ChatListItemCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val style = when (chat.name?.length) {
+                val chatName = chat.name ?: stringResource(Res.string.new_chat)
+                val style = when (chatName.length) {
                     in 0..10 -> MaterialTheme.typography.titleLarge
                     in 11..20 -> MaterialTheme.typography.titleMedium
                     else -> MaterialTheme.typography.titleSmall
                 }
+
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = chat.name ?: stringResource(Res.string.new_chat),
+                    text = chatName,
                     style = style,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 2

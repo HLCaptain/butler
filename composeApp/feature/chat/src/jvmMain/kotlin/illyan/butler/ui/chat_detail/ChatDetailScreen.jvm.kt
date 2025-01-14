@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 actual fun ChatDetailBottomBar(
     modifier: Modifier,
     sendMessage: (String) -> Unit,
-    sendImage: (String) -> Unit,
+    sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean,
     toggleRecord: () -> Unit
 ) {

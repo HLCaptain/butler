@@ -28,10 +28,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.seconds
@@ -267,12 +263,10 @@ class ChatManager(
         return sendMessageWithResources(chatId, senderId, resources = listOf(audioResource))
     }
 
-    suspend fun sendImageMessage(chatId: String, imagePath: String, senderId: String): String {
-        val path = Path(imagePath)
-        val imageContent = SystemFileSystem.source(path).buffered().readByteArray()
+    suspend fun sendImageMessage(chatId: String, imageContent: ByteArray, mimeType: String, senderId: String): String {
         val imageId = resourceRepository.upsert(
             DomainResource(
-                type = "image/${path.name.substringAfterLast('.').lowercase()}",
+                type = mimeType,
                 data = imageContent
             ),
             deviceOnly = authManager.clientId.first() == senderId
