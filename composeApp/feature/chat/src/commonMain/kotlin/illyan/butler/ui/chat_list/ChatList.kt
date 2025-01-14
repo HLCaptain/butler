@@ -29,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
@@ -57,7 +58,7 @@ fun ChatList(
         contentPadding = PaddingValues(8.dp),
     ) {
         items(chats, key = { it.id!! }) { chat ->
-            ChatCard(
+            ChatListItemCard(
                 modifier = Modifier.animateItem(),
                 chat = chat,
                 selected = chat.id == selectedChat,
@@ -71,7 +72,7 @@ fun ChatList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatCard(
+fun ChatListItemCard(
     modifier: Modifier = Modifier,
     chat: DomainChat,
     selected: Boolean,
@@ -100,12 +101,21 @@ fun ChatCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val style = when (chat.name?.length) {
+                    in 0..10 -> MaterialTheme.typography.titleLarge
+                    in 11..20 -> MaterialTheme.typography.titleMedium
+                    else -> MaterialTheme.typography.titleSmall
+                }
                 Text(
+                    modifier = Modifier.weight(1f),
                     text = chat.name ?: stringResource(Res.string.new_chat),
-                    style = MaterialTheme.typography.titleLarge
+                    style = style,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 2
                 )
                 AnimatedVisibility(visible = isDeviceOnly) {
                     ButlerTag { Text(text = stringResource(Res.string.device_only)) }
