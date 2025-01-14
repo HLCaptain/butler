@@ -1,5 +1,7 @@
 # Butler AI Chat App
 
+![Butler App Icon](docs/assets/butler_logo.webp)
+
 Butler is an experimental AI chat app, which is a playground for testing out new technologies and development practices.
 
 ## How to Run
