@@ -10,7 +10,7 @@ Butler is an experimental AI chat app, which is a playground for testing out new
 2. Open with [Android Studio](https://developer.android.com/studio)
 3. Set build variants to `debug` (should be `debug` by default)
 4. Run the Android app on an emulator or a physical device
-5. Run the Desktop app on your computer (gradle butler:composeApp:run)
+5. Run the Desktop app on your computer (with `butler:composeApp [run]` label in Android Studio)
 ![Select 'run'](docs/assets/select_run.png)
 
 ## Usage
