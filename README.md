@@ -10,7 +10,7 @@ Butler is an experimental AI chat app, which is a playground for testing out new
 2. Open with [Android Studio](https://developer.android.com/studio)
 3. Set build variants to `debug` (should be `debug` by default)
 4. Run the Android app on an emulator or a physical device
-5. Run the Desktop app on your computer (gradle butler:composeApp:run)
+5. Run the Desktop app on your computer (with `butler:composeApp [run]` label in Android Studio)
 ![Select 'run'](docs/assets/select_run.png)
 
 ## Usage
@@ -41,7 +41,7 @@ Selecting the OpenAI API option, the user is prompted to enter their API key wit
 
 The credential grid list items are animating with shared element transitions.
 
-The first API key should be added, which is for OpenRouter.
+The first API key should be added, which is for OpenRouter. You can use this API key, as it is limited to 1$ and I have no credits on my account. **Keep in mind, that you can only talk to `:free` models!**
 
 ![API key list](docs/assets/api_key_list.png)
 
