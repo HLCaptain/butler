@@ -21,7 +21,6 @@ package illyan.butler.ui.profile.settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -268,10 +267,7 @@ fun UserSettingsTitle(
     FlowRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
-            Text(text = stringResource(Res.string.settings))
-            SyncPreferencesLabel(arePreferencesSynced = arePreferencesSynced)
-        }
+        Text(text = stringResource(Res.string.settings))
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.Top
