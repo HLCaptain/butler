@@ -5,7 +5,6 @@ import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.MessageNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.core.utils.randomUUID
 import illyan.butler.domain.model.DomainMessage
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -42,14 +41,16 @@ fun provideMessageMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                is MessageKey.Write.Create -> messageLocalDataSource.upsertMessage(local.copy(id = randomUUID()))
-                is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessage(local)
+                MessageKey.Write.Create, MessageKey.Write.Upsert, MessageKey.Write.DeviceOnly -> messageLocalDataSource.upsertMessage(local)
                 is MessageKey.Read.ByMessageId -> messageLocalDataSource.upsertMessage(local) // From fetcher
                 else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
-            require(key is MessageKey.Delete.ByMessageId)
+            require(key is MessageKey.Delete)
+            if (!key.deviceOnly) {
+                messageNetworkDataSource.delete(key.chatId, key.messageId)
+            }
             messageLocalDataSource.deleteMessageById(key.messageId)
         },
         deleteAll = {
@@ -66,6 +67,7 @@ fun provideMessageMutableStore(
                     messageLocalDataSource.replaceMessage(it.id!!, it)
                 }
                 is MessageKey.Write.Upsert -> messageNetworkDataSource.upsert(output)
+                is MessageKey.Write.DeviceOnly -> output // Do not upload device-only messages
             }
             UpdaterResult.Success.Typed(newMessage)
         },

@@ -18,8 +18,6 @@
 
 package illyan.butler.core.ui.components
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -27,27 +25,24 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Done
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RichTooltip
-import androidx.compose.material3.Surface
+import androidx.compose.material3.RichTooltipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TooltipState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,14 +58,13 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.copied_to_clipboard
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.time.Duration
 
 // Values got from material3/Tooltip.kt
@@ -81,12 +75,13 @@ private const val TooltipFadeOutDuration = 75L
  * @param showTooltipOnClick if true, toggles tooltip visibility when
  * card is clicked instead of long clicked
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TooltipElevatedCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
+    colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
@@ -106,21 +101,23 @@ fun TooltipElevatedCard(
         modifier = modifier,
         tooltipState = tooltipState,
         tooltip = tooltip,
+        colors = colors,
         disabledTooltip = disabledTooltip,
         enabled = enabled,
         onShowTooltip = onShowTooltip,
         onDismissTooltip = onDismissTooltip
     ) {
-        OutlinedCard(
+        ButlerOutlinedCard(
             enabled = enabled,
             onClick = {
                 onClick()
                 if (showTooltipOnClick) tryShowTooltip()
-            }
+            },
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp)),
+            contentPadding = PaddingValues(0.dp),
         ) {
-            Surface(
+            Box(
                 modifier = Modifier
-                    .animateContentSize()
                     .combinedClickable(
                         onLongClick = {
                             onLongClick()
@@ -131,7 +128,7 @@ fun TooltipElevatedCard(
                             if (showTooltipOnClick) tryShowTooltip()
                         }
                     ),
-                content = content
+                content = { content() }
             )
         }
     }
@@ -143,7 +140,7 @@ sealed class GestureType {
     data class Hover(val delay: Duration = Duration.ZERO) : GestureType()
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlainTooltipWithContent(
     modifier: Modifier = Modifier,
@@ -152,32 +149,26 @@ fun PlainTooltipWithContent(
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-    enabledGestures: List<GestureType> = emptyList(),
+    enabledGestures: List<GestureType> = getTooltipGestures(),
     onShowTooltip: () -> Unit = {},
     onDismissTooltip: () -> Unit = {},
     content: @Composable (gestureAreaModifier: Modifier) -> Unit
 ) {
     val tooltipState = remember { TooltipState() }
-    var willShowTooltip by rememberSaveable { mutableStateOf(false) }
-    var gestureType by rememberSaveable { mutableStateOf<GestureType?>(null) }
+    val coroutineScope = rememberCoroutineScope()
     val tryToShowTooltip = { gesture: GestureType ->
-        willShowTooltip = true
-        gestureType = gesture
+        if (enabled || disabledTooltip != null) {
+            coroutineScope.launch {
+                if (gesture is GestureType.Hover && gesture.delay > Duration.ZERO) {
+                    delay(gesture.delay.inWholeMilliseconds)
+                }
+                tooltipState.show()
+                onShowTooltip()
+            }
+        }
     }
     val tryToDismissTooltip = {
-        willShowTooltip = false
-        gestureType = null
-    }
-    LaunchedEffect(willShowTooltip) {
-        if (willShowTooltip && (enabled || disabledTooltip != null)) {
-            if (gestureType is GestureType.Hover && (gestureType as GestureType.Hover).delay > Duration.ZERO) {
-                delay((gestureType as GestureType.Hover).delay.inWholeMilliseconds)
-            }
-            tooltipState.show()
-            willShowTooltip = false
-        } else {
-            tooltipState.dismiss()
-        }
+        tooltipState.dismiss()
     }
     PlainTooltipWithContent(
         modifier = modifier,
@@ -213,13 +204,14 @@ fun PlainTooltipWithContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RichTooltipWithContent(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
     tooltip: @Composable () -> Unit,
+    colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
     disabledTooltip: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
     enabledGestures: List<GestureType> = emptyList(),
@@ -253,6 +245,7 @@ fun RichTooltipWithContent(
         modifier = modifier,
         tooltipState = tooltipState,
         tooltip = tooltip,
+        colors = colors,
         disabledTooltip = disabledTooltip,
         enabled = enabled,
         onShowTooltip = onShowTooltip,
@@ -275,64 +268,11 @@ fun RichTooltipWithContent(
                 if (enabledGestures.any { it is GestureType.Hover }) Modifier.handleGestures(
                     enabled = true,
                     state = tooltipState,
-                    onShow = { priority -> tryToShowTooltip(enabledGestures.first { it is GestureType.Hover }) },
+                    onShow = { tryToShowTooltip(enabledGestures.first { it is GestureType.Hover }) },
                     onDismiss = { tryToDismissTooltip() }
                 ) else Modifier
             )
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-@Composable
-fun TooltipButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {},
-    tooltip: @Composable () -> Unit,
-    disabledTooltip: @Composable (() -> Unit)? = null,
-    showTooltipOnClick: Boolean = false,
-    onShowTooltip: () -> Unit = {},
-    onDismissTooltip: () -> Unit = {},
-    content: @Composable RowScope.() -> Unit
-) {
-    val tooltipState = remember { TooltipState() }
-    val coroutineScope = rememberCoroutineScope()
-    val tryShowTooltip = { coroutineScope.launch { tooltipState.show() } }
-    RichTooltipWithContent(
-        modifier = modifier,
-        tooltipState = tooltipState,
-        tooltip = tooltip,
-        disabledTooltip = disabledTooltip,
-        onShowTooltip = onShowTooltip,
-        onDismissTooltip = onDismissTooltip
-    ) {
-        Surface(
-            modifier = Modifier
-                .animateContentSize()
-                .combinedClickable(
-                    onLongClick = {
-                        onLongClick()
-                        if (!showTooltipOnClick) tryShowTooltip()
-                    },
-                    onClick = {
-                        onClick()
-                        if (showTooltipOnClick) tryShowTooltip()
-                    }
-                ),
-            shape = ButtonDefaults.shape,
-            color = MaterialTheme.colorScheme.primary
-        ) {
-            CompositionLocalProvider(
-                LocalContentColor provides MaterialTheme.colorScheme.onPrimary,
-                LocalTextStyle provides MaterialTheme.typography.labelLarge
-            ) {
-                Row(
-                    modifier = Modifier.padding(ButtonDefaults.ContentPadding),
-                    content = content
-                )
-            }
-        }
     }
 }
 
@@ -343,6 +283,7 @@ fun RichTooltipWithContent(
     tooltipState: TooltipState = remember { TooltipState() },
     tooltip: @Composable () -> Unit,
     disabledTooltip: @Composable (() -> Unit)? = null,
+    colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
     enabled: Boolean = true,
     onShowTooltip: () -> Unit = {},
     onDismissTooltip: () -> Unit = {},
@@ -364,7 +305,7 @@ fun RichTooltipWithContent(
     }
     TooltipBox(
         modifier = modifier,
-        tooltip = { RichTooltip { Box(content = { currentTooltip() }) } },
+        tooltip = { RichTooltip(colors = colors) { Box(content = { currentTooltip() }) } },
         state = tooltipState,
         content = content,
         enableUserInput = false,
@@ -408,7 +349,6 @@ fun PlainTooltipWithContent(
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CopiedToKeyboardTooltip() {
     Row(
@@ -486,3 +426,15 @@ fun Modifier.handleGestures(
                 }
             }
     } else this
+
+object ButlerTooltipDefaults {
+    @OptIn(ExperimentalMaterial3Api::class)
+    val richTooltipColors: RichTooltipColors
+        @Composable
+        get() = TooltipDefaults.richTooltipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionContentColor = MaterialTheme.colorScheme.primary,
+        )
+}

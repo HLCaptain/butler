@@ -1,11 +1,10 @@
-package illyan.butler.data.local.room.dao
+package illyan.butler.core.local.room.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import illyan.butler.core.local.room.model.RoomDataHistory
 
 @Dao
 interface DataHistoryDao {

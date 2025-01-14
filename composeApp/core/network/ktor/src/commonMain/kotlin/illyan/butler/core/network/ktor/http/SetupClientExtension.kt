@@ -1,5 +1,6 @@
 package illyan.butler.core.network.ktor.http
 
+import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.local.room.model.RoomToken
 import illyan.butler.data.settings.AppRepository
@@ -8,6 +9,7 @@ import illyan.butler.shared.model.response.UserTokensResponse
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIOEngineConfig
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.ServerResponseException
@@ -29,16 +31,25 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
+import io.ktor.network.tls.CIOCipherSuites
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
+
+fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
+    engine {
+        https {
+            serverName = null
+            cipherSuites = CIOCipherSuites.SupportedSuites
+        }
+    }
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 fun HttpClientConfig<*>.setupClient(
@@ -50,10 +61,11 @@ fun HttpClientConfig<*>.setupClient(
     HttpResponseValidator {
         handleResponseExceptionWithRequest { throwable, _ ->
             Napier.e(throwable) { "Error in response" }
+
             when (throwable) {
                 is ServerResponseException -> errorManager.reportError(throwable.response)
                 is ClientRequestException -> errorManager.reportError(throwable.response)
-                else -> errorManager.reportError(throwable)
+                else -> Napier.e { "Unhandled exception: $throwable" } // Do not report, just log
             }
         }
     }
@@ -78,15 +90,16 @@ fun HttpClientConfig<*>.setupClient(
             // loadTokens run every time a request is made.
             loadTokens {
                 Napier.v { "Loading tokens" }
-                if (!userDao.isUserSignedIn().first()) {
+                val signedInUserId = appRepository.currentSignedInUserId.first()
+                if (signedInUserId == null) {
                     Napier.d { "User is not signed in" }
                     null
                 } else {
-                    val currentUser = userDao.getCurrentUser().filterNotNull().first()
-                    val accessMillis = currentUser.accessToken?.tokenExpirationMillis
-                    val refreshMillis = currentUser.refreshToken?.tokenExpirationMillis
-                    val accessToken = currentUser.accessToken?.token
-                    val refreshToken = currentUser.refreshToken?.token
+                    val currentUser = userDao.getUser(signedInUserId).first()
+                    val accessMillis = currentUser?.accessToken?.tokenExpirationMillis
+                    val refreshMillis = currentUser?.refreshToken?.tokenExpirationMillis
+                    val accessToken = currentUser?.accessToken?.token
+                    val refreshToken = currentUser?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
                     if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
                         Napier.d { "No access or refresh token found in app settings" }
@@ -105,12 +118,13 @@ fun HttpClientConfig<*>.setupClient(
                 }
             }
             refreshTokens {
-                if (userDao.isUserSignedIn().first()) {
-                    val currentUser = userDao.getCurrentUser().filterNotNull().first()
-                    val accessMillis = currentUser.accessToken?.tokenExpirationMillis
-                    val refreshMillis = currentUser.refreshToken?.tokenExpirationMillis
-                    val accessToken = currentUser.accessToken?.token
-                    val refreshToken = currentUser.refreshToken?.token
+                val signedInUserId = appRepository.currentSignedInUserId.first()
+                if (signedInUserId != null) {
+                    val currentUser = userDao.getUser(signedInUserId).first()
+                    val accessMillis = currentUser?.accessToken?.tokenExpirationMillis
+                    val refreshMillis = currentUser?.refreshToken?.tokenExpirationMillis
+                    val accessToken = currentUser?.accessToken?.token
+                    val refreshToken = currentUser?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
                     if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
                         Napier.d { "No access or refresh token found in app settings" }
@@ -126,6 +140,7 @@ fun HttpClientConfig<*>.setupClient(
                             oldTokens?.refreshToken?.let { bearerAuth(it) }
                         }.body<UserTokensResponse>().run {
                             userDao.updateTokens(
+                                signedInUserId,
                                 RoomToken(accessToken, accessTokenExpirationMillis),
                                 RoomToken(refreshToken, refreshTokenExpirationMillis)
                             )
@@ -142,9 +157,6 @@ fun HttpClientConfig<*>.setupClient(
             }
         }
     }
-
-    //    developmentMode = isDebugBuild()
-    developmentMode = true
 
     val fallbackPlugin = createClientPlugin("ContentTypeFallback", ::ContentTypeFallbackConfig) {
         val contentTypes = pluginConfig.supportedContentTypes
@@ -180,7 +192,7 @@ fun HttpClientConfig<*>.setupClient(
     install(fallbackPlugin) {
         val fallbackContentType = ContentType.Application.Json
         val defaultContentType = ContentType.Application.ProtoBuf
-        supportedContentTypes = if (developmentMode) {
+        supportedContentTypes = if (BuildConfig.DEBUG) {
             listOf(fallbackContentType)
         } else {
             listOf(defaultContentType, fallbackContentType)

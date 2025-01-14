@@ -5,7 +5,6 @@ import illyan.butler.core.network.mapping.toDomainModel
 import illyan.butler.core.network.mapping.toNetworkModel
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.shared.model.chat.ChatDto
-import illyan.butler.shared.model.chat.MessageDto
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -16,9 +15,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +23,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.Single
 
 @Single
@@ -53,7 +48,7 @@ class ChatHttpDataSource(private val client: HttpClient) : ChatNetworkDataSource
 
     override fun fetchByUserId(userId: String): Flow<List<DomainChat>> {
         return fetchNewChats().map { chats ->
-            chats.filter { it.members.contains(userId) }
+            chats.filter { it.ownerId == userId }
         }
     }
 

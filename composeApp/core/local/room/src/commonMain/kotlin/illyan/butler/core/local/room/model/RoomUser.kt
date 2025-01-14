@@ -6,7 +6,7 @@ import androidx.room.Entity
 data class RoomUser(
     val id: String,
     val email: String,
-    val username: String,
+    val username: String?,
     val displayName: String?,
     val phone: String?,
     val fullName: String?,

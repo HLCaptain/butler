@@ -3,7 +3,7 @@ package illyan.butler.audio
 import io.github.aakira.napier.Napier
 import korlibs.audio.sound.AudioData
 import korlibs.audio.sound.readAudioData
-import korlibs.io.file.std.resourcesVfs
+import korlibs.io.file.std.toVfs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -48,7 +48,7 @@ class JvmAudioRecorder : AudioRecorder {
             // Create a temporary file to store the captured audio
             startCapturingAudio()
         } catch (e: Exception) {
-            Napier.e("Error starting recording", e)
+            Napier.e("Error while starting recording", e)
             targetLine?.stop()
             targetLine?.close()
             targetLine?.flush()
@@ -84,7 +84,8 @@ class JvmAudioRecorder : AudioRecorder {
         targetLine?.close()
         targetLine?.flush()
         targetLine = null
-        return resourcesVfs[outputFile!!.absolutePath].readAudioData().also {
+        Napier.v { "Absolute path of file: ${outputFile!!.path}" }
+        return outputFile!!.toVfs().readAudioData().also {
             outputFile?.delete()
             Napier.v("Deleted temporary file: $outputFile")
             Napier.v("Audio data: $it")

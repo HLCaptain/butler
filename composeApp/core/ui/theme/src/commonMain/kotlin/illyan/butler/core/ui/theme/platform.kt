@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 @Composable
 expect fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean)
 
+@Composable
 expect fun canUseDynamicColors(): Boolean
 
 @Composable
