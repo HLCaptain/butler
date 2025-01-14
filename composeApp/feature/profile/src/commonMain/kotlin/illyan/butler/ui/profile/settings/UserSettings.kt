@@ -81,7 +81,6 @@ import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.Theme
 import illyan.butler.generated.resources.Res
-import illyan.butler.generated.resources.analytics
 import illyan.butler.generated.resources.dark
 import illyan.butler.generated.resources.data_settings
 import illyan.butler.generated.resources.day_night_cycle
@@ -146,7 +145,6 @@ fun UserSettingsDialogContent(
     showAnalyticsRequestDialog: Boolean = false,
     onShouldSyncChanged: (Boolean) -> Unit = {},
     setAnalytics: (Boolean) -> Unit = {},
-    setAdVisibility: (Boolean) -> Unit = {},
     setDynamicColorEnabled: (Boolean) -> Unit = {},
     navigateToDataSettings: () -> Unit = {},
     onThemeChange: (Theme) -> Unit = {},
@@ -172,19 +170,17 @@ fun UserSettingsDialogContent(
                 text = {
                     UserSettings(
                         preferences = preferences,
-                        setAnalytics = setAnalytics,
-                        setAdVisibility = setAdVisibility,
                         setDynamicColorEnabled = setDynamicColorEnabled,
                         onThemeChange = onThemeChange,
                     )
                 },
                 buttons = {
-                    UserSettingsButtons(
-                        canSyncPreferences = canSyncPreferences,
-                        shouldSyncPreferences = shouldSyncPreferences,
-                        onShouldSyncChanged = onShouldSyncChanged,
-                        navigateToDataSettings = navigateToDataSettings,
-                    )
+//                    UserSettingsButtons(
+//                        canSyncPreferences = canSyncPreferences,
+//                        shouldSyncPreferences = shouldSyncPreferences,
+//                        onShouldSyncChanged = onShouldSyncChanged,
+//                        navigateToDataSettings = navigateToDataSettings,
+//                    )
                 },
                 containerColor = Color.Transparent,
             )
@@ -527,8 +523,6 @@ fun SettingLabel(
 fun UserSettings(
     modifier: Modifier = Modifier,
     preferences: DomainPreferences? = null,
-    setAnalytics: (Boolean) -> Unit = {},
-    setAdVisibility: (Boolean) -> Unit = {},
     setDynamicColorEnabled: (Boolean) -> Unit = {},
     onThemeChange: (Theme) -> Unit = {},
 ) {
@@ -541,13 +535,6 @@ fun UserSettings(
             LazyColumn(
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
             ) {
-                item {
-                    BooleanSetting(
-                        title = stringResource(Res.string.analytics),
-                        onValueChange = setAnalytics,
-                        value = preferences.analyticsEnabled
-                    )
-                }
                 item {
                     var isDropdownOpen by rememberSaveable { mutableStateOf(false) }
                     DropdownSetting(

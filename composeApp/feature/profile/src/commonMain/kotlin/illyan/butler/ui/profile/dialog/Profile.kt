@@ -68,7 +68,7 @@ import kotlin.uuid.Uuid
 fun ProfileDialog(
     onShowSettingsScreen: () -> Unit = {},
     onLogin: () -> Unit,
-    onAbout: () -> Unit,
+    onAbout: (() -> Unit)? = null,
 ) {
     val viewModel = koinViewModel<ProfileViewModel>()
     val userUUID by viewModel.userUUID.collectAsState()
@@ -109,7 +109,7 @@ fun ProfileDialogContent(
     showConfidentialInfoInitially: Boolean = false,
     onSignOut: () -> Unit = {},
     onShowLoginScreen: () -> Unit = {},
-    onShowAboutScreen: () -> Unit = {},
+    onShowAboutScreen: (() -> Unit)? = null,
     onShowSettingsScreen: () -> Unit = {},
     resetTutorialAndSignOut: () -> Unit = {},
 ) {
@@ -156,7 +156,7 @@ fun ProfileButtons(
     isUserSignedIn: Boolean? = null,
     isUserSigningOut: Boolean = false,
     onShowSettingsScreen: () -> Unit = {},
-    onShowAboutScreen: () -> Unit = {},
+    onShowAboutScreen: (() -> Unit)? = null,
     onLogin: () -> Unit = {},
     onSignOut: () -> Unit = {},
     resetTutorialAndSignOut: () -> Unit = {},
@@ -428,17 +428,19 @@ fun UserInfo(
 @Composable
 fun ProfileMenu(
     modifier: Modifier = Modifier,
-    onShowAboutScreen: () -> Unit = {},
+    onShowAboutScreen: (() -> Unit)? = null,
     onShowSettingsScreen: () -> Unit = {},
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy((-12).dp)
     ) {
-        MenuButton(
-            onClick = onShowAboutScreen,
-            text = stringResource(Res.string.about)
-        )
+        onShowAboutScreen?.let {
+            MenuButton(
+                onClick = it,
+                text = stringResource(Res.string.about)
+            )
+        }
         MenuButton(
             onClick = onShowSettingsScreen,
             text = stringResource(Res.string.settings)

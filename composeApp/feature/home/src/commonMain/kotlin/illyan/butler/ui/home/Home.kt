@@ -150,7 +150,7 @@ fun Home() {
                                 isAuthFlowEnded = false
                                 isProfileDialogShowing = false
                             },
-                            onAbout = { profileNavController.navigate("about") }
+//                            onAbout = { profileNavController.navigate("about") }
                         )
                     }
                     composable("settings") {
