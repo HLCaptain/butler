@@ -27,6 +27,8 @@ If you want to build and run the app from source:
 
 A few key steps to showcase app features.
 
+The demo version of the app available in the [releases page](https://github.com/HLCaptain/butler/releases/latest) starts out in the [model selection screen](#new-chat-and-model-selection) for creating a *New Chat*, because a credential key is already added (no-config).
+
 ### Adaptive Layout and Shared Element Transitions
 
 On first open, the user is greeted with an onboarding flow, from which they can select 3 types of chatting:
@@ -108,6 +110,14 @@ After pressing `Settings`, the user can change the app's theme.
 ![Settings](docs/assets/settings_theme.png)
 
 ![Light theme](docs/assets/light_theme.png)
+
+#### Dynamic Theming on Android
+
+Not supported on Desktop, but Android features dynamic theming on recent releases.
+
+![Dynamic theming off](docs/assets/dynamic_theming_off.png)
+
+![Dynamic theming on](docs/assets/dynamic_theming_on.png)
 
 ## Contributing
 
