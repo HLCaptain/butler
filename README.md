@@ -6,11 +6,21 @@ Butler is an experimental AI chat app, which is a playground for testing out new
 
 ## How to Run
 
-1. Clone the repository
-2. Open with [Android Studio](https://developer.android.com/studio)
-3. Set build variants to `debug` (should be `debug` by default)
-4. Run the Android app on an emulator or a physical device
-5. Run the Desktop app on your computer (with `butler:composeApp [run]` label in Android Studio)
+Easier way is to:
+
+1. Go to recent [releases](https://github.com/HLCaptain/butler/releases/latest).
+2. Download `Butler-windows-x64-2.0.0-release.jar`.
+3. Start desktop app with Java 21 or higher. (I just opened it from my console/powershell using `java -jar` commands).
+4. Download `composeApp-release.apk`.
+5. Install the Android app on your device. (Android 8 required (API 26)).
+
+If you want to build and run the app from source:
+
+1. Clone the repository.
+2. Open with [Android Studio](https://developer.android.com/studio).
+3. Run the Android app on an emulator or a physical device. (You need to add some debug key info in `local.properties` and place your key in the `composeApp` project directory).
+4. Run the Desktop app on your computer (with `butler:composeApp [run]` label in Android Studio).
+
 ![Select 'run'](docs/assets/select_run.png)
 
 ## Usage

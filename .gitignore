@@ -49,10 +49,13 @@ local.properties
 
 ### Configuration files ###
 **/google-services.json
-**/*.keystore
 
 ### Kotlin K2
 .kotlin
 
 ### Room
-/composeApp/schemas/
+/**/schemas/
+
+### Android
+*.jks
+*.apk

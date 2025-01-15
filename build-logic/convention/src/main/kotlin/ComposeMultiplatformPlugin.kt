@@ -12,4 +12,3 @@ class ComposeMultiplatformPlugin : KotlinMultiplatformPlugin() {
         extensions.configure<KotlinMultiplatformExtension>(::configureComposeMultiplatformLibrary)
     }
 }
-

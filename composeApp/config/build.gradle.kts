@@ -57,5 +57,8 @@ buildConfig {
 
         val resetRoomDb = localProperties["RESET_ROOM_DB"].toBoolean() // Set to true to reset Room database on app start
         buildConfigField("Boolean", "RESET_ROOM_DB", resetRoomDb.toString())
+
+        val noConfigSetup = localProperties["NO_CONFIG_SETUP"].toBoolean() // Set to true to have a baseline configuration
+        buildConfigField("Boolean", "NO_CONFIG_SETUP", noConfigSetup.toString())
     }
 }
