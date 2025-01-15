@@ -38,7 +38,7 @@ class HomeViewModel(
     private val _appErrors = MutableStateFlow<List<DomainErrorEvent>>(listOf())
 
     init {
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.NO_CONFIG_SETUP) {
             viewModelScope.launch {
                 val credentials = credentialRepository.apiKeyCredentials.first()
                 if (credentials.orEmpty().none { it.providerUrl.contains("openrouter.ai") }) {
