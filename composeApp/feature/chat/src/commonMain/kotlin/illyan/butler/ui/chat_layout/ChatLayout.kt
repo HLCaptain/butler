@@ -57,19 +57,19 @@ fun ChatLayout(
 ) {
     var isChatDetailsOpen by rememberSaveable(currentChat) { mutableStateOf(false) }
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val compact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+    val notExpanded = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     BackHandler(isChatDetailsOpen) {
         isChatDetailsOpen = false
     }
     LaunchedEffect(drawerState.isOpen) {
         // Closed by gesture in compact mode
-        if (compact && !drawerState.isOpen) {
+        if (notExpanded && !drawerState.isOpen) {
             isChatDetailsOpen = false
         }
     }
-    LaunchedEffect(compact, isChatDetailsOpen) {
-        if (compact && isChatDetailsOpen) drawerState.open() else drawerState.close()
+    LaunchedEffect(notExpanded, isChatDetailsOpen) {
+        if (notExpanded && isChatDetailsOpen) drawerState.open() else drawerState.close()
     }
     LaunchedEffect(currentChat) {
         if (currentChat == null) {
@@ -79,12 +79,12 @@ fun ChatLayout(
     var drawerContentWidthInPixels by remember { mutableStateOf(0) }
     var permanentDrawerWidthInPixels by remember { mutableStateOf(0) }
     val drawerOpenRatio = remember(
-        compact,
+        notExpanded,
         drawerState.currentOffset,
         drawerContentWidthInPixels,
         permanentDrawerWidthInPixels
     ) {
-        ((if (compact)
+        ((if (notExpanded)
                 (drawerState.currentOffset / drawerContentWidthInPixels) + 1
         else {
             permanentDrawerWidthInPixels / drawerContentWidthInPixels.toFloat()
@@ -120,7 +120,7 @@ fun ChatLayout(
                         }
                     }
                 },
-                gesturesEnabled = isChatDetailsOpen && compact
+                gesturesEnabled = isChatDetailsOpen && notExpanded
             ) {
                 ReverseLayoutDirection {
                     val viewModel = koinViewModel<ChatDetailViewModel>()
@@ -156,7 +156,7 @@ fun ChatLayout(
                             modifier = Modifier.onSizeChanged {
                                 permanentDrawerWidthInPixels = it.width
                             },
-                            visible = !compact && isChatDetailsOpen,
+                            visible = !notExpanded && isChatDetailsOpen,
                             enter = fadeIn() + expandHorizontally(),
                             exit = fadeOut() + shrinkHorizontally()
                         ) {
