@@ -1,31 +1,31 @@
 [versions]
 butler = "2.0.0-alpha"
-kotlin = "2.1.20-Beta1"
+kotlin = "2.1.20-RC2"
 android-minSdk = "26"
 android-compileSdk = "35"
-ksp = "2.1.20-Beta1-1.0.29"
-agp = "8.8.0"
-compose = "1.8.0-alpha01"
-compose-android = "1.7.6"
-ktor = "3.0.3"
-koin = "4.1.0-Beta1"
-koin-annotations = "2.0.0-Beta2"
+ksp = "2.1.20-RC2-1.0.31"
+agp = "8.9.0"
+compose = "1.8.0-alpha03"
+compose-android = "1.7.8"
+ktor = "3.1.1"
+koin = "4.1.0-Beta5"
+koin-annotations = "2.0.0"
 coroutines = "1.10.1"
-serialization = "1.8.0-RC"
+serialization = "1.8.0"
 aboutlibraries = "11.2.2"
-room = "2.7.0-alpha12"
-logback = "1.5.11"
-commonsCodec = "1.17.1"
+room = "2.7.0-rc01"
+logback = "1.5.16"
+commonsCodec = "1.17.2"
 okhttpLoggingInterceptor = "5.0.0-alpha.14"
 prometheus = "1.12.3"
-exposed = "0.57.0"
+exposed = "0.59.0"
 postgres = "42.7.4"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
-material-adaptive = "1.1.0-alpha01"
+material-adaptive = "1.1.0-alpha03"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -74,16 +74,16 @@ koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "
 koin-ksp = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
 androidx-core = { module = "androidx.core:core-ktx", version = "1.15.0" }
-androidx-activity = { module = "androidx.activity:activity-ktx", version = "1.9.3" }
-androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.9.3" }
-androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.1" }
+androidx-activity = { module = "androidx.activity:activity-ktx", version = "1.10.1" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.10.1" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.3" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-android" }
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose-android" }
 
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-common = { module = "androidx.room:room-common", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0-alpha12" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0-rc01" }
 
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -95,13 +95,13 @@ jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:nav
 
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha05" }
-desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
+desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.5" }
 korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
 filekit = { module = "io.github.vinceglb:filekit-compose", version = "0.8.8"}
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.29.0" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.0.4" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.2.0" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.4.0" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
@@ -112,7 +112,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "serialization" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.25.0" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.1" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.2" }
 kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.6.0" }
 
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }

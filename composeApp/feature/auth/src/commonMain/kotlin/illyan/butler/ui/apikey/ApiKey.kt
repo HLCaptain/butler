@@ -496,7 +496,7 @@ fun NewApiKeyCredentialGridItem(
             ) {
                 Icon(
                     modifier = Modifier.size(64.dp).sharedElement(
-                        state = rememberSharedContentState("new_api_key_icon"),
+                        sharedContentState = rememberSharedContentState("new_api_key_icon"),
                         animatedVisibilityScope = animationScope
                     ),
                     imageVector = Icons.Rounded.Add,
@@ -504,7 +504,7 @@ fun NewApiKeyCredentialGridItem(
                 )
                 Text(
                     modifier = Modifier.sharedElement(
-                        state = rememberSharedContentState("new_api_key_text"),
+                        sharedContentState = rememberSharedContentState("new_api_key_text"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
                     text = stringResource(Res.string.add_api_key),
@@ -554,7 +554,7 @@ fun ApiKeyCredentialGridItem(
                 )
                 Text(
                     modifier = Modifier.sharedElement(
-                        state = rememberSharedContentState("api_key_name_$key"),
+                        sharedContentState = rememberSharedContentState("api_key_name_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
                     text = item.name.takeIf { !it.isNullOrBlank() }
@@ -566,7 +566,7 @@ fun ApiKeyCredentialGridItem(
                 )
                 Text(
                     modifier = Modifier.sharedElement(
-                        state = rememberSharedContentState("api_key_provider_url_$key"),
+                        sharedContentState = rememberSharedContentState("api_key_provider_url_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
                     text = item.providerUrl.takeIf { it.isNotBlank() }
@@ -712,7 +712,7 @@ fun EditApiKeyCredential(
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_test_icon"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_test_icon"),
                                     animatedVisibilityScope = animationScope
                                 ),
                                 imageVector = Icons.Rounded.Refresh,
@@ -738,7 +738,7 @@ fun EditApiKeyCredential(
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_icon"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_icon"),
                                     animatedVisibilityScope = animationScope
                                 ),
                                 imageVector = Icons.Rounded.Add,
@@ -748,7 +748,7 @@ fun EditApiKeyCredential(
                         text = {
                             Text(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_text"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_text"),
                                     animatedVisibilityScope = animationScope
                                 ).skipToLookaheadSize(),
                                 text = saveTitle
@@ -894,7 +894,7 @@ fun NewApiKeyCredential(
                         text = {
                             Text(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_test_text"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_test_text"),
                                     animatedVisibilityScope = animationScope
                                 ).skipToLookaheadSize(),
                                 text = testText
@@ -903,7 +903,7 @@ fun NewApiKeyCredential(
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_test_icon"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_test_icon"),
                                     animatedVisibilityScope = animationScope
                                 ),
                                 imageVector = Icons.Rounded.Refresh,
@@ -934,7 +934,7 @@ fun NewApiKeyCredential(
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_icon"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_icon"),
                                     animatedVisibilityScope = animationScope
                                 ),
                                 imageVector = Icons.Rounded.Add,
@@ -944,7 +944,7 @@ fun NewApiKeyCredential(
                         text = {
                             Text(
                                 modifier = Modifier.sharedElement(
-                                    state = rememberSharedContentState("new_api_key_text"),
+                                    sharedContentState = rememberSharedContentState("new_api_key_text"),
                                     animatedVisibilityScope = animationScope
                                 ).skipToLookaheadSize(),
                                 text = stringResource(Res.string.save)
@@ -1003,8 +1003,7 @@ fun ApiKeyItemFields(
     ) {
         ButlerTextField(
             modifier = Modifier.fillMaxWidth().sharedElement(
-                state = rememberSharedContentState(key?.let { "api_key_name_$it" }
-                    ?: "new_api_key_name"),
+                sharedContentState = rememberSharedContentState(key?.let { "api_key_name_$it" } ?: "new_api_key_name"),
                 animatedVisibilityScope = animationScope
             ),
             value = name,
@@ -1016,8 +1015,7 @@ fun ApiKeyItemFields(
         )
         ButlerTextField(
             modifier = Modifier.fillMaxWidth().sharedElement(
-                state = rememberSharedContentState(key?.let { "api_key_provider_url_$it" }
-                    ?: "new_api_key_provider_url"),
+                sharedContentState = rememberSharedContentState(key?.let { "api_key_provider_url_$it" } ?: "new_api_key_provider_url"),
                 animatedVisibilityScope = animationScope
             ),
             value = providerUrl,
@@ -1035,8 +1033,7 @@ fun ApiKeyItemFields(
         )
         ButlerTextField(
             modifier = Modifier.sharedElement(
-                state = rememberSharedContentState(key?.let { "api_key_api_key_$it" }
-                    ?: "new_api_key_api_key"),
+                sharedContentState = rememberSharedContentState(key?.let { "api_key_api_key_$it" } ?: "new_api_key_api_key"),
                 animatedVisibilityScope = animationScope
             ),
             value = apiKey,
@@ -1046,11 +1043,9 @@ fun ApiKeyItemFields(
                 Text(text = stringResource(Res.string.api_key))
             },
             isError = showApiKeyError,
-            supportingText = if (showApiKeyError) {
-                {
-                    Text(text = stringResource(Res.string.required))
-                }
-            } else null
+            supportingText = if (showApiKeyError) { {
+                Text(text = stringResource(Res.string.required))
+            } } else null
         )
     }
 }

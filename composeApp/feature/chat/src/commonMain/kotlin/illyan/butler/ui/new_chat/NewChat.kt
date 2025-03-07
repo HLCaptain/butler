@@ -336,7 +336,7 @@ fun NewChat(
                                     )
                                     Text(
                                         modifier = Modifier.sharedElement(
-                                            state = rememberSharedContentState("search_filter"),
+                                            sharedContentState = rememberSharedContentState("search_filter"),
                                             animatedVisibilityScope = this@AnimatedContent
                                         ).skipToLookaheadSize(),
                                         text = stringResource(Res.string.search)
