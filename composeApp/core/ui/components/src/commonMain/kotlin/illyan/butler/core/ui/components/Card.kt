@@ -31,6 +31,7 @@ fun ButlerOutlinedCard(
     colors: CardColors = ButlerCardDefaults.outlinedCardColors(),
     border: BorderStroke = if (enabled) ButlerCardDefaults.outlinedCardBorder() else ButlerCardDefaults.disabledOutlinedCardBorder(),
     shape: Shape = ButlerCardDefaults.shape,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     onClick?.let {
@@ -41,6 +42,7 @@ fun ButlerOutlinedCard(
             enabled = enabled,
             shape = shape,
             onClick = it,
+            interactionSource = interactionSource,
             content = { Column(modifier = Modifier.padding(contentPadding)) { content() } }
         )
     } ?: OutlinedCard(

@@ -56,6 +56,7 @@
     <string name="select">Select</string>
     <string name="search">Search</string>
     <string name="filters">Filters</string>
+    <string name="free">Free</string>
     <string name="free_models_only">Free models only</string>
     <string name="chat_completion_model">Chat Completion model</string>
     <string name="audio_speech_model">Audio Speech model</string>
