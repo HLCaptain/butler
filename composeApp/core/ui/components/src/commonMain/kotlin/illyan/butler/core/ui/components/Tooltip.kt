@@ -309,7 +309,7 @@ fun RichTooltipWithContent(
         state = tooltipState,
         content = content,
         enableUserInput = false,
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider()
     )
 }
 
@@ -345,7 +345,7 @@ fun PlainTooltipWithContent(
         state = tooltipState,
         content = content,
         enableUserInput = false,
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider()
     )
 }
 
