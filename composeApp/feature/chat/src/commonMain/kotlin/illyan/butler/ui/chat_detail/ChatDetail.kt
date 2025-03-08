@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -58,8 +59,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
@@ -176,35 +179,66 @@ fun ChatDetail(
                     enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
                     exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
                 ) {
-                    ChatDetailBottomBar(
-                        modifier = Modifier
-                            .imePadding()
-                            .hazeEffect(hazeState)
-                            .navigationBarsPadding(),
-                        sendMessage = sendMessage,
-                        sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
-                        isRecording = state.isRecording,
-                        toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
-                    )
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        ChatDetailBottomBar(
+                            modifier = Modifier
+                                .widthIn(max = 640.dp)
+                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                                .imePadding()
+                                .hazeEffect(hazeState)
+                                .navigationBarsPadding(),
+                            sendMessage = sendMessage,
+                            sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
+                            isRecording = state.isRecording,
+                            toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
+                        )
+                    }
                 }
             },
         ) { innerPadding ->
-            Column(modifier = Modifier.hazeSource(hazeState)) {
-                AnimatedContent(state.chat) {
-                    if (it == null) {
+            var widthOfBox by remember { mutableStateOf(0.dp) }
+            Box(
+                modifier = Modifier.fillMaxSize().hazeSource(hazeState).layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    widthOfBox = placeable.width.toDp()
+                    layout(placeable.width, placeable.height) {
+                        placeable.place(0, 0)
+                    }
+                },
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedContent(
+                    modifier = Modifier.hazeSource(hazeState),
+                    targetState = state.chat,
+                    contentAlignment = Alignment.Center
+                ) { chat ->
+                    if (chat == null) {
                         SelectChat()
                     } else {
-                        MessageList(
-                            modifier = Modifier.weight(1f, fill = true),
-                            messages = state.messages ?: emptyList(),
-                            userId = it.ownerId,
-                            sounds = state.sounds,
-                            playAudio = playAudio,
-                            playingAudio = state.playingAudio,
-                            stopAudio = stopAudio,
-                            images = state.images,
-                            innerPadding = innerPadding
-                        )
+                        AnimatedContent(
+                            targetState = state.messages?.isEmpty() == true,
+                            contentAlignment = Alignment.Center
+                        ) { noMessages ->
+                            if (noMessages) {
+                                Text(
+                                    modifier = Modifier.padding(innerPadding),
+                                    text = stringResource(Res.string.no_messages),
+                                    style = MaterialTheme.typography.headlineLarge
+                                )
+                            } else {
+                                MessageList(
+                                    messages = state.messages ?: emptyList(),
+                                    preferedWidth = 640.dp,
+                                    userId = chat.ownerId,
+                                    sounds = state.sounds,
+                                    playAudio = playAudio,
+                                    playingAudio = state.playingAudio,
+                                    stopAudio = stopAudio,
+                                    images = state.images,
+                                    contentPadding = innerPadding
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -235,83 +269,72 @@ expect fun ChatDetailBottomBar(
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
+    preferedWidth: Dp,
     messages: List<DomainMessage> = emptyList(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
     stopAudio: () -> Unit = {},
     playingAudio: String? = null,
     images: Map<String, ByteArray> = emptyMap(), // URIs of images
     userId: String,
-    innerPadding: PaddingValues
 ) {
-    AnimatedContent(
-        modifier = modifier,
-        targetState = messages.isEmpty()
-    ) { noMessages ->
-        if (noMessages) {
+    val lazyListState = rememberLazyListState()
+    LaunchedEffect(messages.isEmpty()) {
+        lazyListState.animateScrollToItem(0)
+    }
+    LazyColumn(
+        modifier = modifier.consumeWindowInsets(contentPadding),
+        state = lazyListState,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        contentPadding = contentPadding,
+        reverseLayout = true, // From bottom to up
+    ) {
+        items(messages.sortedByDescending { it.time }, key = { it.id!! }) { message ->
             Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = stringResource(Res.string.no_messages),
-                    style = MaterialTheme.typography.headlineLarge
-                )
-            }
-        } else {
-            val lazyListState = rememberLazyListState()
-            LaunchedEffect(messages) {
-                lazyListState.animateScrollToItem(0)
-            }
-            LazyColumn(
-                modifier = Modifier.consumeWindowInsets(innerPadding),
-                state = lazyListState,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = innerPadding,
-                reverseLayout = true, // From bottom to up
-            ) {
-                items(messages.sortedByDescending { it.time }, key = { it.id!! }) { message ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = if (message.senderId == userId) Alignment.CenterEnd else Alignment.CenterStart
-                    ) {
-                        RichTooltipWithContent(
-                            modifier = Modifier.animateItem(),
-                            enabledGestures = getTooltipGestures(),
-                            tooltip = {
-                                val keyValueList = remember(message) {
-                                    listOf(
-                                        Res.string.message_id to message.id,
-                                        Res.string.timestamp to message.time?.let {
-                                            Instant.fromEpochMilliseconds(it)
-                                                .toLocalDateTime(TimeZone.currentSystemDefault())
-                                                .format(LocalDateTime.Formats.ISO)
-                                        },
-                                        Res.string.sender_id to message.senderId,
-                                    ).filter { it.second != null }
-                                }
-                                Column {
-                                    keyValueList.forEach {
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Text(text = stringResource(it.first))
-                                            Text(text = it.second!!)
-                                        }
+                Box(
+                    modifier = Modifier.widthIn(max = preferedWidth),
+                    contentAlignment = if (message.senderId == userId) Alignment.CenterEnd else Alignment.CenterStart
+                ) {
+                    RichTooltipWithContent(
+                        modifier = Modifier.animateItem(),
+                        enabledGestures = getTooltipGestures(),
+                        tooltip = {
+                            val keyValueList = remember(message) {
+                                listOf(
+                                    Res.string.message_id to message.id,
+                                    Res.string.timestamp to message.time?.let {
+                                        Instant.fromEpochMilliseconds(it)
+                                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                                            .format(LocalDateTime.Formats.ISO)
+                                    },
+                                    Res.string.sender_id to message.senderId,
+                                ).filter { it.second != null }
+                            }
+                            Column {
+                                keyValueList.forEach {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(text = stringResource(it.first))
+                                        Text(text = it.second!!)
                                     }
                                 }
-                            },
-                            colors = ButlerTooltipDefaults.richTooltipColors
-                        ) { gestureAreaModifier ->
-                            MessageItem(
-                                modifier = gestureAreaModifier.fillMaxWidth(),
-                                message = message,
-                                userId = userId,
-                                sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                                playAudio = playAudio,
-                                playingAudio = playingAudio,
-                                stopAudio = stopAudio,
-                                images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                            )
-                        }
+                            }
+                        },
+                        colors = ButlerTooltipDefaults.richTooltipColors
+                    ) { gestureAreaModifier ->
+                        MessageItem(
+                            modifier = gestureAreaModifier.fillMaxWidth(),
+                            message = message,
+                            userId = userId,
+                            sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                            playAudio = playAudio,
+                            playingAudio = playingAudio,
+                            stopAudio = stopAudio,
+                            images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                        )
                     }
                 }
             }
@@ -351,7 +374,7 @@ fun MessageItem(
         images.forEach { image ->
             SubcomposeAsyncImage(
                 modifier = Modifier
-                    .sizeIn(maxHeight = 400.dp, maxWidth = 480.dp)
+                    .sizeIn(maxHeight = 400.dp, maxWidth = if (sentByUser) 480.dp else 640.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 model = image,
                 loading = { MediumCircularProgressIndicator() },
@@ -371,7 +394,7 @@ fun MessageItem(
             ReverseLayoutDirection(enabled = sentByUser) {
                 ButlerCard(
                     modifier = Modifier.then(
-                        if (sentByUser) Modifier.widthIn(max = 480.dp) else Modifier
+                        if (sentByUser) Modifier.widthIn(max = 320.dp) else Modifier
                     ),
                     colors = cardColors,
                     contentPadding = ButlerCardDefaults.CompactContentPadding
@@ -517,12 +540,13 @@ fun MessageField(
         var textMessage by rememberSaveable { mutableStateOf("") }
         ButlerTextField(
             modifier = Modifier
+                .weight(1f, fill = true)
                 .padding(horizontal = 4.dp)
-                .weight(1f, fill = true),
+                .heightIn(max = 128.dp),
             value = textMessage,
             onValueChange = { textMessage = it },
             placeholder = { Text(stringResource(Res.string.send_message)) },
-            maxLines = 1
+            singleLine = false
         )
 
         IconButton(

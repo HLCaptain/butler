@@ -1,17 +1,17 @@
 package illyan.butler.core.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,15 +22,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuBoxScope
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ProvideTextStyle
@@ -45,7 +44,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -72,22 +72,20 @@ fun <T : Any> ButlerDropdownMenuBox(
     getValueLeadingIcon: (T) -> ImageVector? = { null },
     getValueTrailingIcon: (T) -> ImageVector? = { null },
     leadingIcon : @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = { IconButton(
-        onClick = { onExpandedChange(!expanded) },
-        enabled = enabled
-    ) {
-        if (expanded) {
-            Icon(imageVector = Icons.Rounded.KeyboardArrowUp, contentDescription = "Close dropdown")
-        } else {
-            Icon(imageVector = Icons.Rounded.KeyboardArrowDown, contentDescription = "Open dropdown")
-        }
-    } },
+    trailingIcon: @Composable (() -> Unit)? = {
+        val rotation by animateFloatAsState(if (expanded) 180f else 0f)
+        Icon(
+            modifier = Modifier.graphicsLayer { rotationZ = rotation },
+            imageVector = Icons.Rounded.KeyboardArrowUp,
+            contentDescription = "Dropdown expended icon"
+        )
+    },
     selectValue: (T) -> Unit,
     settingName: String
 ) {
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = onExpandedChange
+        onExpandedChange = if (enabled) onExpandedChange else { _ -> },
     ) {
         var searchedText by rememberSaveable(selectedValue) { mutableStateOf("") }
         var searchFilter by rememberSaveable { mutableStateOf("") }
@@ -103,7 +101,7 @@ fun <T : Any> ButlerDropdownMenuBox(
             onValueChange = { searchedText = it },
             isError = isError,
             label = { Text(text = settingName) },
-            readOnly = !searchEnabled || !expanded,
+            readOnly = !enabled || !searchEnabled || !expanded,
             trailingIcon = trailingIcon,
             leadingIcon = leadingIcon,
             interactionSource = interactionSource,
@@ -287,49 +285,51 @@ object ButlerDropdownMenuDefaults {
             val itemPositionWithOffset = (selectedItemPosition.toInt() - offset).coerceAtLeast(0)
             scrollState?.animateScrollTo(itemPositionWithOffset)
         }
-        values.forEachIndexed { index, value ->
-            val leadingIcon = remember { getValueLeadingIcon(value) }
-            val leadingComposable = @Composable {
-                leadingIcon?.let {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = "Leading item icon",
-                        tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
+        Column {
+            values.forEachIndexed { index, value ->
+                val leadingIcon = remember { getValueLeadingIcon(value) }
+                val leadingComposable = @Composable {
+                    leadingIcon?.let {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = "Leading item icon",
+                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
-            }
-            val trailingIcon = remember {
-                val icon = getValueTrailingIcon(value)
-                if (value == selectedValue) Icons.Rounded.Check else icon
-            }
-            val trailingComposable = @Composable {
-                trailingIcon?.let {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = "Trailing item icon",
-                        tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
+                val trailingIcon = remember {
+                    val icon = getValueTrailingIcon(value)
+                    if (value == selectedValue) Icons.Rounded.Check else icon
                 }
-            }
+                val trailingComposable = @Composable {
+                    trailingIcon?.let {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = "Trailing item icon",
+                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
-            DropdownMenuItem(
-                modifier = Modifier
-                    .then(if (value == selectedValue) {
-                        Modifier.onGloballyPositioned { selectedItemPosition = it.positionInParent().y }
-                    } else if (index + 1 < values.size && values[index + 1] == selectedValue) {
-                        Modifier.onGloballyPositioned { previousItemSize = it.size.height.toFloat() }
-                    } else {
-                        Modifier
-                    })
-                    .fillMaxSize(),
-                title = getValueName(value),
-                onClick = { selectValue(value); onDismissRequest() },
-                leadingComposable = { leadingComposable() },
-                trailingComposable = { trailingComposable() },
-                colors = ButlerCardDefaults.cardColors().copy(
-                    contentColor = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                DropdownMenuItem(
+                    modifier = Modifier
+                        .then(if (value == selectedValue) {
+                            Modifier.onGloballyPositioned { selectedItemPosition = it.positionInParent().y }
+                        } else if (index + 1 < values.size && values[index + 1] == selectedValue) {
+                            Modifier.onGloballyPositioned { previousItemSize = it.size.height.toFloat() }
+                        } else {
+                            Modifier
+                        })
+                        .fillMaxSize(),
+                    title = getValueName(value),
+                    onClick = { selectValue(value); onDismissRequest() },
+                    leadingComposable = { leadingComposable() },
+                    trailingComposable = { trailingComposable() },
+                    colors = ButlerCardDefaults.cardColors().copy(
+                        contentColor = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -376,42 +376,75 @@ object ButlerDropdownMenuDefaults {
         val isPressed by interactionSource.collectIsPressedAsState()
         val isFocused by interactionSource.collectIsFocusedAsState()
         val containerAlpha by animateFloatAsState(
-            targetValue = if (onClick != null && (isHovered || isPressed || isFocused)) 1f else 0f,
+            targetValue = if (onClick != null && (isHovered || isPressed)) 1f else 0f,
             animationSpec = tween(80),
             label = "Selected item color"
         )
         Box(
             modifier = Modifier
-                .hoverable(interactionSource)
                 .clickable(
                     enabled = onClick != null,
                     indication = null,
                     interactionSource = interactionSource,
                     onClick = { onClick?.invoke() }
-                )
-                .background(Color.Transparent),
+                ),
             contentAlignment = Alignment.Center
         ) {
-            ButlerCard(
-                modifier = modifier.padding(borderPadding),
-                shape = MaterialTheme.shapes.small,
-                contentPadding = PaddingValues(0.dp),
-                colors = colors.copy(containerColor = colors.containerColor.copy(alpha = containerAlpha)),
-                interactionSource = interactionSource
-            ) {
-                Row(
-                    modifier = Modifier
-                        .heightIn(min = DropdownMenuItemMinHeight)
-                        .padding(contentPadding),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+            val borderWidth by animateDpAsState(if (isFocused) ButlerCardDefaults.OutlinedCardBorderWidth else 0.dp)
+            val borderAlpha by animateFloatAsState(
+                targetValue = if (isFocused) 1f else 0f,
+                animationSpec = tween(80),
+                label = "Selected item border"
+            )
+            if (onClick != null) {
+                ButlerOutlinedCard(
+                    modifier = modifier.padding(borderPadding),
+                    shape = MaterialTheme.shapes.small,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = colors.copy(containerColor = colors.containerColor.copy(alpha = containerAlpha)),
+                    border = CardDefaults.outlinedCardBorder().copy(
+                        width = borderWidth,
+                        brush = SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = borderAlpha))
+                    ),
+                    interactionSource = interactionSource
                 ) {
-                    leadingIcon?.invoke()
-                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                        content()
+                    Row(
+                        modifier = Modifier
+                            .heightIn(min = DropdownMenuItemMinHeight)
+                            .padding(contentPadding),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        leadingIcon?.invoke()
+                        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                            content()
+                        }
+                        Spacer(Modifier.weight(1f))
+                        trailingIcon?.invoke()
                     }
-                    Spacer(Modifier.weight(1f))
-                    trailingIcon?.invoke()
+                }
+            } else {
+                ButlerCard(
+                    modifier = modifier.padding(borderPadding),
+                    shape = MaterialTheme.shapes.small,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = colors.copy(containerColor = colors.containerColor.copy(alpha = containerAlpha)),
+                    interactionSource = interactionSource
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .heightIn(min = DropdownMenuItemMinHeight)
+                            .padding(contentPadding),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        leadingIcon?.invoke()
+                        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                            content()
+                        }
+                        Spacer(Modifier.weight(1f))
+                        trailingIcon?.invoke()
+                    }
                 }
             }
         }

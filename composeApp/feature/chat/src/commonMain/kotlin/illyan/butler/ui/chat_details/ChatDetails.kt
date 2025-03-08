@@ -1,5 +1,6 @@
 package illyan.butler.ui.chat_details
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -175,6 +177,7 @@ fun ChatDetails(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelSetting(
     modifier: Modifier = Modifier,
@@ -196,29 +199,21 @@ fun ModelSetting(
         selectedValue = model,
         settingName = title,
         trailingIcon = {
-            IconButton(
-                onClick = { expanded = !expanded },
-                enabled = enabled
-            ) {
-                if (expanded) {
-                    Icon(imageVector = Icons.Rounded.KeyboardArrowUp, contentDescription = "Close dropdown")
-                } else {
-                    Icon(imageVector = Icons.Rounded.KeyboardArrowDown, contentDescription = "Open dropdown")
-                }
-            }
+            val rotation by animateFloatAsState(if (expanded) 180f else 0f)
+            Icon(
+                modifier = Modifier.graphicsLayer { rotationZ = rotation },
+                imageVector = Icons.Rounded.KeyboardArrowUp,
+                contentDescription = "Dropdown expended icon"
+            )
         },
-        leadingIcon = if (model != null && enabled) {
-            {
-                IconButton(
-                    onClick = { setModel?.invoke(null) },
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Clear,
-                        contentDescription = null
-                    )
-                }
+        leadingIcon = if (model != null && enabled) { {
+            IconButton(onClick = { setModel?.invoke(null) }) {
+                Icon(
+                    imageVector = Icons.Rounded.Clear,
+                    contentDescription = null
+                )
             }
-        } else {
+        } } else {
             null
         }
     )

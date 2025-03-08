@@ -6,24 +6,26 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.off
 import illyan.butler.generated.resources.on
@@ -61,7 +63,6 @@ fun BooleanSetting(
                 Text(
                     text = if (enabled) enabledText else disabledText,
                     style = textStyle,
-                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             if (withCheckbox) {
@@ -94,15 +95,17 @@ fun <T : Any> DropdownSetting(
     settingName: String,
     textStyle: TextStyle = MaterialTheme.typography.labelLarge,
     fontWeight: FontWeight = FontWeight.Normal,
+    enabled: Boolean = true,
 ) {
     SettingItem(
         settingName = settingName,
         onClick = onDismissRequest,
         titleStyle = textStyle,
         titleWeight = fontWeight,
+        enabled = enabled,
     ) {
         Row(
-            modifier = Modifier,
+            modifier = Modifier.heightIn(min = LocalMinimumInteractiveComponentSize.current),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -114,27 +117,22 @@ fun <T : Any> DropdownSetting(
                     Text(
                         text = getValueName(it),
                         style = textStyle,
-                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
-            IconToggleButton(
-                checked = isDropdownOpen,
-                onCheckedChange = { if (!it) onDismissRequest() }
-            ) {
-                Icon(
-                    imageVector = if (isDropdownOpen) {
-                        Icons.Rounded.ExpandLess
-                    } else {
-                        Icons.Rounded.ExpandMore
-                    },
-                    contentDescription = ""
-                )
-            }
+            Icon(
+                imageVector = if (isDropdownOpen) {
+                    Icons.Rounded.ExpandLess
+                } else {
+                    Icons.Rounded.ExpandMore
+                },
+                contentDescription = ""
+            )
         }
         ButlerDropdownMenu(
             expanded = isDropdownOpen,
             onDismissRequest = onDismissRequest,
+            popupProperties = PopupProperties(focusable = true)
         ) {
             ButlerDropdownMenuDefaults.DropdownMenuList(
                 values = values.toList(),
@@ -145,42 +143,6 @@ fun <T : Any> DropdownSetting(
                 getValueTrailingIcon = getValueTrailingIcon,
                 onDismissRequest = onDismissRequest
             )
-//            values.forEach { value ->
-//                val leadingIcon = remember { getValueLeadingIcon(value) }
-//                val leadingComposable = @Composable {
-//                    leadingIcon?.let {
-//                        Icon(
-//                            imageVector = it,
-//                            contentDescription = ""
-//                        )
-//                    }
-//                }
-//                val trailingIcon = remember {
-//                    val icon = getValueTrailingIcon(value)
-//                    if (value == selectedValue) Icons.Rounded.Check else icon
-//                }
-//                val trailingComposable = @Composable {
-//                    trailingIcon?.let {
-//                        Icon(
-//                            imageVector = it,
-//                            contentDescription = ""
-//                        )
-//                    }
-//                }
-//                ButlerDropdownMenuDefaults.DropdownMenuItem(
-//                    content = { Text(text = getValueName(value)) },
-//                    leadingIcon = (if (leadingIcon != null) leadingComposable else null) as? @Composable (() -> Unit),
-//                    trailingIcon = (if (trailingIcon != null) trailingComposable else null) as? @Composable (() -> Unit),
-//                    onClick = { selectValue(value); toggleDropdown() },
-//                    colors = if (value == selectedValue) {
-//                        ButlerCardDefaults.cardColors(
-//                            contentColor = MaterialTheme.colorScheme.primary
-//                        )
-//                    } else {
-//                        ButlerCardDefaults.cardColors()
-//                    }
-//                )
-//            }
         }
     }
 }
@@ -190,6 +152,7 @@ fun BasicSetting(
     modifier: Modifier = Modifier,
     screenName: String,
     label: String,
+    enabled: Boolean = true,
     onClick: () -> Unit = {}
 ) = BasicSetting(
     modifier = modifier,
@@ -199,26 +162,26 @@ fun BasicSetting(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
-                tint = MaterialTheme.colorScheme.onSurface,
                 contentDescription = ""
             )
         }
     },
+    enabled = enabled,
     onClick = onClick
 )
 
 @Composable
 fun BasicSetting(
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
     title: String,
     titleStyle: TextStyle = MaterialTheme.typography.labelLarge,
     titleWeight: FontWeight = FontWeight.Normal,
+    enabled: Boolean = true,
     label: @Composable RowScope.() -> Unit = {},
-    onClick: () -> Unit = {}
 ) {
     SettingItem(
         modifier = modifier,
@@ -228,10 +191,10 @@ fun BasicSetting(
                 text = title,
                 style = titleStyle,
                 fontWeight = titleWeight,
-                color = MaterialTheme.colorScheme.onSurface
             )
         },
         content = label,
+        enabled = enabled
     )
 }
 
@@ -268,7 +231,6 @@ fun SettingItem(
             text = settingName,
             style = titleStyle,
             fontWeight = titleWeight,
-            color = MaterialTheme.colorScheme.onSurface
         )
     },
     content = content
@@ -285,7 +247,10 @@ fun SettingItem(
     ButlerCard(
         modifier = modifier,
         colors = ButlerCardDefaults.cardColors(
-            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp).copy(alpha = 0f),
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ),
         onClick = onClick,
         enabled = enabled,

@@ -7,7 +7,6 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -89,6 +88,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.filters
+import illyan.butler.generated.resources.free
 import illyan.butler.generated.resources.free_models_only
 import illyan.butler.generated.resources.loading
 import illyan.butler.generated.resources.new_chat
@@ -98,7 +98,6 @@ import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.server
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import java.util.Locale
 
 @Composable
 fun NewChat(
@@ -133,7 +132,6 @@ fun NewChat(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var searchFilter by rememberSaveable { mutableStateOf("") }
     var freeFilterEnabled by rememberSaveable { mutableStateOf(false) }
-    val hazeState = remember { HazeState() }
     val serverModels = remember(searchFilter, freeFilterEnabled, state.serverModels) {
         val models = if (searchFilter.isBlank()) state.serverModels else
             state.serverModels?.filter {
@@ -164,6 +162,7 @@ fun NewChat(
             }
         if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
     }
+    val hazeState = remember { HazeState() }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -187,30 +186,22 @@ fun NewChat(
             )
         },
         floatingActionButton = {
-            val isCompact =
-                currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+            val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
             var isTextFieldFocused by remember { mutableStateOf(false) }
             Column(Modifier.consumeWindowInsets(WindowInsets.systemBars)) {
-                SharedTransitionLayout(
-                    modifier = Modifier // FAB spacing
-                ) {
-                    AnimatedContent(
-                        targetState = isTextFieldFocused to isCompact,
-                    ) { (focused, compact) ->
+                SharedTransitionLayout {
+                    AnimatedContent(targetState = isTextFieldFocused to isCompact) { (focused, compact) ->
                         if (focused) {
                             val focusRequester = remember { FocusRequester() }
                             var filtersShown by rememberSaveable { mutableStateOf(false) }
-
                             ExposedDropdownMenuBox(
                                 expanded = filtersShown,
                                 onExpandedChange = { filtersShown = it }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(start = 24.dp).then(
-                                        if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(
-                                            max = 320.dp
-                                        )
-                                    ),
+                                    modifier = Modifier
+                                        .padding(start = 24.dp)
+                                        .then(if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
@@ -247,9 +238,9 @@ fun NewChat(
                                     )
 
                                     FilledIconToggleButton(
-                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable),
+                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
                                         checked = filtersShown,
-                                        onCheckedChange = { filtersShown = !filtersShown },
+                                        onCheckedChange = { filtersShown = it },
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.Tune,
@@ -355,33 +346,9 @@ fun NewChat(
             serverModels = serverModels,
             providerModels = providerModels,
             localModels = localModels,
-            selectServerModel = { modelId, provider ->
-                state.userId?.let {
-                    selectModel(
-                        modelId,
-                        provider,
-                        it
-                    )
-                }
-            },
-            selectProviderModel = { modelId, provider ->
-                state.clientId?.let {
-                    selectModel(
-                        modelId,
-                        provider,
-                        it
-                    )
-                }
-            },
-            selectLocalModel = { modelId ->
-                state.clientId?.let {
-                    selectModel(
-                        modelId,
-                        "",
-                        it
-                    )
-                }
-            }, // TODO: support local models properly
+            selectServerModel = { modelId, provider -> state.userId?.let { selectModel(modelId, provider, it) } },
+            selectProviderModel = { modelId, provider -> state.clientId?.let { selectModel(modelId, provider, it) } },
+            selectLocalModel = { modelId -> state.clientId?.let { selectModel(modelId, "", it) } }, // TODO: support local models properly
             innerPadding = innerPadding
         )
     }
@@ -438,8 +405,7 @@ fun ModelList(
                 )
             }
         }
-        val companyCategoriesEnabled =
-            remember(models) { models.filter { it.id.contains('/') }.size > models.size / 2 + 10 }
+        val companyCategoriesEnabled = remember(models) { models.filter { it.id.contains('/') }.size > models.size / 2 + 10 }
         val companyModels = remember(models) {
             // Remove the "$company/" prefix from the model IDs
             models
@@ -447,7 +413,9 @@ fun ModelList(
                 .mapValues { (company, models) ->
                     models.map { model ->
                         model.id.removePrefix("$company/") to model
-                    }
+                    }.distinctBy { it.second.id }.sortedBy { it.second.id }
+                }.mapKeys { (company, _) ->
+                    company.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
                 }.toList().sortedBy { it.first }
         }
         LazyColumn(
@@ -460,63 +428,33 @@ fun ModelList(
                     item {
                         Text(
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            text = company.replaceFirstChar {
-                                if (it.isLowerCase()) it.titlecase(
-                                    Locale.getDefault()
-                                ) else it.toString()
-                            },
+                            text = company,
                             style = MaterialTheme.typography.headlineMedium,
                         )
                     }
-                    items(
-                        models.distinctBy { it.second.id }.sortedBy { it.second.id },
-                        key = { it.second.id }) { (modelIdWithoutCompany, model) ->
+                    items(items = models, key = { it.second.id }) { (modelIdWithoutCompany, model) ->
                         ModelListItem(
                             modifier = Modifier.animateItem(placementSpec = tween(0)),
                             modelName = model.copy(id = modelIdWithoutCompany).displayName,
-                            providers = providerModels?.filter { it.id == model.id }
-                                ?.map { it.endpoint } ?: emptyList(),
-                            server = serverModels?.filter { it.id == model.id }?.map { it.endpoint }
-                                ?: emptyList(),
-                            selectModelWithProvider = { provider ->
-                                selectProviderModel(
-                                    model.id,
-                                    provider
-                                )
-                            },
-                            selectModelFromServerWithProvider = { provider ->
-                                selectServerModel(
-                                    model.id,
-                                    provider
-                                )
-                            },
+                            modelId = model.id,
+                            providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                            server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                            selectModelWithProvider = { provider -> selectProviderModel(model.id, provider) },
+                            selectModelFromServerWithProvider = { provider -> selectServerModel(model.id, provider) },
                             selectLocalModel = { selectLocalModel(model.id) }
                         )
                     }
                 }
             } else {
-                items(models.distinctBy { it.id }.sortedBy { it.id }, key = { it.id }) { model ->
+                items(items = models, key = { it.id }) { model ->
                     ModelListItem(
-                        modifier = Modifier.animateItem(
-                            placementSpec = tween(0)
-                        ),
+                        modifier = Modifier.animateItem(placementSpec = tween(0)),
                         modelName = model.displayName,
-                        providers = providerModels?.filter { it.id == model.id }
-                            ?.map { it.endpoint } ?: emptyList(),
-                        server = serverModels?.filter { it.id == model.id }?.map { it.endpoint }
-                            ?: emptyList(),
-                        selectModelWithProvider = { provider ->
-                            selectProviderModel(
-                                model.id,
-                                provider
-                            )
-                        },
-                        selectModelFromServerWithProvider = { provider ->
-                            selectServerModel(
-                                model.id,
-                                provider
-                            )
-                        },
+                        modelId = model.id,
+                        providers = providerModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                        server = serverModels?.filter { it.id == model.id }?.map { it.endpoint } ?: emptyList(),
+                        selectModelWithProvider = { provider -> selectProviderModel(model.id, provider) },
+                        selectModelFromServerWithProvider = { provider -> selectServerModel(model.id, provider) },
                         selectLocalModel = { selectLocalModel(model.id) },
                     )
                 }
@@ -529,6 +467,7 @@ fun ModelList(
 fun ModelListItem(
     modifier: Modifier = Modifier,
     modelName: String,
+    modelId: String,
     providers: List<String>,
     server: List<String>,
     selectModelWithProvider: (String) -> Unit,
@@ -626,19 +565,27 @@ fun ModelListItem(
                 }
                 PlainTooltipWithContent(
                     modifier = Modifier.weight(1f, fill = false),
-                    onClick = {
-                        isExpanded = !isExpanded
-                    },
-                    tooltip = { Text(modelName) }
+                    onClick = { isExpanded = !isExpanded },
+                    tooltip = { Text(modelId) }
                 ) { tooltipModifier ->
-                    Box(modifier = Modifier.clip(RoundedCornerShape(6.dp))) {
+                    Row(
+                        modifier = Modifier.clip(RoundedCornerShape(6.dp)),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            modifier = tooltipModifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            text = modelName,
+                            modifier = tooltipModifier
+                                .weight(1f, fill = false)
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            text = modelName.replace(":free", ""),
                             maxLines = 1,
                             style = MaterialTheme.typography.titleLarge,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (modelName.contains("free")) {
+                            ButlerTag {
+                                Text(text = stringResource(Res.string.free))
+                            }
+                        }
                     }
                 }
             }

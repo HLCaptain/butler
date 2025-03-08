@@ -31,6 +31,7 @@ fun ButlerOutlinedCard(
     colors: CardColors = ButlerCardDefaults.outlinedCardColors(),
     border: BorderStroke = if (enabled) ButlerCardDefaults.outlinedCardBorder() else ButlerCardDefaults.disabledOutlinedCardBorder(),
     shape: Shape = ButlerCardDefaults.shape,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     onClick?.let {
@@ -41,6 +42,7 @@ fun ButlerOutlinedCard(
             enabled = enabled,
             shape = shape,
             onClick = it,
+            interactionSource = interactionSource,
             content = { Column(modifier = Modifier.padding(contentPadding)) { content() } }
         )
     } ?: OutlinedCard(
@@ -167,26 +169,28 @@ object ButlerCardDefaults {
 
     @Composable
     fun elevatedCardColors(
-        containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
         contentColor: Color = MaterialTheme.colorScheme.onSurface,
+        containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
         disabledContentColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+        disabledContainerColor: Color = containerColor.copy(alpha = 0.5f)
     ): CardColors = CardDefaults.elevatedCardColors().copy(
-        containerColor = containerColor,
         contentColor = contentColor,
+        containerColor = containerColor,
         disabledContentColor = disabledContentColor,
-        disabledContainerColor = containerColor.copy(alpha = 0.5f)
+        disabledContainerColor = disabledContainerColor
     )
 
     @Composable
     fun cardColors(
-        containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
         contentColor: Color = MaterialTheme.colorScheme.onSurface,
-        disabledContentColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+        containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+        disabledContentColor: Color = contentColor.copy(alpha = 0.5f),
+        disabledContainerColor: Color = containerColor.copy(alpha = 0.5f)
     ): CardColors = CardDefaults.cardColors().copy(
         containerColor = containerColor,
         contentColor = contentColor,
         disabledContentColor = disabledContentColor,
-        disabledContainerColor = containerColor.copy(alpha = 0.5f)
+        disabledContainerColor = disabledContainerColor
     )
 
     @Composable

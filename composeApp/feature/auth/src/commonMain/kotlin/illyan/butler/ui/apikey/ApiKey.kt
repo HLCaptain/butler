@@ -185,26 +185,10 @@ fun ApiKeyScaffold(
             startDestination = ApiKeyCredentialList,
             contentAlignment = Alignment.Center,
             sizeTransform = { SizeTransform(clip = true) },
-            enterTransition = {
-                slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(
-                    tween(animationTime)
-                )
-            },
-            popEnterTransition = {
-                slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(
-                    tween(animationTime)
-                )
-            },
-            exitTransition = {
-                slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(
-                    tween(animationTime)
-                )
-            },
-            popExitTransition = {
-                slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(
-                    tween(animationTime)
-                )
-            }
+            enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+            popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+            exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+            popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
         ) {
             composable<ApiKeyCredentialList> {
                 Scaffold(
@@ -760,11 +744,7 @@ fun EditApiKeyCredential(
                 ButlerMediumOutlinedButton(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onBack,
-                    text = {
-                        Text(
-                            text = backTitle
-                        )
-                    },
+                    text = { Text(text = backTitle) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -956,9 +936,7 @@ fun NewApiKeyCredential(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onBack,
                     text = {
-                        Text(
-                            text = stringResource(Res.string.back)
-                        )
+                        Text(text = stringResource(Res.string.back))
                     },
                     leadingIcon = {
                         Icon(
@@ -1009,9 +987,7 @@ fun ApiKeyItemFields(
             value = name,
             isOutlined = false,
             onValueChange = onNameChanged,
-            label = {
-                Text(text = stringResource(Res.string.name))
-            },
+            label = { Text(text = stringResource(Res.string.name)) },
         )
         ButlerTextField(
             modifier = Modifier.fillMaxWidth().sharedElement(
@@ -1032,7 +1008,7 @@ fun ApiKeyItemFields(
             } else null
         )
         ButlerTextField(
-            modifier = Modifier.sharedElement(
+            modifier = Modifier.fillMaxWidth().sharedElement(
                 sharedContentState = rememberSharedContentState(key?.let { "api_key_api_key_$it" } ?: "new_api_key_api_key"),
                 animatedVisibilityScope = animationScope
             ),

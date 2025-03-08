@@ -5,7 +5,7 @@ android-minSdk = "26"
 android-compileSdk = "35"
 ksp = "2.1.20-RC2-1.0.31"
 agp = "8.9.0"
-compose = "1.8.0-alpha03"
+compose = "1.8.0-alpha04"
 compose-android = "1.7.8"
 ktor = "3.1.1"
 koin = "4.1.0-Beta5"
@@ -101,7 +101,7 @@ korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
 filekit = { module = "io.github.vinceglb:filekit-compose", version = "0.8.8"}
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.29.0" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.0.4" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.4.0" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.5.0" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
