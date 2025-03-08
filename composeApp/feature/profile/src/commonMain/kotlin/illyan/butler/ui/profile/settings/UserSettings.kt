@@ -560,7 +560,7 @@ fun UserSettings(
                 }
                 item {
                     BooleanSetting(
-                        value = preferences.dynamicColorEnabled,
+                        value = canUseDynamicColors() && preferences.dynamicColorEnabled,
                         onValueChange = setDynamicColorEnabled,
                         title = stringResource(Res.string.dynamic_color),
                         enabledText = stringResource(Res.string.enabled),

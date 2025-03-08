@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -284,49 +285,51 @@ object ButlerDropdownMenuDefaults {
             val itemPositionWithOffset = (selectedItemPosition.toInt() - offset).coerceAtLeast(0)
             scrollState?.animateScrollTo(itemPositionWithOffset)
         }
-        values.forEachIndexed { index, value ->
-            val leadingIcon = remember { getValueLeadingIcon(value) }
-            val leadingComposable = @Composable {
-                leadingIcon?.let {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = "Leading item icon",
-                        tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
+        Column {
+            values.forEachIndexed { index, value ->
+                val leadingIcon = remember { getValueLeadingIcon(value) }
+                val leadingComposable = @Composable {
+                    leadingIcon?.let {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = "Leading item icon",
+                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
-            }
-            val trailingIcon = remember {
-                val icon = getValueTrailingIcon(value)
-                if (value == selectedValue) Icons.Rounded.Check else icon
-            }
-            val trailingComposable = @Composable {
-                trailingIcon?.let {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = "Trailing item icon",
-                        tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
+                val trailingIcon = remember {
+                    val icon = getValueTrailingIcon(value)
+                    if (value == selectedValue) Icons.Rounded.Check else icon
                 }
-            }
+                val trailingComposable = @Composable {
+                    trailingIcon?.let {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = "Trailing item icon",
+                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
-            DropdownMenuItem(
-                modifier = Modifier
-                    .then(if (value == selectedValue) {
-                        Modifier.onGloballyPositioned { selectedItemPosition = it.positionInParent().y }
-                    } else if (index + 1 < values.size && values[index + 1] == selectedValue) {
-                        Modifier.onGloballyPositioned { previousItemSize = it.size.height.toFloat() }
-                    } else {
-                        Modifier
-                    })
-                    .fillMaxSize(),
-                title = getValueName(value),
-                onClick = { selectValue(value); onDismissRequest() },
-                leadingComposable = { leadingComposable() },
-                trailingComposable = { trailingComposable() },
-                colors = ButlerCardDefaults.cardColors().copy(
-                    contentColor = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                DropdownMenuItem(
+                    modifier = Modifier
+                        .then(if (value == selectedValue) {
+                            Modifier.onGloballyPositioned { selectedItemPosition = it.positionInParent().y }
+                        } else if (index + 1 < values.size && values[index + 1] == selectedValue) {
+                            Modifier.onGloballyPositioned { previousItemSize = it.size.height.toFloat() }
+                        } else {
+                            Modifier
+                        })
+                        .fillMaxSize(),
+                    title = getValueName(value),
+                    onClick = { selectValue(value); onDismissRequest() },
+                    leadingComposable = { leadingComposable() },
+                    trailingComposable = { trailingComposable() },
+                    colors = ButlerCardDefaults.cardColors().copy(
+                        contentColor = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
                 )
-            )
+            }
         }
     }
 
