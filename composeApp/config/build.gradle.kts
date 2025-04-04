@@ -27,7 +27,7 @@ android {
     }
 }
 
-val localProperties = rootProject.findProject(projects.composeApp.identityPath.path)!!.localPropertiesFile.readLines().associate {
+val localProperties = rootProject.findProject(projects.composeApp.path)!!.localPropertiesFile.readLines().associate {
     if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
     val (key, value) = it.split("=", limit = 2)
     key to value
