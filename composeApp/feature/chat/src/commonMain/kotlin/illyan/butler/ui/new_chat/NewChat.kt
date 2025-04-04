@@ -319,7 +319,7 @@ fun NewChat(
                                 ) {
                                     Icon(
                                         modifier = Modifier.sharedElement(
-                                            rememberSharedContentState(key = "search_icon"),
+                                            sharedContentState = rememberSharedContentState(key = "search_icon"),
                                             animatedVisibilityScope = this@AnimatedContent
                                         ),
                                         imageVector = Icons.Rounded.Search,

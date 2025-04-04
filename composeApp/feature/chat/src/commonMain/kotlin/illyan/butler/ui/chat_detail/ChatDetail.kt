@@ -98,10 +98,10 @@ import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
-import io.github.vinceglb.filekit.core.extension
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.extension
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -510,13 +510,13 @@ fun MessageField(
         }
         val coroutineScope = rememberCoroutineScope()
         val launcher = rememberFilePickerLauncher(
-            mode = PickerMode.Single,
-            type = PickerType.Image
+            mode = FileKitMode.Single,
+            type = FileKitType.Image
         ) { file ->
             file?.let {
                 coroutineScope.launch {
                     sendImage(
-                        file.readBytes(),
+                        file.file.readBytes(),
                         "image/${file.extension}"
                     )
                 }
