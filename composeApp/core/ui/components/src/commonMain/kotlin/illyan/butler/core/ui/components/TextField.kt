@@ -125,7 +125,7 @@ fun ButlerTextField(
         animationSpec = tween(150, easing = LinearEasing)
     )
     val animatedShape by animateCornerBasedShapeAsState(
-        targetValue = if (shape is CornerBasedShape) shape else RoundedCornerShape(0.dp),
+        targetValue = shape as? CornerBasedShape ?: RoundedCornerShape(0.dp),
         animationSpec = tween(150, easing = LinearEasing)
     )
     CompositionLocalProvider(

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DismissibleDrawerSheet
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
@@ -58,6 +60,7 @@ fun ChatLayout(
     var isChatDetailsOpen by rememberSaveable(currentChat) { mutableStateOf(false) }
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val notExpanded = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
+    val compact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     BackHandler(isChatDetailsOpen) {
         isChatDetailsOpen = false
@@ -93,6 +96,13 @@ fun ChatLayout(
     ReverseLayoutDirection {
         CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
             DismissibleNavigationDrawer(
+                modifier = Modifier.clip(
+                    // Layout is reversed, so this is actually the start
+                    RoundedCornerShape(
+                        topEnd = if (compact) 0.dp else 24.dp,
+                        bottomEnd = if (compact) 0.dp else 24.dp,
+                    )
+                ),
                 drawerState = drawerState,
                 drawerContent = {
                     DismissibleDrawerSheet(

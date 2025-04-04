@@ -6,6 +6,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,13 +36,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -79,6 +81,7 @@ import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
 import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.ButlerTextFieldDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.PlainTooltipWithContent
@@ -221,8 +224,9 @@ fun NewChat(
                                                 animatedVisibilityScope = this@AnimatedContent,
                                                 resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                                             )
-                                            .focusRequester(focusRequester)
-                                            .hazeEffect(hazeState),
+                                            .clip(ButlerTextFieldDefaults.Shape)
+                                            .hazeEffect(hazeState)
+                                            .focusRequester(focusRequester),
                                         value = searchFilter,
                                         onValueChange = { searchFilter = it },
                                         leadingIcon = {
@@ -236,11 +240,15 @@ fun NewChat(
                                             )
                                         }
                                     )
-
-                                    FilledIconToggleButton(
+                                    OutlinedIconToggleButton(
                                         modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
                                         checked = filtersShown,
                                         onCheckedChange = { filtersShown = it },
+                                        border = BorderStroke(width = if (filtersShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.primary),
+                                        colors = IconButtonDefaults.iconToggleButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            contentColor = MaterialTheme.colorScheme.primary
+                                        )
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.Tune,
