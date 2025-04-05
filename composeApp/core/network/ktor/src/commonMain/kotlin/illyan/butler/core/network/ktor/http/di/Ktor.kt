@@ -93,9 +93,9 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.ApiKeyCredential
-import illyan.butler.error.ErrorManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.network.tls.CIOCipherSuites
@@ -112,13 +112,13 @@ import kotlin.time.Duration.Companion.days
 fun provideHttpClient(
     userDao: UserDao,
     appRepository: AppRepository,
-    errorManager: ErrorManager
+    errorRepository: ErrorRepository
 ): HttpClient = HttpClient(CIO) {
     setupCioClient()
     setupClient(
         userDao = userDao,
         appRepository = appRepository,
-        errorManager = errorManager
+        errorRepository = errorRepository
     )
 }
 

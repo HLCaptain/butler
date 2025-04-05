@@ -78,7 +78,7 @@ class ChatHttpDataSource(private val client: HttpClient) : ChatNetworkDataSource
         return client.get("/chats").body<List<ChatDto>>().map { it.toDomainModel() }
     }
 
-    override suspend fun fetchByModel(modelUUID: String): List<DomainChat> {
+    override suspend fun fetchByModel(modelId: String): List<DomainChat> {
         TODO("Not yet implemented")
     }
 

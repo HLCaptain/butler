@@ -30,7 +30,7 @@ fun provideMessageMutableStore(
     messageNetworkDataSource: MessageNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
-    fetcher = Fetcher.ofFlow { key ->
+    fetcher = Fetcher.ofFlow<MessageKey, DomainMessage> { key ->
         require(key is MessageKey.Read.ByMessageId)
         messageNetworkDataSource.fetchById(key.messageId)
     },
@@ -49,7 +49,7 @@ fun provideMessageMutableStore(
         delete = { key ->
             require(key is MessageKey.Delete)
             if (!key.deviceOnly) {
-                messageNetworkDataSource.delete(key.chatId, key.messageId)
+                messageNetworkDataSource.delete(key.messageId, key.chatId)
             }
             messageLocalDataSource.deleteMessageById(key.messageId)
         },

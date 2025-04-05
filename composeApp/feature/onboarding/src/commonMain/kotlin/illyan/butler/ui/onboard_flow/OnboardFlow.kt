@@ -61,6 +61,27 @@ import illyan.butler.core.ui.components.ButlerLargeOutlinedButton
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
+import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.onboarding_cons_download_required
+import illyan.butler.generated.resources.onboarding_cons_no_remote_access
+import illyan.butler.generated.resources.onboarding_cons_no_remote_saving
+import illyan.butler.generated.resources.onboarding_cons_requires_api_key
+import illyan.butler.generated.resources.onboarding_cons_requires_network
+import illyan.butler.generated.resources.onboarding_cons_server_may_be_down
+import illyan.butler.generated.resources.onboarding_cons_server_setup_required
+import illyan.butler.generated.resources.onboarding_description_hosted_server
+import illyan.butler.generated.resources.onboarding_description_local_llm
+import illyan.butler.generated.resources.onboarding_description_openai_api
+import illyan.butler.generated.resources.onboarding_pro_chats_saved_in_cloud
+import illyan.butler.generated.resources.onboarding_pro_more_models
+import illyan.butler.generated.resources.onboarding_pro_no_network_required
+import illyan.butler.generated.resources.onboarding_pro_no_server_required
+import illyan.butler.generated.resources.onboarding_pro_no_server_setup
+import illyan.butler.generated.resources.onboarding_pro_openai_access
+import illyan.butler.generated.resources.onboarding_pro_self_hosted
+import illyan.butler.generated.resources.onboarding_title_hosted_server
+import illyan.butler.generated.resources.onboarding_title_local_llm
+import illyan.butler.generated.resources.onboarding_title_openai_api
 import illyan.butler.ui.apikey.ApiKey
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemDescription
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemIcon
@@ -69,6 +90,7 @@ import illyan.butler.ui.onboard_flow.AuthItemDefaults.ConsList
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.ProsList
 import illyan.butler.ui.server.auth_flow.AuthFlow
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
 
 object SizeClass {
     const val COMPACT = 0
@@ -140,47 +162,6 @@ fun OnboardFlow(
             // On the fullscreen card, select the item to begin
             // the authentication process for that item.
 
-            val authItems = listOf(
-                AuthItem(
-                    title = "Local LLM",
-                    description = "Authenticate with a local LLM",
-                    image = Icons.Rounded.Smartphone,
-                    pros = listOf("No network required", "No server required"),
-                    cons = listOf(
-                        "No chats are saved remotely",
-                        "No remote access",
-                        "Need to download LLM model"
-                    ),
-                    enabled = false
-                ),
-                AuthItem(
-                    title = "Hosted server",
-                    description = "Authenticate with a hosted server",
-                    image = Icons.Rounded.CloudCircle,
-                    pros = listOf(
-                        "Chats are saved on the cloud",
-                        "Can be self hosted",
-                        "More models available"
-                    ),
-                    cons = listOf(
-                        "Requires network connection",
-                        "Requires server setup",
-                        "Server may be down"
-                    ),
-                    enabled = true
-                ),
-                AuthItem(
-                    title = "OpenAI API",
-                    description = "Authenticate with the OpenAI API",
-                    image = Icons.Rounded.CloudQueue,
-                    pros = listOf(
-                        "No self-hosted server required",
-                        "Access OpenAI API with custom host and API key"
-                    ),
-                    cons = listOf("Requires network connection", "Requires API key from provider"),
-                    enabled = true
-                )
-            )
             SharedTransitionLayout {
                 val windowAdaptiveInfo = currentWindowAdaptiveInfo()
                 val windowWidthSizeClass = windowAdaptiveInfo.windowSizeClass.windowWidthSizeClass
@@ -409,6 +390,53 @@ fun OnboardFlow(
     }
 }
 
+private val authItems @Composable get() = listOf(
+    AuthItem(
+        title = stringResource(Res.string.onboarding_title_local_llm),
+        description = stringResource(Res.string.onboarding_description_local_llm),
+        image = Icons.Rounded.Smartphone,
+        pros = listOf(
+            stringResource(Res.string.onboarding_pro_no_network_required),
+            stringResource(Res.string.onboarding_pro_no_server_required)
+        ),
+        cons = listOf(
+            stringResource(Res.string.onboarding_cons_no_remote_saving),
+            stringResource(Res.string.onboarding_cons_no_remote_access),
+            stringResource(Res.string.onboarding_cons_download_required)
+        ),
+        enabled = false
+    ),
+    AuthItem(
+        title = stringResource(Res.string.onboarding_title_hosted_server),
+        description = stringResource(Res.string.onboarding_description_hosted_server),
+        image = Icons.Rounded.CloudCircle,
+        pros = listOf(
+            stringResource(Res.string.onboarding_pro_chats_saved_in_cloud),
+            stringResource(Res.string.onboarding_pro_self_hosted),
+            stringResource(Res.string.onboarding_pro_more_models)
+        ),
+        cons = listOf(
+            stringResource(Res.string.onboarding_cons_requires_network),
+            stringResource(Res.string.onboarding_cons_server_setup_required),
+            stringResource(Res.string.onboarding_cons_server_may_be_down)
+        ),
+        enabled = true
+    ),
+    AuthItem(
+        title = stringResource(Res.string.onboarding_title_openai_api),
+        description = stringResource(Res.string.onboarding_description_openai_api),
+        image = Icons.Rounded.CloudQueue,
+        pros = listOf(
+            stringResource(Res.string.onboarding_pro_no_server_setup),
+            stringResource(Res.string.onboarding_pro_openai_access)
+        ),
+        cons = listOf(
+            stringResource(Res.string.onboarding_cons_requires_network),
+            stringResource(Res.string.onboarding_cons_requires_api_key)
+        ),
+        enabled = true
+    )
+)
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -479,12 +507,12 @@ fun ColumnScope.AuthItemCompactCard(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 IconButton(
                     modifier = Modifier.sharedElement(
                         rememberSharedContentState(key = "select-$key"),
                         animatedVisibilityScope = animatedVisibilityScope
-                    ).padding(8.dp),
+                    ),
                     onClick = onClick,
                     enabled = item.enabled
                 ) {
@@ -565,12 +593,12 @@ fun ColumnScope.AuthItemHorizontalCard(
                         key = key
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 IconButton(
                     modifier = Modifier.sharedElement(
                         rememberSharedContentState(key = "select-$key"),
                         animatedVisibilityScope = animatedVisibilityScope
-                    ).padding(8.dp),
+                    ),
                     onClick = onClick,
                     enabled = item.enabled
                 ) {

@@ -6,24 +6,24 @@ import androidx.compose.animation.core.spring
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
+import illyan.butler.domain.model.DomainError
 import io.ktor.http.HttpStatusCode
 
 @Composable
-fun ErrorScreen(
+fun ErrorDialogContent(
     cleanError: (String) -> Unit,
-    appErrors: List<DomainErrorEvent>,
-    serverErrors: List<Pair<String, DomainErrorResponse>>
+    errors: List<DomainError>,
 ) {
     Crossfade(
         modifier = Modifier.animateContentSize(spring()),
-        targetState = appErrors + serverErrors
-    ) { _ ->
+        targetState = errors.filter { it !is DomainError.Event.Simple }
+    ) { errors ->
+        val appErrors = errors.mapNotNull { it as? DomainError.Event.Rich }
+        val serverErrors = errors.mapNotNull { it as? DomainError.Response }
         val latestAppError = appErrors.maxByOrNull { it.timestamp }
-        val latestServerError = serverErrors.maxByOrNull { it.second.timestamp }
+        val latestServerError = serverErrors.maxByOrNull { it.timestamp }
         if (latestAppError != null && latestServerError != null) {
-            if (latestAppError.timestamp > latestServerError.second.timestamp) {
+            if (latestAppError.timestamp > latestServerError.timestamp) {
                 AppErrorContent(appErrors, cleanError)
             } else {
                 ServerErrorContent(serverErrors, cleanError)
@@ -37,8 +37,8 @@ fun ErrorScreen(
 }
 
 @Composable
-fun AppErrorContent(
-    appErrors: List<DomainErrorEvent>,
+private fun AppErrorContent(
+    appErrors: List<DomainError.Event.Rich>,
     clearError: (String) -> Unit
 ) {
     appErrors.maxByOrNull { it.timestamp }?.let {
@@ -50,15 +50,15 @@ fun AppErrorContent(
 }
 
 @Composable
-fun ServerErrorContent(
-    serverErrors: List<Pair<String, DomainErrorResponse>>,
+private fun ServerErrorContent(
+    serverErrors: List<DomainError.Response>,
     clearError: (String) -> Unit
 ) {
-    serverErrors.maxByOrNull { it.second.timestamp }?.let {
+    serverErrors.maxByOrNull { it.timestamp }?.let {
         ButlerErrorDialogContent(
-            errorResponse = it.second,
-            onClose = { clearError(it.first) },
-            text = { Text(it.second.message ?: HttpStatusCode.fromValue(it.second.httpStatusCode).description) }
+            errorResponse = it,
+            onClose = { clearError(it.id) },
+            text = { Text(it.message ?: HttpStatusCode.fromValue(it.httpStatusCode).description) }
         )
     }
 }

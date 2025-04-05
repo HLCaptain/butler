@@ -6,7 +6,7 @@ import illyan.butler.shared.model.chat.MessageDto
 fun MessageDto.toDomainModel() = DomainMessage(
     id = id,
     senderId = senderId,
-    message = message,
+    messageContent = message,
     resourceIds = resourceIds,
     time = time,
     chatId = chatId
@@ -15,7 +15,7 @@ fun MessageDto.toDomainModel() = DomainMessage(
 fun DomainMessage.toNetworkModel() = MessageDto(
     id = id,
     senderId = senderId,
-    message = message,
+    message = messageContent,
     resourceIds = resourceIds,
     time = time,
     chatId = chatId

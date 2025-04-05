@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.surfaceColorAtElevation
@@ -60,7 +61,6 @@ fun ChatLayout(
     var isChatDetailsOpen by rememberSaveable(currentChat) { mutableStateOf(false) }
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val notExpanded = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
-    val compact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     BackHandler(isChatDetailsOpen) {
         isChatDetailsOpen = false
@@ -71,9 +71,14 @@ fun ChatLayout(
             isChatDetailsOpen = false
         }
     }
-    LaunchedEffect(notExpanded, isChatDetailsOpen) {
-        if (notExpanded && isChatDetailsOpen) drawerState.open() else drawerState.close()
+    LaunchedEffect(isChatDetailsOpen) {
+        if (isChatDetailsOpen) {
+            drawerState.open()
+        } else {
+            drawerState.close()
+        }
     }
+
     LaunchedEffect(currentChat) {
         if (currentChat == null) {
             isChatDetailsOpen = false
@@ -96,17 +101,10 @@ fun ChatLayout(
     ReverseLayoutDirection {
         CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
             DismissibleNavigationDrawer(
-                modifier = Modifier.clip(
-                    // Layout is reversed, so this is actually the start
-                    RoundedCornerShape(
-                        topEnd = if (compact) 0.dp else 24.dp,
-                        bottomEnd = if (compact) 0.dp else 24.dp,
-                    )
-                ),
                 drawerState = drawerState,
                 drawerContent = {
                     DismissibleDrawerSheet(
-                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.1).dp),
                         drawerContentColor = MaterialTheme.colorScheme.onSurface,
                         drawerShape = RectangleShape,
                     ) {
@@ -139,27 +137,34 @@ fun ChatLayout(
                         currentChat?.let { viewModel.loadChat(it) }
                     }
                     Row(modifier = modifier) {
-                        AnimatedContent(
-                            modifier = Modifier.weight(1f),
-                            targetState = currentChat != null
-                        ) { chatSelected ->
-                            if (chatSelected) {
-                                ChatDetail(
-                                    state = state,
-                                    sendMessage = viewModel::sendMessage,
-                                    toggleRecord = viewModel::toggleRecording,
-                                    sendImage = viewModel::sendImage,
-                                    playAudio = viewModel::playAudio,
-                                    stopAudio = viewModel::stopAudio,
-                                    navigationIcon = navigationIcon,
-                                    toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
-                                    isChatDetailsOpenRatio = drawerOpenRatio
-                                )
-                            } else {
-                                NewChat(
-                                    selectNewChat = selectChat,
-                                    navigationIcon = navigationIcon
-                                )
+                        Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.1).dp)) {
+                            AnimatedContent(
+                                modifier = Modifier.weight(1f).clip(
+                                    RoundedCornerShape(
+                                        topEnd = 24.dp * drawerOpenRatio,
+                                        bottomEnd = 24.dp * drawerOpenRatio,
+                                    )
+                                ),
+                                targetState = currentChat != null
+                            ) { chatSelected ->
+                                if (chatSelected) {
+                                    ChatDetail(
+                                        state = state,
+                                        sendMessage = viewModel::sendMessage,
+                                        toggleRecord = viewModel::toggleRecording,
+                                        sendImage = viewModel::sendImage,
+                                        playAudio = viewModel::playAudio,
+                                        stopAudio = viewModel::stopAudio,
+                                        navigationIcon = navigationIcon,
+                                        toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
+                                        isChatDetailsOpenRatio = drawerOpenRatio
+                                    )
+                                } else {
+                                    NewChat(
+                                        selectNewChat = selectChat,
+                                        navigationIcon = navigationIcon
+                                    )
+                                }
                             }
                         }
                         AnimatedVisibility(
@@ -171,7 +176,7 @@ fun ChatLayout(
                             exit = fadeOut() + shrinkHorizontally()
                         ) {
                             PermanentDrawerSheet(
-                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.1).dp),
                                 drawerContentColor = MaterialTheme.colorScheme.onSurface
                             ) {
                                 Box(modifier = Modifier.fillMaxHeight()) {

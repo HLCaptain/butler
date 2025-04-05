@@ -73,27 +73,26 @@ class ChatDetailViewModel(
     ) { flows ->
         val chat = flows[0] as DomainChat?
         val messages = flows[1] as List<DomainMessage>?
-        val recording = flows[2] as? Boolean ?: false
+        val recording = flows[2] as? Boolean == true
         val playing = flows[3] as? String
         val resources = flows[4] as List<DomainResource>?
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate {
                 it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
             } ?: emptyMap()
-        val images = resources?.filter { it.type.startsWith("image") }
-            ?.associate { it.id!! to it.data } ?: emptyMap()
-        Napier.v {
-            """
-            ChatDetailState:
-            chat: ${chat?.id}
-            messages: ${messages?.map { it.id }}
-            isRecording: $recording
-            playingAudio: $playing
-            resources: ${resources?.map { it.id }}
-            sounds: ${sounds.keys}
-            images: ${images.keys}
-            """.trimIndent()
-        }
+        val images = resources?.filter { it.type.startsWith("image") }?.associate { it.id!! to it.data } ?: emptyMap()
+//        Napier.v {
+//            """
+//            ChatDetailState:
+//            chat: ${chat?.id}
+//            messages: ${messages?.map { it.id }}
+//            isRecording: $recording
+//            playingAudio: $playing
+//            resources: ${resources?.map { it.id }}
+//            sounds: ${sounds.keys}
+//            images: ${images.keys}
+//            """.trimIndent()
+//        }
         ChatDetailState(
             chat = chat,
             messages = messages,
@@ -109,6 +108,7 @@ class ChatDetailViewModel(
     )
 
     fun loadChat(chatId: String) {
+        Napier.v { "Loading chat $chatId" }
         chatIdStateFlow.update { chatId }
     }
 

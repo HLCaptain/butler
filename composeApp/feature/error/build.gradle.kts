@@ -8,7 +8,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.domain)
-        implementation(projects.composeApp.domain.error)
+        implementation(projects.composeApp.data.error)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)

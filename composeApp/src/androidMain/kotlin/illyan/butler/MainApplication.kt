@@ -19,7 +19,6 @@ import illyan.butler.data.user.UserDataModule
 import illyan.butler.di.RepositoryModule
 import illyan.butler.di.coroutines.CoroutineModule
 import illyan.butler.di.datasource.DataSourceModule
-import illyan.butler.error.ErrorManager
 import illyan.butler.host.HostDomainModule
 import illyan.butler.model.ModelManager
 import illyan.butler.settings.SettingsDomainModule
@@ -80,7 +79,6 @@ class MainApplication : Application() {
                 KtorCoreModule().module,
                 DataSourceModule().module,
                 module {
-                    singleOf(::ErrorManager)
                     single { getDataStore(androidContext()) }
                 },
             )

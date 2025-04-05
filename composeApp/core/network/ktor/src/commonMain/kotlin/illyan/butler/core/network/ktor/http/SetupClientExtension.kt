@@ -3,8 +3,8 @@ package illyan.butler.core.network.ktor.http
 import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.local.room.model.RoomToken
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.settings.AppRepository
-import illyan.butler.error.ErrorManager
 import illyan.butler.shared.model.response.UserTokensResponse
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClientConfig
@@ -55,7 +55,7 @@ fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
 fun HttpClientConfig<*>.setupClient(
     userDao: UserDao,
     appRepository: AppRepository,
-    errorManager: ErrorManager
+    errorRepository: ErrorRepository
 ) {
     expectSuccess = true
     HttpResponseValidator {
@@ -63,8 +63,8 @@ fun HttpClientConfig<*>.setupClient(
             Napier.e(throwable) { "Error in response" }
 
             when (throwable) {
-                is ServerResponseException -> errorManager.reportError(throwable.response)
-                is ClientRequestException -> errorManager.reportError(throwable.response)
+                is ServerResponseException -> errorRepository.reportError(throwable.response)
+                is ClientRequestException -> errorRepository.reportError(throwable.response)
                 else -> Napier.e { "Unhandled exception: $throwable" } // Do not report, just log
             }
         }

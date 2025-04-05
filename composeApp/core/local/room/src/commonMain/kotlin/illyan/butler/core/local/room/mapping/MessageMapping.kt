@@ -6,7 +6,7 @@ import illyan.butler.domain.model.DomainMessage
 fun RoomMessage.toDomainModel() = DomainMessage(
     id = id,
     senderId = senderId,
-    message = message,
+    messageContent = message,
     time = time,
     chatId = chatId,
     resourceIds = resourceIds,
@@ -15,7 +15,7 @@ fun RoomMessage.toDomainModel() = DomainMessage(
 fun DomainMessage.toRoomModel() = RoomMessage(
     id = id!!,
     senderId = senderId,
-    message = message,
+    message = messageContent,
     time = time!!,
     chatId = chatId,
     resourceIds = resourceIds,

@@ -20,7 +20,6 @@ import illyan.butler.data.user.UserDataModule
 import illyan.butler.di.RepositoryModule
 import illyan.butler.di.coroutines.CoroutineModule
 import illyan.butler.di.datasource.DataSourceModule
-import illyan.butler.error.ErrorManager
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.app_name
 import illyan.butler.generated.resources.butler_logo
@@ -75,7 +74,6 @@ fun main() = application {
         )
         val coreModules = listOf(
             module {
-                singleOf(::ErrorManager)
                 single { getDataStore() }
             },
             RoomCoreModule().module,

@@ -33,7 +33,9 @@ kotlin {
         implementation(libs.korge.audio)
         implementation(libs.korge.io)
         implementation(libs.filekit)
+        // Using markdown for code blocks, as richtext does not support it yet
         implementation(libs.markdown)
+//        implementation(libs.richtext)
         implementation(libs.material.kolors)
     }
 

@@ -92,6 +92,7 @@
     <string name="last_update">Last update</string>
     <string name="theme">Theme</string>
     <string name="system">System</string>
+    <string name="device">Device</string>
     <string name="device_only">Device-Only</string>
     <string name="api">API</string>
     <string name="sync_available">Sync Available</string>
@@ -127,4 +128,39 @@
     <string name="error">Error</string>
     <string name="warning">Warning</string>
     <string name="about">About</string>
+
+    <!-- Errors -->
+    <string name="error_message_response_short">Response error</string>
+    <string name="error_message_response_long">Response error. Server might be down.</string>
+
+    <!-- Onboarding -->
+    <!-- Titles -->
+    <string name="onboarding_title_local_llm">Local LLM</string>
+    <string name="onboarding_title_hosted_server">Hosted server</string>
+    <string name="onboarding_title_openai_api">OpenAI API</string>
+
+    <!-- Descriptions -->
+    <string name="onboarding_description_local_llm">Authenticate with a local LLM</string>
+    <string name="onboarding_description_hosted_server">Authenticate with a hosted server</string>
+    <string name="onboarding_description_openai_api">Authenticate with the OpenAI API</string>
+
+    <!-- Pros -->
+    <string name="onboarding_pro_no_network_required">No network required</string>
+    <string name="onboarding_pro_no_server_required">No server required</string>
+    <string name="onboarding_pro_chats_saved_in_cloud">Chats are saved on the cloud</string>
+    <string name="onboarding_pro_self_hosted">Can be self hosted</string>
+    <string name="onboarding_pro_more_models">More models available</string>
+    <string name="onboarding_pro_no_server_setup">No self-hosted server required</string>
+    <string name="onboarding_pro_openai_access">Access OpenAI API with custom host and API key</string>
+
+    <!-- Cons -->
+    <string name="onboarding_cons_no_remote_saving">No chats are saved remotely</string>
+    <string name="onboarding_cons_no_remote_access">No remote access</string>
+    <string name="onboarding_cons_download_required">Need to download LLM model</string>
+    <string name="onboarding_cons_requires_network">Requires network connection</string>
+    <string name="onboarding_cons_server_setup_required">Requires server setup</string>
+    <string name="onboarding_cons_server_may_be_down">Server may be down</string>
+    <string name="onboarding_cons_requires_api_key">Requires API key from provider</string>
+
+
 </resources>

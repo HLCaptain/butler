@@ -30,7 +30,7 @@ fun provideChatMutableStore(
     chatNetworkDataSource: ChatNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
-    fetcher = Fetcher.ofFlow { key ->
+    fetcher = Fetcher.ofFlow<ChatKey, DomainChat> { key ->
         require(key is ChatKey.Read.ByChatId)
         chatNetworkDataSource.fetchByChatId(key.chatId)
     },

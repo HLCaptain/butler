@@ -221,7 +221,7 @@ fun RichTooltipWithContent(
 ) {
     val tooltipState = remember { TooltipState() }
     var willShowTooltip by rememberSaveable { mutableStateOf(false) }
-    var gestureType by rememberSaveable { mutableStateOf<GestureType?>(null) }
+    var gestureType by remember { mutableStateOf<GestureType?>(null) }
     val tryToShowTooltip = { gesture: GestureType ->
         willShowTooltip = true
         gestureType = gesture

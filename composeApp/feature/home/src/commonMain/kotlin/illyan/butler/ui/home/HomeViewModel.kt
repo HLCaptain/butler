@@ -6,15 +6,14 @@ import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
 import illyan.butler.config.BuildConfig
 import illyan.butler.data.credential.CredentialRepository
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
-import illyan.butler.error.ErrorManager
+import illyan.butler.domain.model.DomainError
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -24,7 +23,6 @@ import org.koin.android.annotation.KoinViewModel
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalEncodingApi::class)
 @KoinViewModel
@@ -32,11 +30,9 @@ class HomeViewModel(
     authManager: AuthManager,
     private val chatManager: ChatManager,
     credentialRepository: CredentialRepository,
-    errorManager: ErrorManager,
+    errorRepository: ErrorRepository,
 ) : ViewModel() {
-    private val _serverErrors = MutableStateFlow<List<Pair<String, DomainErrorResponse>>>(listOf())
-    private val _appErrors = MutableStateFlow<List<DomainErrorEvent>>(listOf())
-
+    private val errors = MutableStateFlow(emptyList<DomainError>())
     init {
         if (BuildConfig.NO_CONFIG_SETUP) {
             viewModelScope.launch {
@@ -61,24 +57,30 @@ class HomeViewModel(
     val state = combine(
         authManager.signedInUserId,
         authManager.clientId,
-        _serverErrors,
-        _appErrors,
+        errors,
         chatManager.userChats,
         chatManager.deviceChats,
         credentialRepository.apiKeyCredentials
     ) { flows ->
         val signedInUserId = flows[0] as String?
         val clientId = flows[1] as String?
-        val serverErrors = flows[2] as List<Pair<String, DomainErrorResponse>>
-        val appErrors = flows[3] as List<DomainErrorEvent>
-        val userChats = flows[4] as List<DomainChat>
-        val deviceChats = flows[5] as List<DomainChat>
-        val credentials = flows[6] as List<ApiKeyCredential>? ?: emptyList()
+        val errors = flows[2] as List<DomainError>
+        val userChats = flows[3] as List<DomainChat>
+        val deviceChats = flows[4] as List<DomainChat>
+        val credentials = flows[5] as List<ApiKeyCredential>? ?: emptyList()
+        Napier.v {
+            """
+            signedInUserId: $signedInUserId
+            numberOfUserChats: ${userChats.size}
+            numberOfDeviceChats: ${deviceChats.size}
+            errors: $errors
+            numberOfCredentials: ${credentials.size}
+            """.trimIndent()
+        }
         HomeState(
             signedInUserId = signedInUserId,
             clientId = clientId,
-            serverErrors = serverErrors,
-            appErrors = appErrors,
+            errors = errors,
             userChats = userChats,
             deviceChats = deviceChats,
             credentials = credentials
@@ -91,41 +93,22 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            errorManager.serverErrors.collectLatest { response ->
-                _serverErrors.update { it + (Uuid.random().toString() to response) }
-            }
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            errorManager.appErrors.collectLatest { error ->
-                _appErrors.update { it + error }
+            errorRepository.errorEventFlow.collect { error ->
+                Napier.v { "Error event received: $error" }
+                errors.update { it + error }
             }
         }
     }
 
     fun clearError(id: String) {
-        _serverErrors.update { errors ->
-            errors.filter { it.first != id }
-        }
-        _appErrors.update { errors ->
-            errors.filter { it.id != id }
+        viewModelScope.launch(Dispatchers.IO) {
+            errors.update { it.filter { error -> error.id != id } }
         }
     }
 
     fun removeLastError() {
         viewModelScope.launch(Dispatchers.IO) {
-            val latestServerErrorId = _serverErrors.first().maxByOrNull { it.second.timestamp }?.first
-            val latestAppErrorId = _appErrors.first().maxByOrNull { it.timestamp }?.id
-            if (latestServerErrorId != null && latestAppErrorId != null) {
-                if (latestServerErrorId > latestAppErrorId) {
-                    clearError(latestServerErrorId)
-                } else {
-                    clearError(latestAppErrorId)
-                }
-            } else if (latestServerErrorId != null) {
-                clearError(latestServerErrorId)
-            } else if (latestAppErrorId != null) {
-                clearError(latestAppErrorId)
-            }
+            errors.update { it.dropLast(1) }
         }
     }
 

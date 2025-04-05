@@ -41,7 +41,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -102,6 +101,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.extension
+import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -126,118 +126,109 @@ fun ChatDetail(
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
-    Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
-        Scaffold(
-            modifier = Modifier
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .clip(
-                    RoundedCornerShape(
-                        topEnd = 24.dp * isChatDetailsOpenRatio,
-                        bottomEnd = 24.dp * isChatDetailsOpenRatio
-                    )
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            CenterAlignedTopAppBar(
+                modifier = Modifier.hazeEffect(hazeState) {
+                    inputScale = HazeInputScale.None
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent
                 ),
-            containerColor = MaterialTheme.colorScheme.surface,
-            topBar = {
-                CenterAlignedTopAppBar(
-                    modifier = Modifier.hazeEffect(hazeState) {
-                        inputScale = HazeInputScale.None
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent
-                    ),
-                    title = {
-                        Text(
-                            state.chat?.name ?: stringResource(Res.string.new_chat),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = navigationIcon ?: {},
-                    actions = {
-                        if (state.chat != null) {
-                            IconButton(onClick = toggleChatDetails) {
-                                val layoutDirection = LocalLayoutDirection.current
-                                val imageVector = if (layoutDirection == LayoutDirection.Ltr) {
-                                    if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
-                                } else {
-                                    if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight
-                                }
-                                Icon(
-                                    imageVector = imageVector,
-                                    contentDescription = "Chat details"
-                                )
+                title = {
+                    Text(
+                        state.chat?.name ?: stringResource(Res.string.new_chat),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = navigationIcon ?: {},
+                actions = {
+                    if (state.chat != null) {
+                        IconButton(onClick = toggleChatDetails) {
+                            val layoutDirection = LocalLayoutDirection.current
+                            val imageVector = if (layoutDirection == LayoutDirection.Ltr) {
+                                if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
+                            } else {
+                                if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight
                             }
+                            Icon(
+                                imageVector = imageVector,
+                                contentDescription = "Chat details"
+                            )
                         }
-                    },
-                    scrollBehavior = scrollBehavior,
-                )
-            },
-            bottomBar = {
-                AnimatedVisibility(
-                    visible = state.chat != null,
-                    enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
-                    exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        ChatDetailBottomBar(
-                            modifier = Modifier
-                                .widthIn(max = 640.dp)
-                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                                .imePadding()
-                                .hazeEffect(hazeState)
-                                .navigationBarsPadding(),
-                            sendMessage = sendMessage,
-                            sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
-                            isRecording = state.isRecording,
-                            toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
-                        )
-                    }
-                }
-            },
-        ) { innerPadding ->
-            var widthOfBox by remember { mutableStateOf(0.dp) }
-            Box(
-                modifier = Modifier.fillMaxSize().hazeSource(hazeState).layout { measurable, constraints ->
-                    val placeable = measurable.measure(constraints)
-                    widthOfBox = placeable.width.toDp()
-                    layout(placeable.width, placeable.height) {
-                        placeable.place(0, 0)
                     }
                 },
-                contentAlignment = Alignment.Center
+                scrollBehavior = scrollBehavior,
+            )
+        },
+        bottomBar = {
+            AnimatedVisibility(
+                visible = state.chat != null,
+                enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
             ) {
-                AnimatedContent(
-                    modifier = Modifier.hazeSource(hazeState),
-                    targetState = state.chat,
-                    contentAlignment = Alignment.Center
-                ) { chat ->
-                    if (chat == null) {
-                        SelectChat()
-                    } else {
-                        AnimatedContent(
-                            targetState = state.messages?.isEmpty() == true,
-                            contentAlignment = Alignment.Center
-                        ) { noMessages ->
-                            if (noMessages) {
-                                Text(
-                                    modifier = Modifier.padding(innerPadding),
-                                    text = stringResource(Res.string.no_messages),
-                                    style = MaterialTheme.typography.headlineLarge
-                                )
-                            } else {
-                                MessageList(
-                                    messages = state.messages ?: emptyList(),
-                                    preferedWidth = 640.dp,
-                                    userId = chat.ownerId,
-                                    sounds = state.sounds,
-                                    playAudio = playAudio,
-                                    playingAudio = state.playingAudio,
-                                    stopAudio = stopAudio,
-                                    images = state.images,
-                                    contentPadding = innerPadding
-                                )
-                            }
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    ChatDetailBottomBar(
+                        modifier = Modifier
+                            .widthIn(max = 640.dp)
+                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                            .imePadding()
+                            .hazeEffect(hazeState)
+                            .navigationBarsPadding(),
+                        sendMessage = sendMessage,
+                        sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
+                        isRecording = state.isRecording,
+                        toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+        var widthOfBox by remember { mutableStateOf(0.dp) }
+        Box(
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState).layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                widthOfBox = placeable.width.toDp()
+                layout(placeable.width, placeable.height) {
+                    placeable.place(0, 0)
+                }
+            },
+            contentAlignment = Alignment.Center
+        ) {
+            AnimatedContent(
+                modifier = Modifier.hazeSource(hazeState),
+                targetState = state.chat,
+                contentAlignment = Alignment.Center
+            ) { chat ->
+                if (chat == null) {
+                    SelectChat()
+                } else {
+                    AnimatedContent(
+                        targetState = state.messages?.isEmpty() == true,
+                        contentAlignment = Alignment.Center
+                    ) { noMessages ->
+                        if (noMessages) {
+                            Text(
+                                modifier = Modifier.padding(innerPadding),
+                                text = stringResource(Res.string.no_messages),
+                                style = MaterialTheme.typography.headlineLarge
+                            )
+                        } else {
+                            MessageList(
+                                messages = state.messages ?: emptyList(),
+                                preferedWidth = 640.dp,
+                                userId = chat.ownerId,
+                                sounds = state.sounds,
+                                playAudio = playAudio,
+                                playingAudio = state.playingAudio,
+                                stopAudio = stopAudio,
+                                images = state.images,
+                                contentPadding = innerPadding
+                            )
                         }
                     }
                 }
@@ -385,7 +376,7 @@ fun MessageItem(
                 contentDescription = "Image"
             )
         }
-        if (!message.message.isNullOrBlank()) {
+        if (!message.messageContent.isNullOrBlank()) {
             val cardColors = ButlerCardDefaults.cardColors(
                 containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                 contentColor = if (sentByUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
@@ -401,18 +392,24 @@ fun MessageItem(
                 ) {
                     ReverseLayoutDirection(enabled = sentByUser) {
                         SelectionContainer {
-                            if (sentByUser) {
-                                Text(
-                                    modifier = Modifier,
-                                    text = message.message ?: ""
-                                )
-                            } else {
-                                Markdown(
-                                    content = message.message ?: "",
-                                    colors = markdownColor(),
-                                    typography = markdownTypography()
-                                )
-                            }
+                            // TODO: Use rich text state when code blocks are supported
+//                            val richTextState = rememberRichTextState()
+//                            LaunchedEffect(message.messageContent) {
+//                                richTextState.setMarkdown(message.messageContent ?: "")
+//                            }
+//                            RichText(state = richTextState)
+                            Markdown(
+                                modifier = Modifier, // Don't use the default fillMaxSize here.
+                                content = message.messageContent ?: "",
+                                colors = markdownColor(
+                                    text = MaterialTheme.colorScheme.onSurface,
+                                    codeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                                    inlineCodeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                                    dividerColor = MaterialTheme.colorScheme.outline,
+                                    tableBackground = MaterialTheme.colorScheme.surface,
+                                ),
+                                typography = markdownTypography()
+                            )
                         }
                     }
                 }
@@ -516,7 +513,7 @@ fun MessageField(
             file?.let {
                 coroutineScope.launch {
                     sendImage(
-                        file.file.readBytes(),
+                        file.readBytes(),
                         "image/${file.extension}"
                     )
                 }

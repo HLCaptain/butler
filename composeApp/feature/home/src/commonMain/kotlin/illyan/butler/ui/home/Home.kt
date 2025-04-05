@@ -52,6 +52,7 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -88,6 +89,7 @@ import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.DomainError
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.create_new_chat
@@ -97,7 +99,8 @@ import illyan.butler.generated.resources.no_chats
 import illyan.butler.generated.resources.profile
 import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.chat_list.ChatList
-import illyan.butler.ui.error.ErrorScreen
+import illyan.butler.ui.error.ErrorDialogContent
+import illyan.butler.ui.error.ErrorSnackbarHost
 import illyan.butler.ui.onboard_flow.OnboardFlow
 import illyan.butler.ui.profile.dialog.ProfileDialog
 import illyan.butler.ui.profile.settings.UserSettings
@@ -111,241 +114,242 @@ import org.koin.compose.viewmodel.koinViewModel
 fun Home() {
     val viewModel = koinViewModel<HomeViewModel>()
     val state by viewModel.state.collectAsState()
-    Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
-        Column(modifier = Modifier.statusBarsPadding()) {
-            var isProfileDialogShowing by rememberSaveable(state.signedInUserId) { mutableStateOf(false) }
-            var initialLoadingDelayPassed by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) {
-                delay(100)
-                initialLoadingDelayPassed = true
-            }
-            var isAuthFlowEnded by rememberSaveable(
-                state.signedInUserId,
-                state.credentials,
-                initialLoadingDelayPassed
-            ) { mutableStateOf(if (initialLoadingDelayPassed) (state.signedInUserId != null || state.credentials.isNotEmpty()) else null) }
-            val profileNavController = rememberNavController()
-            val animationTime = 200
-            ButlerDialog(
-                isDialogOpen = isProfileDialogShowing,
-                isDialogFullscreen = false,
-                onDismissDialog = { isProfileDialogShowing = false },
-                onDialogClosed = {},
-                navController = profileNavController
-            ) {
-                NavHost(
-                    navController = profileNavController,
-                    contentAlignment = Alignment.Center,
-                    sizeTransform = { SizeTransform(clip = false) },
-                    startDestination = "profile",
-                    enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-                    popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-                    exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-                    popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
-                ) {
-                    composable("profile") {
-                        ProfileDialog(
-                            onShowSettingsScreen = { profileNavController.navigate("settings") },
-                            onLogin = {
-                                isAuthFlowEnded = false
-                                isProfileDialogShowing = false
-                            },
+    var isProfileDialogShowing by rememberSaveable(state.signedInUserId) { mutableStateOf(false) }
+    var initialLoadingDelayPassed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(100)
+        initialLoadingDelayPassed = true
+    }
+    var isAuthFlowEnded by rememberSaveable(
+        state.signedInUserId,
+        state.credentials,
+        initialLoadingDelayPassed
+    ) { mutableStateOf(if (initialLoadingDelayPassed) (state.signedInUserId != null || state.credentials.isNotEmpty()) else null) }
+    val profileNavController = rememberNavController()
+    val animationTime = 200
+    ButlerDialog(
+        isDialogOpen = isProfileDialogShowing,
+        isDialogFullscreen = false,
+        onDismissDialog = { isProfileDialogShowing = false },
+        onDialogClosed = {},
+        navController = profileNavController
+    ) {
+        NavHost(
+            navController = profileNavController,
+            contentAlignment = Alignment.Center,
+            sizeTransform = { SizeTransform(clip = false) },
+            startDestination = "profile",
+            enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
+            popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
+            exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
+            popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
+        ) {
+            composable("profile") {
+                ProfileDialog(
+                    onShowSettingsScreen = { profileNavController.navigate("settings") },
+                    onLogin = {
+                        isAuthFlowEnded = false
+                        isProfileDialogShowing = false
+                    },
 //                            onAbout = { profileNavController.navigate("about") }
-                        )
-                    }
-                    composable("settings") {
-                        UserSettings()
-                    }
-                    composable("about") {
-                        Text("About")
-                    }
-                }
-            }
-
-            val numberOfErrors = remember(
-                state.appErrors,
-                state.serverErrors
-            ) { state.appErrors.size + state.serverErrors.size }
-            ButlerDialog(
-                modifier = Modifier.zIndex(1f),
-                isDialogOpen = numberOfErrors > 0,
-                isDialogFullscreen = false,
-                onDismissDialog = viewModel::removeLastError,
-            ) {
-                ErrorScreen(
-                    cleanError = viewModel::clearError,
-                    appErrors = state.appErrors,
-                    serverErrors = state.serverErrors
                 )
             }
-            // Index is rememberSaveable, Screen is probably not.
-            val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-            val navigationSuiteLayout = remember(windowSizeClass) {
-                when (windowSizeClass.windowWidthSizeClass) {
-                    WindowWidthSizeClass.COMPACT -> NavigationSuiteType.NavigationDrawer
-                    WindowWidthSizeClass.MEDIUM -> NavigationSuiteType.NavigationRail
-                    else -> NavigationSuiteType.NavigationDrawer
-                }
+            composable("settings") {
+                UserSettings()
             }
-            val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
-                windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
+            composable("about") {
+                Text("About")
             }
-            var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<String?>(null) }
-            val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
-            val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
-            NavigationSuiteScaffoldLayout(
-                layoutType = navigationSuiteLayout,
-                navigationSuite = {
-                    AnimatedContent(
-                        targetState = navigationSuiteLayout,
-                        transitionSpec = { slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() }
-                    ) { _ ->
-                        AnimatedVisibility(
-                            visible = !isCompact && isAuthFlowEnded == true,
-                            enter = slideInHorizontally { -it } + fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
-                            exit = slideOutHorizontally { -it } + fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
-                        ) {
-                            VerticalNavBar(
-                                modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
-                                compact = isVerticalNavBarCompact,
-                                userChats = state.userChats,
-                                deviceChats = state.deviceChats,
-                                isProfileDialogShowing = isProfileDialogShowing,
-                                setProfileDialogShowing = { isProfileDialogShowing = it },
-                                navigateToNewChat = { currentChat = null },
-                                selectChat = { currentChat = it },
-                                deleteChat = {
-                                    viewModel.deleteChat(it)
-                                    if (currentChat == it) currentChat = null
-                                },
-                                currentChat = currentChat,
-                                isExpanded = isExpanded
-                            )
-                        }
+        }
+    }
+
+    val numberOfDialogErrors = state.errors.filter { it !is DomainError.Event.Simple }.size
+    ButlerDialog(
+        modifier = Modifier.zIndex(1f),
+        isDialogOpen = numberOfDialogErrors > 0,
+        isDialogFullscreen = false,
+        onDismissDialog = viewModel::removeLastError,
+    ) {
+        ErrorDialogContent(
+            cleanError = viewModel::clearError,
+            errors = state.errors
+        )
+    }
+    // Index is rememberSaveable, Screen is probably not.
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val navigationSuiteLayout = remember(windowSizeClass) {
+        when (windowSizeClass.windowWidthSizeClass) {
+            WindowWidthSizeClass.COMPACT -> NavigationSuiteType.NavigationDrawer
+            WindowWidthSizeClass.MEDIUM -> NavigationSuiteType.NavigationRail
+            else -> NavigationSuiteType.NavigationDrawer
+        }
+    }
+    val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
+        windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
+    }
+    var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<String?>(null) }
+    val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
+    val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+    Scaffold(
+        snackbarHost = { ErrorSnackbarHost(
+            modifier = Modifier.widthIn(max = 420.dp),
+            errors = state.errors.mapNotNull { it as? DomainError.Event.Simple },
+            cleanError = viewModel::clearError,
+        ) },
+        containerColor = if (isAuthFlowEnded == true) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else MaterialTheme.colorScheme.surface
+    ) { _ ->
+        NavigationSuiteScaffoldLayout(
+            layoutType = navigationSuiteLayout,
+            navigationSuite = {
+                AnimatedContent(
+                    targetState = navigationSuiteLayout,
+                    transitionSpec = {
+                        slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() using SizeTransform(clip = true)
+                    }
+                ) { _ ->
+                    AnimatedVisibility(
+                        visible = !isCompact && isAuthFlowEnded == true,
+                        enter = slideInHorizontally { -it } + fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                        exit = slideOutHorizontally { -it } + fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
+                    ) {
+                        VerticalNavBar(
+                            modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
+                            compact = isVerticalNavBarCompact,
+                            userChats = state.userChats,
+                            deviceChats = state.deviceChats,
+                            isProfileDialogShowing = isProfileDialogShowing,
+                            setProfileDialogShowing = { isProfileDialogShowing = it },
+                            navigateToNewChat = { currentChat = null },
+                            selectChat = { currentChat = it },
+                            deleteChat = {
+                                viewModel.deleteChat(it)
+                                if (currentChat == it) currentChat = null
+                            },
+                            currentChat = currentChat,
+                            isExpanded = isExpanded
+                        )
                     }
                 }
-            ) {
-                Surface(tonalElevation = 0.dp) {
-                    AnimatedContent(isAuthFlowEnded) { isHome ->
-                        if (isHome == null) return@AnimatedContent
-                        if (isHome) {
-                            val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                            var drawerContentWidthInPixels by remember { mutableStateOf(0) }
-                            val drawerOpenRatio = remember(
-                                drawerState.currentOffset,
-                                drawerContentWidthInPixels
-                            ) {
-                                (((drawerState.currentOffset / drawerContentWidthInPixels) + 1).takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
-                            }
-                            val coroutineScope = rememberCoroutineScope()
-                            LaunchedEffect(isCompact) {
-                                if (!isCompact) drawerState.close()
-                            }
-                            BackHandler(drawerState.isOpen) {
-                                coroutineScope.launch { drawerState.close() }
-                            }
-                            DismissibleNavigationDrawer(
-                                drawerState = drawerState,
-                                gesturesEnabled = isCompact,
-                                drawerContent = {
-                                    CompositionLocalProvider(LocalAbsoluteTonalElevation provides LocalAbsoluteTonalElevation.current + 2.dp) {
-                                        DismissibleDrawerSheet(
-                                            modifier = Modifier
-                                                .widthIn(max = 280.dp)
-                                                .fillMaxHeight(),
-                                            drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current),
-                                            drawerContentColor = MaterialTheme.colorScheme.onSurface,
-                                            windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+            }
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), tonalElevation = 0.dp) {
+                AnimatedContent(targetState = isAuthFlowEnded) { isHome ->
+                    if (isHome == null) return@AnimatedContent
+                    if (isHome) {
+                        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                        var drawerContentWidthInPixels by remember { mutableStateOf(0) }
+                        val drawerOpenRatio = remember(
+                            drawerState.currentOffset,
+                            drawerContentWidthInPixels
+                        ) {
+                            (((drawerState.currentOffset / drawerContentWidthInPixels) + 1).takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
+                        }
+                        val coroutineScope = rememberCoroutineScope()
+                        LaunchedEffect(isCompact) {
+                            if (!isCompact) drawerState.close()
+                        }
+                        BackHandler(drawerState.isOpen) {
+                            coroutineScope.launch { drawerState.close() }
+                        }
+                        DismissibleNavigationDrawer(
+                            drawerState = drawerState,
+                            gesturesEnabled = isCompact,
+                            drawerContent = {
+                                CompositionLocalProvider(LocalAbsoluteTonalElevation provides LocalAbsoluteTonalElevation.current + 2.dp) {
+                                    DismissibleDrawerSheet(
+                                        modifier = Modifier
+                                            .widthIn(max = 280.dp)
+                                            .fillMaxHeight(),
+                                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current),
+                                        drawerContentColor = MaterialTheme.colorScheme.onSurface,
+                                        windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+                                    ) {
+                                        NavigationDrawerContent(
+                                            modifier = Modifier.padding(vertical = 8.dp).onSizeChanged {
+                                                drawerContentWidthInPixels = it.width
+                                            },
+                                            closeDrawer = { coroutineScope.launch { drawerState.close() } },
+                                            closeButtonPadding = DrawerCloseButtonPadding,
+                                            bottomContent = {
+                                                NavDrawerItem(
+                                                    modifier = Modifier
+                                                        .systemBarsPadding()
+                                                        .imePadding()
+                                                        .padding(bottom = 8.dp),
+                                                    onClick = { isProfileDialogShowing = true },
+                                                    icon = Icons.Filled.Person,
+                                                    stringResource = Res.string.profile
+                                                )
+                                            }
                                         ) {
-                                            NavigationDrawerContent(
-                                                modifier = Modifier.padding(vertical = 8.dp).onSizeChanged {
-                                                    drawerContentWidthInPixels = it.width
-                                                },
-                                                closeDrawer = { coroutineScope.launch { drawerState.close() } },
-                                                closeButtonPadding = DrawerCloseButtonPadding,
-                                                bottomContent = {
-                                                    NavDrawerItem(
-                                                        modifier = Modifier
-                                                            .systemBarsPadding()
-                                                            .imePadding()
-                                                            .padding(bottom = 8.dp),
-                                                        onClick = { isProfileDialogShowing = true },
-                                                        icon = Icons.Filled.Person,
-                                                        stringResource = Res.string.profile
-                                                    )
-                                                }
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(8.dp),
                                             ) {
-                                                Column(
-                                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    NewChatFABExtended(
-                                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                                                        onClick = {
-                                                            currentChat = null
-                                                            coroutineScope.launch { drawerState.close() }
-                                                        }
-                                                    )
-
-                                                    AnimatedVisibility(
-                                                        visible = (state.userChats + state.deviceChats).isEmpty(),
-                                                        enter = fadeIn(),
-                                                        exit = fadeOut()
-                                                    ) {
-                                                        EmptyChatNavDrawerItem()
+                                                NewChatFABExtended(
+                                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                                    onClick = {
+                                                        currentChat = null
+                                                        coroutineScope.launch { drawerState.close() }
                                                     }
+                                                )
 
-                                                    ChatList(
-                                                        chats = state.userChats + state.deviceChats,
-                                                        deleteChat = {
-                                                            viewModel.deleteChat(it)
-                                                            if (currentChat == it) currentChat = null
-                                                        },
-                                                        openChat = {
-                                                            currentChat = it
-                                                            coroutineScope.launch { drawerState.close() }
-                                                        },
-                                                        selectedChat = currentChat,
-                                                        deviceOnlyChatIds = state.deviceChats.map { it.id!! }
-                                                    )
+                                                AnimatedVisibility(
+                                                    visible = (state.userChats + state.deviceChats).isEmpty(),
+                                                    enter = fadeIn(),
+                                                    exit = fadeOut()
+                                                ) {
+                                                    EmptyChatNavDrawerItem()
+                                                }
+
+                                                ChatList(
+                                                    chats = state.userChats + state.deviceChats,
+                                                    deleteChat = {
+                                                        viewModel.deleteChat(it)
+                                                        if (currentChat == it) currentChat = null
+                                                    },
+                                                    openChat = {
+                                                        currentChat = it
+                                                        coroutineScope.launch { drawerState.close() }
+                                                    },
+                                                    selectedChat = currentChat,
+                                                    deviceOnlyChatIds = state.deviceChats.map { it.id!! }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                        ) {
+                            Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
+                                ChatLayout(
+                                    modifier = Modifier.fillMaxSize().clip(
+                                        RoundedCornerShape(
+                                            topStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp,
+                                            bottomStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp
+                                        )
+                                    ),
+                                    currentChat = currentChat,
+                                    selectChat = { currentChat = it },
+                                    navigationIcon = {
+                                        if (isCompact) {
+                                            HamburgerButton {
+                                                coroutineScope.launch {
+                                                    if (drawerState.isOpen) drawerState.close() else drawerState.open()
                                                 }
                                             }
                                         }
                                     }
-                                },
-                            ) {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                                ) {
-                                    ChatLayout(
-                                        modifier = Modifier.clip(
-                                            RoundedCornerShape(
-                                                topStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp,
-                                                bottomStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp
-                                            )
-                                        ),
-                                        currentChat = currentChat,
-                                        selectChat = { currentChat = it },
-                                        navigationIcon = {
-                                            if (isCompact) {
-                                                HamburgerButton {
-                                                    coroutineScope.launch {
-                                                        if (drawerState.isOpen) drawerState.close() else drawerState.open()
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                OnboardFlow(
-                                    authSuccessEnded = { isAuthFlowEnded = true },
                                 )
                             }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            OnboardFlow(
+                                authSuccessEnded = { isAuthFlowEnded = true },
+                            )
                         }
                     }
                 }
