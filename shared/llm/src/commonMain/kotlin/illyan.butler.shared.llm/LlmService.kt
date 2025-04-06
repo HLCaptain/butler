@@ -293,12 +293,16 @@ class LlmService(
         emitAll(openAI.chatCompletions(
             request = ChatCompletionRequest(
                 model = ModelId(chat.chatCompletionModel!!.second),
-                messages = if (chatSummaries.isEmpty()) conversation else conversation + ChatMessage(
-                    role = ChatRole.System,
-                    content = "Previous chat summaries:\n${chatSummaries.joinToString("\n")}".also {
-                        Napier.v { "Context for answer:\n$it" }
-                    }
-                )
+                messages = conversation,
+                // FIXME: providing memory should be optional if AI requests it.
+                //  Try to provide a function which returns the most recent chat summaries.
+                //  Local function call is not yet supported? Disabling context for now.
+//                messages = if (chatSummaries.isEmpty()) conversation else conversation + ChatMessage(
+//                    role = ChatRole.System,
+//                    content = "Previous chat summaries:\n${chatSummaries.joinToString("\n")}".also {
+//                        Napier.v { "Context for answer:\n$it" }
+//                    }
+//                )
             ),
         ).map { completionChunk ->
             previousCompletions = try {
