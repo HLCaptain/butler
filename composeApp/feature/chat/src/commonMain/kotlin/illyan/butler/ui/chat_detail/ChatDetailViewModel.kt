@@ -6,9 +6,11 @@ import illyan.butler.audio.AudioManager
 import illyan.butler.audio.toWav
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.ErrorCode
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
 import korlibs.audio.sound.AudioData
@@ -31,6 +33,7 @@ class ChatDetailViewModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
+    private val errorRepository: ErrorRepository
 ) : ViewModel() {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
 
@@ -148,6 +151,18 @@ class ChatDetailViewModel(
     fun stopAudio() {
         viewModelScope.launch {
             audioManager.stopAudio()
+        }
+    }
+
+    fun refreshChat() {
+        viewModelScope.launch {
+            chatManager.refreshDeviceChat(chatIdStateFlow.value ?: return@launch)
+        }
+    }
+
+    fun sendError(code: ErrorCode) {
+        viewModelScope.launch {
+            errorRepository.reportSimpleError(code)
         }
     }
 }

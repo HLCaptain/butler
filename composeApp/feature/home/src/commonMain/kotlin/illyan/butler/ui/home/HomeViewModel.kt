@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -60,7 +61,15 @@ class HomeViewModel(
         errors,
         chatManager.userChats,
         chatManager.deviceChats,
-        credentialRepository.apiKeyCredentials
+        credentialRepository.apiKeyCredentials,
+        combine(
+            chatManager.userChats,
+            chatManager.deviceChats
+        ) { userChats, deviceChats ->
+            (userChats + deviceChats).associate {
+                it.id!! to (chatManager.getMessagesByChatFlow(it.id!!).firstOrNull()?.mapNotNull { it.time }?.minOrNull() ?: it.created)
+            }
+        }
     ) { flows ->
         val signedInUserId = flows[0] as String?
         val clientId = flows[1] as String?
@@ -68,6 +77,7 @@ class HomeViewModel(
         val userChats = flows[3] as List<DomainChat>
         val deviceChats = flows[4] as List<DomainChat>
         val credentials = flows[5] as List<ApiKeyCredential>? ?: emptyList()
+        val lastInteractionTimestampForChat = flows[6] as Map<String, Long?>
         Napier.v {
             """
             signedInUserId: $signedInUserId
@@ -83,7 +93,8 @@ class HomeViewModel(
             errors = errors,
             userChats = userChats,
             deviceChats = deviceChats,
-            credentials = credentials
+            credentials = credentials,
+            lastInteractionTimestampForChat = lastInteractionTimestampForChat
         )
     }.stateIn(
         viewModelScope,

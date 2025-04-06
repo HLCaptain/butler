@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import illyan.butler.domain.model.DomainError
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.generated.resources.Res
+import illyan.butler.generated.resources.error_message_chat_refresh
 import illyan.butler.generated.resources.error_message_response_long
 import org.jetbrains.compose.resources.stringResource
 
@@ -21,7 +22,8 @@ fun ErrorSnackbarHost(
 ) {
     val hostState = remember { SnackbarHostState() }
     val errorCodeMessages = mapOf(
-        ErrorCode.MessageResponseError to stringResource(Res.string.error_message_response_long)
+        ErrorCode.MessageResponseError to stringResource(Res.string.error_message_response_long),
+        ErrorCode.ChatRefreshError to stringResource(Res.string.error_message_chat_refresh),
     )
     LaunchedEffect(errors) {
         errors.lastOrNull()?.let {

@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,18 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.navigation.NavController
 import illyan.butler.core.ui.utils.getWindowSizeInDp
 import kotlinx.coroutines.delay
-
-val LocalDialogDismissRequest = compositionLocalOf { {} }
 
 @Composable
 private fun DialogContent(
     modifier: Modifier,
     isDialogFullscreen: Boolean,
     isDialogClosing: Boolean,
-    onDismissRequest: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val containerSize = getWindowSizeInDp() // first: height, second: width
@@ -80,13 +74,9 @@ private fun DialogContent(
             LaunchedEffect(isDialogClosing) {
                 isDialogVisible = !isDialogClosing
             }
-        }
-    ) {
-        CompositionLocalProvider(
-            LocalDialogDismissRequest provides onDismissRequest,
-            content = content
-        )
-    }
+        },
+        content = content
+    )
 }
 
 @Composable
@@ -96,7 +86,6 @@ fun ButlerDialog(
     isDialogFullscreen: Boolean = false,
     onDismissDialog: () -> Unit = {},
     onDialogClosed: () -> Unit = {},
-    navController: NavController? = null,
     content: @Composable () -> Unit
 ) {
     var isDialogClosing by rememberSaveable { mutableStateOf(false) }
@@ -110,7 +99,7 @@ fun ButlerDialog(
 
     if (!isDialogClosingAnimationEnded) {
         Dialog(
-            onDismissRequest = { navController?.previousBackStackEntry?.let { navController.navigateUp() } ?: onDismissDialog() },
+            onDismissRequest = onDismissDialog,
             properties = DialogProperties(
                 usePlatformDefaultWidth = false,
                 dismissOnBackPress = true,
@@ -121,7 +110,6 @@ fun ButlerDialog(
                 modifier,
                 isDialogFullscreen,
                 isDialogClosing,
-                onDismissDialog,
                 content
             )
         }

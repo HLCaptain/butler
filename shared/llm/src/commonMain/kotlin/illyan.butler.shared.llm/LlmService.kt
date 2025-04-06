@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
@@ -45,28 +45,47 @@ class LlmService(
     private val getOpenAIClient: suspend (endpoint: String) -> OpenAI,
     private val upsertChat: suspend (chat: ChatDto) -> ChatDto,
     private val errorInMessageResponse: suspend (message: MessageDto?) -> Unit,
+    private val removeMessage: suspend (message: MessageDto) -> Unit,
 ) {
     suspend fun answerChat(
         chat: ChatDto,
         previousChats: List<ChatDto> = emptyList(),
         regenerateMessage: MessageDto? = null
     ) {
+        var chat = chat
         Napier.v("Answering chat ${chat.id}")
         val chatModelId = chat.chatCompletionModel!!.second
-        val messages = chat.lastFewMessages.sortedBy { it.time }
+        var messages = chat.lastFewMessages.sortedBy { it.time }
         if (messages.isEmpty()) {
             Napier.v("No messages in chat, skipping")
             return
         }
         // Then last message is by a user
-        val lastMessage = if (regenerateMessage != null) {
+        var lastMessage = if (regenerateMessage != null) {
             messages.first { it.id == regenerateMessage.id }
         } else {
             messages.last()
         }
         val resources = messages.map { message -> message.resourceIds.map { getResource(it) } }.flatten()
-        val conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId, resources)
-        if (lastMessage.senderId != chat.ownerId) {
+        var conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId, resources)
+        if (lastMessage.senderId != chat.ownerId && lastMessage.message.isNullOrBlank()) {
+            Napier.v("Last message from AI is blank, regenerating new response.")
+            removeMessage(lastMessage)
+            // Removing last message from conversation
+            messages = messages.filter { lastMessage.id != it.id }
+            if (messages.isEmpty()) {
+                Napier.v("No messages in chat, skipping")
+                return
+            }
+            chat = chat.copy(lastFewMessages = messages)
+            conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId, resources)
+            lastMessage = if (regenerateMessage != null) {
+                messages.first { it.id == regenerateMessage.id }
+            } else {
+                messages.last()
+            }
+        }
+        if (lastMessage.senderId != chat.ownerId && regenerateMessage == null && !lastMessage.message.isNullOrBlank()) {
             var updatedChat = chat
             coroutineScopeIO.launch {
                 combine(
@@ -99,7 +118,7 @@ class LlmService(
             var updatedAnswer: MessageDto? = null
             try {
                 // Getting the first response
-                updatedAnswer = answerFlow.first()?.let { toNewMessage(regenerateMessage, chat, it) }
+                updatedAnswer = answerFlow.firstOrNull { !it.isNullOrBlank() }?.let { toNewMessage(regenerateMessage, chat, it) }
             } catch (e: Exception) {
                 Napier.e("Error while getting answer", e)
                 errorInMessageResponse(null)

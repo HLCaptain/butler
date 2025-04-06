@@ -446,6 +446,8 @@ private fun SyncPreferencesButton(
 fun ClientLabel(
     clientUUID: String?,
 ) {
+    // FIXME: Compose Multiplatform (desktop) does not yet support ClipEntry (with ClipData objects)
+    //  so we use the deprecated LocalClipboardManager instead
     val clipboard = LocalClipboardManager.current
     AnimatedVisibility(visible = clientUUID != null) {
         TooltipElevatedCard(

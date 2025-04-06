@@ -12,4 +12,5 @@ data class HomeState(
     val deviceChats: List<DomainChat> = listOf(),
     val localChats: List<DomainChat> = listOf(),
     val credentials: List<ApiKeyCredential> = listOf(),
+    val lastInteractionTimestampForChat: Map<String, Long?> = mapOf()
 )

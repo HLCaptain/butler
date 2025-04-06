@@ -40,7 +40,6 @@ import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.core.ui.components.LocalDialogDismissRequest
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.mediumDialogWidth
@@ -68,6 +67,7 @@ import kotlin.uuid.Uuid
 fun ProfileDialog(
     onShowSettingsScreen: () -> Unit = {},
     onLogin: () -> Unit,
+    onClose: () -> Unit = {},
     onAbout: (() -> Unit)? = null,
 ) {
     val viewModel = koinViewModel<ProfileViewModel>()
@@ -93,6 +93,7 @@ fun ProfileDialog(
         onSignOut = viewModel::signOut,
         onShowLoginScreen = onLogin,
         onShowAboutScreen = onAbout,
+        onClose = onClose,
         onShowSettingsScreen = onShowSettingsScreen,
         resetTutorialAndSignOut = viewModel::resetTutorialAndSignOut
     )
@@ -108,6 +109,7 @@ fun ProfileDialogContent(
     confidentialInfo: List<Pair<String, String?>> = emptyList(),
     showConfidentialInfoInitially: Boolean = false,
     onSignOut: () -> Unit = {},
+    onClose: () -> Unit = {},
     onShowLoginScreen: () -> Unit = {},
     onShowAboutScreen: (() -> Unit)? = null,
     onShowSettingsScreen: () -> Unit = {},
@@ -140,6 +142,7 @@ fun ProfileDialogContent(
                 isUserSigningOut = isUserSigningOut,
                 onLogin = onShowLoginScreen,
                 onSignOut = onSignOut,
+                onClose = onClose,
                 onShowSettingsScreen = onShowSettingsScreen,
                 onShowAboutScreen = onShowAboutScreen,
                 resetTutorialAndSignOut = resetTutorialAndSignOut
@@ -159,9 +162,9 @@ fun ProfileButtons(
     onShowAboutScreen: (() -> Unit)? = null,
     onLogin: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    onClose: () -> Unit = {},
     resetTutorialAndSignOut: () -> Unit = {},
 ) {
-    val onDialogClosed = LocalDialogDismissRequest.current
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,7 +179,7 @@ fun ProfileButtons(
                 .align(Alignment.Bottom),
             horizontalArrangement = Arrangement.End
         ) {
-            ButlerMediumTextButton(onClick = { onDialogClosed() }) {
+            ButlerMediumTextButton(onClick = onClose) {
                 Text(text = stringResource(Res.string.close))
             }
             if (isUserSignedIn == true) {

@@ -157,7 +157,9 @@ fun ChatLayout(
                                         stopAudio = viewModel::stopAudio,
                                         navigationIcon = navigationIcon,
                                         toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
-                                        isChatDetailsOpenRatio = drawerOpenRatio
+                                        isChatDetailsOpenRatio = drawerOpenRatio,
+                                        refreshChat = viewModel::refreshChat,
+                                        sendError = viewModel::sendError
                                     )
                                 } else {
                                     NewChat(

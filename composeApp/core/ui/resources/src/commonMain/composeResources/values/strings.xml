@@ -64,6 +64,7 @@
     <string name="audio_translation_model">Audio Translation model</string>
     <string name="image_generations_model">Image Generations model</string>
     <string name="select_chat">Select chat!</string>
+    <string name="refresh_chat">Refresh chat</string>
     <string name="send">Send</string>
     <string name="sender_id">Sender ID</string>
     <string name="send_message">Send message</string>
@@ -132,6 +133,7 @@
     <!-- Errors -->
     <string name="error_message_response_short">Response error</string>
     <string name="error_message_response_long">Response error. Server might be down.</string>
+    <string name="error_message_chat_refresh">Chat refresh timeout.</string>
 
     <!-- Onboarding -->
     <!-- Titles -->

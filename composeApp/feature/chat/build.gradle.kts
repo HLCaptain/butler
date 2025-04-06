@@ -10,6 +10,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.core.utils)
+        implementation(projects.composeApp.data.error)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.chat)
         implementation(projects.composeApp.domain.auth)

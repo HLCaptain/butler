@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -151,7 +152,7 @@ fun <T : Any> ExposedDropdownMenuBoxScope.ButlerDropdownMenu(
         scrollState = scrollState,
         border = ButlerCardDefaults.outlinedCardBorder(),
         containerColor = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
     ) {
         ButlerDropdownMenuDefaults.DropdownMenuList(
             values = values,
@@ -222,7 +223,7 @@ fun ExposedDropdownMenuBoxScope.ButlerDropdownMenu(
         border = ButlerCardDefaults.outlinedCardBorder(),
         containerColor = ButlerDropdownMenuDefaults.ContainerColor,
         shape = MaterialTheme.shapes.medium,
-        content = content
+        content = content,
     )
 }
 
@@ -285,7 +286,7 @@ object ButlerDropdownMenuDefaults {
             val itemPositionWithOffset = (selectedItemPosition.toInt() - offset).coerceAtLeast(0)
             scrollState?.animateScrollTo(itemPositionWithOffset)
         }
-        Column {
+        Column(modifier = Modifier.focusable(enabled = true)) {
             values.forEachIndexed { index, value ->
                 val leadingIcon = remember { getValueLeadingIcon(value) }
                 val leadingComposable = @Composable {

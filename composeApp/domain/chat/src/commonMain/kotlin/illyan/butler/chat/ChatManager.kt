@@ -110,6 +110,10 @@ class ChatManager(
         errorInMessageResponse = { message ->
             errorRepository.reportSimpleError(ErrorCode.MessageResponseError)
             message?.toDomainModel()?.let { messageRepository.delete(it, deviceOnly = true) }
+        },
+        removeMessage = { message ->
+            Napier.v { "Removing message ${message.id} from device" }
+            messageRepository.delete(message.toDomainModel(), deviceOnly = true)
         }
     )
 
@@ -334,5 +338,9 @@ class ChatManager(
                 deviceOnly = authManager.clientId.first() == chat.ownerId
             )
         }
+    }
+
+    suspend fun refreshDeviceChat(chatId: String) {
+        answerOpenAIChat(chatId = chatId)
     }
 }

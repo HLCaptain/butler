@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.rounded.KeyboardDoubleArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -77,6 +80,7 @@ import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
+import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.ButlerTooltipDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
@@ -84,12 +88,14 @@ import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.ErrorCode
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.message_id
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
 import illyan.butler.generated.resources.play
+import illyan.butler.generated.resources.refresh_chat
 import illyan.butler.generated.resources.select_chat
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
@@ -120,12 +126,40 @@ fun ChatDetail(
     toggleRecord: (String) -> Unit,
     playAudio: (String) -> Unit,
     stopAudio: () -> Unit,
+    refreshChat: () -> Unit,
+    sendError: (ErrorCode) -> Unit,
     toggleChatDetails: () -> Unit,
     isChatDetailsOpenRatio: Float,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
+    var sentMessageButNoUpdate by remember { mutableStateOf(false) }
+    val lastMessage = remember(state.messages) {
+        (state.messages ?: emptyList()).maxByOrNull { it.time ?: 0L }
+    }
+    var sentMessageAndLoading by remember(lastMessage?.senderId, state.chat?.ownerId) {
+        mutableStateOf(lastMessage?.senderId == state.chat?.ownerId)
+    }
+    LaunchedEffect(lastMessage?.senderId) {
+        // Last message is sent by the user
+        if (lastMessage?.senderId == state.chat?.ownerId ||
+            // Or last message is from bot, but the message is blank
+            (lastMessage?.senderId != state.chat?.ownerId && lastMessage?.messageContent?.isBlank() == true)) {
+            delay(5000)
+            sentMessageButNoUpdate = true
+        } else {
+            sentMessageButNoUpdate = false
+        }
+    }
+    LaunchedEffect(sentMessageAndLoading) {
+        if (sentMessageAndLoading) {
+            delay(60000)
+            sentMessageAndLoading = false
+            sentMessageButNoUpdate = true
+            sendError(ErrorCode.ChatRefreshError)
+        }
+    }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surface,
@@ -227,7 +261,14 @@ fun ChatDetail(
                                 playingAudio = state.playingAudio,
                                 stopAudio = stopAudio,
                                 images = state.images,
-                                contentPadding = innerPadding
+                                contentPadding = innerPadding,
+                                sentMessageButNoUpdate = sentMessageButNoUpdate,
+                                sentMessageAndLoading = sentMessageAndLoading,
+                                refreshChat = {
+                                    sentMessageButNoUpdate = false
+                                    sentMessageAndLoading = true
+                                    refreshChat()
+                                }
                             )
                         }
                     }
@@ -266,9 +307,12 @@ fun MessageList(
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
     stopAudio: () -> Unit = {},
+    refreshChat: () -> Unit = {},
     playingAudio: String? = null,
     images: Map<String, ByteArray> = emptyMap(), // URIs of images
     userId: String,
+    sentMessageButNoUpdate: Boolean = false,
+    sentMessageAndLoading: Boolean = false
 ) {
     val lazyListState = rememberLazyListState()
     LaunchedEffect(messages.isEmpty()) {
@@ -281,7 +325,17 @@ fun MessageList(
         contentPadding = contentPadding,
         reverseLayout = true, // From bottom to up
     ) {
-        items(messages.sortedByDescending { it.time }, key = { it.id!! }) { message ->
+        if (sentMessageAndLoading) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MediumCircularProgressIndicator()
+                }
+            }
+        }
+        items(messages.withIndex().sortedByDescending { it.value.time }, key = { it.value.id!! }) { (index, message) ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -290,42 +344,65 @@ fun MessageList(
                     modifier = Modifier.widthIn(max = preferedWidth),
                     contentAlignment = if (message.senderId == userId) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
-                    RichTooltipWithContent(
-                        modifier = Modifier.animateItem(),
-                        enabledGestures = getTooltipGestures(),
-                        tooltip = {
-                            val keyValueList = remember(message) {
-                                listOf(
-                                    Res.string.message_id to message.id,
-                                    Res.string.timestamp to message.time?.let {
-                                        Instant.fromEpochMilliseconds(it)
-                                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                                            .format(LocalDateTime.Formats.ISO)
-                                    },
-                                    Res.string.sender_id to message.senderId,
-                                ).filter { it.second != null }
-                            }
-                            Column {
-                                keyValueList.forEach {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(text = stringResource(it.first))
-                                        Text(text = it.second!!)
+                    Column {
+                        RichTooltipWithContent(
+                            enabledGestures = getTooltipGestures(),
+                            tooltip = {
+                                val keyValueList = remember(message) {
+                                    listOf(
+                                        Res.string.message_id to message.id,
+                                        Res.string.timestamp to message.time?.let {
+                                            Instant.fromEpochMilliseconds(it)
+                                                .toLocalDateTime(TimeZone.currentSystemDefault())
+                                                .format(LocalDateTime.Formats.ISO)
+                                        },
+                                        Res.string.sender_id to message.senderId,
+                                    ).filter { it.second != null }
+                                }
+                                Column {
+                                    keyValueList.forEach {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(text = stringResource(it.first))
+                                            Text(text = it.second!!)
+                                        }
                                     }
                                 }
+                            },
+                            colors = ButlerTooltipDefaults.richTooltipColors
+                        ) { gestureAreaModifier ->
+                            MessageItem(
+                                modifier = gestureAreaModifier.fillMaxWidth(),
+                                message = message,
+                                userId = userId,
+                                sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                                playAudio = playAudio,
+                                playingAudio = playingAudio,
+                                stopAudio = stopAudio,
+                                images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                            )
+                        }
+                        AnimatedVisibility(
+                            visible = index == 0 && sentMessageButNoUpdate,
+                            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+                        ) {
+                            Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    ButlerMediumTextButton(
+                                        onClick = refreshChat,
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Refresh,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        text = { Text(text = stringResource(Res.string.refresh_chat)) }
+                                    )
+                                }
                             }
-                        },
-                        colors = ButlerTooltipDefaults.richTooltipColors
-                    ) { gestureAreaModifier ->
-                        MessageItem(
-                            modifier = gestureAreaModifier.fillMaxWidth(),
-                            message = message,
-                            userId = userId,
-                            sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                            playAudio = playAudio,
-                            playingAudio = playingAudio,
-                            stopAudio = stopAudio,
-                            images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                        )
+                        }
                     }
                 }
             }

@@ -104,6 +104,7 @@ import illyan.butler.ui.error.ErrorSnackbarHost
 import illyan.butler.ui.onboard_flow.OnboardFlow
 import illyan.butler.ui.profile.dialog.ProfileDialog
 import illyan.butler.ui.profile.settings.UserSettings
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
@@ -130,14 +131,22 @@ fun Home() {
     ButlerDialog(
         isDialogOpen = isProfileDialogShowing,
         isDialogFullscreen = false,
-        onDismissDialog = { isProfileDialogShowing = false },
+        onDismissDialog = {
+            Napier.d { "Dialog dismissed, previous entry: ${profileNavController.previousBackStackEntry?.destination}" }
+            if (profileNavController.previousBackStackEntry != null) {
+                Napier.d { "Navigating up" }
+                profileNavController.navigateUp()
+            } else {
+                Napier.d { "Closing dialog" }
+                isProfileDialogShowing = false
+            }
+        },
         onDialogClosed = {},
-        navController = profileNavController
     ) {
         NavHost(
             navController = profileNavController,
             contentAlignment = Alignment.Center,
-            sizeTransform = { SizeTransform(clip = false) },
+            sizeTransform = { SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> tween(animationTime) }) },
             startDestination = "profile",
             enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
             popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
@@ -151,6 +160,9 @@ fun Home() {
                         isAuthFlowEnded = false
                         isProfileDialogShowing = false
                     },
+                    onClose = {
+                        isProfileDialogShowing = false
+                    }
 //                            onAbout = { profileNavController.navigate("about") }
                 )
             }
@@ -301,8 +313,13 @@ fun Home() {
                                                     EmptyChatNavDrawerItem()
                                                 }
 
+                                                val chats = remember(state.userChats, state.deviceChats, state.lastInteractionTimestampForChat) {
+                                                    (state.userChats + state.deviceChats).sortedByDescending {
+                                                        state.lastInteractionTimestampForChat[it.id!!] ?: it.created
+                                                    }
+                                                }
                                                 ChatList(
-                                                    chats = state.userChats + state.deviceChats,
+                                                    chats = chats,
                                                     deleteChat = {
                                                         viewModel.deleteChat(it)
                                                         if (currentChat == it) currentChat = null

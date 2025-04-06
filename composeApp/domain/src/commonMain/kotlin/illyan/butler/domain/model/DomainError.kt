@@ -32,5 +32,6 @@ sealed class DomainError {
 }
 
 enum class ErrorCode {
-    MessageResponseError
+    MessageResponseError,
+    ChatRefreshError
 }
