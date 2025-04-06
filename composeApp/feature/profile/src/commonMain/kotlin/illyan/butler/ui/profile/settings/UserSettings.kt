@@ -75,7 +75,7 @@ import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.TooltipElevatedCard
-import illyan.butler.core.ui.components.mediumDialogWidth
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.Theme
@@ -149,7 +149,7 @@ fun UserSettingsDialogContent(
     onThemeChange: (Theme) -> Unit = {},
 ) {
     Crossfade(
-        modifier = modifier.mediumDialogWidth(),
+        modifier = modifier.smallDialogWidth(),
         targetState = showAnalyticsRequestDialog,
         label = "User Settings Dialog Content",
     ) {
@@ -446,6 +446,8 @@ private fun SyncPreferencesButton(
 fun ClientLabel(
     clientUUID: String?,
 ) {
+    // FIXME: Compose Multiplatform (desktop) does not yet support ClipEntry (with ClipData objects)
+    //  so we use the deprecated LocalClipboardManager instead
     val clipboard = LocalClipboardManager.current
     AnimatedVisibility(visible = clientUUID != null) {
         TooltipElevatedCard(

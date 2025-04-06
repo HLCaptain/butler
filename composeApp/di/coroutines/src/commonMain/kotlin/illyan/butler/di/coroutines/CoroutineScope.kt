@@ -1,7 +1,7 @@
 package illyan.butler.di.coroutines
 
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.di.KoinNames
-import illyan.butler.error.ErrorManager
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +28,8 @@ fun provideCoroutineScopeDefault(exceptionHandler: CoroutineExceptionHandler) = 
 
 @Single
 fun provideCoroutineExceptionHandler(
-    errorManager: ErrorManager, // FIXME: Cyclic dependency using coroutineScope with handler
+    errorRepository: ErrorRepository,
     @Named(KoinNames.CoroutineScopeIOWithoutHandler) coroutineScope: CoroutineScope
 ) = CoroutineExceptionHandler { _, throwable ->
-    coroutineScope.launch { errorManager.reportError(throwable) }
+    coroutineScope.launch { errorRepository.reportError(throwable) }
 }

@@ -76,7 +76,8 @@ class MessageStoreRepository(
         }.filterNotNull()
     }
 
+    @OptIn(ExperimentalStoreApi::class)
     override suspend fun delete(message: DomainMessage, deviceOnly: Boolean) {
-        userMessageStore.clear(MessageKey.Delete(message.id!!, message.chatId, deviceOnly))
+        messageMutableStore.clear(MessageKey.Delete(message.id!!, message.chatId, deviceOnly))
     }
 }

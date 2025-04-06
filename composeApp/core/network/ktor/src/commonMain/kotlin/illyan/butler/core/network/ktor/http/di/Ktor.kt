@@ -62,6 +62,8 @@ import com.aallam.openai.api.moderation.ModerationModel
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.api.moderation.ModerationResult
 import com.aallam.openai.api.moderation.TextModeration
+import com.aallam.openai.api.run.AssistantStreamEvent
+import com.aallam.openai.api.run.AssistantStreamEventType
 import com.aallam.openai.api.run.MessageCreation
 import com.aallam.openai.api.run.MessageCreationStep
 import com.aallam.openai.api.run.MessageCreationStepDetails
@@ -91,9 +93,9 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.ApiKeyCredential
-import illyan.butler.error.ErrorManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.network.tls.CIOCipherSuites
@@ -110,13 +112,13 @@ import kotlin.time.Duration.Companion.days
 fun provideHttpClient(
     userDao: UserDao,
     appRepository: AppRepository,
-    errorManager: ErrorManager
+    errorRepository: ErrorRepository
 ): HttpClient = HttpClient(CIO) {
     setupCioClient()
     setupClient(
         userDao = userDao,
         appRepository = appRepository,
-        errorManager = errorManager
+        errorRepository = errorRepository
     )
 }
 
@@ -1037,6 +1039,51 @@ fun provideOpenAIClient(
                     ),
                     expiresAt = 0,
                     lastActiveAt = 0,
+                )
+            )
+        }
+
+        @BetaOpenAI
+        override suspend fun createStreamingRun(
+            threadId: ThreadId,
+            request: RunRequest,
+            requestOptions: RequestOptions?
+        ): Flow<AssistantStreamEvent> {
+            return flowOf(
+                AssistantStreamEvent(
+                    rawType = "dummy_type",
+                    type = AssistantStreamEventType.THREAD_CREATED,
+                    data = "dummy_data",
+                )
+            )
+        }
+
+        @BetaOpenAI
+        override suspend fun createStreamingThreadRun(
+            request: ThreadRunRequest,
+            requestOptions: RequestOptions?
+        ): Flow<AssistantStreamEvent> {
+            return flowOf(
+                AssistantStreamEvent(
+                    rawType = "dummy_type",
+                    type = AssistantStreamEventType.THREAD_CREATED,
+                    data = "dummy_data",
+                )
+            )
+        }
+
+        @BetaOpenAI
+        override suspend fun submitStreamingToolOutput(
+            threadId: ThreadId,
+            runId: RunId,
+            output: List<ToolOutput>,
+            requestOptions: RequestOptions?
+        ): Flow<AssistantStreamEvent> {
+            return flowOf(
+                AssistantStreamEvent(
+                    rawType = "dummy_type",
+                    type = AssistantStreamEventType.THREAD_CREATED,
+                    data = "dummy_data",
                 )
             )
         }

@@ -10,6 +10,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.core.utils)
+        implementation(projects.composeApp.data.error)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.chat)
         implementation(projects.composeApp.domain.auth)
@@ -33,7 +34,9 @@ kotlin {
         implementation(libs.korge.audio)
         implementation(libs.korge.io)
         implementation(libs.filekit)
+        // Using markdown for code blocks, as richtext does not support it yet
         implementation(libs.markdown)
+//        implementation(libs.richtext)
         implementation(libs.material.kolors)
     }
 

@@ -385,7 +385,7 @@ fun NoApiKeyCredentialGridItem(
     lazyGridState: LazyGridState
 ) {
     AnimatedContent(
-        targetState = lazyGridState.layoutInfo.maxSpan > 1,
+        targetState = lazyGridState.layoutInfo.mainAxisItemSpacing > 1,
         transitionSpec = {
             val slideSpec = spring<IntOffset>(
                 stiffness = Spring.StiffnessMediumLow,

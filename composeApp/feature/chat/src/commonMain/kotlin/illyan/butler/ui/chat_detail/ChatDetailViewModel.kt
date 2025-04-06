@@ -6,9 +6,11 @@ import illyan.butler.audio.AudioManager
 import illyan.butler.audio.toWav
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
+import illyan.butler.data.error.ErrorRepository
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.ErrorCode
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
 import korlibs.audio.sound.AudioData
@@ -31,6 +33,7 @@ class ChatDetailViewModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
+    private val errorRepository: ErrorRepository
 ) : ViewModel() {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
 
@@ -73,27 +76,26 @@ class ChatDetailViewModel(
     ) { flows ->
         val chat = flows[0] as DomainChat?
         val messages = flows[1] as List<DomainMessage>?
-        val recording = flows[2] as? Boolean ?: false
+        val recording = flows[2] as? Boolean == true
         val playing = flows[3] as? String
         val resources = flows[4] as List<DomainResource>?
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate {
                 it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
             } ?: emptyMap()
-        val images = resources?.filter { it.type.startsWith("image") }
-            ?.associate { it.id!! to it.data } ?: emptyMap()
-        Napier.v {
-            """
-            ChatDetailState:
-            chat: ${chat?.id}
-            messages: ${messages?.map { it.id }}
-            isRecording: $recording
-            playingAudio: $playing
-            resources: ${resources?.map { it.id }}
-            sounds: ${sounds.keys}
-            images: ${images.keys}
-            """.trimIndent()
-        }
+        val images = resources?.filter { it.type.startsWith("image") }?.associate { it.id!! to it.data } ?: emptyMap()
+//        Napier.v {
+//            """
+//            ChatDetailState:
+//            chat: ${chat?.id}
+//            messages: ${messages?.map { it.id }}
+//            isRecording: $recording
+//            playingAudio: $playing
+//            resources: ${resources?.map { it.id }}
+//            sounds: ${sounds.keys}
+//            images: ${images.keys}
+//            """.trimIndent()
+//        }
         ChatDetailState(
             chat = chat,
             messages = messages,
@@ -109,6 +111,7 @@ class ChatDetailViewModel(
     )
 
     fun loadChat(chatId: String) {
+        Napier.v { "Loading chat $chatId" }
         chatIdStateFlow.update { chatId }
     }
 
@@ -148,6 +151,18 @@ class ChatDetailViewModel(
     fun stopAudio() {
         viewModelScope.launch {
             audioManager.stopAudio()
+        }
+    }
+
+    fun refreshChat() {
+        viewModelScope.launch {
+            chatManager.refreshDeviceChat(chatIdStateFlow.value ?: return@launch)
+        }
+    }
+
+    fun sendError(code: ErrorCode) {
+        viewModelScope.launch {
+            errorRepository.reportSimpleError(code)
         }
     }
 }

@@ -13,7 +13,7 @@ kotlin {
         implementation(projects.composeApp.config)
         implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.settings)
-        implementation(projects.composeApp.domain.error)
+        implementation(projects.composeApp.data.error)
 
         implementation(libs.ktor.core)
         implementation(libs.ktor.auth)

@@ -27,7 +27,7 @@ android {
     }
 }
 
-val localProperties = rootProject.findProject(projects.composeApp.identityPath.path)!!.localPropertiesFile.readLines().associate {
+val localProperties = rootProject.findProject(projects.composeApp.path)!!.localPropertiesFile.readLines().associate {
     if (it.startsWith("#") || !it.contains("=")) return@associate "" to ""
     val (key, value) = it.split("=", limit = 2)
     key to value
@@ -60,5 +60,8 @@ buildConfig {
 
         val noConfigSetup = localProperties["NO_CONFIG_SETUP"].toBoolean() // Set to true to have a baseline configuration
         buildConfigField("Boolean", "NO_CONFIG_SETUP", noConfigSetup.toString())
+
+        buildConfigField("String", "VERSION_NAME", "\"${libs.versions.butler.name.get()}\"")
+        buildConfigField("Int", "VERSION_CODE", libs.versions.butler.code.get().toInt())
     }
 }

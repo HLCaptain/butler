@@ -17,10 +17,12 @@ import illyan.butler.generated.resources.open_app_settings
 import illyan.butler.generated.resources.permission_request_denied_description
 import illyan.butler.generated.resources.permission_request_denied_title
 import illyan.butler.ui.permission.PermissionRequestScreen
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
-import io.github.vinceglb.filekit.core.extension
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.extension
+import io.github.vinceglb.filekit.path
+import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -35,8 +37,8 @@ actual fun ChatDetailBottomBar(
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val launcher = rememberFilePickerLauncher(
-        mode = PickerMode.Single,
-        type = PickerType.Image
+        mode = FileKitMode.Single,
+        type = FileKitType.Image
     ) { file ->
         file?.path?.let {
             coroutineScope.launch {

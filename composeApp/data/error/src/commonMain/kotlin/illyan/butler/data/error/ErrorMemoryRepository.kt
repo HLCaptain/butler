@@ -3,8 +3,8 @@ package illyan.butler.data.error
 import illyan.butler.core.utils.getOsName
 import illyan.butler.core.utils.getPlatformName
 import illyan.butler.core.utils.getSystemMetadata
-import illyan.butler.domain.model.DomainErrorEvent
-import illyan.butler.domain.model.DomainErrorResponse
+import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.ErrorState
 import illyan.butler.shared.model.response.ServerErrorResponse
 import io.github.aakira.napier.Napier
@@ -20,16 +20,13 @@ import kotlin.uuid.Uuid
 
 @Single
 class ErrorMemoryRepository : ErrorRepository {
-    private val _appErrorEventFlow = MutableSharedFlow<DomainErrorEvent>()
-    override val appErrorEventFlow: SharedFlow<DomainErrorEvent> = _appErrorEventFlow.asSharedFlow()
-
-    private val _serverErrorEventFlow = MutableSharedFlow<DomainErrorResponse>()
-    override val serverErrorEventFlow: SharedFlow<DomainErrorResponse> = _serverErrorEventFlow.asSharedFlow()
+    private val _errorEventFlow = MutableSharedFlow<DomainError>()
+    override val errorEventFlow: SharedFlow<DomainError> = _errorEventFlow.asSharedFlow()
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun reportError(throwable: Throwable) {
         Napier.e(throwable) { "Default throwable error reported" }
-        val newErrorEvent = DomainErrorEvent(
+        val newEvent = DomainError.Event.Rich(
             id = Uuid.random().toString(),
             platform = getPlatformName(),
             exception = throwable.toString().split(":").first(),
@@ -40,9 +37,10 @@ class ErrorMemoryRepository : ErrorRepository {
             timestamp = System.currentTimeMillis(),
             state = ErrorState.NEW
         )
-        _appErrorEventFlow.emit(newErrorEvent)
+        _errorEventFlow.emit(newEvent)
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun reportError(response: HttpResponse) {
         try {
             val containsBody = (response.contentLength()?.toInt() ?: 0) > 0
@@ -50,31 +48,45 @@ class ErrorMemoryRepository : ErrorRepository {
                 val serverResponse = response.body<ServerErrorResponse>()
                 Napier.e { "Custom server error reported: ${serverResponse.statusCodes}" }
                 serverResponse.statusCodes.forEach {
-                    val domainResponse = DomainErrorResponse(
+                    val domainResponse = DomainError.Response(
+                        id = Uuid.random().toString(),
                         httpStatusCode = response.status.value,
                         customErrorCode = it.code,
                         timestamp = response.responseTime.timestamp,
                         message = it.message
                     )
-                    _serverErrorEventFlow.emit(domainResponse)
+                    _errorEventFlow.emit(domainResponse)
                 }
             } else {
                 Napier.e { "Default server error reported" }
-                val domainResponse = DomainErrorResponse(
+                val domainResponse = DomainError.Response(
+                    id = Uuid.random().toString(),
                     httpStatusCode = response.status.value,
                     customErrorCode = null,
                     timestamp = response.responseTime.timestamp
                 )
-                _serverErrorEventFlow.emit(domainResponse)
+                _errorEventFlow.emit(domainResponse)
             }
         } catch (t: Throwable) {
             Napier.e { "Default server error reported" }
-            val domainResponse = DomainErrorResponse(
+            val domainResponse = DomainError.Response(
+                id = Uuid.random().toString(),
                 httpStatusCode = response.status.value,
                 customErrorCode = null,
                 timestamp = response.responseTime.timestamp
             )
-            _serverErrorEventFlow.emit(domainResponse)
+            _errorEventFlow.emit(domainResponse)
         }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun reportSimpleError(code: ErrorCode) {
+        _errorEventFlow.emit(
+            DomainError.Event.Simple(
+                id = Uuid.random().toString(),
+                code = code,
+                timestamp = System.currentTimeMillis(),
+            )
+        )
     }
 }

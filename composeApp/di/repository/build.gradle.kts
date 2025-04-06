@@ -15,7 +15,7 @@ kotlin {
         implementation(projects.composeApp.data.message)
         implementation(projects.composeApp.data.resource)
         implementation(projects.composeApp.data.settings)
-        implementation(projects.composeApp.domain.error)
+        implementation(projects.composeApp.data.error)
 
         implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.core.local.room)

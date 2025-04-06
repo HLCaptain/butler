@@ -14,7 +14,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.domain)
-        implementation(projects.composeApp.domain.error)
+        implementation(projects.composeApp.data.error)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.chat)
         implementation(projects.composeApp.feature.auth)
@@ -32,6 +32,9 @@ kotlin {
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.core)
+
+        implementation(libs.aboutlibraries.core)
+        implementation(libs.aboutlibraries.compose.m3)
 
         implementation(libs.napier)
     }

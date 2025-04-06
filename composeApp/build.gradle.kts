@@ -5,10 +5,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.illyan.butler.composeMultiplatform)
     alias(libs.plugins.illyan.butler.koinForComposeMultiplatform)
+    alias(libs.plugins.aboutlibraries)
 }
 
 group = "illyan"
-version = libs.versions.butler.get()
+version = libs.versions.butler.name.get()
 
 kotlin {
     sourceSets.commonMain.dependencies {
@@ -37,7 +38,6 @@ kotlin {
         implementation(projects.composeApp.domain.audio)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.chat)
-        implementation(projects.composeApp.domain.error)
         implementation(projects.composeApp.domain.host)
         implementation(projects.composeApp.domain.model)
         implementation(projects.composeApp.domain.settings)
@@ -54,6 +54,9 @@ kotlin {
         implementation(projects.composeApp.feature.onboarding)
         implementation(projects.composeApp.feature.permission)
         implementation(projects.composeApp.feature.profile)
+
+        implementation(libs.aboutlibraries.core)
+        implementation(libs.aboutlibraries.compose.m3)
 
         implementation(libs.napier)
         implementation(libs.androidx.datastore.preferences)
@@ -90,8 +93,8 @@ android {
         applicationId = "illyan.butler"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.compileSdk.get().toInt()
-        versionCode = 4
-        versionName = libs.versions.butler.get()
+        versionCode = libs.versions.butler.code.get().toInt()
+        versionName = libs.versions.butler.name.get()
     }
 
     signingConfigs {
@@ -152,7 +155,7 @@ compose.desktop.application {
     nativeDistributions {
         targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
         packageName = "Butler"
-        packageVersion = libs.versions.butler.get().takeWhile { it != '-' }
+        packageVersion = libs.versions.butler.name.get().takeWhile { it != '-' }
         linux {
             modules("jdk.security.auth")
         }
@@ -166,5 +169,15 @@ compose.desktop.application {
 //        obfuscate = true
 
         configurationFiles.from(project.file("compose-desktop.pro"))
+    }
+}
+
+aboutLibraries {
+    android {
+        registerAndroidTasks = false
+    }
+    export {
+        prettyPrint = true
+        outputPath = file("src/commonMain/composeResources/files/aboutlibraries.json")
     }
 }

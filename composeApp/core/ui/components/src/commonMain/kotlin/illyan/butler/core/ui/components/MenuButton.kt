@@ -15,22 +15,17 @@ fun MenuButton(
     enabled: Boolean = true,
     content: @Composable (RowScope.() -> Unit)
 ) {
-    ButlerTextButton(
+    ButlerMediumTextButton(
         modifier = modifier,
         onClick = onClick,
         enabled = enabled,
-        content = {
-            ButlerButtonDefaults.ButtonRow(
-                rowPadding = ButlerButtonDefaults.SmallRowPadding,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                        contentDescription = null
-                    )
-                },
-                text = content
+        text = content,
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null
             )
-        }
+        },
     )
 }
 

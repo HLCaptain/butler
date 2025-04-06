@@ -2,14 +2,18 @@ package illyan.butler.ui.chat_layout
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DismissibleDrawerSheet
@@ -19,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.surfaceColorAtElevation
@@ -32,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
@@ -68,9 +74,14 @@ fun ChatLayout(
             isChatDetailsOpen = false
         }
     }
-    LaunchedEffect(notExpanded, isChatDetailsOpen) {
-        if (notExpanded && isChatDetailsOpen) drawerState.open() else drawerState.close()
+    LaunchedEffect(isChatDetailsOpen) {
+        if (isChatDetailsOpen) {
+            drawerState.open()
+        } else {
+            drawerState.close()
+        }
     }
+
     LaunchedEffect(currentChat) {
         if (currentChat == null) {
             isChatDetailsOpen = false
@@ -96,7 +107,7 @@ fun ChatLayout(
                 drawerState = drawerState,
                 drawerContent = {
                     DismissibleDrawerSheet(
-                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
                         drawerContentColor = MaterialTheme.colorScheme.onSurface,
                         drawerShape = RectangleShape,
                     ) {
@@ -129,27 +140,39 @@ fun ChatLayout(
                         currentChat?.let { viewModel.loadChat(it) }
                     }
                     Row(modifier = modifier) {
-                        AnimatedContent(
-                            modifier = Modifier.weight(1f),
-                            targetState = currentChat != null
-                        ) { chatSelected ->
-                            if (chatSelected) {
-                                ChatDetail(
-                                    state = state,
-                                    sendMessage = viewModel::sendMessage,
-                                    toggleRecord = viewModel::toggleRecording,
-                                    sendImage = viewModel::sendImage,
-                                    playAudio = viewModel::playAudio,
-                                    stopAudio = viewModel::stopAudio,
-                                    navigationIcon = navigationIcon,
-                                    toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
-                                    isChatDetailsOpenRatio = drawerOpenRatio
-                                )
-                            } else {
-                                NewChat(
-                                    selectNewChat = selectChat,
-                                    navigationIcon = navigationIcon
-                                )
+                        Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp)) {
+                            AnimatedContent(
+                                modifier = Modifier.weight(1f).clip(
+                                    RoundedCornerShape(
+                                        topEnd = 24.dp * drawerOpenRatio,
+                                        bottomEnd = 24.dp * drawerOpenRatio,
+                                    )
+                                ),
+                                targetState = currentChat != null,
+                                transitionSpec = {
+                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200)) using SizeTransform(clip = false) { _, _ -> tween(0) }
+                                }
+                            ) { chatSelected ->
+                                if (chatSelected) {
+                                    ChatDetail(
+                                        state = state,
+                                        sendMessage = viewModel::sendMessage,
+                                        toggleRecord = viewModel::toggleRecording,
+                                        sendImage = viewModel::sendImage,
+                                        playAudio = viewModel::playAudio,
+                                        stopAudio = viewModel::stopAudio,
+                                        navigationIcon = navigationIcon,
+                                        toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
+                                        isChatDetailsOpenRatio = drawerOpenRatio,
+                                        refreshChat = viewModel::refreshChat,
+                                        sendError = viewModel::sendError
+                                    )
+                                } else {
+                                    NewChat(
+                                        selectNewChat = selectChat,
+                                        navigationIcon = navigationIcon
+                                    )
+                                }
                             }
                         }
                         AnimatedVisibility(
@@ -161,7 +184,7 @@ fun ChatLayout(
                             exit = fadeOut() + shrinkHorizontally()
                         ) {
                             PermanentDrawerSheet(
-                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
                                 drawerContentColor = MaterialTheme.colorScheme.onSurface
                             ) {
                                 Box(modifier = Modifier.fillMaxHeight()) {

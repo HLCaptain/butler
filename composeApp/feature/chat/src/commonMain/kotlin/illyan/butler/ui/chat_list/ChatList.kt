@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,12 +36,10 @@ import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerDropdownMenu
 import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
-import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.delete_chat
-import illyan.butler.generated.resources.device_only
 import illyan.butler.generated.resources.new_chat
 import org.jetbrains.compose.resources.stringResource
 
@@ -93,7 +92,7 @@ fun ChatListItemCard(
         modifier = modifier,
         onClick = openChat,
         colors = ButlerCardDefaults.cardColors(containerColor = cardContainerColor),
-        contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
+        contentPadding = PaddingValues(top = 4.dp, bottom = 4.dp, start = 8.dp, end = 4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -103,7 +102,6 @@ fun ChatListItemCard(
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val chatName = chat.name ?: stringResource(Res.string.new_chat)
                 val style = when (chatName.length) {
@@ -111,7 +109,6 @@ fun ChatListItemCard(
                     in 11..20 -> MaterialTheme.typography.titleMedium
                     else -> MaterialTheme.typography.titleSmall
                 }
-
                 Text(
                     modifier = Modifier.weight(1f),
                     text = chatName,
@@ -120,7 +117,11 @@ fun ChatListItemCard(
                     maxLines = 2
                 )
                 AnimatedVisibility(visible = isDeviceOnly) {
-                    ButlerTag { Text(text = stringResource(Res.string.device_only)) }
+                    Icon(
+                        imageVector = Icons.Rounded.CloudOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
             ExposedDropdownMenuBox(
