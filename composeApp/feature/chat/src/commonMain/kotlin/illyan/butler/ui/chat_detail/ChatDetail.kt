@@ -3,10 +3,13 @@ package illyan.butler.ui.chat_detail
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -236,7 +239,10 @@ fun ChatDetail(
             AnimatedContent(
                 modifier = Modifier.hazeSource(hazeState),
                 targetState = state.chat,
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
+                transitionSpec = {
+                    fadeIn(tween(200)) togetherWith fadeOut(tween(200)) using SizeTransform(clip = false) { _, _ -> tween(0) }
+                }
             ) { chat ->
                 if (chat == null) {
                     SelectChat()

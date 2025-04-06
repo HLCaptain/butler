@@ -18,6 +18,7 @@
 
 package illyan.butler.core.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -75,7 +76,7 @@ private const val TooltipFadeOutDuration = 75L
  * @param showTooltipOnClick if true, toggles tooltip visibility when
  * card is clicked instead of long clicked
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TooltipElevatedCard(
     modifier: Modifier = Modifier,
@@ -140,7 +141,7 @@ sealed class GestureType {
     data class Hover(val delay: Duration = Duration.ZERO) : GestureType()
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PlainTooltipWithContent(
     modifier: Modifier = Modifier,
@@ -204,7 +205,7 @@ fun PlainTooltipWithContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RichTooltipWithContent(
     modifier: Modifier = Modifier,

@@ -2,10 +2,13 @@ package illyan.butler.ui.chat_layout
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -104,7 +107,7 @@ fun ChatLayout(
                 drawerState = drawerState,
                 drawerContent = {
                     DismissibleDrawerSheet(
-                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.1).dp),
+                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
                         drawerContentColor = MaterialTheme.colorScheme.onSurface,
                         drawerShape = RectangleShape,
                     ) {
@@ -137,7 +140,7 @@ fun ChatLayout(
                         currentChat?.let { viewModel.loadChat(it) }
                     }
                     Row(modifier = modifier) {
-                        Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.1).dp)) {
+                        Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp)) {
                             AnimatedContent(
                                 modifier = Modifier.weight(1f).clip(
                                     RoundedCornerShape(
@@ -145,7 +148,10 @@ fun ChatLayout(
                                         bottomEnd = 24.dp * drawerOpenRatio,
                                     )
                                 ),
-                                targetState = currentChat != null
+                                targetState = currentChat != null,
+                                transitionSpec = {
+                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200)) using SizeTransform(clip = false) { _, _ -> tween(0) }
+                                }
                             ) { chatSelected ->
                                 if (chatSelected) {
                                     ChatDetail(
@@ -178,7 +184,7 @@ fun ChatLayout(
                             exit = fadeOut() + shrinkHorizontally()
                         ) {
                             PermanentDrawerSheet(
-                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.1).dp),
+                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
                                 drawerContentColor = MaterialTheme.colorScheme.onSurface
                             ) {
                                 Box(modifier = Modifier.fillMaxHeight()) {

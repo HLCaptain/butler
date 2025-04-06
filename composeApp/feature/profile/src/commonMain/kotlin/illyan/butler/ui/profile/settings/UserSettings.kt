@@ -75,7 +75,7 @@ import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.TooltipElevatedCard
-import illyan.butler.core.ui.components.mediumDialogWidth
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.Theme
@@ -149,7 +149,7 @@ fun UserSettingsDialogContent(
     onThemeChange: (Theme) -> Unit = {},
 ) {
     Crossfade(
-        modifier = modifier.mediumDialogWidth(),
+        modifier = modifier.smallDialogWidth(),
         targetState = showAnalyticsRequestDialog,
         label = "User Settings Dialog Content",
     ) {

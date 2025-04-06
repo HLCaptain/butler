@@ -83,8 +83,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowWidthSizeClass
+import com.mikepenz.aboutlibraries.Libs
+import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import illyan.butler.core.ui.components.ButlerDialog
 import illyan.butler.core.ui.components.PlainTooltipWithContent
+import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
@@ -102,17 +105,22 @@ import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.error.ErrorDialogContent
 import illyan.butler.ui.error.ErrorSnackbarHost
 import illyan.butler.ui.onboard_flow.OnboardFlow
+import illyan.butler.ui.profile.about.AboutDialogContent
 import illyan.butler.ui.profile.dialog.ProfileDialog
 import illyan.butler.ui.profile.settings.UserSettings
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
-fun Home() {
+fun Home(
+    libraries: Libs?
+) {
     val viewModel = koinViewModel<HomeViewModel>()
     val state by viewModel.state.collectAsState()
     var isProfileDialogShowing by rememberSaveable(state.signedInUserId) { mutableStateOf(false) }
@@ -130,7 +138,7 @@ fun Home() {
     val animationTime = 200
     ButlerDialog(
         isDialogOpen = isProfileDialogShowing,
-        isDialogFullscreen = false,
+        isDialogFullscreen = profileNavController.currentBackStackEntry?.destination?.route == "libraries",
         onDismissDialog = {
             Napier.d { "Dialog dismissed, previous entry: ${profileNavController.previousBackStackEntry?.destination}" }
             if (profileNavController.previousBackStackEntry != null) {
@@ -162,15 +170,25 @@ fun Home() {
                     },
                     onClose = {
                         isProfileDialogShowing = false
-                    }
-//                            onAbout = { profileNavController.navigate("about") }
+                    },
+                    onAbout = { profileNavController.navigate("about") }
                 )
             }
             composable("settings") {
                 UserSettings()
             }
             composable("about") {
-                Text("About")
+                AboutDialogContent(
+                    modifier = Modifier.mediumDialogWidth()
+                    // FIXME: LibrariesContainer is not compatible in Compose Multiplatform 1.8.0 yet.
+//                    onNavigateToLibraries = { profileNavController.navigate("libraries") },
+                )
+            }
+            composable("libraries") {
+                LibrariesContainer(
+                    modifier = Modifier.fillMaxSize(),
+                    libraries = libraries
+                )
             }
         }
     }

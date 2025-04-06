@@ -42,7 +42,7 @@ import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.core.ui.components.MenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
-import illyan.butler.core.ui.components.mediumDialogWidth
+import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.about
@@ -117,7 +117,7 @@ fun ProfileDialogContent(
 ) {
     var showConfidentialInfo by remember { mutableStateOf(showConfidentialInfoInitially) }
     ButlerDialogContent(
-        modifier = modifier.mediumDialogWidth(),
+        modifier = modifier.smallDialogWidth(),
         title = {
             ProfileTitleScreen(
                 userUUID = userUUID,

@@ -33,6 +33,9 @@ kotlin {
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.core)
 
+        implementation(libs.aboutlibraries.core)
+        implementation(libs.aboutlibraries.compose.m3)
+
         implementation(libs.napier)
     }
 

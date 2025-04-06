@@ -9,6 +9,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.theme)
         implementation(projects.composeApp.core.utils)
+        implementation(projects.composeApp.config)
         implementation(projects.composeApp.feature.theme)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain)

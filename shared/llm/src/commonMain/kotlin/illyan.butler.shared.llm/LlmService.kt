@@ -329,8 +329,9 @@ class LlmService(
             request = ChatCompletionRequest(
                 model = ModelId(modelId),
                 messages = conversation.also { conversation ->
-                    Napier.v { "Context for answer: ${conversation.joinToString("\n") { "Role: ${it.role.role} \tMessage: ${
-                        when (val content = it.messageContent) {
+                    Napier.v { "Context for answer: ${conversation.joinToString("\n") { chatMessage ->
+                        "Role: ${chatMessage.role.role} \tMessage: ${
+                        when (val content = chatMessage.messageContent) {
                             is TextContent -> content.content
                             is ListContent -> content.content.joinToString("\n") { 
                                 when (it) {
@@ -428,13 +429,13 @@ fun MessageDto.toChatMessage(
     previousMessageContent: String? = null,
     resources: List<ResourceDto> = emptyList(),
 ): ChatMessage {
-    val textPart = if (previousMessageContent?.trim('\n').isNullOrBlank()) message ?: "" else if (message == null) previousMessageContent ?: "" else "$previousMessageContent\n$message"
+    val textPart = if (previousMessageContent?.trim('\n').isNullOrBlank()) message ?: "" else if (message == null) previousMessageContent else "$previousMessageContent\n$message"
     val content = mutableListOf<ContentPart>()
     resources.filter { it.type.startsWith("image") && resourceIds.contains(it.id) }.forEach { imageResource ->
         val imageData = "data:${imageResource.type};base64,${Base64.encode(imageResource.data)}"
         content += ImagePart(imageData)
     }
-    if (textPart.isNotBlank()) content += TextPart(textPart)
+    if (!textPart.isNullOrBlank()) content += TextPart(textPart)
     return if (content.size == 1 && content[0] is TextPart) {
         // Only text
         ChatMessage(

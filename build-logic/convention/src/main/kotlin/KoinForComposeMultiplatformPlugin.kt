@@ -26,6 +26,7 @@ class KoinForComposeMultiplatformPlugin : Plugin<Project> {
 
         extensions.configure<KspExtension> {
             arg("KOIN_USE_COMPOSE_VIEWMODEL", "true")
+            arg("KOIN_DEFAULT_MODULE", "false")
         }
     }
 }

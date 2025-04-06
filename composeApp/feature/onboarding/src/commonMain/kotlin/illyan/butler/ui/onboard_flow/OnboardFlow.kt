@@ -79,9 +79,11 @@ import illyan.butler.generated.resources.onboarding_pro_no_server_required
 import illyan.butler.generated.resources.onboarding_pro_no_server_setup
 import illyan.butler.generated.resources.onboarding_pro_openai_access
 import illyan.butler.generated.resources.onboarding_pro_self_hosted
+import illyan.butler.generated.resources.onboarding_select
 import illyan.butler.generated.resources.onboarding_title_hosted_server
 import illyan.butler.generated.resources.onboarding_title_local_llm
 import illyan.butler.generated.resources.onboarding_title_openai_api
+import illyan.butler.generated.resources.onboarding_unavailable
 import illyan.butler.ui.apikey.ApiKey
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemDescription
 import illyan.butler.ui.onboard_flow.AuthItemDefaults.AuthItemIcon
@@ -280,7 +282,15 @@ fun OnboardFlow(
                                                             windowAdaptiveInfo.heightSizeClass
                                                         )
                                                     )
-                                                }
+                                                },
+                                                onSelect = { navController.navigate(
+                                                    when (index) {
+                                                        0 -> "local_llm"
+                                                        1 -> "hosted_server"
+                                                        2 -> "openai_api"
+                                                        else -> "local_llm"
+                                                    }
+                                                ) }
                                             )
                                         }
                                     }
@@ -305,7 +315,15 @@ fun OnboardFlow(
                                                         windowAdaptiveInfo.heightSizeClass
                                                     )
                                                 )
-                                            }
+                                            },
+                                            onSelect = { navController.navigate(
+                                                when (index) {
+                                                    0 -> "local_llm"
+                                                    1 -> "hosted_server"
+                                                    2 -> "openai_api"
+                                                    else -> "local_llm"
+                                                }
+                                            ) }
                                         )
                                     }
                                 }
@@ -534,7 +552,8 @@ fun ColumnScope.AuthItemHorizontalCard(
     item: AuthItem,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onSelect: () -> Unit
 ) = with(sharedTransitionScope) {
     ButlerCard(
         modifier = modifier.weight(1f).sharedBounds(
@@ -599,7 +618,7 @@ fun ColumnScope.AuthItemHorizontalCard(
                         rememberSharedContentState(key = "select-$key"),
                         animatedVisibilityScope = animatedVisibilityScope
                     ),
-                    onClick = onClick,
+                    onClick = onSelect,
                     enabled = item.enabled
                 ) {
                     Icon(
@@ -620,7 +639,8 @@ fun RowScope.AuthItemVerticalCard(
     item: AuthItem,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onSelect: () -> Unit
 ) = with(sharedTransitionScope) {
     ButlerCard(
         modifier = modifier.weight(1f).sharedBounds(
@@ -689,10 +709,10 @@ fun RowScope.AuthItemVerticalCard(
                             rememberSharedContentState(key = "select-$key"),
                             animatedVisibilityScope = animatedVisibilityScope
                         ).padding(8.dp),
-                        onClick = onClick,
+                        onClick = onSelect,
                         enabled = item.enabled,
                     ) {
-                        Text(if (item.enabled) "Select" else "Unavailable")
+                        Text(text = stringResource(if (item.enabled) Res.string.onboarding_select else Res.string.onboarding_unavailable))
                     }
                 }
             }

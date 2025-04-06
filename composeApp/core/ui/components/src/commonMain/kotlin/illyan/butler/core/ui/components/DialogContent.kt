@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -150,11 +152,11 @@ fun ButlerDialogContentHolder(
 ) = surface(content)
 
 val DialogMinWidth = 280.dp
-val DialogMaxWidth = 800.dp
+val DialogMaxWidth = 640.dp
 val DialogMargin = 64.dp
 
-fun Modifier.dialogWidth(
-    screenWidthDp: Dp = 400.dp,
+@Composable fun Modifier.dialogWidth(
+    screenWidthDp: Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() },
     min: Dp = DialogMinWidth,
     max: Dp = DialogMaxWidth,
     margin: Dp = DialogMargin,
@@ -163,15 +165,16 @@ fun Modifier.dialogWidth(
     max = minOf(maxOf(min, screenWidthDp - margin), max)
 )
 
-fun Modifier.smallDialogWidth() = dialogWidth(max = 320.dp)
-fun Modifier.mediumDialogWidth() = dialogWidth(max = 420.dp)
-fun Modifier.largeDialogWidth() = dialogWidth(max = DialogMaxWidth)
+@Composable fun Modifier.smallDialogWidth() = dialogWidth(max = 360.dp)
+@Composable fun Modifier.mediumDialogWidth() = dialogWidth(max = 480.dp)
+@Composable fun Modifier.largeDialogWidth() = dialogWidth(max = DialogMaxWidth)
 
 val DialogMinHeight = 200.dp
-val DialogMaxHeight = 800.dp
+val DialogMaxHeight = 640.dp
 
+@Composable
 fun Modifier.dialogHeight(
-    screenHeightDp: Dp = 400.dp,
+    screenHeightDp: Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() },
     min: Dp = DialogMinHeight,
     max: Dp = DialogMaxHeight,
     margin: Dp = DialogMargin,
@@ -180,13 +183,14 @@ fun Modifier.dialogHeight(
     max = minOf(maxOf(min, screenHeightDp - margin), max)
 )
 
-fun Modifier.smallDialogHeight() = dialogHeight(max = 280.dp)
-fun Modifier.mediumDialogHeight() = dialogHeight(max = 400.dp)
-fun Modifier.largeDialogHeight() = dialogHeight(max = DialogMaxHeight)
+@Composable fun Modifier.smallDialogHeight() = dialogHeight(max = 280.dp)
+@Composable fun Modifier.mediumDialogHeight() = dialogHeight(max = 420.dp)
+@Composable fun Modifier.largeDialogHeight() = dialogHeight(max = DialogMaxHeight)
 
+@Composable
 fun Modifier.dialogSize(
-    screenWidthDp: Dp = 400.dp,
-    screenHeightDp: Dp = 400.dp,
+    screenWidthDp: Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() },
+    screenHeightDp: Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() },
     minWidth: Dp = DialogMinWidth,
     maxWidth: Dp = DialogMaxWidth,
     minHeight: Dp = DialogMinHeight,
@@ -194,9 +198,9 @@ fun Modifier.dialogSize(
     margin: Dp = DialogMargin,
 ) = dialogWidth(screenWidthDp, minWidth, maxWidth, margin).dialogHeight(screenHeightDp, minHeight, maxHeight, margin)
 
-fun Modifier.smallDialogSize() = smallDialogWidth().smallDialogHeight()
-fun Modifier.mediumDialogSize() = mediumDialogWidth().mediumDialogHeight()
-fun Modifier.largeDialogSize() = largeDialogWidth().largeDialogHeight()
+@Composable fun Modifier.smallDialogSize() = smallDialogWidth().smallDialogHeight()
+@Composable fun Modifier.mediumDialogSize() = mediumDialogWidth().mediumDialogHeight()
+@Composable fun Modifier.largeDialogSize() = largeDialogWidth().largeDialogHeight()
 
 // Paddings for each of the dialog's parts.
 val ButlerDialogContentPadding = PaddingValues(all = 24.dp)

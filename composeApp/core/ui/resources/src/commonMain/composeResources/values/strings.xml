@@ -128,7 +128,13 @@
     <string name="healthy">Healthy</string>
     <string name="error">Error</string>
     <string name="warning">Warning</string>
+
+    <!-- About -->
     <string name="about">About</string>
+    <string name="app_description_brief">Butler is an open-source AI chat app that allows you to chat with various AI models. Select from an OpenAI API endpoint or host your own!</string>
+    <string name="libraries">Libraries</string>
+    <string name="support_app">Support Butler</string>
+    <string name="support_app_description">Support making AI more accessible with Butler!</string>
 
     <!-- Errors -->
     <string name="error_message_response_short">Response error</string>
@@ -164,5 +170,7 @@
     <string name="onboarding_cons_server_may_be_down">Server may be down</string>
     <string name="onboarding_cons_requires_api_key">Requires API key from provider</string>
 
+    <string name="onboarding_select">Select</string>
+    <string name="onboarding_unavailable">Unavailable</string>
 
 </resources>
