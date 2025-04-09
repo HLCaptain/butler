@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +65,7 @@ fun BooleanSetting(
                 )
             }
             if (withCheckbox) {
-                Checkbox(
+                ButlerCheckbox(
                     checked = value,
                     onCheckedChange = onValueChange,
                     enabled = enabled

@@ -31,7 +31,6 @@ import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -76,6 +75,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerCheckbox
 import illyan.butler.core.ui.components.ButlerDropdownMenu
 import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.components.ButlerExpandableCard
@@ -277,7 +277,7 @@ fun NewChat(
                                                 Text(text = "$")
                                             },
                                             trailingIcon = {
-                                                Checkbox(
+                                                ButlerCheckbox(
                                                     checked = freeFilterEnabled,
                                                     onCheckedChange = { freeFilterEnabled = it }
                                                 )
