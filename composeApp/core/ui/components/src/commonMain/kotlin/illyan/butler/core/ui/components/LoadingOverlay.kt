@@ -1,11 +1,11 @@
 package illyan.butler.core.ui.components
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,6 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import illyan.butler.core.ui.utils.BackHandler
 
 // Use LoadingScreenEffect, do not access composition locals directly
@@ -62,25 +65,28 @@ fun LoadingOverlay(
     isLoading: Boolean,
     content: @Composable () -> Unit
 ) {
-    content()
-    Crossfade(isLoading, label = "LoadingOverlayFade") {
-        if (it) {
-            val alpha by animateFloatAsState(
-                targetValue = 0.5f,
-                label = "LoadingOverlayAlpha"
-            )
-            Box(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = alpha))
-                    .fillMaxSize()
-            )
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LargeCircularProgressIndicator()
-            }
+    Box {
+        val blurRadius by animateFloatAsState(if (isLoading) 24f else 0f)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                .graphicsLayer {
+                    renderEffect = BlurEffect(blurRadius, blurRadius)
+                }
+        ) {
+            content()
+        }
+        if (isLoading) {
+            Box(modifier = Modifier.pointerInput(Unit) { /* Catching clicks */ })
+        }
+        AnimatedVisibility(
+            visible = isLoading,
+            modifier = Modifier.fillMaxSize().align(Alignment.Center),
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            LargeCircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     }
 }

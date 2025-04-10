@@ -208,12 +208,19 @@ fun NewChat(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    FilledIconButton(
-                                        onClick = { isTextFieldFocused = false },
+                                    OutlinedIconToggleButton(
+                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                                        checked = filtersShown,
+                                        onCheckedChange = { filtersShown = it },
+                                        border = BorderStroke(width = if (filtersShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.primary),
+                                        colors = IconButtonDefaults.iconToggleButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            contentColor = MaterialTheme.colorScheme.primary
+                                        )
                                     ) {
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                            contentDescription = stringResource(Res.string.close)
+                                            imageVector = Icons.Rounded.Tune,
+                                            contentDescription = stringResource(Res.string.filters)
                                         )
                                     }
                                     ButlerTextField(
@@ -240,19 +247,12 @@ fun NewChat(
                                             )
                                         }
                                     )
-                                    OutlinedIconToggleButton(
-                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                                        checked = filtersShown,
-                                        onCheckedChange = { filtersShown = it },
-                                        border = BorderStroke(width = if (filtersShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.primary),
-                                        colors = IconButtonDefaults.iconToggleButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surface,
-                                            contentColor = MaterialTheme.colorScheme.primary
-                                        )
+                                    FilledIconButton(
+                                        onClick = { isTextFieldFocused = false },
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Tune,
-                                            contentDescription = stringResource(Res.string.filters)
+                                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                            contentDescription = stringResource(Res.string.close)
                                         )
                                     }
                                 }
@@ -385,34 +385,6 @@ fun ModelList(
             localModels
         ) { serverModels == null || providerModels == null || localModels == null }
         val noAvailableModels = models.isEmpty() && !isLoading
-        AnimatedVisibility(visible = isLoading) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp))
-                    .consumeWindowInsets(innerPadding),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                MediumCircularProgressIndicator()
-                Text(
-                    text = stringResource(Res.string.loading),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            }
-        }
-
-        AnimatedVisibility(visible = noAvailableModels) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding + PaddingValues(16.dp))
-                    .consumeWindowInsets(innerPadding),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(Res.string.no_models_to_chat_with),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            }
-        }
         val companyCategoriesEnabled = remember(models) { models.filter { it.id.contains('/') }.size > models.size / 2 + 10 }
         val companyModels = remember(models) {
             // Remove the "$company/" prefix from the model IDs
@@ -431,6 +403,43 @@ fun ModelList(
             contentPadding = PaddingValues(12.dp) + innerPadding + PaddingValues(bottom = 56.dp + 16.dp), // Base + inner + FAB height + FAB spacing
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            if (isLoading) {
+                item("is_loading") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(innerPadding + PaddingValues(16.dp))
+                            .consumeWindowInsets(innerPadding)
+                            .animateItem(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        MediumCircularProgressIndicator()
+                        Text(
+                            text = stringResource(Res.string.loading),
+                            style = MaterialTheme.typography.headlineSmall,
+                        )
+                    }
+                }
+            }
+            if (noAvailableModels) {
+                item("no_models") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(innerPadding + PaddingValues(16.dp))
+                            .consumeWindowInsets(innerPadding)
+                            .animateItem(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.no_models_to_chat_with),
+                            style = MaterialTheme.typography.headlineSmall,
+                        )
+                    }
+                }
+            }
             if (companyCategoriesEnabled) {
                 companyModels.forEach { (company, models) ->
                     item {

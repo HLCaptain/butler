@@ -64,6 +64,7 @@ kotlin {
 
     sourceSets.androidMain.dependencies {
         implementation(libs.androidx.core)
+        implementation(libs.androidx.core.splashscreen)
         implementation(libs.koin.android)
         implementation(libs.kotlinx.coroutines.android)
         implementation(libs.androidx.activity)
