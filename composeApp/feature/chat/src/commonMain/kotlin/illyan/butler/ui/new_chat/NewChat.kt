@@ -223,6 +223,7 @@ fun NewChat(
     SharedTransitionLayout {
         val blurRadius by animateFloatAsState(if (selectedModelId != null) 32f else 0f)
         val darkenRatio by animateFloatAsState(if (selectedModelId != null) 2.5f else 1f)
+        val overlayAlpha by animateFloatAsState(if (selectedModelId != null) 0.5f else 0f)
         val surfaceColor = MaterialTheme.colorScheme.surface
         Box(
             modifier = Modifier.graphicsLayer {
@@ -232,7 +233,7 @@ fun NewChat(
                 if (blurRadius > 0f) {
                     drawRect(
                         color = surfaceColor.darken(darkenRatio),
-                        alpha = 0.5f
+                        alpha = overlayAlpha
                     )
                 }
             }
@@ -337,6 +338,7 @@ fun NewChat(
                                 }
                                 1 -> {
                                     val focusRequester = remember { FocusRequester() }
+
                                     ExposedDropdownMenuBox(
                                         expanded = searchFiltersShown,
                                         onExpandedChange = { searchFiltersShown = it }
@@ -430,8 +432,12 @@ fun NewChat(
                                                 }
                                             }
                                         }
-                                        LaunchedEffect(Unit) {
-                                            focusRequester.requestFocus()
+                                        LaunchedEffect(selectedModelId) {
+                                            if (selectedModelId == null) {
+                                                focusRequester.requestFocus()
+                                            } else {
+                                                focusRequester.freeFocus()
+                                            }
                                         }
                                     }
                                 }
@@ -526,30 +532,37 @@ fun NewChat(
         AnimatedContent(
             targetState = selectedModelId,
         ) { id ->
-            id?.let { modelId ->
-                val modelIdWithoutCompany = if (filterByCompany) modelId.substringAfter('/') else modelId
-                Box(
-                    modifier = Modifier.zIndex(1f).fillMaxSize().clickable(
-                        enabled = true,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { selectedModelId = null },
-                    ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ModelListItemExpanded(
-                        modifier = Modifier.mediumDialogWidth(),
-                        onClick = { selectedModelId = null },
-                        sharedTransitionScope = this@SharedTransitionLayout,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        modelName = (models ?: emptyList()).first { it.id == modelId }.copy(id = modelIdWithoutCompany).displayName,
-                        modelId = (models ?: emptyList()).first { it.id == modelId }.id,
-                        providers = providerModels?.filter { it.id == modelId }?.map { it.endpoint } ?: emptyList(),
-                        server = serverModels?.filter { it.id == modelId }?.map { it.endpoint } ?: emptyList(),
-                        selectServerModel = { modelId, provider -> state.userId?.let { selectModel(modelId, provider, it) } },
-                        selectProviderModel = { modelId, provider -> state.clientId?.let { selectModel(modelId, provider, it) } },
-                        selectLocalModel = { modelId -> state.clientId?.let { selectModel(modelId, "", it) } }, // TODO: support local models properly
-                    )
+            id?.let {
+                val selectedModel = models?.firstOrNull { it.id == id }
+                if (selectedModel != null) {
+                    val modelIdWithoutCompany = if (filterByCompany) selectedModel.id.substringAfter('/') else id
+                    Box(
+                        modifier = Modifier.zIndex(1f).fillMaxSize().clickable(
+                            enabled = true,
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { selectedModelId = null },
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ModelListItemExpanded(
+                            modifier = Modifier.mediumDialogWidth(),
+                            onClick = { selectedModelId = null },
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedContent,
+                            modelName = selectedModel.copy(id = modelIdWithoutCompany).displayName,
+                            modelId = selectedModel.id,
+                            providers = providerModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
+                            server = serverModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
+                            selectServerModel = { modelId, provider -> state.userId?.let { selectModel(modelId, provider, it) } },
+                            selectProviderModel = { modelId, provider -> state.clientId?.let { selectModel(modelId, provider, it) } },
+                            selectLocalModel = { modelId -> state.clientId?.let { selectModel(modelId, "", it) } }, // TODO: support local models properly
+                        )
+                    }
+                } else {
+                    LaunchedEffect(Unit) {
+                        selectedModelId = null
+                    }
                 }
             }
         }
