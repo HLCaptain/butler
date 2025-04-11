@@ -100,7 +100,7 @@ object ButlerCheckboxDefaults {
     @Composable
     fun uncheckedBorder(enabled: Boolean) = CardDefaults.outlinedCardBorder(enabled).copy(
         width = 1.dp,
-        brush = SolidColor(MaterialTheme.colorScheme.surfaceDim),
+        brush = SolidColor(MaterialTheme.colorScheme.surfaceVariant),
     )
 
     @Composable
