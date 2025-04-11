@@ -217,7 +217,7 @@ fun NewChat(
         localModels
     ) {
         if (serverModels != null || providerModels != null || localModels != null) {
-            serverModels.orEmpty() + providerModels.orEmpty() + localModels.orEmpty()
+            (serverModels.orEmpty() + providerModels.orEmpty() + localModels.orEmpty()).sortedBy { it.id }
         } else null
     }
     SharedTransitionLayout {
