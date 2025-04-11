@@ -746,7 +746,7 @@ fun ModelList(
             companyModels.forEach { (company, models) ->
                 item {
                     Text(
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
                         text = company,
                         style = MaterialTheme.typography.headlineMedium,
                     )
