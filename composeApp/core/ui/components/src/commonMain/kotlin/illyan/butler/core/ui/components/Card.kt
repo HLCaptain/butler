@@ -1,6 +1,5 @@
 package illyan.butler.core.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
@@ -114,31 +113,6 @@ fun ButlerElevatedCard(
         elevation = elevation,
         content = { Column(modifier = Modifier.padding(contentPadding)) { content() } }
     )
-}
-
-@Composable
-fun ButlerExpandableCard(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    isExpanded: Boolean = false,
-    expandedContent: @Composable () -> Unit = {},
-    contentPadding: PaddingValues = ButlerCardDefaults.ContentPadding,
-    color: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-    content: @Composable ColumnScope.() -> Unit = {},
-) {
-    ButlerCard(
-        modifier = modifier,
-        onClick = onClick,
-        colors = ButlerCardDefaults.cardColors().copy(containerColor = color),
-        contentPadding = contentPadding,
-    ) {
-        Column {
-            content()
-            AnimatedVisibility(visible = isExpanded) {
-                expandedContent()
-            }
-        }
-    }
 }
 
 object ButlerCardDefaults {

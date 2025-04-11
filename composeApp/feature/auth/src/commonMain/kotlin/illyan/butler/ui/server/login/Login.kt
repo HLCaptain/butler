@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
-import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
@@ -189,14 +189,14 @@ fun LoginButtons(
             modifier = Modifier.width(IntrinsicSize.Max),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            MenuButton(
+            MediumMenuButton(
                 onClick = navigateToSignUp,
                 enabled = true,
                 text = stringResource(Res.string.sign_up)
             )
 
             AnimatedVisibility(visible = signInAnonymously != null) {
-                MenuButton(
+                MediumMenuButton(
                     onClick = signInAnonymously ?: {},
                     enabled = true,
                     text = stringResource(Res.string.sign_in_anonymously)
@@ -207,7 +207,7 @@ fun LoginButtons(
         HorizontalDivider()
 
         AnimatedVisibility(visible = selectHost != null) {
-            MenuButton(
+            MediumMenuButton(
                 onClick = selectHost ?: {},
                 enabled = true,
                 text = stringResource(Res.string.select_host)

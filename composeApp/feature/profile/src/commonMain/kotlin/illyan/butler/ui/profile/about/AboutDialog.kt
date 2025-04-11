@@ -24,7 +24,7 @@ import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
-import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.about
 import illyan.butler.generated.resources.app_description_brief
@@ -82,7 +82,7 @@ fun AboutScreen(
         ) {
             AnimatedContent(targetState = onNavigateToLibraries) { onClick ->
                 onClick?.let {
-                    MenuButton(
+                    MediumMenuButton(
                         text = stringResource(Res.string.libraries),
                         onClick = it
                     )

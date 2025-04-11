@@ -153,7 +153,7 @@ fun ButlerDialogContentHolder(
 
 val DialogMinWidth = 280.dp
 val DialogMaxWidth = 640.dp
-val DialogMargin = 64.dp
+val DialogMargin = 48.dp
 
 @Composable fun Modifier.dialogWidth(
     screenWidthDp: Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() },

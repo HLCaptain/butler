@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerTextField
-import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.generated.resources.Res
@@ -181,7 +181,7 @@ fun SelectHostButtons(
             Text(text = stringResource(Res.string.select_host))
         }
         Spacer(modifier = Modifier.width(16.dp))
-        MenuButton(
+        MediumMenuButton(
             onClick = testConnection,
             enabled = true,
             text = stringResource(Res.string.test_host)
