@@ -72,7 +72,7 @@ import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
 import illyan.butler.core.ui.components.DropdownSetting
 import illyan.butler.core.ui.components.LoadingIndicator
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
-import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
@@ -341,7 +341,7 @@ fun UserSettingsButtons(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        MenuButton(
+        MediumMenuButton(
             text = stringResource(Res.string.data_settings),
             onClick = navigateToDataSettings
         )

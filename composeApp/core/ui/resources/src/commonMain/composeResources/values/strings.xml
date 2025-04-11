@@ -56,6 +56,7 @@
     <string name="select">Select</string>
     <string name="search">Search</string>
     <string name="filters">Filters</string>
+    <string name="filters_coming_soon">More filter options are coming soon! 🍵</string>
     <string name="free">Free</string>
     <string name="free_models_only">Free models only</string>
     <string name="chat_completion_model">Chat Completion model</string>
@@ -70,6 +71,7 @@
     <string name="send_message">Send message</string>
     <string name="username">Username</string>
     <string name="select_host">Select Host</string>
+    <string name="hosts">Hosts</string>
     <string name="host_url">Host URL</string>
     <string name="select_host_description">Input the URL of your self-hosted service to access your account and chats!</string>
     <string name="self_hosted">Self-hosted</string>
@@ -80,6 +82,8 @@
     <string name="test">Test</string>
     <string name="you">You</string>
     <string name="assistant">Assistant</string>
+    <string name="companies">Companies</string>
+    <string name="model_id">Model ID</string>
     <string name="back">Back</string>
     <string name="menu">Menu</string>
     <string name="dismiss">Dismiss</string>

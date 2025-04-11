@@ -40,7 +40,7 @@ import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.core.ui.components.MenuButton
+import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
@@ -439,12 +439,12 @@ fun ProfileMenu(
         verticalArrangement = Arrangement.spacedBy((-12).dp)
     ) {
         onShowAboutScreen?.let {
-            MenuButton(
+            MediumMenuButton(
                 onClick = it,
                 text = stringResource(Res.string.about)
             )
         }
-        MenuButton(
+        MediumMenuButton(
             onClick = onShowSettingsScreen,
             text = stringResource(Res.string.settings)
         )

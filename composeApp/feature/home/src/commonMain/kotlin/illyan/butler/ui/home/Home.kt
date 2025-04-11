@@ -63,6 +63,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -111,15 +112,13 @@ import illyan.butler.ui.profile.settings.UserSettings
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun Home(
-    libraries: Libs?
+    libraries: State<Libs?>
 ) {
     val viewModel = koinViewModel<HomeViewModel>()
     val state by viewModel.state.collectAsState()
@@ -185,9 +184,10 @@ fun Home(
                 )
             }
             composable("libraries") {
+                val libs by libraries
                 LibrariesContainer(
                     modifier = Modifier.fillMaxSize(),
-                    libraries = libraries
+                    libraries = libs
                 )
             }
         }
@@ -263,7 +263,10 @@ fun Home(
             }
         ) {
             Surface(modifier = Modifier.fillMaxSize(), tonalElevation = 0.dp) {
-                AnimatedContent(targetState = isAuthFlowEnded) { isHome ->
+                AnimatedContent(
+                    targetState = isAuthFlowEnded,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() }
+                ) { isHome ->
                     if (isHome == null) return@AnimatedContent
                     if (isHome) {
                         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
