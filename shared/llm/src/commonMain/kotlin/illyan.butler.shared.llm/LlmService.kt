@@ -39,8 +39,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 class LlmService(
     private val coroutineScopeIO: CoroutineScope,
-    private val getResource: suspend (resourceId: String) -> ResourceDto,
-    private val createResource: suspend (chatId: String, modelId: String, resource: ResourceDto) -> ResourceDto,
+    private val getResource: suspend (resourceId: String, ownerId: String) -> ResourceDto,
+    private val createResource: suspend (chatId: String, senderId: String, resource: ResourceDto) -> ResourceDto,
     private val upsertMessage: suspend (message: MessageDto) -> MessageDto,
     private val getOpenAIClient: suspend (endpoint: String) -> OpenAI,
     private val upsertChat: suspend (chat: ChatDto) -> ChatDto,
@@ -66,7 +66,7 @@ class LlmService(
         } else {
             messages.last()
         }
-        val resources = messages.map { message -> message.resourceIds.map { getResource(it) } }.flatten()
+        val resources = messages.map { message -> message.resourceIds.map { getResource(it, chat.ownerId) } }.flatten()
         var conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId, resources)
         if (lastMessage.senderId != chat.ownerId && lastMessage.message.isNullOrBlank()) {
             Napier.v("Last message from AI is blank, regenerating new response.")

@@ -80,6 +80,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
@@ -156,9 +157,18 @@ fun NewChat(
     )
 }
 
+private fun filterModelsWithQuery(
+    models: List<DomainModel>?,
+    query: String,
+): List<DomainModel>? {
+    return if (query.isBlank()) models else models?.filter { model ->
+        model.displayName.contains(query, ignoreCase = true) || model.id.contains(query, ignoreCase = true)
+    }
+}
+
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
-    ExperimentalHazeApi::class, ExperimentalHazeMaterialsApi::class
+    ExperimentalHazeApi::class
 )
 @Composable
 fun NewChat(
@@ -170,34 +180,16 @@ fun NewChat(
     var searchFilter by rememberSaveable { mutableStateOf("") }
     var freeFilterEnabled by rememberSaveable { mutableStateOf(false) }
     val serverModels = remember(searchFilter, freeFilterEnabled, state.serverModels) {
-        val models = if (searchFilter.isBlank()) state.serverModels else
-            state.serverModels?.filter {
-                it.displayName.contains(
-                    searchFilter,
-                    ignoreCase = true
-                ) || it.id.contains(searchFilter, ignoreCase = true)
-            }
-        if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
+        val models = filterModelsWithQuery(state.serverModels, searchFilter)
+        if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
     }
     val providerModels = remember(searchFilter, freeFilterEnabled, state.providerModels) {
-        val models = if (searchFilter.isBlank()) state.providerModels else
-            state.providerModels?.filter {
-                it.displayName.contains(
-                    searchFilter,
-                    ignoreCase = true
-                ) || it.id.contains(searchFilter, ignoreCase = true)
-            }
-        if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
+        val models = filterModelsWithQuery(state.providerModels, searchFilter)
+        if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
     }
     val localModels = remember(searchFilter, freeFilterEnabled, state.localModels) {
-        val models = if (searchFilter.isBlank()) state.localModels else
-            state.localModels?.filter {
-                it.displayName.contains(
-                    searchFilter,
-                    ignoreCase = true
-                ) || it.id.contains(searchFilter, ignoreCase = true)
-            }
-        if (freeFilterEnabled) models?.filter { it.displayName.contains("free") } else models
+        val models = filterModelsWithQuery(state.localModels, searchFilter)
+        if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
     }
     val hazeState = remember { HazeState() }
     var selectedModelId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -236,7 +228,7 @@ fun NewChat(
                         alpha = overlayAlpha
                     )
                 }
-            }
+            }.then(if (selectedModelId == null) Modifier else Modifier.focusProperties { canFocus = false })
         ) {
             Scaffold(
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -262,255 +254,44 @@ fun NewChat(
                 },
                 floatingActionButton = {
                     Column(Modifier.consumeWindowInsets(WindowInsets.systemBars)) {
-                        AnimatedContent(
-                            targetState = fabState
-                        ) { fab ->
+                        AnimatedContent(targetState = fabState) { fab ->
                             when (fab) {
                                 0 -> {
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        SmallFloatingActionButton(
-                                            modifier = Modifier.sharedBounds(
-                                                sharedContentState = rememberSharedContentState("filter_fab"),
-                                                animatedVisibilityScope = this@AnimatedContent,
-                                                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
-                                            ),
-                                            onClick = { fabState = 2 },
-                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.FilterList,
-                                                contentDescription = stringResource(Res.string.filters)
-                                            )
-                                        }
-                                        if (isCompact) {
-                                            FloatingActionButton(
-                                                modifier = Modifier.sharedBounds(
-                                                    sharedContentState = rememberSharedContentState("search_fab"),
-                                                    animatedVisibilityScope = this@AnimatedContent,
-                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                                ),
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                onClick = { fabState = 1 },
-                                            ) {
-                                                Icon(
-                                                    modifier = Modifier.sharedElement(
-                                                        rememberSharedContentState(key = "search_icon"),
-                                                        animatedVisibilityScope = this@AnimatedContent
-                                                    ),
-                                                    imageVector = Icons.Rounded.Search,
-                                                    contentDescription = stringResource(Res.string.search)
-                                                )
-                                            }
-                                        } else {
-                                            ExtendedFloatingActionButton(
-                                                modifier = Modifier.sharedBounds(
-                                                    sharedContentState = rememberSharedContentState("search_fab"),
-                                                    animatedVisibilityScope = this@AnimatedContent,
-                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                                ),
-                                                onClick = { fabState = 1 },
-                                            ) {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(
-                                                        modifier = Modifier.sharedElement(
-                                                            sharedContentState = rememberSharedContentState(key = "search_icon"),
-                                                            animatedVisibilityScope = this@AnimatedContent
-                                                        ),
-                                                        imageVector = Icons.Rounded.Search,
-                                                        contentDescription = stringResource(Res.string.search)
-                                                    )
-                                                    Text(
-                                                        modifier = Modifier.sharedElement(
-                                                            sharedContentState = rememberSharedContentState("search_filter"),
-                                                            animatedVisibilityScope = this@AnimatedContent
-                                                        ).skipToLookaheadSize(),
-                                                        text = stringResource(Res.string.search)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
+                                    RegularFABs(
+                                        isCompact = isCompact,
+                                        setFabState = { fabState = it },
+                                        animatedVisibilityScope = this@AnimatedContent,
+                                        sharedTransitionScope = this@SharedTransitionLayout
+                                    )
                                 }
                                 1 -> {
-                                    val focusRequester = remember { FocusRequester() }
-
-                                    ExposedDropdownMenuBox(
-                                        expanded = searchFiltersShown,
-                                        onExpandedChange = { searchFiltersShown = it }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .padding(start = 24.dp)
-                                                .then(if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            OutlinedIconToggleButton(
-                                                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                                                checked = searchFiltersShown,
-                                                onCheckedChange = { searchFiltersShown = it },
-                                                border = BorderStroke(width = if (searchFiltersShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.primary),
-                                                colors = IconButtonDefaults.iconToggleButtonColors(
-                                                    containerColor = MaterialTheme.colorScheme.surface,
-                                                    contentColor = MaterialTheme.colorScheme.primary
-                                                )
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Tune,
-                                                    contentDescription = stringResource(Res.string.filters)
-                                                )
-                                            }
-                                            ButlerTextField(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .sharedBounds(
-                                                        sharedContentState = rememberSharedContentState("search_filter"),
-                                                        animatedVisibilityScope = this@AnimatedContent,
-                                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                                    )
-                                                    .clip(ButlerTextFieldDefaults.Shape)
-                                                    .hazeEffect(hazeState)
-                                                    .focusRequester(focusRequester),
-                                                value = searchFilter,
-                                                onValueChange = { searchFilter = it },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        modifier = Modifier.sharedElement(
-                                                            rememberSharedContentState(key = "search_icon"),
-                                                            animatedVisibilityScope = this@AnimatedContent
-                                                        ),
-                                                        imageVector = Icons.Rounded.Search,
-                                                        contentDescription = stringResource(Res.string.search)
-                                                    )
-                                                }
-                                            )
-                                            FilledIconButton(
-                                                onClick = { fabState = 0 },
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                                    contentDescription = stringResource(Res.string.close)
-                                                )
-                                            }
-                                        }
-                                        ButlerDropdownMenu(
-                                            expanded = searchFiltersShown,
-                                            onDismissRequest = { searchFiltersShown = false },
-                                        ) {
-                                            ButlerDropdownMenuDefaults.DropdownMenuItem {
-                                                Text(
-                                                    text = stringResource(Res.string.filters),
-                                                    style = MaterialTheme.typography.titleSmall,
-                                                )
-                                            }
-                                            CompositionLocalProvider(
-                                                LocalMinimumInteractiveComponentSize provides 40.dp
-                                            ) {
-                                                ButlerDropdownMenuDefaults.DropdownMenuItem(
-                                                    onClick = {
-                                                        freeFilterEnabled = !freeFilterEnabled
-                                                    },
-                                                    leadingIcon = {
-                                                        Text(text = "$")
-                                                    },
-                                                    trailingIcon = {
-                                                        ButlerCheckbox(
-                                                            checked = freeFilterEnabled,
-                                                            onCheckedChange = { freeFilterEnabled = it }
-                                                        )
-                                                    }
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(Res.string.free_models_only),
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        LaunchedEffect(selectedModelId) {
-                                            if (selectedModelId == null) {
-                                                focusRequester.requestFocus()
-                                            } else {
-                                                focusRequester.freeFocus()
-                                            }
-                                        }
-                                    }
+                                    SearchOpenFAB(
+                                        searchFilter = searchFilter,
+                                        setSearchFilter = { searchFilter = it },
+                                        searchFiltersShown = searchFiltersShown,
+                                        setSearchFiltersShown = { searchFiltersShown = it },
+                                        isCompact = isCompact,
+                                        hazeState = hazeState,
+                                        setFabState = { fabState = it },
+                                        selectedModelId = selectedModelId,
+                                        freeFilterEnabled = freeFilterEnabled,
+                                        setFreeFilterEnabled = { freeFilterEnabled = it },
+                                        animatedVisibilityScope = this@AnimatedContent,
+                                        sharedTransitionScope = this@SharedTransitionLayout
+                                    )
                                 }
                                 2 -> {
-                                    ExposedDropdownMenuBox(
-                                        expanded = filtersMenuShown,
-                                        onExpandedChange = { filtersMenuShown = it }
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.padding(start = 24.dp),
-                                            horizontalAlignment = Alignment.End
-                                        ) {
-                                            Row {
-                                                OutlinedIconToggleButton(
-                                                    modifier = Modifier
-                                                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                                        .sharedBounds(
-                                                            sharedContentState = rememberSharedContentState("filter_fab"),
-                                                            animatedVisibilityScope = this@AnimatedContent,
-                                                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
-                                                        ),
-                                                    checked = filtersMenuShown,
-                                                    onCheckedChange = { filtersMenuShown = it },
-                                                    border = BorderStroke(width = if (filtersMenuShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.secondary),
-                                                    colors = IconButtonDefaults.iconToggleButtonColors(
-                                                        containerColor = MaterialTheme.colorScheme.surface,
-                                                        contentColor = MaterialTheme.colorScheme.secondary
-                                                    )
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Rounded.Tune,
-                                                        contentDescription = stringResource(Res.string.filters)
-                                                    )
-                                                }
-
-                                                FilledIconButton(
-                                                    onClick = { fabState = 0 },
-                                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                                    )
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                                        contentDescription = stringResource(Res.string.close)
-                                                    )
-                                                }
-                                            }
-
-                                            FiltersTab(
-                                                modifier = Modifier,
-                                                hazeState = hazeState,
-                                                selectedIndex = if (filterByCompany) 0 else 1,
-                                                tabLabels = listOf(
-                                                    stringResource(Res.string.companies),
-                                                    stringResource(Res.string.model_id)
-                                                ),
-                                                onIndexChanged = { index ->
-                                                    filterByCompany = index == 0
-                                                }
-                                            )
-                                        }
-                                        ButlerDropdownMenu(
-                                            expanded = filtersMenuShown,
-                                            onDismissRequest = { filtersMenuShown = false },
-                                            matchTextFieldWidth = false
-                                        ) {
-                                            Text(
-                                                modifier = Modifier.padding(horizontal = 16.dp),
-                                                text = stringResource(Res.string.filters_coming_soon)
-                                            )
-                                        }
-                                    }
+                                    FiltersOpenFAB(
+                                        filtersMenuShown = filtersMenuShown,
+                                        setFiltersMenuShown = { filtersMenuShown = it },
+                                        isCompact = isCompact,
+                                        filterByCompany = filterByCompany,
+                                        setFilterByCompany = { filterByCompany = it },
+                                        hazeState = hazeState,
+                                        setFabState = { fabState = it },
+                                        animatedVisibilityScope = this@AnimatedContent,
+                                        sharedTransitionScope = this@SharedTransitionLayout
+                                    )
                                 }
                             }
                         }
@@ -565,6 +346,288 @@ fun NewChat(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun RegularFABs(
+    isCompact: Boolean,
+    setFabState: (Int) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope
+) = with(sharedTransitionScope) {
+    Column(horizontalAlignment = Alignment.End) {
+        SmallFloatingActionButton(
+            modifier = Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState("filter_fab"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+            ),
+            onClick = { setFabState(2) },
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.FilterList,
+                contentDescription = stringResource(Res.string.filters)
+            )
+        }
+        if (isCompact) {
+            FloatingActionButton(
+                modifier = Modifier.sharedBounds(
+                    sharedContentState = rememberSharedContentState("search_fab"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                ),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = { setFabState(1) },
+            ) {
+                Icon(
+                    modifier = Modifier.sharedElement(
+                        rememberSharedContentState(key = "search_icon"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = stringResource(Res.string.search)
+                )
+            }
+        } else {
+            ExtendedFloatingActionButton(
+                modifier = Modifier.sharedBounds(
+                    sharedContentState = rememberSharedContentState("search_fab"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                ),
+                onClick = { setFabState(1) },
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        modifier = Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState(key = "search_icon"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = stringResource(Res.string.search)
+                    )
+                    Text(
+                        modifier = Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState("search_filter"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ).skipToLookaheadSize(),
+                        text = stringResource(Res.string.search)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@Composable
+fun SearchOpenFAB(
+    searchFilter: String,
+    setSearchFilter: (String) -> Unit,
+    searchFiltersShown: Boolean,
+    setSearchFiltersShown: (Boolean) -> Unit,
+    isCompact: Boolean,
+    hazeState: HazeState,
+    setFabState: (Int) -> Unit,
+    selectedModelId: String?,
+    freeFilterEnabled: Boolean,
+    setFreeFilterEnabled: (Boolean) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope
+) = with(sharedTransitionScope) {
+    val focusRequester = remember { FocusRequester() }
+    ExposedDropdownMenuBox(
+        expanded = searchFiltersShown,
+        onExpandedChange = setSearchFiltersShown
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(start = 24.dp)
+                .then(if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedIconToggleButton(
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                checked = searchFiltersShown,
+                onCheckedChange = setSearchFiltersShown,
+                border = BorderStroke(width = if (searchFiltersShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.primary),
+                colors = IconButtonDefaults.iconToggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = stringResource(Res.string.filters)
+                )
+            }
+            ButlerTextField(
+                modifier = Modifier
+                    .weight(1f)
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState("search_filter"),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                    )
+                    .clip(ButlerTextFieldDefaults.Shape)
+                    .hazeEffect(hazeState)
+                    .focusRequester(focusRequester),
+                value = searchFilter,
+                onValueChange = setSearchFilter,
+                leadingIcon = {
+                    Icon(
+                        modifier = Modifier.sharedElement(
+                            rememberSharedContentState(key = "search_icon"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = stringResource(Res.string.search)
+                    )
+                }
+            )
+            FilledIconButton(
+                onClick = { setFabState(0) },
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = stringResource(Res.string.close)
+                )
+            }
+        }
+        ButlerDropdownMenu(
+            expanded = searchFiltersShown,
+            onDismissRequest = { setSearchFiltersShown(false) },
+        ) {
+            ButlerDropdownMenuDefaults.DropdownMenuItem {
+                Text(
+                    text = stringResource(Res.string.filters),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+            CompositionLocalProvider(
+                LocalMinimumInteractiveComponentSize provides 40.dp
+            ) {
+                ButlerDropdownMenuDefaults.DropdownMenuItem(
+                    onClick = {
+                        setFreeFilterEnabled(!freeFilterEnabled)
+                    },
+                    leadingIcon = {
+                        Text(text = "$")
+                    },
+                    trailingIcon = {
+                        ButlerCheckbox(
+                            checked = freeFilterEnabled,
+                            onCheckedChange = setFreeFilterEnabled
+                        )
+                    }
+                ) {
+                    Text(
+                        text = stringResource(Res.string.free_models_only),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+        LaunchedEffect(selectedModelId) {
+            if (selectedModelId == null) {
+                focusRequester.requestFocus()
+            } else {
+                focusRequester.freeFocus()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun FiltersOpenFAB(
+    filtersMenuShown: Boolean,
+    setFiltersMenuShown: (Boolean) -> Unit,
+    isCompact: Boolean,
+    filterByCompany: Boolean,
+    setFilterByCompany: (Boolean) -> Unit,
+    hazeState: HazeState,
+    setFabState: (Int) -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope
+) = with(sharedTransitionScope) {
+    ExposedDropdownMenuBox(
+        expanded = filtersMenuShown,
+        onExpandedChange = setFiltersMenuShown
+    ) {
+        Column(
+            modifier = Modifier.padding(start = 24.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            Row {
+                OutlinedIconToggleButton(
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .sharedBounds(
+                            sharedContentState = rememberSharedContentState("filter_fab"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                        ),
+                    checked = filtersMenuShown,
+                    onCheckedChange = setFiltersMenuShown,
+                    border = BorderStroke(width = if (filtersMenuShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.secondary),
+                    colors = IconButtonDefaults.iconToggleButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Tune,
+                        contentDescription = stringResource(Res.string.filters)
+                    )
+                }
+
+                FilledIconButton(
+                    onClick = { setFabState(0) },
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        contentDescription = stringResource(Res.string.close)
+                    )
+                }
+            }
+
+            FiltersTab(
+                modifier = Modifier.then(if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp)),
+                hazeState = hazeState,
+                selectedIndex = if (filterByCompany) 0 else 1,
+                tabLabels = listOf(
+                    stringResource(Res.string.companies),
+                    stringResource(Res.string.model_id)
+                ),
+                onIndexChanged = { index ->
+                    setFilterByCompany(index == 0)
+                }
+            )
+        }
+        ButlerDropdownMenu(
+            expanded = filtersMenuShown,
+            onDismissRequest = { setFiltersMenuShown(false) },
+            matchTextFieldWidth = false
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                text = stringResource(Res.string.filters_coming_soon)
+            )
         }
     }
 }
@@ -807,7 +870,7 @@ fun ModelListItemCompact(
                     modifier = Modifier.sharedElement(
                         rememberSharedContentState(key = "arrow$modelId"),
                         animatedVisibilityScope = this@AnimatedVisibility,
-                    ),
+                    ).focusProperties { canFocus = false },
                     onClick = onClick
                 ) {
                     Icon(
@@ -840,7 +903,6 @@ fun ModelListItemCompact(
                                 modifier = Modifier.sharedElement(
                                     rememberSharedContentState(key = "free_tag$modelId"),
                                     animatedVisibilityScope = this@AnimatedVisibility,
-//                                    renderInOverlayDuringTransition = false
                                 )
                             ) {
                                 Text(text = stringResource(Res.string.free))
@@ -874,7 +936,6 @@ fun ModelListItemExpanded(
             animatedVisibilityScope = animatedVisibilityScope,
             resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
         ),
-        onClick = onClick,
         contentPadding = ButlerCardDefaults.CompactContentPadding,
     ) {
         Column {

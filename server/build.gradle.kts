@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.compression)
+    implementation(libs.ktor.server.sse)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
     implementation(libs.logback.classic)

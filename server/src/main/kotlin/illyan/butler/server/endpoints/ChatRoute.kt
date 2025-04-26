@@ -1,8 +1,8 @@
 package illyan.butler.server.endpoints
 
 import illyan.butler.server.data.service.ChatService
-import illyan.butler.server.data.service.LlmService
 import illyan.butler.server.utils.Claim
+import illyan.butler.shared.llm.LlmService
 import illyan.butler.shared.model.chat.ChatDto
 import illyan.butler.shared.model.chat.MessageDto
 import illyan.butler.shared.model.chat.ResourceDto
@@ -12,12 +12,17 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondTextWriter
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
+import io.ktor.server.sse.sse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 import org.koin.ktor.ext.inject
 
 fun Route.chatRoute() {
@@ -59,6 +64,18 @@ fun Route.chatRoute() {
                     call.respond(HttpStatusCode.OK, result)
                 }
 
+                sse {
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                    val chatId = call.parameters["chatId"]?.trim().orEmpty()
+                    val flow = chatService.getChangesFromChat(userId, chatId)
+                    call.respondTextWriter {
+                        flow.collectLatest { chat ->
+                            write("data: $chat\n\n")
+                            flush()
+                        }.flowOn(Dispatchers.IO)
+                    }
+                }
+
                 put {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
@@ -69,8 +86,7 @@ fun Route.chatRoute() {
                 }
 
                 delete {
-                    val userId =
-                        call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val result = chatService.deleteChat(userId, chatId)
                     call.respond(HttpStatusCode.OK, result)
@@ -144,7 +160,15 @@ fun Route.chatRoute() {
                         get("/regenerate") {
                             val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                             val messageId = call.parameters["messageId"]
-                            call.respond(llmService.regenerateMessage(chatId, messageId))
+                            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                            val chats = chatService.getChats(userId)
+//                            call.respond(
+//                                llmService.answerChat(
+//                                    chats.first { it.id == chatId },
+//                                    chats.filter { it.id != chatId },
+//                                    chatService.getMessages(userId, chatId).first { it.id == messageId }
+//                                )
+//                            )
                         }
 
                         delete {

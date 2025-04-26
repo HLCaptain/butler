@@ -77,13 +77,13 @@ class ChatManager(
 
     private val llmService = LlmService(
         coroutineScopeIO = coroutineScopeIO,
-        getResource = { resourceRepository.getResourceFlow(it, true).filterNotNull().first().toNetworkModel() },
-        createResource = { chatId, modelId, resource ->
+        getResource = { resourceId, _ -> resourceRepository.getResourceFlow(resourceId, true).filterNotNull().first().toNetworkModel() },
+        createResource = { chatId, senderId, resource ->
             val id = resourceRepository.upsert(resource.toDomainModel(), true)
             sendMessageWithResourceIds(
                 DomainMessage(
                     chatId = chatId,
-                    senderId = modelId,
+                    senderId = senderId,
                     resourceIds = listOf(id)
                 ),
                 deviceOnly = true

@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,7 +39,7 @@ import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.core.ui.components.MediumMenuButton
+import illyan.butler.core.ui.components.SmallMenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
@@ -152,7 +151,6 @@ fun ProfileDialogContent(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileButtons(
     modifier: Modifier = Modifier,
@@ -189,13 +187,6 @@ fun ProfileButtons(
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
                 }
-//                if (BuildConfig.DEBUG) {
-//                    Button(
-//                        onClick = resetTutorialAndSignOut
-//                    ) {
-//                        Text(text = "Reset tutorial and sign out")
-//                    }
-//                }
             } else if (isUserSignedIn == false) {
                 ButlerMediumSolidButton(
                     onClick = onLogin
@@ -257,7 +248,7 @@ private fun PreviewProfileDialogScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileTitleScreen(
     modifier: Modifier = Modifier,
@@ -434,17 +425,14 @@ fun ProfileMenu(
     onShowAboutScreen: (() -> Unit)? = null,
     onShowSettingsScreen: () -> Unit = {},
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy((-12).dp)
-    ) {
+    Column(modifier = modifier) {
         onShowAboutScreen?.let {
-            MediumMenuButton(
+            SmallMenuButton(
                 onClick = it,
                 text = stringResource(Res.string.about)
             )
         }
-        MediumMenuButton(
+        SmallMenuButton(
             onClick = onShowSettingsScreen,
             text = stringResource(Res.string.settings)
         )

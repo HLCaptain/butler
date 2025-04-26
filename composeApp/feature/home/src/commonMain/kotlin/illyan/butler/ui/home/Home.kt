@@ -109,7 +109,6 @@ import illyan.butler.ui.onboard_flow.OnboardFlow
 import illyan.butler.ui.profile.about.AboutDialogContent
 import illyan.butler.ui.profile.dialog.ProfileDialog
 import illyan.butler.ui.profile.settings.UserSettings
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
@@ -139,12 +138,9 @@ fun Home(
         isDialogOpen = isProfileDialogShowing,
         isDialogFullscreen = profileNavController.currentBackStackEntry?.destination?.route == "libraries",
         onDismissDialog = {
-            Napier.d { "Dialog dismissed, previous entry: ${profileNavController.previousBackStackEntry?.destination}" }
             if (profileNavController.previousBackStackEntry != null) {
-                Napier.d { "Navigating up" }
                 profileNavController.navigateUp()
             } else {
-                Napier.d { "Closing dialog" }
                 isProfileDialogShowing = false
             }
         },
@@ -178,9 +174,8 @@ fun Home(
             }
             composable("about") {
                 AboutDialogContent(
-                    modifier = Modifier.mediumDialogWidth()
-                    // FIXME: LibrariesContainer is not compatible in Compose Multiplatform 1.8.0 yet.
-//                    onNavigateToLibraries = { profileNavController.navigate("libraries") },
+                    modifier = Modifier.mediumDialogWidth(),
+                    onNavigateToLibraries = { profileNavController.navigate("libraries") },
                 )
             }
             composable("libraries") {

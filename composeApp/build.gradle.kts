@@ -163,7 +163,7 @@ compose.desktop.application {
     }
 
     buildTypes.release.proguard {
-        version = "7.6.0"
+        version = "7.7.0"
         // FIXME: make JVM prod work with Proguard
         isEnabled = false
 //        optimize = true

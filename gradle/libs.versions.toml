@@ -1,32 +1,32 @@
 [versions]
-butler-name = "2.2.0-alpha"
+butler-name = "2.3.0-alpha"
 butler-code = "6"
-kotlin = "2.1.20"
+kotlin = "2.1.21-RC"
 android-minSdk = "26"
 android-compileSdk = "35"
-ksp = "2.1.20-2.0.0"
-agp = "8.10.0-rc02"
-compose = "1.8.0-beta02"
+ksp = "2.1.21-RC-2.0.0"
+agp = "8.10.0-rc03"
+compose = "1.8.0-rc01"
 compose-android = "1.7.8"
 ktor = "3.1.2"
 koin = "4.1.0-Beta7"
-koin-annotations = "2.0.0"
+koin-annotations = "2.0.1-Beta1"
 coroutines = "1.10.1"
 serialization = "1.8.1"
-aboutlibraries = "12.0.0-b02"
-room = "2.7.0-rc03"
+aboutlibraries = "12.1.0-rc01"
+room = "2.7.0"
 logback = "1.5.16"
 commonsCodec = "1.17.2"
 okhttpLoggingInterceptor = "5.0.0-alpha.14"
 prometheus = "1.12.3"
-exposed = "0.60.0"
+exposed = "0.61.0"
 postgres = "42.7.4"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
-material-adaptive = "1.1.0-beta02"
+material-adaptive = "1.1.0-rc01"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -75,7 +75,7 @@ koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "
 koin-ksp = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
 androidx-core = { module = "androidx.core:core-ktx", version = "1.15.0" }
-androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0-beta01" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0-beta02" }
 androidx-activity = { module = "androidx.activity:activity-ktx", version = "1.10.1" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.10.1" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.4" }
@@ -85,26 +85,26 @@ compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose-android
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-common = { module = "androidx.room:room-common", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0-rc03" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version = "2.5.0" }
 
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 compose-gradlePlugin = { module = "org.jetbrains.compose:org.jetbrains.compose.gradle.plugin", version.ref = "compose" }
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 
-jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.0-alpha06" }
-jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version = "2.9.0-alpha16" }
+jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.0-alpha07" }
+jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version = "2.9.0-alpha17" }
 
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha06" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.5" }
 korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
-filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.10.0-beta01" }
+filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.10.0-beta02" }
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.32.0" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc12" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.1.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.5.2" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.5.4" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
@@ -136,6 +136,8 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor"
 ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-compression = { module = "io.ktor:ktor-server-compression", version.ref = "ktor" }
+ktor-server-sse = { module = "io.ktor:ktor-server-sse", version.ref = "ktor" }
+
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }

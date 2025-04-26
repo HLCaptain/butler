@@ -41,6 +41,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowWidthSizeClass
 import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -51,7 +55,15 @@ import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_details.ChatDetails
 import illyan.butler.ui.new_chat.NewChat
+import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+
+sealed class ChatLayoutDestinations {
+    @Serializable
+    data object NewChat : ChatLayoutDestinations()
+    @Serializable
+    data class ChatDetail(val chatId: String) : ChatLayoutDestinations()
+}
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -136,11 +148,54 @@ fun ChatLayout(
                 ReverseLayoutDirection {
                     val viewModel = koinViewModel<ChatDetailViewModel>()
                     val state by viewModel.state.collectAsState()
+                    val navController = rememberNavController()
                     LaunchedEffect(currentChat) {
                         currentChat?.let { viewModel.loadChat(it) }
+                        if (navController.currentDestination?.hasRoute<ChatLayoutDestinations.ChatDetail>() != true && currentChat != null) {
+                            
+                            navController.navigate(ChatLayoutDestinations.ChatDetail(currentChat)) {
+                                restoreState = true
+                            }
+                        } else if (navController.currentDestination?.hasRoute<ChatLayoutDestinations.NewChat>() != true && currentChat == null) {
+                            navController.navigate(ChatLayoutDestinations.NewChat) {
+                                restoreState = true
+                            }
+                        }
                     }
                     Row(modifier = modifier) {
                         Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp)) {
+                            NavHost(
+                                modifier = Modifier.weight(1f).clip(
+                                    RoundedCornerShape(
+                                        topEnd = 24.dp * drawerOpenRatio,
+                                        bottomEnd = 24.dp * drawerOpenRatio,
+                                    )
+                                ),
+                                navController = navController,
+                                startDestination = ChatLayoutDestinations.NewChat,
+                            ) {
+                                composable<ChatLayoutDestinations.NewChat> {
+                                    NewChat(
+                                        selectNewChat = selectChat,
+                                        navigationIcon = navigationIcon
+                                    )
+                                }
+                                composable<ChatLayoutDestinations.ChatDetail> {
+                                    ChatDetail(
+                                        state = state,
+                                        sendMessage = viewModel::sendMessage,
+                                        toggleRecord = viewModel::toggleRecording,
+                                        sendImage = viewModel::sendImage,
+                                        playAudio = viewModel::playAudio,
+                                        stopAudio = viewModel::stopAudio,
+                                        navigationIcon = navigationIcon,
+                                        toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
+                                        isChatDetailsOpenRatio = drawerOpenRatio,
+                                        refreshChat = viewModel::refreshChat,
+                                        sendError = viewModel::sendError
+                                    )
+                                }
+                            }
                             AnimatedContent(
                                 modifier = Modifier.weight(1f).clip(
                                     RoundedCornerShape(
