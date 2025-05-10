@@ -16,35 +16,39 @@ import kotlinx.coroutines.flow.map
 import kotlin.time.Duration
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun Flow<List<Pair<String, String>>>.mapToProvidedModels(pingDuration: Duration) = flatMapLatest { credentials ->
-    combine(*credentials.map { (url, apiKey) ->
-        flow {
-            emit(url to null)
-            while (true) {
-                try {
-                    emit(url to OpenAI(
-                        token = apiKey,
-                        host = OpenAIHost(url)
-                    ).models().map { Model(
-                        id = it.id.id,
-                        typeObject = null,
-                        created = it.created,
-                        ownedBy = it.ownedBy,
-                    ) })
-                } catch (e: Exception) {
-                    Napier.e(e) { "Error fetching models from $url" }
-                    emit(url to emptyList())
-                }
-                delay(pingDuration)
-            }
-        }.flowOn(Dispatchers.IO)
-    }.toTypedArray()) { it.toList().toMap() }
+fun Flow<Map<String, String>>.mapToProvidedModels(pingDuration: Duration) = flatMapLatest { credentials ->
+    credentials.mapToProvidedModels(pingDuration)
 }
 
+fun Map<String, String>.mapToProvidedModels(pingDuration: Duration) = combine(*map { (url, apiKey) ->
+    flow {
+        emit(url to null)
+        while (true) {
+            try {
+                emit(url to OpenAI(
+                    token = apiKey,
+                    host = OpenAIHost(url)
+                ).models().map { Model(
+                    id = it.id.id,
+                    typeObject = null,
+                    created = it.created,
+                    ownedBy = it.ownedBy,
+                ) })
+            } catch (e: Exception) {
+                Napier.e(e) { "Error fetching models from $url" }
+                emit(url to emptyList())
+            }
+            delay(pingDuration)
+        }
+    }.flowOn(Dispatchers.IO)
+}.toTypedArray()) { it.toList().toMap() }
+
+fun Map<String, List<Model>?>.mapToProvidedModels() = flatMap { (provider, models) ->
+    (models ?: emptyList()).map { it to provider }
+}.groupBy { it.first.id }.map { (_, modelWithProvider) ->
+    modelWithProvider.first().first to modelWithProvider.map { it.second }
+}.toMap() // Map<ModelDto, List<String>> where key is model and value is list of providers
+
 fun Flow<Map<String, List<Model>?>>.mapToModelsAndProviders() = map { models ->
-    models.flatMap { (provider, models) ->
-        (models ?: emptyList()).map { it to provider }
-    }.groupBy { it.first.id }.map { (_, modelWithProvider) ->
-        modelWithProvider.first().first to modelWithProvider.map { it.second }
-    }.toMap() // Map<ModelDto, List<String>> where key is model and value is list of providers
+    models.mapToProvidedModels()
 }

@@ -71,7 +71,7 @@ class ChatManager(
         )
 
     private val availableModelsFromProviders = credentialRepository.apiKeyCredentials.filterNotNull().map { credentials ->
-        credentials.map { it.providerUrl to it.apiKey }
+        credentials.associate { it.providerUrl to it.apiKey }
     }.mapToProvidedModels(pingDuration = 5.seconds)
     private val availableProvidersForModel = availableModelsFromProviders.mapToModelsAndProviders()
 

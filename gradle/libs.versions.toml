@@ -1,19 +1,19 @@
 [versions]
 butler-name = "2.3.0-alpha"
 butler-code = "6"
-kotlin = "2.1.21-RC"
+kotlin = "2.1.21-RC2"
 android-minSdk = "26"
-android-compileSdk = "35"
-ksp = "2.1.21-RC-2.0.0"
-agp = "8.10.0-rc03"
-compose = "1.8.0-rc01"
+android-compileSdk = "36"
+ksp = "2.1.21-RC2-2.0.1"
+agp = "8.10.0"
+compose = "1.8.0"
 compose-android = "1.7.8"
 ktor = "3.1.2"
 koin = "4.1.0-Beta7"
-koin-annotations = "2.0.1-Beta1"
+koin-annotations = "2.0.1-RC1"
 coroutines = "1.10.1"
 serialization = "1.8.1"
-aboutlibraries = "12.1.0-rc01"
+aboutlibraries = "12.1.2"
 room = "2.7.0"
 logback = "1.5.16"
 commonsCodec = "1.17.2"
@@ -74,7 +74,7 @@ koin-test = { module = "io.insert-koin:koin-test" }
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin-annotations" }
 koin-ksp = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
-androidx-core = { module = "androidx.core:core-ktx", version = "1.15.0" }
+androidx-core = { module = "androidx.core:core-ktx", version = "1.16.0" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0-beta02" }
 androidx-activity = { module = "androidx.activity:activity-ktx", version = "1.10.1" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.10.1" }

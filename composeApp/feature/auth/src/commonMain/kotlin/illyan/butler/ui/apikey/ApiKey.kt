@@ -84,7 +84,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.core.bundle.Bundle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -121,6 +120,7 @@ import illyan.butler.generated.resources.save
 import illyan.butler.generated.resources.test
 import illyan.butler.generated.resources.unknown
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -275,24 +275,13 @@ fun ApiKeyScaffold(
             }
             composable<NewApiKeyCredential> {
                 var testCredential by rememberSaveable(
-                    stateSaver = object : Saver<ApiKeyCredential?, Bundle> {
-                        override fun restore(value: Bundle): ApiKeyCredential? {
-                            val name = value.getString("name")
-                            val providerUrl = value.getString("providerUrl")
-                            val apiKey = value.getString("apiKey")
-                            return if (name != null && providerUrl != null && apiKey != null) {
-                                ApiKeyCredential(name, providerUrl, apiKey)
-                            } else {
-                                null
-                            }
+                    stateSaver = object : Saver<ApiKeyCredential?, String> {
+                        override fun restore(value: String): ApiKeyCredential? {
+                            return if (value.isBlank()) null else Json.decodeFromString(ApiKeyCredential.serializer(), value)
                         }
 
-                        override fun SaverScope.save(value: ApiKeyCredential?): Bundle {
-                            return Bundle().apply {
-                                putString("name", value?.name)
-                                putString("providerUrl", value?.providerUrl)
-                                putString("apiKey", value?.apiKey)
-                            }
+                        override fun SaverScope.save(value: ApiKeyCredential?): String {
+                            return value?.let { Json.encodeToString(ApiKeyCredential.serializer(), it) } ?: ""
                         }
                     },
                 ) { mutableStateOf(null) }

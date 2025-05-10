@@ -1,18 +1,19 @@
 package illyan.butler.server.endpoints
 
+import illyan.butler.server.AppConfig
 import illyan.butler.server.data.service.ChatService
 import illyan.butler.server.utils.Claim
 import illyan.butler.shared.llm.LlmService
 import illyan.butler.shared.model.chat.ChatDto
 import illyan.butler.shared.model.chat.MessageDto
 import illyan.butler.shared.model.chat.ResourceDto
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondTextWriter
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -20,11 +21,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.sse.sse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToHexString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.serializer
 import org.koin.ktor.ext.inject
 
+@OptIn(ExperimentalSerializationApi::class)
 fun Route.chatRoute() {
     val chatService: ChatService by inject()
     val llmService: LlmService by inject()
@@ -64,16 +68,38 @@ fun Route.chatRoute() {
                     call.respond(HttpStatusCode.OK, result)
                 }
 
-                sse {
+                sse(
+                    serialize = { typeInfo, it ->
+                        when (AppConfig.Ktor.DEFAULT_CONTENT_TYPE) {
+                            ContentType.Application.Json -> {
+                                val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
+                                Json.encodeToString(serializer, it)
+                            }
+                            ContentType.Application.ProtoBuf -> {
+                                val serializer = ProtoBuf.serializersModule.serializer(typeInfo.kotlinType!!)
+                                ProtoBuf.encodeToHexString(serializer, it)
+                            }
+                            else -> {
+                                val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
+                                Json.encodeToString(serializer, it)
+                            }
+                        }
+                    }
+                ) {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val flow = chatService.getChangesFromChat(userId, chatId)
-                    call.respondTextWriter {
-                        flow.collectLatest { chat ->
-                            write("data: $chat\n\n")
-                            flush()
-                        }.flowOn(Dispatchers.IO)
-                    }
+
+//                    flow.flowOn(Dispatchers.IO)
+//                        .collectLatest { data ->
+//                            val typedEvent = TypedServerSentEvent(
+//                                data = data,
+//                                event = "chat",
+//                                type = ContentType.Application.Json,
+//                                id = data.id.toString(),
+//                                retry = 1000L
+//                            )
+//                        }
                 }
 
                 put {

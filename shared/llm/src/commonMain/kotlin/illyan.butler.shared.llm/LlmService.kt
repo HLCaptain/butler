@@ -286,7 +286,7 @@ class LlmService(
         chat: ChatDto,
         conversation: List<ChatMessage>,
         previousChats: List<ChatDto>,
-    ) = flow<String?> {
+    ) = flow {
         val chatSummaries = previousChats.mapNotNull { it.summary }
         val openAI = getOpenAIClient(chat.chatCompletionModel!!.first)
         var previousCompletions: String? = ""
@@ -323,7 +323,7 @@ class LlmService(
         modelId: String,
         endpoint: String,
         conversation: List<ChatMessage>,
-    ) = flow<String?> {
+    ) = flow {
         var previousCompletions: String? = ""
         emitAll(getOpenAIClient(endpoint).chatCompletions(
             request = ChatCompletionRequest(

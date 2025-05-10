@@ -17,6 +17,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.core)
+        implementation(libs.kotlinx.serialization.json)
 
         implementation(libs.napier)
     }
