@@ -43,14 +43,11 @@ data object AppConfig {
     }
     data object Api {
         val LOCAL_AI_OPEN_AI_API_URL = System.getenv("LOCAL_AI_API_URL") ?: "http://localai:8080"
-        val ANYSCALE_API_URL = System.getenv("ANYSCALE_API_URL") ?: "https://api.endpoints.anyscale.com/v1"
         val OPEN_AI_API_URL = System.getenv("OPEN_AI_API_URL") ?: "https://api.openai.com/v1/"
         // val OTHER_AI_PROVIDER_OPEN_AI_API_URL...
         val OPEN_AI_API_KEY = System.getenv("OPEN_AI_API_KEY") ?: "sk-1234567890abcdef1234567890abcdef"
-        val ANYSCALE_API_CREDENTIAL = System.getenv("ANYSCALE_API_CREDENTIAL") ?: "sk-1234567890abcdef1234567890abcdef"
         val OPEN_AI_API_URLS_AND_KEYS = mapOf(
             LOCAL_AI_OPEN_AI_API_URL to "",
-            ANYSCALE_API_URL to ANYSCALE_API_CREDENTIAL,
             OPEN_AI_API_URL to OPEN_AI_API_KEY
         )
     }
@@ -58,10 +55,10 @@ data object AppConfig {
         val OTEL_EXPORTER_OTLP_ENDPOINT = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4317"
     }
     data object Database {
-        val DATABASE_URL = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432"
-        val DATABASE_NAME = System.getenv("DATABASE_NAME") ?: "butler"
-        val DATABASE_DRIVER = System.getenv("DATABASE_DRIVER") ?: "org.postgresql.Driver"
         val DATABASE_USER = System.getenv("DATABASE_USER") ?: "butler"
         val DATABASE_PASSWORD = System.getenv("DATABASE_PASSWORD") ?: "butler"
+        val DATABASE_URL = System.getenv("DATABASE_URL") ?: "r2dbc:postgresql:${DATABASE_USER}:${DATABASE_PASSWORD}@localhost:5432/postgres?lc_messages=en_US.UTF-8"
+        val DATABASE_NAME = System.getenv("DATABASE_NAME") ?: "butler"
+        val DATABASE_DRIVER = System.getenv("DATABASE_DRIVER") ?: "org.postgresql.Driver"
     }
 }

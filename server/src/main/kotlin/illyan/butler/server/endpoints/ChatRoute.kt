@@ -154,7 +154,7 @@ fun Route.chatRoute() {
                         }
 
                         // Connecting to Chat Service with "AI" service account
-                        // Listen to chats with custom Chat Service endpoints with WebSocket
+                        // Listen to chats with custom Chat Service models with WebSocket
                         // Send message to Chat Service
                         // Cache chat history in memory
                         // Regenerate message or generate new one when prompted

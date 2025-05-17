@@ -14,17 +14,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import org.koin.ktor.ext.inject
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 fun Route.aiRoute() {
-    val coroutineScopeIO: CoroutineScope by inject()
-
-    val availableModelsFromProviders = AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapToProvidedModels(pingDuration = 5.seconds)
-        .stateIn(coroutineScopeIO, SharingStarted.Eagerly, emptyMap())
-    val modelsAndProviders = availableModelsFromProviders.mapToModelsAndProviders()
-        .stateIn(coroutineScopeIO, SharingStarted.Eagerly, emptyMap())
-
     authenticate("auth-jwt") {
+        val coroutineScopeIO: CoroutineScope by inject()
+
+        val availableModelsFromProviders = AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapToProvidedModels(pingDuration = 1.minutes)
+            .stateIn(coroutineScopeIO, SharingStarted.Eagerly, emptyMap())
+        val modelsAndProviders = availableModelsFromProviders.mapToModelsAndProviders()
+            .stateIn(coroutineScopeIO, SharingStarted.Eagerly, emptyMap())
+
         route("/models") {
             get {
                 call.respond(HttpStatusCode.OK, modelsAndProviders.first())

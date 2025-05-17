@@ -8,13 +8,22 @@ data class ChatDto(
     val created: Long? = null,
     val name: String? = null,
     val ownerId: String,
-    val chatCompletionModel: Pair<String, String>? = null, // URL to Model ID eg. https://api.openai.com/v1/ to gpt-4o
-    val audioTranscriptionModel: Pair<String, String>? = null, // URL to Model ID eg. https://api.openai.com/v1/ to whisper-1
-    val audioTranslationModel: Pair<String, String>? = null, // URL to Model ID eg. https://api.openai.com/v1/ to whisper-1
-    val imageGenerationsModel: Pair<String, String>? = null, // URL to Model ID eg. https://api.openai.com/v1/ to dall-e-3
-    val audioSpeechModel: Pair<String, String>? = null, // URL to Model ID eg. https://api.openai.com/v1/ to tts-1
-    val lastFewMessages: List<MessageDto> = emptyList(),
+    val models: Map<Capability, ModelConfig> = emptyMap(),
     val summary: String? = null
+)
+
+enum class Capability {
+    CHAT_COMPLETION,
+    AUDIO_TRANSCRIPTION,
+    AUDIO_TRANSLATION,
+    IMAGE_GENERATION,
+    SPEECH_SYNTHESIS
+}
+
+@Serializable
+data class ModelConfig(
+    val endpoint: String,        // e.g. https://api.openai.com/v1/
+    val modelId: String          // e.g. gpt-4o
 )
 
 // Model endpoint compatibility

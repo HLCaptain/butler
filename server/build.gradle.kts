@@ -70,6 +70,7 @@ dependencies {
     // Koin DI
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.ktor)
+    implementation(libs.koin.logger.slf4j)
     implementation(libs.koin.core)
     implementation(platform(libs.koin.annotations.bom))
     implementation(libs.koin.annotations)
@@ -78,7 +79,7 @@ dependencies {
     // Database
     implementation(libs.postgresql)
     implementation(libs.exposed.core)
-    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.r2dbc)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.json)
 

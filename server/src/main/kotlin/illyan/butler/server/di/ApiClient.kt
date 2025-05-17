@@ -24,7 +24,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.instrumentation.ktor.v3_0.client.KtorClientTracing
+import io.opentelemetry.instrumentation.ktor.v3_0.KtorClientTelemetry
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
@@ -91,16 +91,14 @@ fun HttpClientConfig<OkHttpConfig>.setupClient() {
         supportedContentTypes = AppConfig.Ktor.SUPPORTED_CONTENT_TYPES
     }
 
-    install(KtorClientTracing) {
+    install(KtorClientTelemetry) {
         setOpenTelemetry(GlobalOpenTelemetry.get())
-
-        emitExperimentalHttpClientMetrics()
 
         knownMethods(HttpMethod.DefaultMethods)
         capturedRequestHeaders(HttpHeaders.Accept)
         capturedResponseHeaders(HttpHeaders.ContentType)
 
-        attributeExtractor {
+        attributesExtractor {
             onStart {
                 attributes.put("start-time", Clock.System.now().toEpochMilliseconds())
             }
