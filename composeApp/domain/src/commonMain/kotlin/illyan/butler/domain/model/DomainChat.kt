@@ -12,6 +12,7 @@ data class DomainChat(
     val summary: String? = null
 )
 
+@Serializable
 enum class Capability {
     CHAT_COMPLETION,
     AUDIO_TRANSCRIPTION,

@@ -10,10 +10,12 @@ import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.message.MessageRepository
 import illyan.butler.data.resource.ResourceRepository
 import illyan.butler.di.KoinNames
+import illyan.butler.domain.model.Capability
 import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
 import illyan.butler.domain.model.ErrorCode
+import illyan.butler.domain.model.ModelConfig
 import illyan.butler.shared.llm.LlmService
 import illyan.butler.shared.llm.mapToModelsAndProviders
 import illyan.butler.shared.llm.mapToProvidedModels
@@ -183,7 +185,12 @@ class ChatManager(
         return chatRepository.upsert(
             DomainChat(
                 ownerId = senderId,
-                chatCompletionModel = endpoint to modelId
+                models = mapOf(
+                    Capability.CHAT_COMPLETION to ModelConfig(
+                        modelId = modelId,
+                        endpoint = endpoint,
+                    )
+                )
             ),
             deviceOnly = authManager.clientId.first() == senderId
         )
@@ -194,12 +201,9 @@ class ChatManager(
         val previousChats = chatRepository.getUserChatsFlow(clientId, true).first()
         val messages = (previousMessages + deviceMessages.first()).distinctBy { it.id }
         llmService.answerChat(
-            chat = previousChats.first { it.id == chatId }.toNetworkModel().copy(
-                lastFewMessages = messages.filter { it.chatId == chatId }.map { it.toNetworkModel() }
-            ),
-            previousChats = previousChats.filter { it.id != chatId }.map { it.toNetworkModel().copy(
-                lastFewMessages = messages.filter { message -> message.chatId == it.id }.map { m -> m.toNetworkModel() }
-            ) }
+            chat = previousChats.first { it.id == chatId }.toNetworkModel(),
+            chatMessages = messages.map { it.toNetworkModel() },
+            previousChats = previousChats.filter { it.id != chatId }.map { it.toNetworkModel() }
         )
     }
 
@@ -296,44 +300,15 @@ class ChatManager(
         chatRepository.deleteChat(chatId, deviceOnly)
     }
 
-    suspend fun setAudioTranscriptionModel(chatId: String, model: Pair<String, String>?) {
+    suspend fun setModel(chatId: String, model: ModelConfig?, capability: Capability) {
         combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
             chatRepository.upsert(
                 chat.copy(
-                    audioTranscriptionModel = model
-                ),
-                deviceOnly = authManager.clientId.first() == chat.ownerId
-            )
-        }
-    }
-
-    suspend fun setAudioTranslationModel(chatId: String, model: Pair<String, String>?) {
-        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
-            chatRepository.upsert(
-                chat.copy(
-                    audioTranslationModel = model
-                ),
-                deviceOnly = authManager.clientId.first() == chat.ownerId
-            )
-        }
-    }
-
-    suspend fun setAudioSpeechModel(chatId: String, model: Pair<String, String>?) {
-        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
-            chatRepository.upsert(
-                chat.copy(
-                    audioSpeechModel = model
-                ),
-                deviceOnly = authManager.clientId.first() == chat.ownerId
-            )
-        }
-    }
-
-    suspend fun setImageGenerationsModel(chatId: String, model: Pair<String, String>?) {
-        combine(userChats, deviceChats) { user, device -> user + device }.first().firstOrNull { it.id == chatId }?.let { chat ->
-            chatRepository.upsert(
-                chat.copy(
-                    imageGenerationsModel = model
+                    models = if (model == null) {
+                        chat.models - capability
+                    } else {
+                        chat.models + mapOf(capability to model)
+                    }
                 ),
                 deviceOnly = authManager.clientId.first() == chat.ownerId
             )

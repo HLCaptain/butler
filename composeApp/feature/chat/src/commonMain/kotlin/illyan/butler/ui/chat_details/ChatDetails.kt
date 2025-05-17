@@ -36,7 +36,9 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerDropdownMenuBox
 import illyan.butler.core.ui.utils.plus
+import illyan.butler.domain.model.Capability
 import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.audio_speech_model
 import illyan.butler.generated.resources.audio_transcription_model
@@ -67,10 +69,7 @@ fun ChatDetails(
         modifier = modifier,
         chat = state.chat,
         alternativeModels = state.alternativeModels,
-        setAudioTranscriptionModel = viewModel::setAudioTranscriptionModel,
-        setAudioTranslationModel = viewModel::setAudioTranslationModel,
-        setAudioSpeechModel = viewModel::setAudioSpeechModel,
-        setImageGenerationsModel = viewModel::setImageGenerationsModel,
+        setModel = viewModel::setModel,
         actions = actions
     )
 }
@@ -79,11 +78,8 @@ fun ChatDetails(
 fun ChatDetails(
     modifier: Modifier = Modifier,
     chat: DomainChat?,
-    alternativeModels: List<Pair<String, String>>,
-    setAudioTranscriptionModel: ((Pair<String, String>?) -> Unit)? = null,
-    setAudioTranslationModel: ((Pair<String, String>?) -> Unit)? = null,
-    setAudioSpeechModel: ((Pair<String, String>?) -> Unit)? = null,
-    setImageGenerationsModel: ((Pair<String, String>?) -> Unit)? = null,
+    alternativeModels: List<ModelConfig>,
+    setModel: ((ModelConfig?, Capability) -> Unit)? = null,
     actions: @Composable () -> Unit = {},
 ) {
     Box {
@@ -94,11 +90,11 @@ fun ChatDetails(
         ) { innerPadding ->
             val aiMembers = remember(chat) {
                 mapOf(
-                    Res.string.chat_completion_model to chat?.chatCompletionModel,
-                    Res.string.audio_speech_model to chat?.audioSpeechModel,
-                    Res.string.audio_transcription_model to chat?.audioTranscriptionModel,
-                    Res.string.audio_translation_model to chat?.audioTranslationModel,
-                    Res.string.image_generations_model to chat?.imageGenerationsModel
+                    Res.string.chat_completion_model to chat?.models[Capability.CHAT_COMPLETION],
+                    Res.string.audio_speech_model to chat?.models[Capability.SPEECH_SYNTHESIS],
+                    Res.string.audio_transcription_model to chat?.models[Capability.AUDIO_TRANSCRIPTION],
+                    Res.string.audio_translation_model to chat?.models[Capability.AUDIO_TRANSLATION],
+                    Res.string.image_generations_model to chat?.models[Capability.IMAGE_GENERATION]
                 )
             }
             LazyColumn(
@@ -152,7 +148,15 @@ fun ChatDetails(
                         }
                     }
                 }
-                items(aiMembers.toList(), key = { it.first.key }) { (resTitle, model) ->
+                items(aiMembers.toList(), key = { (resTitle, _) ->
+                    when (resTitle) {
+                        Res.string.audio_transcription_model -> Capability.AUDIO_TRANSCRIPTION
+                        Res.string.audio_translation_model -> Capability.AUDIO_TRANSLATION
+                        Res.string.audio_speech_model -> Capability.SPEECH_SYNTHESIS
+                        Res.string.image_generations_model -> Capability.IMAGE_GENERATION
+                        else -> Capability.CHAT_COMPLETION
+                    }
+                }) { (resTitle, model) ->
                     ModelSetting(
                         modifier = Modifier.fillMaxWidth(),
                         title = stringResource(resTitle),
@@ -161,10 +165,10 @@ fun ChatDetails(
                         alternatives = alternativeModels,
                         setModel = {
                             when (resTitle) {
-                                Res.string.audio_transcription_model -> setAudioTranscriptionModel?.invoke(it)
-                                Res.string.audio_translation_model -> setAudioTranslationModel?.invoke(it)
-                                Res.string.audio_speech_model -> setAudioSpeechModel?.invoke(it)
-                                Res.string.image_generations_model -> setImageGenerationsModel?.invoke(it)
+                                Res.string.audio_transcription_model -> setModel?.invoke(it, Capability.AUDIO_TRANSCRIPTION)
+                                Res.string.audio_translation_model -> setModel?.invoke(it, Capability.AUDIO_TRANSLATION)
+                                Res.string.audio_speech_model -> setModel?.invoke(it, Capability.SPEECH_SYNTHESIS)
+                                Res.string.image_generations_model -> setModel?.invoke(it, Capability.IMAGE_GENERATION)
                             }
                         }
                     )
@@ -183,9 +187,9 @@ fun ModelSetting(
     modifier: Modifier = Modifier,
     title: String,
     enabled: Boolean = true,
-    model: Pair<String, String>?,
-    alternatives: List<Pair<String, String>>,
-    setModel: ((Pair<String, String>?) -> Unit)? = null
+    model: ModelConfig?,
+    alternatives: List<ModelConfig>,
+    setModel: ((ModelConfig?) -> Unit)? = null
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     ButlerDropdownMenuBox(

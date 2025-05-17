@@ -4,7 +4,10 @@ import androidx.room.TypeConverter
 import illyan.butler.core.local.room.model.RoomAddress
 import illyan.butler.core.local.room.model.RoomPreferences
 import illyan.butler.core.local.room.model.RoomToken
+import illyan.butler.domain.model.Capability
+import illyan.butler.domain.model.ModelConfig
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.json.Json
 
 class Converters {
@@ -74,6 +77,17 @@ class Converters {
     @TypeConverter
     fun toPair(databaseValue: String): Pair<String, String> {
         return Json.decodeFromString(StringPair.serializer(), databaseValue).toPair()
+    }
+
+    @JvmName("modelsMapToString")
+    @TypeConverter
+    fun toString(models: Map<Capability, ModelConfig>): String {
+        return Json.encodeToString(MapSerializer(Capability.serializer(), ModelConfig.serializer()), models)
+    }
+
+    @TypeConverter
+    fun toModelsMap(databaseValue: String): Map<Capability, ModelConfig> {
+        return Json.decodeFromString(MapSerializer(Capability.serializer(), ModelConfig.serializer()), databaseValue)
     }
 }
 

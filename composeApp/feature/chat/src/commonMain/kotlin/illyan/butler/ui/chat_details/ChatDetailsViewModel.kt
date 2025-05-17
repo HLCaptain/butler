@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
+import illyan.butler.domain.model.Capability
+import illyan.butler.domain.model.ModelConfig
 import illyan.butler.model.ModelManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,7 +43,7 @@ class ChatDetailsViewModel(
     ) { currentChat, providerModels, device ->
         ChatDetailsState(
             chat = currentChat,
-            alternativeModels = if (device) providerModels.map { it.endpoint to it.id } else emptyList()
+            alternativeModels = if (device) providerModels.map { ModelConfig(it.endpoint, it.id) } else emptyList()
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ChatDetailsState())
 
@@ -49,27 +51,9 @@ class ChatDetailsViewModel(
         currentChatId.update { chatId }
     }
 
-    fun setAudioTranscriptionModel(model: Pair<String, String>?) {
+    fun setModel(model: ModelConfig?, capability: Capability) {
         viewModelScope.launch {
-            chatManager.setAudioTranscriptionModel(currentChatId.value!!, model)
-        }
-    }
-
-    fun setAudioTranslationModel(model: Pair<String, String>?) {
-        viewModelScope.launch {
-            chatManager.setAudioTranslationModel(currentChatId.value!!, model)
-        }
-    }
-
-    fun setAudioSpeechModel(model: Pair<String, String>?) {
-        viewModelScope.launch {
-            chatManager.setAudioSpeechModel(currentChatId.value!!, model)
-        }
-    }
-
-    fun setImageGenerationsModel(model: Pair<String, String>?) {
-        viewModelScope.launch {
-            chatManager.setImageGenerationsModel(currentChatId.value!!, model)
+            chatManager.setModel(currentChatId.value!!, model, capability)
         }
     }
 }

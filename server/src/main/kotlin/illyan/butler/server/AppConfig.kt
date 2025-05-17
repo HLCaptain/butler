@@ -55,7 +55,7 @@ data object AppConfig {
         val OTEL_EXPORTER_OTLP_ENDPOINT = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4317"
     }
     data object Database {
-        val DATABASE_USER = System.getenv("DATABASE_USER") ?: "butler"
+        val DATABASE_USER = System.getenv("DATABASE_USER") ?: "postgres"
         val DATABASE_PASSWORD = System.getenv("DATABASE_PASSWORD") ?: "butler"
         val DATABASE_URL = System.getenv("DATABASE_URL") ?: "r2dbc:postgresql:${DATABASE_USER}:${DATABASE_PASSWORD}@localhost:5432/postgres?lc_messages=en_US.UTF-8"
         val DATABASE_NAME = System.getenv("DATABASE_NAME") ?: "butler"

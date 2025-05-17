@@ -68,7 +68,7 @@ dependencies {
     implementation(libs.logback.classic)
 
     // Koin DI
-    implementation(platform(libs.koin.bom))
+    implementation(platform(libs.koin.bom.ktor3))
     implementation(libs.koin.ktor)
     implementation(libs.koin.logger.slf4j)
     implementation(libs.koin.core)
