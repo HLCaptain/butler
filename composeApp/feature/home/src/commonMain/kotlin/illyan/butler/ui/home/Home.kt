@@ -276,9 +276,16 @@ fun Home(
                         LaunchedEffect(isCompact) {
                             if (!isCompact) drawerState.close()
                         }
+                        val noChats = remember(state.userChats.size, state.deviceChats.size, state.localChats.size) {
+                            (state.userChats + state.deviceChats + state.localChats).isEmpty()
+                        }
+                        LaunchedEffect(noChats) {
+                            coroutineScope.launch { drawerState.close() }
+                        }
                         BackHandler(drawerState.isOpen) {
                             coroutineScope.launch { drawerState.close() }
                         }
+
                         DismissibleNavigationDrawer(
                             drawerState = drawerState,
                             gesturesEnabled = isCompact,

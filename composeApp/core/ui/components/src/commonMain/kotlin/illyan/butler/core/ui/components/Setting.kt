@@ -87,20 +87,16 @@ fun <T : Any> DropdownSetting(
     isDropdownOpen: Boolean = false,
     onDismissRequest: () -> Unit = {},
     values: Iterable<T> = emptyList(),
-    getValueName: @Composable (T) -> String = { it.toString() },
+    text: @Composable (T) -> Unit = { Text(it.toString()) },
     getValueLeadingIcon: (T) -> ImageVector? = { null },
     getValueTrailingIcon: (T) -> ImageVector? = { null },
     selectValue: (T) -> Unit,
     settingName: String,
-    textStyle: TextStyle = MaterialTheme.typography.labelLarge,
-    fontWeight: FontWeight = FontWeight.Normal,
     enabled: Boolean = true,
 ) {
     SettingItem(
         settingName = settingName,
         onClick = onDismissRequest,
-        titleStyle = textStyle,
-        titleWeight = fontWeight,
         enabled = enabled,
     ) {
         Row(
@@ -112,12 +108,7 @@ fun <T : Any> DropdownSetting(
                 targetState = selectedValue,
                 label = "Dropdown setting text",
             ) { state ->
-                state?.let {
-                    Text(
-                        text = getValueName(it),
-                        style = textStyle,
-                    )
-                }
+                state?.let { text(it) }
             }
             Icon(
                 imageVector = if (isDropdownOpen) {
@@ -137,7 +128,7 @@ fun <T : Any> DropdownSetting(
                 values = values.toList(),
                 selectedValue = selectedValue,
                 selectValue = selectValue,
-                getValueName = getValueName,
+                valueText = text,
                 getValueLeadingIcon = getValueLeadingIcon,
                 getValueTrailingIcon = getValueTrailingIcon,
                 onDismissRequest = onDismissRequest

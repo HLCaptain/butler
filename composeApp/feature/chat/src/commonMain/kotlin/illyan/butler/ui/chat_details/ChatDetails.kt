@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -45,6 +47,7 @@ import illyan.butler.generated.resources.audio_transcription_model
 import illyan.butler.generated.resources.audio_translation_model
 import illyan.butler.generated.resources.chat_completion_model
 import illyan.butler.generated.resources.chat_details
+import illyan.butler.generated.resources.chat_details_model_config
 import illyan.butler.generated.resources.chat_id
 import illyan.butler.generated.resources.image_generations_model
 import illyan.butler.generated.resources.name
@@ -90,11 +93,11 @@ fun ChatDetails(
         ) { innerPadding ->
             val aiMembers = remember(chat) {
                 mapOf(
-                    Res.string.chat_completion_model to chat?.models[Capability.CHAT_COMPLETION],
-                    Res.string.audio_speech_model to chat?.models[Capability.SPEECH_SYNTHESIS],
-                    Res.string.audio_transcription_model to chat?.models[Capability.AUDIO_TRANSCRIPTION],
-                    Res.string.audio_translation_model to chat?.models[Capability.AUDIO_TRANSLATION],
-                    Res.string.image_generations_model to chat?.models[Capability.IMAGE_GENERATION]
+                    Capability.CHAT_COMPLETION to chat?.models[Capability.CHAT_COMPLETION],
+                    Capability.SPEECH_SYNTHESIS to chat?.models[Capability.SPEECH_SYNTHESIS],
+                    Capability.AUDIO_TRANSCRIPTION to chat?.models[Capability.AUDIO_TRANSCRIPTION],
+                    Capability.AUDIO_TRANSLATION to chat?.models[Capability.AUDIO_TRANSLATION],
+                    Capability.IMAGE_GENERATION to chat?.models[Capability.IMAGE_GENERATION]
                 )
             }
             LazyColumn(
@@ -148,29 +151,22 @@ fun ChatDetails(
                         }
                     }
                 }
-                items(aiMembers.toList(), key = { (resTitle, _) ->
-                    when (resTitle) {
-                        Res.string.audio_transcription_model -> Capability.AUDIO_TRANSCRIPTION
-                        Res.string.audio_translation_model -> Capability.AUDIO_TRANSLATION
-                        Res.string.audio_speech_model -> Capability.SPEECH_SYNTHESIS
-                        Res.string.image_generations_model -> Capability.IMAGE_GENERATION
-                        else -> Capability.CHAT_COMPLETION
-                    }
-                }) { (resTitle, model) ->
+                items(aiMembers.toList(), key = { (capability, _) -> capability }) { (capability, model) ->
                     ModelSetting(
                         modifier = Modifier.fillMaxWidth(),
-                        title = stringResource(resTitle),
-                        model = model,
-                        enabled = resTitle != Res.string.chat_completion_model && alternativeModels.any { it != model },
-                        alternatives = alternativeModels,
-                        setModel = {
-                            when (resTitle) {
-                                Res.string.audio_transcription_model -> setModel?.invoke(it, Capability.AUDIO_TRANSCRIPTION)
-                                Res.string.audio_translation_model -> setModel?.invoke(it, Capability.AUDIO_TRANSLATION)
-                                Res.string.audio_speech_model -> setModel?.invoke(it, Capability.SPEECH_SYNTHESIS)
-                                Res.string.image_generations_model -> setModel?.invoke(it, Capability.IMAGE_GENERATION)
+                        title = stringResource(
+                            when (capability) {
+                                Capability.CHAT_COMPLETION -> Res.string.chat_completion_model
+                                Capability.AUDIO_TRANSCRIPTION -> Res.string.audio_transcription_model
+                                Capability.AUDIO_TRANSLATION -> Res.string.audio_translation_model
+                                Capability.SPEECH_SYNTHESIS -> Res.string.audio_speech_model
+                                Capability.IMAGE_GENERATION -> Res.string.image_generations_model
                             }
-                        }
+                        ),
+                        model = model,
+                        enabled = capability != Capability.CHAT_COMPLETION && alternativeModels.any { it != model },
+                        alternatives = alternativeModels,
+                        setModel = { setModel?.invoke(it, capability) }
                     )
                 }
             }
@@ -199,6 +195,25 @@ fun ModelSetting(
         onExpandedChange = { expanded = it },
         enabled = enabled,
         values = alternatives,
+        getValueName = {
+            stringResource(
+                Res.string.chat_details_model_config,
+                it.modelId,
+                it.endpoint
+            )
+        },
+        item = {
+            Column {
+                Text(text = it.modelId)
+                Text(
+                    text = it.endpoint,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontStyle = FontStyle.Italic,
+                        fontWeight = FontWeight.Light
+                    ),
+                )
+            }
+        },
         selectValue = { expanded = false; setModel?.invoke(it) },
         selectedValue = model,
         settingName = title,

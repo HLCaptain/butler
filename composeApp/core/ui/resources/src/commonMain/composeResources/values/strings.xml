@@ -45,6 +45,7 @@
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
     <string name="chat_details">Chat details</string>
+    <string name="chat_details_model_config"><b>%1$s</b> <i>%2$s</i></string>
     <string name="chat_name_is_x">Chat name: %s</string>
     <string name="chat_id_is_x">Chat ID: %s</string>
     <string name="chat_id">Chat ID</string>

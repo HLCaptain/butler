@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,6 +71,7 @@ fun <T : Any> ButlerDropdownMenuBox(
     isError: Boolean = false,
     values: List<T> = emptyList(),
     getValueName: @Composable (T) -> String = { it.toString() },
+    item: @Composable (T) -> Unit = { Text(getValueName(it)) },
     getValueLeadingIcon: (T) -> ImageVector? = { null },
     getValueTrailingIcon: (T) -> ImageVector? = { null },
     leadingIcon : @Composable (() -> Unit)? = null,
@@ -124,7 +126,7 @@ fun <T : Any> ButlerDropdownMenuBox(
             getValueLeadingIcon = getValueLeadingIcon,
             getValueTrailingIcon = getValueTrailingIcon,
             selectedValue = selectedValue,
-            getValueName = getValueName,
+            valueText = { item(it) },
             selectValue = selectValue
         )
     }
@@ -140,7 +142,7 @@ fun <T : Any> ExposedDropdownMenuBoxScope.ButlerDropdownMenu(
     getValueLeadingIcon: (T) -> ImageVector?,
     getValueTrailingIcon: (T) -> ImageVector?,
     selectedValue: T?,
-    getValueName: @Composable (T) -> String,
+    valueText: @Composable (T) -> Unit,
     selectValue: (T) -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -159,7 +161,7 @@ fun <T : Any> ExposedDropdownMenuBoxScope.ButlerDropdownMenu(
             getValueLeadingIcon = getValueLeadingIcon,
             getValueTrailingIcon = getValueTrailingIcon,
             selectedValue = selectedValue,
-            getValueName = getValueName,
+            valueText = valueText,
             selectValue = selectValue,
             onDismissRequest = onDismissRequest,
             scrollState = scrollState
@@ -176,7 +178,7 @@ fun <T : Any> ButlerDropdownMenu(
     getValueLeadingIcon: (T) -> ImageVector?,
     getValueTrailingIcon: (T) -> ImageVector?,
     selectedValue: T?,
-    getValueName: @Composable (T) -> String,
+    text: @Composable (T) -> Unit,
     selectValue: (T) -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -195,7 +197,7 @@ fun <T : Any> ButlerDropdownMenu(
             getValueLeadingIcon = getValueLeadingIcon,
             getValueTrailingIcon = getValueTrailingIcon,
             selectedValue = selectedValue,
-            getValueName = getValueName,
+            valueText = text,
             selectValue = selectValue,
             onDismissRequest = onDismissRequest,
             scrollState = scrollState
@@ -276,6 +278,28 @@ object ButlerDropdownMenuDefaults {
         selectValue: (T) -> Unit,
         scrollState: ScrollState? = null,
         onDismissRequest: () -> Unit
+    ) = DropdownMenuList(
+        values = values,
+        getValueLeadingIcon = getValueLeadingIcon,
+        getValueTrailingIcon = getValueTrailingIcon,
+        selectedValue = selectedValue,
+        valueText = { Text(text = getValueName(it)) },
+        selectValue = selectValue,
+        scrollState = scrollState,
+        onDismissRequest = onDismissRequest
+    )
+
+    @JvmName("DropdownMenuListWithComposableText")
+    @Composable
+    fun <T : Any> DropdownMenuList(
+        values: List<T>,
+        getValueLeadingIcon: (T) -> ImageVector?,
+        getValueTrailingIcon: (T) -> ImageVector?,
+        selectedValue: T?,
+        valueText: @Composable (T) -> Unit,
+        selectValue: (T) -> Unit,
+        scrollState: ScrollState? = null,
+        onDismissRequest: () -> Unit
     ) {
         var selectedItemPosition by remember { mutableFloatStateOf(0f) }
         var previousItemSize by remember { mutableFloatStateOf(0f) }
@@ -289,27 +313,9 @@ object ButlerDropdownMenuDefaults {
         Column(modifier = Modifier.focusable(enabled = true)) {
             values.forEachIndexed { index, value ->
                 val leadingIcon = remember { getValueLeadingIcon(value) }
-                val leadingComposable = @Composable {
-                    leadingIcon?.let {
-                        Icon(
-                            imageVector = it,
-                            contentDescription = "Leading item icon",
-                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
                 val trailingIcon = remember {
                     val icon = getValueTrailingIcon(value)
                     if (value == selectedValue) Icons.Rounded.Check else icon
-                }
-                val trailingComposable = @Composable {
-                    trailingIcon?.let {
-                        Icon(
-                            imageVector = it,
-                            contentDescription = "Trailing item icon",
-                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
                 }
 
                 DropdownMenuItem(
@@ -322,40 +328,27 @@ object ButlerDropdownMenuDefaults {
                             Modifier
                         })
                         .fillMaxSize(),
-                    title = getValueName(value),
+                    content = { valueText(value) },
                     onClick = { selectValue(value); onDismissRequest() },
-                    leadingComposable = { leadingComposable() },
-                    trailingComposable = { trailingComposable() },
+                    leadingIcon = leadingIcon?.let { {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = "Leading item icon",
+                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    } },
+                    trailingIcon = trailingIcon?.let { {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = "Trailing item icon",
+                            tint = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    } },
                     colors = ButlerCardDefaults.cardColors().copy(
                         contentColor = if (value == selectedValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                     )
                 )
             }
-        }
-    }
-
-    @Composable
-    fun DropdownMenuItem(
-        modifier: Modifier = Modifier,
-        onClick: (() -> Unit)? = null,
-        title: String,
-        colors: CardColors = ButlerCardDefaults.cardColors(),
-        leadingComposable: (@Composable () -> Unit)? = null,
-        trailingComposable: (@Composable () -> Unit)? = null,
-        interactionSource: MutableInteractionSource? = null
-    ) {
-        DropdownMenuItem(
-            modifier = modifier,
-            onClick = onClick,
-            colors = colors,
-            leadingIcon = leadingComposable,
-            trailingIcon = trailingComposable,
-            interactionSource = interactionSource
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium
-            )
         }
     }
 
@@ -397,6 +390,22 @@ object ButlerDropdownMenuDefaults {
                 animationSpec = tween(80),
                 label = "Selected item border"
             )
+            val cardContent = movableContentOf {
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = DropdownMenuItemMinHeight)
+                        .padding(contentPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    leadingIcon?.invoke()
+                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                        content()
+                    }
+                    Spacer(Modifier.weight(1f))
+                    trailingIcon?.invoke()
+                }
+            }
             if (onClick != null) {
                 ButlerOutlinedCard(
                     modifier = modifier.padding(borderPadding),
@@ -409,20 +418,7 @@ object ButlerDropdownMenuDefaults {
                     ),
                     interactionSource = interactionSource
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .heightIn(min = DropdownMenuItemMinHeight)
-                            .padding(contentPadding),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        leadingIcon?.invoke()
-                        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                            content()
-                        }
-                        Spacer(Modifier.weight(1f))
-                        trailingIcon?.invoke()
-                    }
+                    cardContent()
                 }
             } else {
                 ButlerCard(
@@ -432,20 +428,7 @@ object ButlerDropdownMenuDefaults {
                     colors = colors.copy(containerColor = colors.containerColor.copy(alpha = containerAlpha)),
                     interactionSource = interactionSource
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .heightIn(min = DropdownMenuItemMinHeight)
-                            .padding(contentPadding),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        leadingIcon?.invoke()
-                        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                            content()
-                        }
-                        Spacer(Modifier.weight(1f))
-                        trailingIcon?.invoke()
-                    }
+                    cardContent()
                 }
             }
         }

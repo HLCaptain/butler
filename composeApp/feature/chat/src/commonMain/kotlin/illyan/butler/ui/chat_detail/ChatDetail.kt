@@ -149,7 +149,7 @@ fun ChatDetail(
         if (lastMessage?.senderId == state.chat?.ownerId ||
             // Or last message is from bot, but the message is blank
             (lastMessage?.senderId != state.chat?.ownerId && lastMessage?.messageContent?.isBlank() == true)) {
-            delay(5000)
+            delay(10000)
             sentMessageButNoUpdate = true
         } else {
             sentMessageButNoUpdate = false
@@ -626,7 +626,9 @@ fun MessageField(
             value = textMessage,
             onValueChange = { textMessage = it },
             placeholder = { Text(stringResource(Res.string.send_message)) },
-            singleLine = false
+            singleLine = false,
+            isCompact = true,
+            isOutlined = false
         )
 
         IconButton(

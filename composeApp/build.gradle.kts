@@ -141,7 +141,7 @@ android {
 
     packaging {
         resources {
-            excludes += "/META-INF/**"
+//            excludes += "/META-INF/**"
         }
     }
 

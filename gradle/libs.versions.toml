@@ -105,8 +105,8 @@ korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.10.0-beta04" }
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.34.0" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc12" }
-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.1.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.5.4" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.2.0" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.0" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
