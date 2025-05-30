@@ -10,7 +10,9 @@ import illyan.butler.shared.model.chat.ResourceDto
 import illyan.butler.shared.model.response.StatusCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.toList
@@ -110,5 +112,13 @@ class ResourceExposedDatabase(
             .andWhere { Chats.ownerId eq UUID.fromString(userId) }
             .count() > 0
         return isUserPartOfReferencingChat
+    }
+
+    override fun getResourceFlow(userId: String, resourceId: String): Flow<ResourceDto> = flow {
+        emit(getResource(userId, resourceId))
+    }
+
+    override fun getResourcesFlow(userId: String): Flow<List<ResourceDto>> = flow {
+        emit(getResources(userId))
     }
 }

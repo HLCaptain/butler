@@ -200,17 +200,36 @@ class MessageExposedDatabase(
         }
     }
 
+    override fun getPreviousMessagesFlow(userId: String, chatId: String, limit: Int, timestamp: Long): Flow<List<MessageDto>> = flow {
+        emit(getPreviousMessages(userId, chatId, limit, timestamp))
+    }
+
+    override fun getMessagesFlow(userId: String, chatId: String, limit: Int, offset: Int): Flow<List<MessageDto>> = flow {
+        emit(getMessages(userId, chatId, limit, offset))
+    }
+
+    override fun getMessagesFlow(userId: String, chatId: String): Flow<List<MessageDto>> = flow {
+        emit(getMessages(userId, chatId))
+    }
+
+    override fun getMessagesFlow(userId: String): Flow<List<MessageDto>> = flow {
+        emit(getMessages(userId))
+    }
+
     override fun getChangedMessagesAffectingChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+        // This is a simple implementation, a more robust one would listen to database changes.
         return flow {
             var previousMessages: Set<MessageDto>? = null
             while (true) {
-                val messages = getMessages(userId, chatId).toSet()
+                val currentMessages = getMessages(userId, chatId).toSet()
                 val changedMessages = previousMessages?.let {
-                    messages.filter { message -> message !in it }
-                } ?: emptySet()
-                if (changedMessages.isNotEmpty()) emit(changedMessages.toList())
-                previousMessages = messages
-                delay(1000)
+                    currentMessages.filter { message -> message !in it }.toSet()
+                } ?: currentMessages
+                if (changedMessages.isNotEmpty()) {
+                    emit(changedMessages.toList())
+                }
+                previousMessages = currentMessages
+                delay(5000) // Poll every 5 seconds
             }
         }
     }

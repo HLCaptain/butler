@@ -219,29 +219,67 @@ class ChatExposedDatabase(
         }
     }
 
+    override fun getChatFlow(userId: String, chatId: String): Flow<ChatDto> = flow {
+        emit(getChat(userId, chatId))
+    }
+
+    override fun getChatsLastMonthFlow(userId: String): Flow<List<ChatDto>> = flow {
+        emit(getChatsLastMonth(userId))
+    }
+
+    override fun getChatsLastWeekFlow(userId: String): Flow<List<ChatDto>> = flow {
+        emit(getChatsLastWeek(userId))
+    }
+
+    override fun getChatsFlow(userId: String): Flow<List<ChatDto>> = flow {
+        emit(getChats(userId))
+    }
+
+    override fun getChatsFlow(userId: String, limit: Int, offset: Int): Flow<List<ChatDto>> = flow {
+        emit(getChats(userId, limit, offset))
+    }
+
+    override fun getChatsFlow(userId: String, fromDate: Long, toDate: Long): Flow<List<ChatDto>> = flow {
+        emit(getChats(userId, fromDate, toDate))
+    }
+
+    override fun getPreviousChatsFlow(userId: String, limit: Int, timestamp: Long): Flow<List<ChatDto>> = flow {
+        emit(getPreviousChats(userId, limit, timestamp))
+    }
+
+    override fun getPreviousChatsFlow(userId: String, limit: Int, offset: Int): Flow<List<ChatDto>> = flow {
+        emit(getPreviousChats(userId, limit, offset))
+    }
+
     override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
+        // This is a simple implementation, a more robust one would listen to database changes.
         return flow {
             var previousChats: Set<ChatDto>? = null
             while (true) {
-                val chats = getChats(userId).toSet()
+                val currentChats = getChats(userId).toSet()
                 val changedChats = previousChats?.let {
-                    chats.filter { chat -> chat !in it }
-                } ?: chats
-                if (changedChats.isNotEmpty()) emit(changedChats.toList())
-                previousChats = chats
-                delay(10000)
+                    currentChats.filter { chat -> chat !in it }.toSet()
+                } ?: currentChats
+                if (changedChats.isNotEmpty()) {
+                    emit(changedChats.toList())
+                }
+                previousChats = currentChats
+                delay(5000) // Poll every 5 seconds
             }
         }
     }
 
     override fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto> {
+        // This is a simple implementation, a more robust one would listen to database changes.
         return flow {
             var previousChat: ChatDto? = null
             while (true) {
-                val chat = getChat(userId, chatId)
-                if (chat != previousChat) emit(chat)
-                previousChat = chat
-                delay(10000)
+                val currentChat = getChat(userId, chatId)
+                if (previousChat != currentChat) {
+                    emit(currentChat)
+                }
+                previousChat = currentChat
+                delay(5000) // Poll every 5 seconds
             }
         }
     }

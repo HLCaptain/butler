@@ -77,9 +77,11 @@ dependencies {
     ksp(libs.koin.ksp)
 
     // Database
+    implementation(libs.postgresql.r2dbc)
     implementation(libs.postgresql)
     implementation(libs.exposed.core)
     implementation(libs.exposed.r2dbc)
+    implementation(libs.exposed.jdbc) // Required for SchemaUtils
     implementation(libs.exposed.dao)
     implementation(libs.exposed.json)
 

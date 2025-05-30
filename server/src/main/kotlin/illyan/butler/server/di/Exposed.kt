@@ -10,12 +10,11 @@ import org.koin.core.annotation.Single
 fun provideDatabase(): R2dbcDatabase = R2dbcDatabase.connect {
     defaultR2dbcIsolationLevel = IsolationLevel.SERIALIZABLE
 
-//    setUrl(TestDB.POSTGRESQL.connection.invoke().replace("rdbc:", "r2dbc:pool:"))
     setUrl(AppConfig.Database.DATABASE_URL)
 
     connectionFactoryOptions {
         option(ConnectionFactoryOptions.USER, AppConfig.Database.DATABASE_USER)
         option(ConnectionFactoryOptions.PASSWORD, AppConfig.Database.DATABASE_PASSWORD)
-        option(ConnectionFactoryOptions.DRIVER, AppConfig.Database.DATABASE_DRIVER)
+        option(ConnectionFactoryOptions.DATABASE, AppConfig.Database.DATABASE_NAME)
     }
 }

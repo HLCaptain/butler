@@ -5,9 +5,9 @@ kotlin = "2.2.0-RC"
 android-minSdk = "26"
 android-compileSdk = "36"
 ksp = "2.2.0-RC-2.0.1"
-agp = "8.10.0"
-compose = "1.8.0"
-compose-android = "1.8.1"
+agp = "8.10.1"
+compose = "1.8.1"
+compose-android = "1.8.2"
 ktor = "3.1.3"
 koin-ktor3 = "4.1.0-Beta11"
 koin = "4.1.0-Beta7"
@@ -20,14 +20,15 @@ logback = "1.5.16"
 commonsCodec = "1.17.2"
 okhttpLoggingInterceptor = "5.0.0-alpha.14"
 prometheus = "1.12.3"
-exposed = "1.0.0-beta-1"
-postgres = "42.7.4"
+exposed = "1.0.0-beta-2"
+postgres = "42.7.5"
+postgres-r2dbc = "1.0.7.RELEASE"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
-material-adaptive = "1.1.0-rc01"
+material-adaptive = "1.1.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -80,7 +81,7 @@ androidx-core = { module = "androidx.core:core-ktx", version = "1.16.0" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0-beta02" }
 androidx-activity = { module = "androidx.activity:activity-ktx", version = "1.10.1" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.10.1" }
-androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.6" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.7" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-android" }
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose-android" }
 
@@ -94,8 +95,8 @@ kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", ve
 compose-gradlePlugin = { module = "org.jetbrains.compose:org.jetbrains.compose.gradle.plugin", version.ref = "compose" }
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 
-jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.0-alpha07" }
-jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version = "2.9.0-alpha17" }
+jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.0" }
+jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version = "2.9.0-beta02" }
 
 napier = { module = "io.github.aakira:napier", version = "2.7.1" }
 store = { module = "org.mobilenativefoundation.store:store5", version = "5.1.0-alpha06" }
@@ -106,7 +107,7 @@ filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.34.0" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc12" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.2.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.0" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.2" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
@@ -141,8 +142,10 @@ ktor-server-compression = { module = "io.ktor:ktor-server-compression", version.
 ktor-server-sse = { module = "io.ktor:ktor-server-sse", version.ref = "ktor" }
 
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+postgresql-r2dbc = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgres-r2dbc" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-r2dbc = { module = "org.jetbrains.exposed:exposed-r2dbc", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
 exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "exposed" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

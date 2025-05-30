@@ -9,8 +9,10 @@ import illyan.butler.shared.model.identity.UserDto
 import illyan.butler.shared.model.response.StatusCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
@@ -89,6 +91,15 @@ class UserExposedDatabase(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
+    override fun getUserFlow(userId: String): Flow<UserDto> = flow {
+        emit(getUser(userId))
+    }
+
+    override fun getUserByEmailAndPasswordFlow(email: String, password: String): Flow<UserDto> = flow {
+        emit(getUserByEmailAndPassword(email, password))
+    }
+
     override suspend fun upsertPasswordForUser(userId: String, password: String) {
         val encodedPassword = passwordEncoder.encode(password)
         return suspendTransaction(dispatcher, db = database) {
@@ -139,3 +150,4 @@ class UserExposedDatabase(
         )
     }
 }
+

@@ -97,7 +97,7 @@ fun SelectHostDialogContent(
             modifier = Modifier,
             state = state,
             hostUrl = hostUrl,
-            hostUrlChanged = { hostUrl = it; isHostBlank = false },
+            hostUrlChanged = { hostUrl = it; isHostBlank = it.isBlank() },
             hostError = if (isHostBlank) { {
                 Text(text = stringResource(Res.string.required))
             } } else if (!state.isConnecting && state.isConnected == false) { {

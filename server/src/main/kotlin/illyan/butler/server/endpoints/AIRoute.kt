@@ -9,10 +9,13 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import io.ktor.server.websocket.sendSerialized
+import io.ktor.server.websocket.webSocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
 import kotlin.time.Duration.Companion.minutes
 
@@ -28,6 +31,14 @@ fun Route.aiRoute() {
         route("/models") {
             get {
                 call.respond(HttpStatusCode.OK, modelsAndProviders.first())
+            }
+
+            webSocket {
+                coroutineScopeIO.launch {
+                    modelsAndProviders.collect { models ->
+                        sendSerialized(models)
+                    }
+                }
             }
 
             get("/{modelId}") {

@@ -11,6 +11,7 @@ import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
@@ -174,7 +175,7 @@ fun Application.configureMonitoring() {
     }
 
     routing {
-//        openAPI(path = "openapi")
+        openAPI(path = "openapi")
 //        swaggerUI(path = "openapi")
         get("/metrics") {
             call.respond(appMicrometerRegistry.scrape())

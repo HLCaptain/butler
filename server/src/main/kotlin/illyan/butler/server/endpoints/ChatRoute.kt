@@ -20,13 +20,44 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import io.ktor.server.sse.sse
+import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.Frame
+import io.ktor.websocket.close
+import io.ktor.websocket.readText
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromHexString
 import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
-import kotlinx.serialization.serializer
 import org.koin.ktor.ext.inject
+
+@OptIn(ExperimentalSerializationApi::class)
+private suspend inline fun <reified T : Any> DefaultWebSocketServerSession.sendSerialized(data: T) {
+    val serializedText = when (AppConfig.Ktor.DEFAULT_CONTENT_TYPE) {
+        ContentType.Application.Json -> Json.encodeToString(data)
+        ContentType.Application.ProtoBuf -> ProtoBuf.encodeToHexString(data)
+        else -> Json.encodeToString(data)
+    }
+    send(Frame.Text(serializedText))
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+private inline fun <reified T : Any> DefaultWebSocketServerSession.tryReceiveDeserialized(frameText: String): T? {
+    return try {
+        when (AppConfig.Ktor.DEFAULT_CONTENT_TYPE) {
+            ContentType.Application.Json -> Json.decodeFromString<T>(frameText)
+            ContentType.Application.ProtoBuf -> ProtoBuf.decodeFromHexString<T>(frameText)
+            else -> Json.decodeFromString<T>(frameText)
+        }
+    } catch (e: Exception) {
+        // Log error or handle deserialization failure
+        println("Failed to deserialize: ${e.message}")
+        null
+    }
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Route.chatRoute() {
@@ -68,38 +99,24 @@ fun Route.chatRoute() {
                     call.respond(HttpStatusCode.OK, result)
                 }
 
-                sse(
-                    serialize = { typeInfo, it ->
-                        when (AppConfig.Ktor.DEFAULT_CONTENT_TYPE) {
-                            ContentType.Application.Json -> {
-                                val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
-                                Json.encodeToString(serializer, it)
-                            }
-                            ContentType.Application.ProtoBuf -> {
-                                val serializer = ProtoBuf.serializersModule.serializer(typeInfo.kotlinType!!)
-                                ProtoBuf.encodeToHexString(serializer, it)
-                            }
-                            else -> {
-                                val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
-                                Json.encodeToString(serializer, it)
-                            }
-                        }
-                    }
-                ) {
+                webSocket {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                    val flow = chatService.getChangesFromChat(userId, chatId)
 
-//                    flow.flowOn(Dispatchers.IO)
-//                        .collectLatest { data ->
-//                            val typedEvent = TypedServerSentEvent(
-//                                data = data,
-//                                event = "chat",
-//                                type = ContentType.Application.Json,
-//                                id = data.id.toString(),
-//                                retry = 1000L
-//                            )
-//                        }
+                    if (userId.isEmpty() || chatId.isEmpty()) {
+                        close(io.ktor.websocket.CloseReason(io.ktor.websocket.CloseReason.Codes.VIOLATED_POLICY, "User ID and Chat ID must be provided"))
+                        return@webSocket
+                    }
+
+                    launch {
+                        chatService.getChangesFromChat(userId, chatId).collectLatest { chatDto ->
+                            sendSerialized(chatDto)
+                        }
+                    }
+
+                    for (frame in incoming) {
+                        // Handle incoming frames if necessary, e.g., client acknowledging receipt or sending commands
+                    }
                 }
 
                 put {
@@ -134,6 +151,45 @@ fun Route.chatRoute() {
                                 chatService.getMessages(userId, chatId)
                             }
                         } else chatService.getMessages(userId, chatId))
+                    }
+
+                    webSocket {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
+                        val chatId = call.parameters["chatId"]?.trim().orEmpty()
+
+                        if (userId.isEmpty() || chatId.isEmpty()) {
+                            close(io.ktor.websocket.CloseReason(io.ktor.websocket.CloseReason.Codes.VIOLATED_POLICY, "User ID and Chat ID must be provided"))
+                            return@webSocket
+                        }
+
+                        // Launch a coroutine to send all messages history once and then listen for new messages
+                        launch {
+                            // Send all current messages once upon connection
+                            val initialMessages = chatService.getMessages(userId, chatId)
+                            sendSerialized(initialMessages)
+
+                            // Then, collect and send new/changed messages
+                            chatService.getChangedMessagesByChat(userId, chatId).collectLatest { messages ->
+                                sendSerialized(messages)
+                            }
+                        }
+
+                        // Handle incoming messages from the client
+                        for (frame in incoming) {
+                            if (frame is Frame.Text) {
+                                val text = frame.readText()
+                                val messageDto = tryReceiveDeserialized<MessageDto>(text)
+                                if (messageDto != null) {
+                                    // Ensure the received message belongs to the correct chat and user before processing
+                                    if (messageDto.chatId == chatId) {
+                                        chatService.sendMessage(userId, messageDto.copy(senderId = userId))
+                                        // The flow above will pick up the new message and broadcast it
+                                    } else {
+                                        // Log or handle messages for wrong chat
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     post {
