@@ -1,16 +1,18 @@
 services:
   postgres:
     image: postgres:17
+    container_name: butler-postgres
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: butler
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "butler"]
+      test: ["CMD-SHELL", "pg_isready", "-U", "${DATABASE_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,21 +36,25 @@ services:
     runtime: nvidia
 
   butler-server:
+    container_name: butler-server
     build:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: "r2dbc:postgresql://localhost:5432/postgres?lc_messages=en_US.UTF-8"
       DATABASE_USERNAME: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_DRIVER: "postgresql"
+      DATABASE_PORT: 5432
+      DATABASE_HOST: "butler-postgres"
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       JWT_REALM: ${JWT_REALM}
       KTOR_PORT: 8080
-      KTOR_DEVELOPMENT: false
+      KTOR_DEVELOPMENT: ${KTOR_DEVELOPMENT}
+      KTOR_ENVIRONMENT: ${KTOR_ENVIRONMENT}
       KTOR_DEFAULT_CONTENT_TYPE: application/json
       OPEN_AI_API_URLS_AND_KEYS: ${OPEN_AI_API_URLS_AND_KEYS}
     depends_on:

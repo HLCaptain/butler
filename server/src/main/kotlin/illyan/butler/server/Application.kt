@@ -47,10 +47,10 @@ fun Application.module() {
 
     configureMonitoring()
     configureDependencyInjection()
-    configureAuthentication()
     configureSerialization()
-    configureStatusPages()
     configureCompression()
+    configureAuthentication()
+    configureStatusPages()
     configureSSE()
     configureWebSockets()
     configureRouting(tokenConfig)

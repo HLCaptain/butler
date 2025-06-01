@@ -88,6 +88,7 @@ dependencies {
     // Security
     implementation(libs.commons.codec)
     implementation(libs.spring.security.crypto)
+    implementation(libs.bouncycastle) // Required for spring.security.crypto
 
     // Ktor Client
     implementation(libs.ktor.core)

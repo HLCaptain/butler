@@ -7,6 +7,7 @@ import illyan.butler.server.data.service.ApiException
 import illyan.butler.shared.model.identity.AddressDto
 import illyan.butler.shared.model.identity.UserDto
 import illyan.butler.shared.model.response.StatusCode
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +53,8 @@ class UserExposedDatabase(
             val userId = try {
                 Users.insertAndGetId { setUser(it, user) }
             } catch (e: Exception) {
-                throw throw ApiException(StatusCode.UserAlreadyExists)
+                Napier.e("Error creating user: ${e.message}", throwable = e)
+                throw ApiException(StatusCode.UserAlreadyExists)
             }
             user.copy(id = userId.value.toString())
         }

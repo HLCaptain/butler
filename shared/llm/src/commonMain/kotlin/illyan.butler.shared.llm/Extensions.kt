@@ -2,7 +2,7 @@ package illyan.butler.shared.llm
 
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIHost
-import illyan.butler.shared.llm.model.Model
+import illyan.butler.shared.model.llm.ModelDto
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,43 +12,32 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlin.time.Duration
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun Flow<Map<String, String>>.mapToProvidedModels(pingDuration: Duration) = flatMapLatest { credentials ->
-    credentials.mapToProvidedModels(pingDuration)
+fun Flow<Map<String, String>>.mapToModels(pingDuration: Duration) = flatMapLatest { credentials ->
+    credentials.mapToModels(pingDuration)
 }
 
-fun Map<String, String>.mapToProvidedModels(pingDuration: Duration) = combine(*map { (url, apiKey) ->
+fun Map<String, String>.mapToModels(pingDuration: Duration) = combine(*map { (url, apiKey) ->
     flow {
-        emit(url to null)
+        emit(null)
         while (true) {
             try {
-                emit(url to OpenAI(
+                emit(OpenAI(
                     token = apiKey,
                     host = OpenAIHost(url)
-                ).models().map { Model(
+                ).models().map { ModelDto(
                     id = it.id.id,
-                    typeObject = null,
-                    created = it.created,
+                    name = null,
+                    endpoint = url,
                     ownedBy = it.ownedBy,
                 ) })
             } catch (e: Exception) {
                 Napier.e(e) { "Error fetching models from $url" }
-                emit(url to emptyList())
+                emit(emptyList())
             }
             delay(pingDuration)
         }
     }.flowOn(Dispatchers.IO)
-}.toTypedArray()) { it.toList().toMap() }
-
-fun Map<String, List<Model>?>.mapToProvidedModels() = flatMap { (provider, models) ->
-    (models ?: emptyList()).map { it to provider }
-}.groupBy { it.first.id }.map { (_, modelWithProvider) ->
-    modelWithProvider.first().first to modelWithProvider.map { it.second }
-}.toMap() // Map<ModelDto, List<String>> where key is model and value is list of providers
-
-fun Flow<Map<String, List<Model>?>>.mapToModelsAndProviders() = map { models ->
-    models.mapToProvidedModels()
-}
+}.toTypedArray()) { it.toList().mapNotNull { it }.flatten() }

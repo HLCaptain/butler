@@ -10,14 +10,14 @@ import kotlinx.serialization.protobuf.ProtoBuf
 private val config = ConfigFactory.systemEnvironment().withFallback(ConfigFactory.load())
 
 data object AppConfig {
-    /**
-     * Deployment may be one of the following values:
-     *  - development
-     *  - staging
-     *  - production
-     */
-    val DEPLOYMENT_ENVIRONMENT: String = config.getString("DEPLOYMENT_ENVIRONMENT")
     data object Ktor {
+        /**
+         * Deployment may be one of the following values:
+         *  - development
+         *  - staging
+         *  - production
+         */
+        val ENVIRONMENT: String = config.getString("KTOR_ENVIRONMENT")
         val DEVELOPMENT = config.getBoolean("KTOR_DEVELOPMENT")
         val PORT = config.getInt("KTOR_PORT")
         val DEBUG_CONTENT_TYPE = ContentType.Application.Json
@@ -53,10 +53,11 @@ data object AppConfig {
         val OTEL_EXPORTER_OTLP_ENDPOINT = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4317"
     }
     data object Database {
-        val DATABASE_USER = config.getString("DATABASE_USER")
-        val DATABASE_PASSWORD = config.getString("DATABASE_PASSWORD")
-        val DATABASE_URL = config.getString("DATABASE_URL")
-        val DATABASE_NAME = config.getString("DATABASE_NAME")
-        val DATABASE_DRIVER = System.getenv("DATABASE_DRIVER") ?: "org.postgresql.Driver"
+        val USER = config.getString("DATABASE_USER")
+        val PASSWORD = config.getString("DATABASE_PASSWORD")
+        val NAME = config.getString("DATABASE_NAME")
+        val DRIVER = config.getString("DATABASE_DRIVER")
+        val HOST = config.getString("DATABASE_HOST")
+        val PORT = config.getInt("DATABASE_PORT")
     }
 }

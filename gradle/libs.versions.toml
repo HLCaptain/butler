@@ -107,7 +107,7 @@ filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.34.0" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc12" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.2.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.2" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.3" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
@@ -168,7 +168,8 @@ opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-
 opentelemetry-resources = { module = "io.opentelemetry.instrumentation:opentelemetry-resources", version = "2.16.0-alpha" }
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheus" }
-spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.4.5" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.5.0" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.80" }
 openai-client = { module = "com.aallam.openai:openai-client", version = "4.0.1" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junitVersion" }

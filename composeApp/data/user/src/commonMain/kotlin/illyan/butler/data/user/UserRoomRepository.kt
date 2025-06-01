@@ -6,29 +6,28 @@ import illyan.butler.domain.model.DomainUser
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single
 
-// TODO: should be using Store5 implementation
 @Single
 class UserRoomRepository(
     private val userLocalDataSource: UserLocalDataSource
 ) : UserRepository {
     override suspend fun upsertUser(user: DomainUser) {
-        TODO("Not yet implemented")
+        userLocalDataSource.upsertUser(user)
     }
 
     override fun getUser(userId: String): Flow<DomainUser?> {
-        TODO("Not yet implemented")
+        return userLocalDataSource.getUser(userId)
     }
 
     override fun getAllUsers(): Flow<List<DomainUser>> {
-        TODO("Not yet implemented")
+        return userLocalDataSource.getAllUsers()
     }
 
     override suspend fun deleteUserData() {
-        TODO("Not yet implemented")
+        userLocalDataSource.deleteUserData()
     }
 
-    override suspend fun deleteUserData(userId: String) {
-        TODO("Not yet implemented")
+    override suspend fun deleteUser(userId: String) {
+        userLocalDataSource.deleteUser(userId)
     }
 
     override suspend fun refreshUserTokens(userId: String, accessToken: DomainToken?, refreshToken: DomainToken?) {

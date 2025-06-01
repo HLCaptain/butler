@@ -40,10 +40,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -311,7 +313,15 @@ object ButlerDropdownMenuDefaults {
             scrollState?.animateScrollTo(itemPositionWithOffset)
         }
         Column(modifier = Modifier.focusable(enabled = true)) {
-            values.forEachIndexed { index, value ->
+            var stage by remember { mutableIntStateOf(0) }
+            // Deferred rendering to avoid recomposition stutter with large lists.
+            LaunchedEffect(Unit) {
+                while (stage < values.size) {
+                    withFrameNanos {}
+                    stage += 10
+                }
+            }
+            values.take(stage).forEachIndexed { index, value ->
                 val leadingIcon = remember { getValueLeadingIcon(value) }
                 val trailingIcon = remember {
                     val icon = getValueTrailingIcon(value)

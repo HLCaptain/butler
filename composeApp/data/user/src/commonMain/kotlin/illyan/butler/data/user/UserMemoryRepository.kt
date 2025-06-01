@@ -33,7 +33,7 @@ class UserMemoryRepository : UserRepository {
         users.update { emptyList() }
     }
 
-    override suspend fun deleteUserData(userId: String) {
+    override suspend fun deleteUser(userId: String) {
         users.update { currentUsers ->
             currentUsers.filterNot { it.id == userId }
         }

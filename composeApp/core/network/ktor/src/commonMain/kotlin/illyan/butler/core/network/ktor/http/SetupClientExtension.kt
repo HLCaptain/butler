@@ -78,7 +78,7 @@ fun HttpClientConfig<*>.setupClient(
     install(Logging) {
         logger = object: Logger {
             override fun log(message: String) {
-                Napier.v( message, null, "HTTP Client")
+                Napier.v(message, null, "HTTP Client")
             }
         }
         level = LogLevel.HEADERS
@@ -134,8 +134,7 @@ fun HttpClientConfig<*>.setupClient(
                         refreshMillis == null ||
                         refreshMillis < currentMillis
                     ) {
-                        Napier.d { "Access or refresh token expired" }
-                        Napier.d { "Refreshing tokens" }
+                        Napier.d { "Access or refresh token expired, refreshing tokens" }
                         client.post("/refresh-access-token") {
                             oldTokens?.refreshToken?.let { bearerAuth(it) }
                         }.body<UserTokensResponse>().run {
@@ -199,7 +198,11 @@ fun HttpClientConfig<*>.setupClient(
         }
     }
 
-    install(ContentEncoding)
+    install(ContentEncoding) {
+        // Enable gzip compression for requests and responses
+        deflate(1f)
+        gzip(0.9f)
+    }
 
     var currentApiUrl: String? = null
     CoroutineScope(Dispatchers.IO).launch {

@@ -153,9 +153,9 @@
     <string name="onboarding_title_openai_api">OpenAI API</string>
 
     <!-- Descriptions -->
-    <string name="onboarding_description_local_llm">Authenticate with a local LLM</string>
+    <string name="onboarding_description_local_llm">Download a local LLM</string>
     <string name="onboarding_description_hosted_server">Authenticate with a hosted server</string>
-    <string name="onboarding_description_openai_api">Authenticate with the OpenAI API</string>
+    <string name="onboarding_description_openai_api">Authenticate with multiple OpenAI APIs</string>
 
     <!-- Pros -->
     <string name="onboarding_pro_no_network_required">No network required</string>

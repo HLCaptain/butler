@@ -17,8 +17,7 @@ import illyan.butler.domain.model.DomainResource
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.ModelConfig
 import illyan.butler.shared.llm.LlmService
-import illyan.butler.shared.llm.mapToModelsAndProviders
-import illyan.butler.shared.llm.mapToProvidedModels
+import illyan.butler.shared.llm.mapToModels
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -74,8 +73,7 @@ class ChatManager(
 
     private val availableModelsFromProviders = credentialRepository.apiKeyCredentials.filterNotNull().map { credentials ->
         credentials.associate { it.providerUrl to it.apiKey }
-    }.mapToProvidedModels(pingDuration = 5.seconds)
-    private val availableProvidersForModel = availableModelsFromProviders.mapToModelsAndProviders()
+    }.mapToModels(pingDuration = 5.seconds)
 
     private val llmService = LlmService(
         coroutineScopeIO = coroutineScopeIO,

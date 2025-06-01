@@ -10,11 +10,13 @@ import org.koin.core.annotation.Single
 fun provideDatabase(): R2dbcDatabase = R2dbcDatabase.connect {
     defaultR2dbcIsolationLevel = IsolationLevel.SERIALIZABLE
 
-    setUrl(AppConfig.Database.DATABASE_URL)
-
     connectionFactoryOptions {
-        option(ConnectionFactoryOptions.USER, AppConfig.Database.DATABASE_USER)
-        option(ConnectionFactoryOptions.PASSWORD, AppConfig.Database.DATABASE_PASSWORD)
-        option(ConnectionFactoryOptions.DATABASE, AppConfig.Database.DATABASE_NAME)
+        option(ConnectionFactoryOptions.USER, AppConfig.Database.USER)
+        option(ConnectionFactoryOptions.DRIVER, AppConfig.Database.DRIVER)
+        option(ConnectionFactoryOptions.PASSWORD, AppConfig.Database.PASSWORD)
+        option(ConnectionFactoryOptions.DATABASE, AppConfig.Database.NAME)
+        option(ConnectionFactoryOptions.HOST, AppConfig.Database.HOST)
+        option(ConnectionFactoryOptions.PORT, AppConfig.Database.PORT)
+        option(ConnectionFactoryOptions.PROTOCOL, "r2dbc")
     }
 }

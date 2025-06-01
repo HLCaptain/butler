@@ -38,10 +38,6 @@ class AuthManager(
     val signedInUserId = appRepository.currentSignedInUserId
     @OptIn(ExperimentalCoroutinesApi::class)
     val signedInUser = signedInUserId.flatMapLatest { it?.let { userRepository.getUser(it) } ?: flowOf(null) }
-    val signedInUserPhotoUrl = signedInUser.map { it?.photoUrl }
-    val signedInUserDisplayName = signedInUser.map { it?.displayName }
-    val signedInUserPhoneNumber = signedInUser.map { it?.phone }
-    val signedInUserEmail = signedInUser.map { it?.email }
 
     private val _isUserSigningIn = MutableStateFlow(false)
     val isUserSigningIn = _isUserSigningIn.asStateFlow()
@@ -71,7 +67,7 @@ class AuthManager(
         val currentUser = userId ?: signedInUserId.first() ?: throw IllegalStateException("User is not signed in")
         // Delete everything from the database
         appRepository.setSignedInUser(null)
-        userRepository.deleteUserData(currentUser)
+        userRepository.deleteUser(currentUser)
         messageLocalDataSource.deleteAllMessages()
         chatLocalDataSource.deleteAllChats()
         resourceLocalDataSource.deleteAllResources()
@@ -87,6 +83,6 @@ class AuthManager(
 
     suspend fun deleteUserProfile(userId: String) {
         signOut(userId)
-        userRepository.deleteUserData(userId)
+        userRepository.deleteUser(userId)
     }
 }

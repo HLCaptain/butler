@@ -1,8 +1,7 @@
 package illyan.butler.server.endpoints
 
 import illyan.butler.server.AppConfig
-import illyan.butler.shared.llm.mapToModelsAndProviders
-import illyan.butler.shared.llm.mapToProvidedModels
+import illyan.butler.shared.llm.mapToModels
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
@@ -13,7 +12,7 @@ import io.ktor.server.websocket.sendSerialized
 import io.ktor.server.websocket.webSocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
@@ -23,19 +22,17 @@ fun Route.aiRoute() {
     authenticate("auth-jwt") {
         val coroutineScopeIO: CoroutineScope by inject()
 
-        val availableModelsFromProviders = AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapToProvidedModels(pingDuration = 1.minutes)
-            .stateIn(coroutineScopeIO, SharingStarted.Eagerly, emptyMap())
-        val modelsAndProviders = availableModelsFromProviders.mapToModelsAndProviders()
-            .stateIn(coroutineScopeIO, SharingStarted.Eagerly, emptyMap())
+        val availableModels = AppConfig.Api.OPEN_AI_API_URLS_AND_KEYS.mapToModels(pingDuration = 1.minutes)
+            .stateIn(coroutineScopeIO, SharingStarted.Eagerly, null)
 
         route("/models") {
             get {
-                call.respond(HttpStatusCode.OK, modelsAndProviders.first())
+                call.respond(HttpStatusCode.OK, availableModels.firstOrNull().orEmpty())
             }
 
             webSocket {
                 coroutineScopeIO.launch {
-                    modelsAndProviders.collect { models ->
+                    availableModels.collect { models ->
                         sendSerialized(models)
                     }
                 }
@@ -43,13 +40,12 @@ fun Route.aiRoute() {
 
             get("/{modelId}") {
                 val modelId = call.parameters["modelId"]?.trim().orEmpty()
-                availableModelsFromProviders.value.let { providerModels ->
-                    val model = providerModels.values.firstNotNullOfOrNull { models -> models.orEmpty().firstOrNull { it.id == modelId } }
-                    val providersOfModel = providerModels.flatMap { (provider, models) ->
-                        if (models.orEmpty().any { it.id == modelId }) listOf(provider) else emptyList()
-                    }
-                    model?.let {
-                        call.respond(HttpStatusCode.OK, it to providersOfModel)
+                availableModels.value.let { providerModels ->
+                    val modelsWithId = providerModels
+                        ?.filter { it.id == modelId }
+                        ?.map { it.endpoint }
+                    modelsWithId?.let {
+                        call.respond(HttpStatusCode.OK, modelsWithId)
                     } ?: call.respond(HttpStatusCode.NotFound)
                 }
             }
@@ -58,7 +54,7 @@ fun Route.aiRoute() {
         get("/providers") {
             call.respond(
                 HttpStatusCode.OK,
-                availableModelsFromProviders.value
+                availableModels.value?.map { it.endpoint }?.distinct().orEmpty()
             )
         }
     }

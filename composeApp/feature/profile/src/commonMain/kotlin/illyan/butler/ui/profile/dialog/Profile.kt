@@ -73,20 +73,17 @@ fun ProfileDialog(
     val userUUID by viewModel.userUUID.collectAsState()
     val isUserSignedIn by viewModel.isUserSignedIn.collectAsState()
     val isUserSigningOut by viewModel.isUserSigningOut.collectAsState()
-    val userPhotoUrl by viewModel.userPhotoUrl.collectAsState()
-    val email by viewModel.userEmail.collectAsState()
-    val phone by viewModel.userPhoneNumber.collectAsState()
-    val name by viewModel.userName.collectAsState()
+    val signedInUser by viewModel.signedInUser.collectAsState()
     val confidentialInfo = listOf(
-        stringResource(Res.string.name) to name,
-        stringResource(Res.string.email) to email,
-        stringResource(Res.string.phone) to phone
+        stringResource(Res.string.name) to signedInUser?.displayName,
+        stringResource(Res.string.email) to signedInUser?.email,
+        stringResource(Res.string.phone) to signedInUser?.phone
     )
     ProfileDialogContent(
         userUUID = userUUID,
         isUserSignedIn = isUserSignedIn,
         isUserSigningOut = isUserSigningOut,
-        userPhotoUrl = userPhotoUrl,
+        userPhotoUrl = signedInUser?.photoUrl,
         confidentialInfo = confidentialInfo,
         showConfidentialInfoInitially = false,
         onSignOut = viewModel::signOut,

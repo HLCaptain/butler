@@ -9,6 +9,6 @@ interface UserRepository {
     fun getAllUsers(): Flow<List<DomainUser>>
     suspend fun upsertUser(user: DomainUser)
     suspend fun deleteUserData()
-    suspend fun deleteUserData(userId: String)
+    suspend fun deleteUser(userId: String)
     suspend fun refreshUserTokens(userId: String, accessToken: DomainToken?, refreshToken: DomainToken?)
 }
