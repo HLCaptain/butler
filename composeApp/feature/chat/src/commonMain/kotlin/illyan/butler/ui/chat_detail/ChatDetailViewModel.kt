@@ -11,6 +11,8 @@ import illyan.butler.domain.model.DomainChat
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
 import illyan.butler.domain.model.ErrorCode
+import illyan.butler.domain.model.ModelConfig
+import illyan.butler.settings.SettingsManager
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
 import korlibs.audio.sound.AudioData
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -33,9 +36,19 @@ class ChatDetailViewModel(
     private val chatManager: ChatManager,
     private val authManager: AuthManager,
     private val audioManager: AudioManager,
-    private val errorRepository: ErrorRepository
+    private val errorRepository: ErrorRepository,
+    private val settingsManager: SettingsManager,
 ) : ViewModel() {
     private val chatIdStateFlow = MutableStateFlow<String?>(null)
+    private val selectedNewChatModel = MutableStateFlow<ModelConfig?>(null)
+
+    init {
+        viewModelScope.launch {
+            selectedNewChatModel.update {
+                settingsManager.defaultModel.firstOrNull()
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val chat = chatIdStateFlow
@@ -73,12 +86,14 @@ class ChatDetailViewModel(
         audioManager.isRecording,
         audioManager.playingAudioId,
         resources,
+        selectedNewChatModel,
     ) { flows ->
         val chat = flows[0] as DomainChat?
         val messages = flows[1] as List<DomainMessage>?
         val recording = flows[2] as? Boolean == true
         val playing = flows[3] as? String
         val resources = flows[4] as List<DomainResource>?
+        val selectedModel = flows[5] as ModelConfig?
         val sounds = resources?.filter { it.type.startsWith("audio") }
             ?.associate {
                 it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
@@ -102,7 +117,8 @@ class ChatDetailViewModel(
             isRecording = recording,
             playingAudio = playing,
             sounds = sounds,
-            images = images
+            images = images,
+            selectedNewChatModel = selectedModel,
         )
     }.stateIn(
         viewModelScope,
@@ -110,13 +126,35 @@ class ChatDetailViewModel(
         ChatDetailState()
     )
 
-    fun loadChat(chatId: String) {
+    fun loadChat(chatId: String?) {
         Napier.v { "Loading chat $chatId" }
         chatIdStateFlow.update { chatId }
+        if (chatId == null) {
+            viewModelScope.launch {
+                selectedNewChatModel.update {
+                    settingsManager.defaultModel.firstOrNull()
+                }
+            }
+        }
+    }
+
+    fun selectNewChatModel(model: ModelConfig?) {
+        Napier.v { "Selected new chat model: ${model?.modelId}" }
+        selectedNewChatModel.update { model }
+    }
+
+    private suspend fun createNewChat() {
+        selectedNewChatModel.value?.let {
+            val newChatId = chatManager.startNewChat(it)
+            loadChat(newChatId)
+        }
     }
 
     fun sendMessage(message: String) {
         viewModelScope.launch {
+            if (chatIdStateFlow.value.isNullOrEmpty()) {
+                createNewChat()
+            }
             chat.value?.let { chatManager.sendMessage(it.id!!, it.ownerId, message) }
         }
     }

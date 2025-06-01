@@ -66,7 +66,6 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -117,6 +116,7 @@ import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.DomainModel
+import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.close
@@ -139,20 +139,14 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun NewChat(
-    selectNewChat: (String) -> Unit,
+    selectModel: (ModelConfig) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val viewModel = koinViewModel<NewChatViewModel>()
     val state by viewModel.state.collectAsState()
-    DisposableEffect(state) {
-        state.newChatId?.let { selectNewChat(it) }
-        onDispose {
-            state.newChatId?.let { viewModel.clearNewChatId() }
-        }
-    }
     NewChat(
         state = state,
-        selectModel = viewModel::createChatWithModel,
+        selectModel = selectModel,
         navigationIcon = navigationIcon,
     )
 }
@@ -173,7 +167,7 @@ private fun filterModelsWithQuery(
 @Composable
 fun NewChat(
     state: NewChatState,
-    selectModel: (String, String, String) -> Unit,
+    selectModel: (ModelConfig) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -335,9 +329,7 @@ fun NewChat(
                             modelId = selectedModel.id,
                             providers = providerModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
                             server = serverModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
-                            selectServerModel = { modelId, provider -> state.userId?.let { selectModel(modelId, provider, it) } },
-                            selectProviderModel = { modelId, provider -> state.clientId?.let { selectModel(modelId, provider, it) } },
-                            selectLocalModel = { modelId -> state.clientId?.let { selectModel(modelId, "", it) } }, // TODO: support local models properly
+                            selectModel = { modelConfig -> state.userId?.let { selectModel(modelConfig) } },
                         )
                     }
                 } else {
@@ -925,9 +917,7 @@ fun ModelListItemExpanded(
     modelId: String,
     providers: List<String>,
     server: List<String>,
-    selectServerModel: (String, String) -> Unit,
-    selectProviderModel: (String, String) -> Unit,
-    selectLocalModel: (String) -> Unit,
+    selectModel: (ModelConfig) -> Unit,
     onClick: () -> Unit
 ) = with(sharedTransitionScope) {
     ButlerOutlinedCard(
@@ -1033,7 +1023,7 @@ fun ModelListItemExpanded(
                             }
                         }
                         SmallMenuButton(
-                            onClick = { selectProviderModel(modelId, provider) },
+                            onClick = { selectModel(ModelConfig(provider, modelId)) },
                             text = stringResource(Res.string.select)
                         )
                     }
@@ -1059,7 +1049,7 @@ fun ModelListItemExpanded(
                             }
                         }
                         SmallMenuButton(
-                            onClick = { selectServerModel(modelId, provider) },
+                            onClick = { selectModel(ModelConfig(provider, modelId)) },
                             text = stringResource(Res.string.select_host)
                         )
                     }

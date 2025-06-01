@@ -369,7 +369,6 @@ fun Home(
                                         )
                                     ),
                                     currentChat = currentChat,
-                                    selectChat = { currentChat = it },
                                     navigationIcon = {
                                         if (isCompact) {
                                             HamburgerButton {

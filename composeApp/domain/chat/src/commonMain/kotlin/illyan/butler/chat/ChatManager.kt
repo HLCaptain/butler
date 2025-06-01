@@ -16,8 +16,8 @@ import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.DomainResource
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.ModelConfig
+import illyan.butler.model.ModelManager
 import illyan.butler.shared.llm.LlmService
-import illyan.butler.shared.llm.mapToModels
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,12 +28,10 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Single
@@ -44,7 +42,8 @@ class ChatManager(
     private val messageRepository: MessageRepository,
     private val resourceRepository: ResourceRepository,
     private val credentialRepository: CredentialRepository,
-    private val errorRepository: ErrorRepository
+    private val errorRepository: ErrorRepository,
+    private val modelManager: ModelManager
 ) {
     val userChats = authManager.signedInUserId.flatMapLatest { loadChats(it, false) }
         .stateIn(
@@ -70,10 +69,6 @@ class ChatManager(
             SharingStarted.Eagerly,
             emptyList()
         )
-
-    private val availableModelsFromProviders = credentialRepository.apiKeyCredentials.filterNotNull().map { credentials ->
-        credentials.associate { it.providerUrl to it.apiKey }
-    }.mapToModels(pingDuration = 5.seconds)
 
     private val llmService = LlmService(
         coroutineScopeIO = coroutineScopeIO,
@@ -176,18 +171,18 @@ class ChatManager(
     fun getResource(resourceId: String) = combine(userResources, deviceResources) { user, device -> (user + device).firstOrNull { it?.id == resourceId } }
     fun getResources(resourceIds: List<String>) = combine(userResources, deviceResources) { user, device -> (user + device).filter { resource -> resource?.id?.let { resourceIds.contains(it) } ?: false } }
     suspend fun startNewChat(
-        modelId: String,
-        endpoint: String,
-        senderId: String
+        config: ModelConfig
     ): String {
+        val senderId = if (config in modelManager.getAvailableModelsFromServer().first().map { ModelConfig(it.endpoint, it.id) }) {
+            authManager.signedInUserId.first()
+        } else {
+            authManager.clientId.first()
+        }!!
         return chatRepository.upsert(
             DomainChat(
                 ownerId = senderId,
                 models = mapOf(
-                    Capability.CHAT_COMPLETION to ModelConfig(
-                        modelId = modelId,
-                        endpoint = endpoint,
-                    )
+                    Capability.CHAT_COMPLETION to config
                 )
             ),
             deviceOnly = authManager.clientId.first() == senderId

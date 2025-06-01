@@ -9,7 +9,8 @@ actual fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    enabled: Boolean
 ) {
     MessageField(
         modifier = modifier,
@@ -23,5 +24,6 @@ actual fun ChatDetailBottomBar(
         recordAudioEnabled = true, // Desktop doesn't need permission
         requestGalleryAccess = {},
         requestRecordAudioAccess = {},
+        enabled = enabled
     )
 }

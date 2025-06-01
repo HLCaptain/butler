@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
 import illyan.butler.domain.model.DomainModel
+import illyan.butler.domain.model.ModelConfig
 import illyan.butler.model.ModelManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -66,14 +67,12 @@ class NewChatViewModel(
     )
 
     fun createChatWithModel(
-        modelId: String,
-        endpoint: String,
-        senderId: String
+        config: ModelConfig,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            Napier.v { "Creating new chat with modelId: $modelId, endpoint: $endpoint, senderId: $senderId" }
+            Napier.v { "Creating new chat with modelId: ${config.modelId}, endpoint: ${config.endpoint}" }
             creatingNewChat.update { true }
-            val id = chatManager.startNewChat(modelId, endpoint, senderId)
+            val id = chatManager.startNewChat(config)
             creatingNewChat.update { false }
             newChatId.update { id }
             Napier.v { "New chat created with id: $id" }

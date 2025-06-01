@@ -3,6 +3,7 @@ package illyan.butler.ui.chat_detail
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -33,21 +34,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.KeyboardDoubleArrowLeft
-import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.surfaceColorAtElevation
@@ -65,10 +66,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
@@ -84,22 +83,31 @@ import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
+import illyan.butler.core.ui.components.ButlerOutlinedCard
+import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.ButlerTooltipDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
+import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.ErrorCode
+import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
+import illyan.butler.generated.resources.free
+import illyan.butler.generated.resources.host
 import illyan.butler.generated.resources.message_id
+import illyan.butler.generated.resources.model_id
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
+import illyan.butler.generated.resources.no_models_selected
 import illyan.butler.generated.resources.play
 import illyan.butler.generated.resources.refresh_chat
-import illyan.butler.generated.resources.select_chat
+import illyan.butler.generated.resources.select_model
+import illyan.butler.generated.resources.selected_model
 import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
 import illyan.butler.generated.resources.sender_id
@@ -131,8 +139,8 @@ fun ChatDetail(
     stopAudio: () -> Unit,
     refreshChat: () -> Unit,
     sendError: (ErrorCode) -> Unit,
-    toggleChatDetails: () -> Unit,
-    isChatDetailsOpenRatio: Float,
+    navigateToModelSelection: () -> Unit,
+    navigateToChatSettings: () -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -167,7 +175,7 @@ fun ChatDetail(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 modifier = Modifier.hazeEffect(hazeState) {
                     inputScale = HazeInputScale.None
                 },
@@ -183,45 +191,41 @@ fun ChatDetail(
                     )
                 },
                 navigationIcon = navigationIcon ?: {},
+                scrollBehavior = scrollBehavior,
                 actions = {
-                    if (state.chat != null) {
-                        IconButton(onClick = toggleChatDetails) {
-                            val layoutDirection = LocalLayoutDirection.current
-                            val imageVector = if (layoutDirection == LayoutDirection.Ltr) {
-                                if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowRight else Icons.Rounded.KeyboardDoubleArrowLeft
-                            } else {
-                                if (isChatDetailsOpenRatio > 0.5f) Icons.Rounded.KeyboardDoubleArrowLeft else Icons.Rounded.KeyboardDoubleArrowRight
-                            }
+                    AnimatedVisibility(
+                        visible = state.chat != null,
+                        enter = fadeIn(tween(200)) + expandVertically(expandFrom = Alignment.Top),
+                        exit = fadeOut(tween(200)) + shrinkVertically(shrinkTowards = Alignment.Top)
+                    ) {
+                        IconButton(
+                            onClick = navigateToChatSettings,
+                            enabled = state.chat != null
+                        ) {
                             Icon(
-                                imageVector = imageVector,
-                                contentDescription = "Chat details"
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = null
                             )
                         }
                     }
-                },
-                scrollBehavior = scrollBehavior,
+                }
             )
         },
         bottomBar = {
-            AnimatedVisibility(
-                visible = state.chat != null,
-                enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
-                exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
-            ) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    ChatDetailBottomBar(
-                        modifier = Modifier
-                            .widthIn(max = 640.dp)
-                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                            .imePadding()
-                            .hazeEffect(hazeState)
-                            .navigationBarsPadding(),
-                        sendMessage = sendMessage,
-                        sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
-                        isRecording = state.isRecording,
-                        toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
-                    )
-                }
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                ChatDetailBottomBar(
+                    modifier = Modifier
+                        .widthIn(max = 640.dp)
+                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                        .imePadding()
+                        .hazeEffect(hazeState)
+                        .navigationBarsPadding(),
+                    sendMessage = sendMessage,
+                    sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
+                    isRecording = state.isRecording,
+                    toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
+                    enabled = state.chat != null,
+                )
             }
         },
     ) { innerPadding ->
@@ -245,7 +249,10 @@ fun ChatDetail(
                 }
             ) { chat ->
                 if (chat == null) {
-                    SelectChat()
+                    StartChatModelInfo(
+                        navigateToModelSelection = navigateToModelSelection,
+                        selectedModel = state.selectedNewChatModel
+                    )
                 } else {
                     AnimatedContent(
                         targetState = state.messages?.isEmpty() == true,
@@ -285,13 +292,127 @@ fun ChatDetail(
 }
 
 @Composable
-private fun SelectChat() {
+private fun StartChatModelInfo(
+    modifier: Modifier = Modifier,
+    selectedModel: ModelConfig? = null,
+    navigateToModelSelection: () -> Unit = {}
+) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(stringResource(Res.string.select_chat))
+        Column(
+            modifier = Modifier.fillMaxWidth().widthIn(max = 320.dp).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (selectedModel != null) {
+                Text(
+                    text = stringResource(Res.string.selected_model),
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+                ModelInfo(
+                    modifier = Modifier.fillMaxWidth(),
+                    modelConfig = selectedModel,
+                    onClick = navigateToModelSelection
+                )
+            } else {
+                Text(
+                    text = stringResource(Res.string.no_models_selected),
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+            }
+            ButlerMediumTextButton(
+                onClick = navigateToModelSelection,
+                text = { Text(text = stringResource(Res.string.select_model)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Image,
+                        contentDescription = null
+                    )
+                }
+            )
+        }
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun ModelInfo(
+    modifier: Modifier = Modifier,
+    modelConfig: ModelConfig,
+    onClick: () -> Unit
+) {
+    ButlerOutlinedCard(
+        modifier = modifier,
+        contentPadding = ButlerCardDefaults.CompactContentPadding,
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ExpandLess,
+                            contentDescription = "Collapse"
+                        )
+                    }
+                    PlainTooltipWithContent(
+                        modifier = Modifier.weight(1f, fill = false),
+                        onClick = onClick,
+                        tooltip = { Text(modelConfig.modelId) }
+                    ) { tooltipModifier ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))) {
+                                Text(
+                                    modifier = tooltipModifier
+                                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                                    text = modelConfig.modelId.replace(":free", ""),
+                                    maxLines = 2,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            if (modelConfig.modelId.contains("free", ignoreCase = true)) {
+                                ButlerTag {
+                                    Text(text = stringResource(Res.string.free))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Column(
+                modifier = Modifier.padding(start = 8.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.model_id),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = modelConfig.modelId,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.host),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = modelConfig.endpoint,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+    }
+
 }
 
 @Composable
@@ -300,7 +421,8 @@ expect fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean = false,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    enabled: Boolean = true,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -557,20 +679,24 @@ fun MessageField(
     recordAudioAccessGranted: Boolean = false,
     recordAudioEnabled: Boolean = false,
     requestGalleryAccess: () -> Unit,
-    requestRecordAudioAccess: () -> Unit
+    requestRecordAudioAccess: () -> Unit,
+    enabled: Boolean = true
 ) {
     Row(
         modifier = modifier.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AnimatedVisibility(visible = recordAudioEnabled) {
-            IconButton(onClick = {
-                if (recordAudioAccessGranted) {
-                    toggleRecord()
-                } else {
-                    requestRecordAudioAccess()
-                }
-            }) {
+            IconButton(
+                onClick = {
+                    if (recordAudioAccessGranted) {
+                        toggleRecord()
+                    } else {
+                        requestRecordAudioAccess()
+                    }
+                },
+                enabled = enabled
+            ) {
                 Crossfade(isRecording) {
                     if (it) {
                         Icon(
@@ -603,13 +729,16 @@ fun MessageField(
             }
         }
         AnimatedVisibility(visible = galleryEnabled) {
-            IconButton(onClick = {
-                if (galleryAccessGranted) {
-                    launcher.launch()
-                } else {
-                    requestGalleryAccess()
-                }
-            }) {
+            IconButton(
+                onClick = {
+                    if (galleryAccessGranted) {
+                        launcher.launch()
+                    } else {
+                        requestGalleryAccess()
+                    }
+                },
+                enabled = enabled
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.Image,
                     contentDescription = null,
@@ -628,14 +757,16 @@ fun MessageField(
             placeholder = { Text(stringResource(Res.string.send_message)) },
             singleLine = false,
             isCompact = true,
-            isOutlined = false
+            isOutlined = false,
+            enabled = enabled
         )
 
         IconButton(
             onClick = {
                 sendMessage(textMessage)
                 textMessage = ""
-            }
+            },
+            enabled = enabled && textMessage.isNotBlank()
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.Send,

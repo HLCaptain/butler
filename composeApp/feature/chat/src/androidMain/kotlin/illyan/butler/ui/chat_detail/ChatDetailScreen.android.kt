@@ -32,7 +32,8 @@ actual fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    enabled: Boolean
 ) {
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -73,6 +74,7 @@ actual fun ChatDetailBottomBar(
         recordAudioEnabled = true,
         requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
         requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission },
+        enabled = enabled
     )
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,
