@@ -1,12 +1,15 @@
 package illyan.butler.data.chat
 
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface ChatRepository {
-    fun getChatFlow(chatId: String, deviceOnly: Boolean): Flow<DomainChat?>
-    fun getUserChatsFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainChat>>
-    suspend fun upsert(chat: DomainChat, deviceOnly: Boolean): String
-    suspend fun deleteAllChats(userId: String, deviceOnly: Boolean)
-    suspend fun deleteChat(chatId: String, deviceOnly: Boolean)
+    fun getChatFlow(chatId: Uuid, source: Source): Flow<Chat?>
+    fun getChatFlowBySource(source: Source): Flow<List<Chat>?>
+    suspend fun upsert(chat: Chat): Uuid
+    suspend fun deleteChat(chat: Chat)
 }

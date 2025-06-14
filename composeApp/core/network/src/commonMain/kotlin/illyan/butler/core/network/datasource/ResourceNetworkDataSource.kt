@@ -1,12 +1,12 @@
 package illyan.butler.core.network.datasource
 
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface ResourceNetworkDataSource {
-    fun fetchNewResources(): Flow<List<DomainResource>>
-    fun fetchResourceById(resourceId: String): Flow<DomainResource>
-    suspend fun upsert(resource: DomainResource): DomainResource
-    fun fetchByUser(): Flow<List<DomainResource>>
+    fun fetchNewResources(): Flow<List<Resource>>
+    fun fetchResourceById(resourceId: String): Flow<Resource>
+    suspend fun upsert(resource: Resource): Resource
+    fun fetchByUser(): Flow<List<Resource>>
     suspend fun delete(resourceId: String): Boolean
 }

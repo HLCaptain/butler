@@ -1,24 +1,28 @@
 package illyan.butler.core.network.datasource
 
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Message
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface MessageNetworkDataSource {
-    fun fetchNewMessages(): Flow<List<DomainMessage>>
+    fun fetchNewMessages(source: Source.Server): Flow<List<Message>>
 
-    fun fetchByChatId(chatId: String): Flow<List<DomainMessage>>
+    fun fetchByChatId(chatId: Uuid): Flow<List<Message>>
 
     /**
      * Update a message.
      * @return updated message.
      */
-    suspend fun upsert(message: DomainMessage): DomainMessage
+    suspend fun upsert(message: Message): Message
 
     /**
      * Delete a message.
      * @return true if the message is deleted.
      */
-    suspend fun delete(messageId: String, chatId: String): Boolean
-    fun fetchById(messageId: String): Flow<DomainMessage>
-    fun fetchAvailableToUser(): Flow<List<DomainMessage>>
+    suspend fun delete(message: Message): Boolean
+    fun fetchById(messageId: Uuid): Flow<Message>
+    fun fetchAvailableToUser(): Flow<List<Message>>
 }

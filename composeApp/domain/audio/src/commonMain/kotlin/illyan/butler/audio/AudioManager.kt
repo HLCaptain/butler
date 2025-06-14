@@ -1,7 +1,7 @@
 package illyan.butler.audio
 
 import illyan.butler.data.resource.ResourceRepository
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
 import korlibs.audio.format.WAV
@@ -34,21 +34,21 @@ class AudioManager(
         audioRecorder.startRecording()
     }
 
-    suspend fun stopRecording(): DomainResource {
+    suspend fun stopRecording(): Resource {
         if (audioRecorder == null) throw IllegalStateException("Audio recording is not supported")
         val audioData = audioRecorder.stopRecording()
-        return DomainResource(
-            type = Wav.toString(),
+        return Resource(
+            mimeType = Wav.toString(),
             data = audioData.toWav()
         )
     }
 
     suspend fun playAudio(audioId: String, deviceOnly: Boolean) {
         val resource = resourceRepository.getResourceFlow(audioId, deviceOnly).first()!!
-        val audioData = when (resource.type) {
+        val audioData = when (resource.mimeType) {
             "audio/wav" -> WAV.decode(resource.data)
             "audio/mp3" -> MP3.decode(resource.data)
-            else -> throw IllegalArgumentException("Unsupported audio type: ${resource.type}")
+            else -> throw IllegalArgumentException("Unsupported audio mimeType: ${resource.mimeType}")
         }
         _playingAudioId.update { audioId }
 //        nativeSoundChannel.playAndWait(audioData!!.toStream())

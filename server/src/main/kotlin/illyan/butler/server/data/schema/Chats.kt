@@ -8,7 +8,7 @@ import org.jetbrains.exposed.v1.json.json
 
 object Chats : UUIDTable() {
     val name = text("name").nullable()
-    val created = long("created")
+    val created = long("createdAt")
     val models = json<Map<Capability, ModelConfig>>("models", Json.Default)
     val summary = text("summary").nullable()
     val ownerId = reference("ownerId", Users)

@@ -30,7 +30,7 @@ expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
         RoomUser::class,
         RoomApiKeyCredential::class
     ],
-    version = 8
+    version = 9
 )
 @ConstructedBy(ButlerDatabaseCtor::class)
 @TypeConverters(Converters::class)

@@ -1,22 +1,30 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.core.local.room.mapping
 
 import illyan.butler.core.local.room.model.RoomChat
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
-fun RoomChat.toDomainModel() = DomainChat(
+fun RoomChat.toDomainModel() = Chat(
     id = id,
-    created = created,
-    name = name,
-    ownerId = ownerId,
-    models = models,
+    title = title,
     summary = summary,
+    createdAt = createdAt,
+    lastUpdated = lastUpdated,
+    models = models,
+    ownerId = ownerId,
+    source = source,
 )
 
-fun DomainChat.toRoomModel() = RoomChat(
-    id = id!!,
-    created = created,
-    name = name,
-    ownerId = ownerId,
-    models = models,
+fun Chat.toRoomModel() = RoomChat(
+    id = id,
+    title = title,
     summary = summary,
+    createdAt = createdAt,
+    lastUpdated = lastUpdated,
+    models = models,
+    ownerId = ownerId,
+    source = source,
 )

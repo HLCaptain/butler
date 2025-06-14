@@ -34,7 +34,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -42,13 +41,13 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.surfaceColorAtElevation
@@ -66,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -88,12 +88,13 @@ import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.ButlerTooltipDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
+import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
-import illyan.butler.domain.model.DomainMessage
 import illyan.butler.domain.model.ErrorCode
+import illyan.butler.domain.model.Message
 import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
@@ -127,6 +128,40 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+@Composable
+fun RefreshMessageEffect(
+    ownerId: String,
+    lastMessage: Message?,
+    noUpdateDelay: Duration,
+    sentMessageAndLoading: Boolean,
+    onSentMessageAndLoading: (Boolean) -> Unit,
+    onMessageUpdated: (Boolean) -> Unit,
+    refreshErrorDelay: Duration,
+    onRefreshError: () -> Unit
+) {
+    LaunchedEffect(lastMessage?.senderId) {
+        // Last message is sent by the user
+        if (lastMessage?.senderId == ownerId ||
+            // Or last message is from bot, but the message is blank
+            lastMessage?.messageContent?.isBlank() == true) {
+            delay(noUpdateDelay)
+            onMessageUpdated(true)
+        } else {
+            onMessageUpdated(false)
+        }
+    }
+    LaunchedEffect(sentMessageAndLoading) {
+        if (sentMessageAndLoading) {
+            delay(refreshErrorDelay)
+            onSentMessageAndLoading(false)
+            onMessageUpdated(true)
+            onRefreshError()
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeApi::class)
 @Composable
@@ -146,36 +181,26 @@ fun ChatDetail(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
     var sentMessageButNoUpdate by remember { mutableStateOf(false) }
-    val lastMessage = remember(state.messages) {
-        (state.messages ?: emptyList()).maxByOrNull { it.time ?: 0L }
-    }
+    val lastMessage = remember(state.messages) { state.messages?.maxByOrNull { it.time ?: 0L } }
     var sentMessageAndLoading by remember(lastMessage?.senderId, state.chat?.ownerId) {
         mutableStateOf(lastMessage?.senderId == state.chat?.ownerId)
     }
-    LaunchedEffect(lastMessage?.senderId) {
-        // Last message is sent by the user
-        if (lastMessage?.senderId == state.chat?.ownerId ||
-            // Or last message is from bot, but the message is blank
-            (lastMessage?.senderId != state.chat?.ownerId && lastMessage?.messageContent?.isBlank() == true)) {
-            delay(10000)
-            sentMessageButNoUpdate = true
-        } else {
-            sentMessageButNoUpdate = false
-        }
-    }
-    LaunchedEffect(sentMessageAndLoading) {
-        if (sentMessageAndLoading) {
-            delay(60000)
-            sentMessageAndLoading = false
-            sentMessageButNoUpdate = true
-            sendError(ErrorCode.ChatRefreshError)
-        }
-    }
+    RefreshMessageEffect(
+        ownerId = state.chat?.ownerId ?: "",
+        lastMessage = lastMessage,
+        noUpdateDelay = 10.seconds,
+        sentMessageAndLoading = sentMessageAndLoading,
+        onSentMessageAndLoading = { sentMessageAndLoading = it },
+        onMessageUpdated = { sentMessageButNoUpdate = it },
+        refreshErrorDelay = 20.seconds,
+        onRefreshError = { sendError(ErrorCode.ChatRefreshError) }
+    )
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 modifier = Modifier.hazeEffect(hazeState) {
                     inputScale = HazeInputScale.None
                 },
@@ -224,7 +249,7 @@ fun ChatDetail(
                     sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
                     isRecording = state.isRecording,
                     toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
-                    enabled = state.chat != null,
+                    enabled = state.chat != null || state.selectedNewChatModel != null,
                 )
             }
         },
@@ -307,8 +332,10 @@ private fun StartChatModelInfo(
         ) {
             if (selectedModel != null) {
                 Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                     text = stringResource(Res.string.selected_model),
                     style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center
                 )
                 ModelInfo(
                     modifier = Modifier.fillMaxWidth(),
@@ -321,16 +348,11 @@ private fun StartChatModelInfo(
                     style = MaterialTheme.typography.headlineLarge,
                 )
             }
-            ButlerMediumTextButton(
-                onClick = navigateToModelSelection,
-                text = { Text(text = stringResource(Res.string.select_model)) },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Image,
-                        contentDescription = null
-                    )
-                }
-            )
+            MediumMenuButton(
+                onClick = navigateToModelSelection
+            ) {
+                Text(text = stringResource(Res.string.select_model))
+            }
         }
     }
 }
@@ -356,14 +378,6 @@ fun ModelInfo(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = onClick
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ExpandLess,
-                            contentDescription = "Collapse"
-                        )
-                    }
                     PlainTooltipWithContent(
                         modifier = Modifier.weight(1f, fill = false),
                         onClick = onClick,
@@ -430,7 +444,7 @@ expect fun ChatDetailBottomBar(
 fun MessageList(
     modifier: Modifier = Modifier,
     preferedWidth: Dp,
-    messages: List<DomainMessage> = emptyList(),
+    messages: List<Message> = emptyList(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
@@ -541,7 +555,7 @@ fun MessageList(
 @Composable
 fun MessageItem(
     modifier: Modifier = Modifier,
-    message: DomainMessage,
+    message: Message,
     sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
     playAudio: (String) -> Unit = {},
     stopAudio: () -> Unit = {},

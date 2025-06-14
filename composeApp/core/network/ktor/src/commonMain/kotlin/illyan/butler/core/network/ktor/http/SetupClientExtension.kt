@@ -1,10 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
+
 package illyan.butler.core.network.ktor.http
 
 import illyan.butler.config.BuildConfig
-import illyan.butler.core.local.room.dao.UserDao
-import illyan.butler.core.local.room.model.RoomToken
+import illyan.butler.core.local.datasource.UserLocalDataSource
 import illyan.butler.data.error.ErrorRepository
-import illyan.butler.data.settings.AppRepository
+import illyan.butler.domain.model.Token
 import illyan.butler.shared.model.response.UserTokensResponse
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClientConfig
@@ -34,13 +35,13 @@ import io.ktor.http.contentType
 import io.ktor.network.tls.CIOCipherSuites
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
     engine {
@@ -51,11 +52,12 @@ fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
     }
 }
 
-@OptIn(ExperimentalSerializationApi::class)
+@OptIn(ExperimentalSerializationApi::class, ExperimentalUuidApi::class)
 fun HttpClientConfig<*>.setupClient(
-    userDao: UserDao,
-    appRepository: AppRepository,
-    errorRepository: ErrorRepository
+    userDataSource: UserLocalDataSource,
+    errorRepository: ErrorRepository,
+    endpoint: String,
+    userId: Uuid?,
 ) {
     expectSuccess = true
     HttpResponseValidator {
@@ -90,14 +92,13 @@ fun HttpClientConfig<*>.setupClient(
             // loadTokens run every time a request is made.
             loadTokens {
                 Napier.v { "Loading tokens" }
-                val signedInUserId = appRepository.currentSignedInUserId.first()
-                if (signedInUserId == null) {
+                if (userId == null) {
                     Napier.d { "User is not signed in" }
                     null
                 } else {
-                    val currentUser = userDao.getUser(signedInUserId).first()
-                    val accessMillis = currentUser?.accessToken?.tokenExpirationMillis
-                    val refreshMillis = currentUser?.refreshToken?.tokenExpirationMillis
+                    val currentUser = userDataSource.getUser(userId).first()
+                    val accessMillis = currentUser?.accessToken?.tokenExpiration?.toEpochMilliseconds()
+                    val refreshMillis = currentUser?.refreshToken?.tokenExpiration?.toEpochMilliseconds()
                     val accessToken = currentUser?.accessToken?.token
                     val refreshToken = currentUser?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
@@ -118,11 +119,10 @@ fun HttpClientConfig<*>.setupClient(
                 }
             }
             refreshTokens {
-                val signedInUserId = appRepository.currentSignedInUserId.first()
-                if (signedInUserId != null) {
-                    val currentUser = userDao.getUser(signedInUserId).first()
-                    val accessMillis = currentUser?.accessToken?.tokenExpirationMillis
-                    val refreshMillis = currentUser?.refreshToken?.tokenExpirationMillis
+                if (userId != null) {
+                    val currentUser = userDataSource.getUser(userId).first()
+                    val accessMillis = currentUser?.accessToken?.tokenExpiration?.toEpochMilliseconds()
+                    val refreshMillis = currentUser?.refreshToken?.tokenExpiration?.toEpochMilliseconds()
                     val accessToken = currentUser?.accessToken?.token
                     val refreshToken = currentUser?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
@@ -138,10 +138,10 @@ fun HttpClientConfig<*>.setupClient(
                         client.post("/refresh-access-token") {
                             oldTokens?.refreshToken?.let { bearerAuth(it) }
                         }.body<UserTokensResponse>().run {
-                            userDao.updateTokens(
-                                signedInUserId,
-                                RoomToken(accessToken, accessTokenExpirationMillis),
-                                RoomToken(refreshToken, refreshTokenExpirationMillis)
+                            userDataSource.refreshUserTokens(
+                                userId,
+                                Token(accessToken, Instant.fromEpochMilliseconds(accessTokenExpirationMillis)),
+                                Token(refreshToken, Instant.fromEpochMilliseconds(refreshTokenExpirationMillis))
                             )
                             BearerTokens(accessToken, refreshToken)
                         }
@@ -162,9 +162,9 @@ fun HttpClientConfig<*>.setupClient(
         onRequest { request, content ->
             Napier.v("ContentTypeFallback plugin called onRequest, request: ${request.url}, content: $content")
             // Default body is EmptyContent
-            // Don't set content type if content itself is not set
+            // Don't set content mimeType if content itself is not set
             if (request.contentType() == null && content !is EmptyContent) {
-                Napier.v("Request content type is null and content is not EmptyContent, setting content type: ${contentTypes.first()}")
+                Napier.v("Request content mimeType is null and content is not EmptyContent, setting content mimeType: ${contentTypes.first()}")
                 request.contentType(contentTypes.first())
             }
         }
@@ -173,14 +173,14 @@ fun HttpClientConfig<*>.setupClient(
             when (request.body) {
                 is OutgoingContent -> {
                     try {
-                        if (contentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
+                        if (contentTypes.isEmpty()) throw IllegalStateException("No supported content types. Please add at least one content mimeType to the supportedContentTypes list in the ContentTypeFallbackConfig.")
                         contentTypes.firstNotNullOf {
                             request.contentType(it)
                             val call = proceed(request)
                             if (call.response.status != HttpStatusCode.UnsupportedMediaType) call else null
                         }
                     } catch (e: NoSuchElementException) {
-                        throw IllegalStateException("Server does not support any of the content types in the supportedContentTypes list configured in ContentTypeFallbackConfig. Please add at least one server supported content type to the supportedContentTypes list in the ContentTypeFallbackConfig.")
+                        throw IllegalStateException("Server does not support any of the content types in the supportedContentTypes list configured in ContentTypeFallbackConfig. Please add at least one server supported content mimeType to the supportedContentTypes list in the ContentTypeFallbackConfig.")
                     }
                 }
                 else -> proceed(request)
@@ -204,16 +204,9 @@ fun HttpClientConfig<*>.setupClient(
         gzip(0.9f)
     }
 
-    var currentApiUrl: String? = null
-    CoroutineScope(Dispatchers.IO).launch {
-        appRepository.currentHost.collectLatest {
-            Napier.d { "API URL changed to $it" }
-            currentApiUrl = it
-        }
-    }
     defaultRequest {
-        Napier.v("Default request interceptor called, currentApiUrl: $currentApiUrl, protocol: ${url.protocol}")
-        url(urlString = currentApiUrl ?: "http://localhost:8080")
+        Napier.v("Default request interceptor called, currentApiUrl: ${endpoint}, protocol: ${url.protocol}")
+        url(urlString = endpoint)
     }
 }
 

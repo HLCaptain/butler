@@ -1,12 +1,16 @@
 package illyan.butler.data.message
 
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Message
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface MessageRepository {
-    fun getMessageFlow(messageId: String, deviceOnly: Boolean): Flow<DomainMessage?>
-    fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): Flow<List<DomainMessage>>
-    fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainMessage>>
-    suspend fun upsert(message: DomainMessage, deviceOnly: Boolean): String
-    suspend fun delete(message: DomainMessage, deviceOnly: Boolean)
+    fun getMessageFlow(messageId: Uuid, source: Source): Flow<Message?>
+    fun getChatMessagesFlow(chatId: Uuid, source: Source): Flow<List<Message>>
+    fun getOwnerMessagesFlow(ownerId: Uuid): Flow<List<Message>>
+    suspend fun upsert(message: Message): Uuid
+    suspend fun delete(message: Message)
 }

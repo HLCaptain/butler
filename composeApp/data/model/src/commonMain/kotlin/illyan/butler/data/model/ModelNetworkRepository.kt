@@ -5,8 +5,9 @@ import illyan.butler.core.local.datasource.CredentialLocalDataSource
 import illyan.butler.core.network.datasource.ModelNetworkDataSource
 import illyan.butler.core.network.ktor.http.di.provideOpenAIClient
 import illyan.butler.data.host.HostRepository
-import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
+import illyan.butler.shared.model.auth.ApiKeyCredential
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -53,6 +54,7 @@ class ModelNetworkRepository(
                     healthyCredentials.update { list -> list + credential }
                     emit(models)
                 } catch (e: Exception) {
+                    Napier.e(e) { "Failed to fetch models for ${credential.providerUrl}" }
                     healthyCredentials.update { list -> list - credential }
                     emit(emptyList())
                 }

@@ -1,12 +1,21 @@
 package illyan.butler.shared.model.chat
 
+import illyan.butler.shared.model.serializers.InstantSerializer
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Serializable
 data class ResourceDto(
-    val id: String? = null,
+    val id: Uuid = Uuid.random(),
     val type: String,
-    val data: ByteArray
+    val data: ByteArray,
+    @Serializable(InstantSerializer::class)
+    val createdAt: Instant = Clock.System.now(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

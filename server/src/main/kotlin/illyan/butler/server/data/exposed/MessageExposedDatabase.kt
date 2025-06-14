@@ -55,7 +55,7 @@ class MessageExposedDatabase(
                     it[time] = nowMillis
                     it[senderId] = userId
                     it[chatId] = entityId(message.chatId, Chats)
-                    it[this.message] = message.message
+                    it[this.message] = message.content
                 }
             } else {
                 throw ApiException(StatusCode.ChatNotFound)
@@ -77,7 +77,7 @@ class MessageExposedDatabase(
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
             val messageUuid = UUID.fromString(message.id)
             if (isUserInChat) {
-                Messages.update({ Messages.id eq messageUuid }) { it[this.message] = message.message }
+                Messages.update({ Messages.id eq messageUuid }) { it[this.message] = message.content }
             } else {
                 throw ApiException(StatusCode.ChatNotFound)
             }
@@ -238,7 +238,7 @@ class MessageExposedDatabase(
 suspend fun ResultRow.toMessageDto() = MessageDto(
     id = this[Messages.id].value.toString(),
     senderId = this[Messages.senderId],
-    message = this[Messages.message],
+    content = this[Messages.message],
     time = this[Messages.time],
     chatId = this[Messages.chatId].value.toString(),
     resourceIds = MessageResources

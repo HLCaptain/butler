@@ -35,12 +35,12 @@ fun provideAuthNetworkDataSource(
     authNetworkDataSource: AuthHttpDataSource
 ): AuthNetworkDataSource = if (BuildConfig.USE_MEMORY_DB) {
     object : AuthNetworkDataSource {
-        val users = mutableMapOf<String, UserDto>()
-        val userWithCredential = mutableMapOf<Pair<String, String>, String>()
+        val users = mutableMapOf<Uuid, UserDto>()
+        val userWithCredential = mutableMapOf<Pair<String, String>, Uuid>()
 
-        override suspend fun signup(credentials: UserRegistrationDto): UserLoginResponseDto {
+        override suspend fun signup(credentials: UserRegistrationDto, endpoint: String): UserLoginResponseDto {
             delay(1000)
-            val userId = Uuid.random().toString()
+            val userId = Uuid.random()
             users[userId] = UserDto(
                 id = userId,
                 email = credentials.email,
@@ -58,7 +58,7 @@ fun provideAuthNetworkDataSource(
             )
         }
 
-        override suspend fun login(credentials: UserLoginDto): UserLoginResponseDto {
+        override suspend fun login(credentials: UserLoginDto, endpoint: String): UserLoginResponseDto {
             delay(1000)
             val user = try {
                 users[userWithCredential[credentials.email to credentials.password]]!!
@@ -77,7 +77,7 @@ fun provideAuthNetworkDataSource(
             )
         }
 
-        override suspend fun sendPasswordResetEmail(request: PasswordResetRequest): Boolean {
+        override suspend fun sendPasswordResetEmail(request: PasswordResetRequest, endpoint: String): Boolean {
             delay(1000)
             return true
         }

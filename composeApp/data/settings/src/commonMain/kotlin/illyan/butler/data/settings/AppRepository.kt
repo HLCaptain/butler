@@ -2,19 +2,23 @@ package illyan.butler.data.settings
 
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
-import illyan.butler.domain.model.ModelConfig
+import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 interface AppRepository {
     val appSettings: Flow<AppSettings?>
     val currentHost: Flow<String?>
-    val currentSignedInUserId: Flow<String?>
-    val defaultModel: Flow<ModelConfig?>
+    val signedInServers: Flow<Set<Source.Server>>
+    val defaultModel: Flow<AiSource?>
     val isUserSignedIn: Flow<Boolean>
-        get() = currentSignedInUserId.map { it != null }
+        get() = signedInServers.map { it.isNotEmpty() }
 
     suspend fun setUserPreferences(preferences: DomainPreferences)
-    suspend fun setSignedInUser(userId: String?)
-    suspend fun setDefaultModel(model: ModelConfig?)
+    suspend fun addServerSource(source: Source.Server)
+    suspend fun removeServerSource(source: Source.Server)
+    suspend fun setDefaultModel(model: AiSource?)
 }

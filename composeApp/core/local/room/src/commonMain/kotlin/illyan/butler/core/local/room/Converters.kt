@@ -4,11 +4,15 @@ import androidx.room.TypeConverter
 import illyan.butler.core.local.room.model.RoomAddress
 import illyan.butler.core.local.room.model.RoomPreferences
 import illyan.butler.core.local.room.model.RoomToken
+import illyan.butler.domain.model.AiSource
 import illyan.butler.domain.model.Capability
-import illyan.butler.domain.model.ModelConfig
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.json.Json
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class Converters {
     @TypeConverter
@@ -66,6 +70,30 @@ class Converters {
         return Json.decodeFromString(RoomAddress.serializer(), databaseValue)
     }
 
+    @OptIn(ExperimentalUuidApi::class)
+    @TypeConverter
+    fun toByteArray(databaseValue: Uuid): ByteArray {
+        return databaseValue.toByteArray()
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    @TypeConverter
+    fun toUuid(databaseValue: ByteArray): Uuid {
+        return Uuid.fromByteArray(databaseValue)
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @TypeConverter
+    fun toLong(value: Instant): Long {
+        return value.toEpochMilliseconds()
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @TypeConverter
+    fun toInstant(value: Long): Instant {
+        return Instant.fromEpochMilliseconds(value)
+    }
+
     @Serializable
     data class StringPair(val first: String, val second: String)
 
@@ -81,13 +109,13 @@ class Converters {
 
     @JvmName("modelsMapToString")
     @TypeConverter
-    fun toString(models: Map<Capability, ModelConfig>): String {
-        return Json.encodeToString(MapSerializer(Capability.serializer(), ModelConfig.serializer()), models)
+    fun toString(models: Map<Capability, AiSource>): String {
+        return Json.encodeToString(MapSerializer(Capability.serializer(), AiSource.serializer()), models)
     }
 
     @TypeConverter
-    fun toModelsMap(databaseValue: String): Map<Capability, ModelConfig> {
-        return Json.decodeFromString(MapSerializer(Capability.serializer(), ModelConfig.serializer()), databaseValue)
+    fun toModelsMap(databaseValue: String): Map<Capability, AiSource> {
+        return Json.decodeFromString(MapSerializer(Capability.serializer(), AiSource.serializer()), databaseValue)
     }
 }
 

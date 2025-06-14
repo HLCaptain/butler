@@ -2,7 +2,7 @@ package illyan.butler.core.network.ktor.http
 
 import illyan.butler.core.network.datasource.ResourceNetworkDataSource
 import illyan.butler.core.network.mapping.toDomainModel
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
 import illyan.butler.shared.model.chat.ResourceDto
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -27,7 +27,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDataSource {
-    private val newResourcesStateFlow = MutableStateFlow<List<DomainResource>?>(null)
+    private val newResourcesStateFlow = MutableStateFlow<List<Resource>?>(null)
     private var isLoadingNewResourcesWebSocketSession = false
     private var isLoadedNewResourcesWebSocketSession = false
 
@@ -48,7 +48,7 @@ class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDa
         return client.delete("/resources/$resourceId").status.isSuccess()
     }
 
-    override fun fetchNewResources(): Flow<List<DomainResource>> {
+    override fun fetchNewResources(): Flow<List<Resource>> {
         return if (newResourcesStateFlow.value == null && !isLoadingNewResourcesWebSocketSession && !isLoadedNewResourcesWebSocketSession) {
             isLoadingNewResourcesWebSocketSession = true
             flow {
@@ -62,13 +62,13 @@ class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDa
             newResourcesStateFlow
         }.filterNotNull()
     }
-    override fun fetchResourceById(resourceId: String): Flow<DomainResource> {
+    override fun fetchResourceById(resourceId: String): Flow<Resource> {
         return fetchNewResources().map { resources -> resources.first { it.id == resourceId } }
     }
 
-    // To avoid needless updates to resources right after they are created
-    private val dontUpdateResource = mutableSetOf<DomainResource>()
-    override suspend fun upsert(resource: DomainResource): DomainResource {
+    // To avoid needless updates to resources right after they are createdAt
+    private val dontUpdateResource = mutableSetOf<Resource>()
+    override suspend fun upsert(resource: Resource): Resource {
         return if (resource.id == null) {
             val newMessage = client.post("/resources") { setBody(resource) }.body<ResourceDto>().toDomainModel()
             dontUpdateResource.add(newMessage)
@@ -81,11 +81,11 @@ class ResourceHttpDataSource(private val client: HttpClient) : ResourceNetworkDa
         }
     }
 
-    override fun fetchByUser(): Flow<List<DomainResource>> {
+    override fun fetchByUser(): Flow<List<Resource>> {
         return fetchNewResources()
     }
 
-    private suspend fun fetchByUserOnce(): List<DomainResource> {
+    private suspend fun fetchByUserOnce(): List<Resource> {
         return client.get("/resources").body<List<ResourceDto>>().map { it.toDomainModel() }
     }
 }

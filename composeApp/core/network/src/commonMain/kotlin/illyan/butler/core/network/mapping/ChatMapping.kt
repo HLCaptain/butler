@@ -1,49 +1,47 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.core.network.mapping
 
 import illyan.butler.domain.model.Capability
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.ModelConfig
+import illyan.butler.domain.model.Chat
+import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.ChatDto
+import illyan.butler.shared.model.chat.Source
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
-fun ChatDto.toDomainModel() = DomainChat(
+fun ChatDto.toDomainModel(endpoint: String) = Chat(
     id = id,
-    created = created,
-    name = name,
-    ownerId = ownerId,
+    createdAt = createdAt,
+    title = name,
+    source = Source.Server(
+        userId = ownerId,
+        endpoint = endpoint,
+    ),
     models = models.toDomainModel(),
     summary = summary,
 )
 
-fun DomainChat.toNetworkModel() = ChatDto(
+fun Chat.toNetworkModel() = ChatDto(
     id = id,
-    created = created,
-    name = name,
-    ownerId = ownerId,
-    models = models.toNetworkModel(),
+    createdAt = createdAt,
+    name = title,
+    ownerId = (source as Source.Server).userId,
     summary = summary,
+    models = models.mapValues { it.value as AiSource.Server }.toNetworkModel()
 )
 
-fun Map<Capability, ModelConfig>.toNetworkModel(): Map<illyan.butler.shared.model.chat.Capability, illyan.butler.shared.model.chat.ModelConfig> {
+fun Map<Capability, AiSource>.toNetworkModel(): Map<illyan.butler.shared.model.chat.Capability, AiSource> {
     return map { (key, value) ->
-        key.toNetworkModel() to value.toNetworkModel()
+        key.toNetworkModel() to value
     }.toMap()
 }
 
-fun Map<illyan.butler.shared.model.chat.Capability, illyan.butler.shared.model.chat.ModelConfig>.toDomainModel(): Map<Capability, ModelConfig> {
+fun Map<illyan.butler.shared.model.chat.Capability, AiSource>.toDomainModel(): Map<Capability, AiSource> {
     return map { (key, value) ->
-        key.toDomainModel() to value.toDomainModel()
+        key.toDomainModel() to value
     }.toMap()
 }
-
-fun ModelConfig.toNetworkModel() = illyan.butler.shared.model.chat.ModelConfig(
-    modelId = modelId,
-    endpoint = endpoint
-)
-
-fun illyan.butler.shared.model.chat.ModelConfig.toDomainModel() = ModelConfig(
-    modelId = modelId,
-    endpoint = endpoint
-)
 
 fun Capability.toNetworkModel() = when (this) {
     Capability.CHAT_COMPLETION -> illyan.butler.shared.model.chat.Capability.CHAT_COMPLETION

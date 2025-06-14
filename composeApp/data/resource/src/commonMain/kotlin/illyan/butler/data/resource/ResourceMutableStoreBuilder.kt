@@ -5,7 +5,7 @@ import illyan.butler.core.local.datasource.ResourceLocalDataSource
 import illyan.butler.core.network.datasource.ResourceNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -41,9 +41,9 @@ fun provideResourceMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                ResourceKey.Write.Create, ResourceKey.Write.Upsert, ResourceKey.Write.DeviceOnly -> resourceLocalDataSource.upsertResource(local)
+                ResourceKey.Write.Upsert -> resourceLocalDataSource.upsertResource(local)
                 is ResourceKey.Read.ByResourceId -> resourceLocalDataSource.upsertResource(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
@@ -64,10 +64,13 @@ fun provideResourceMutableStore(
             require(key is ResourceKey.Write)
             val newResource = when (key) {
                 is ResourceKey.Write.Create -> resourceNetworkDataSource.upsert(output.copy(id = null)).also {
-                    resourceLocalDataSource.replaceResource(it.id!!, it)
+                    resourceLocalDataSource.replaceResource(it.id, it)
                 }
-                is ResourceKey.Write.Upsert -> resourceNetworkDataSource.upsert(output)
-                is ResourceKey.Write.DeviceOnly -> output // Don't sync to network
+                is ResourceKey.Write.Upsert -> if (output.deviceOnly) {
+                    resourceNetworkDataSource.upsert(output)
+                } else {
+                    output // Don't sync to network
+                }
             }
             UpdaterResult.Success.Typed(newResource)
         },
@@ -75,6 +78,6 @@ fun provideResourceMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        DomainResource::class.qualifiedName.toString()
+        Resource::class.qualifiedName.toString()
     ) { it.toString() }
 )

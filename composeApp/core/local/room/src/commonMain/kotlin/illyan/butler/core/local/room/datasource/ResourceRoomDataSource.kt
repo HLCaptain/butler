@@ -4,26 +4,29 @@ import illyan.butler.core.local.datasource.ResourceLocalDataSource
 import illyan.butler.core.local.room.dao.ResourceDao
 import illyan.butler.core.local.room.mapping.toDomainModel
 import illyan.butler.core.local.room.mapping.toRoomModel
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class ResourceRoomDataSource(private val resourceDao: ResourceDao) : ResourceLocalDataSource {
-    override fun getResource(resourceId: String): Flow<DomainResource?> {
+    override fun getResource(resourceId: Uuid): Flow<Resource?> {
         return resourceDao.getResourceById(resourceId).map { it?.toDomainModel() }
     }
 
-    override suspend fun upsertResource(resource: DomainResource) {
+    override suspend fun upsertResource(resource: Resource) {
         resourceDao.upsertResource(resource.toRoomModel())
     }
 
-    override suspend fun replaceResource(oldResourceId: String, newResource: DomainResource) {
-        resourceDao
+    override suspend fun replaceResource(oldResourceId: Uuid, newResource: Resource) {
+        resourceDao.replaceResource(oldResourceId, newResource.toRoomModel())
     }
 
-    override suspend fun deleteResourceById(resourceId: String) {
+    override suspend fun deleteResourceById(resourceId: Uuid) {
         resourceDao.deleteResourceById(resourceId)
     }
 

@@ -1,14 +1,17 @@
 package illyan.butler.core.local.datasource
 
-import illyan.butler.domain.model.DomainToken
-import illyan.butler.domain.model.DomainUser
+import illyan.butler.domain.model.Token
+import illyan.butler.domain.model.User
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface UserLocalDataSource {
-    fun getAllUsers(): Flow<List<DomainUser>>
-    fun getUser(userId: String): Flow<DomainUser?>
-    suspend fun upsertUser(user: DomainUser)
+    fun getAllUsers(): Flow<List<User>>
+    fun getUser(userId: Uuid): Flow<User?>
+    suspend fun upsertUser(user: User)
     suspend fun deleteUserData()
-    suspend fun deleteUser(userId: String)
-    suspend fun refreshUserTokens(userId: String, accessToken: DomainToken?, refreshToken: DomainToken?)
+    suspend fun deleteUser(userId: Uuid)
+    suspend fun refreshUserTokens(userId: Uuid, accessToken: Token?, refreshToken: Token?)
 }

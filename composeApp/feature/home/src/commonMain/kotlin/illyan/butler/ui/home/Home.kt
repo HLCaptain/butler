@@ -92,7 +92,7 @@ import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.DomainError
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
@@ -369,6 +369,7 @@ fun Home(
                                         )
                                     ),
                                     currentChat = currentChat,
+                                    onCurrentChatChanged = { currentChat = it },
                                     navigationIcon = {
                                         if (isCompact) {
                                             HamburgerButton {
@@ -426,8 +427,8 @@ private fun VerticalNavBar(
     modifier: Modifier = Modifier,
     selectChat: (String?) -> Unit = {},
     isExpanded: Boolean,
-    userChats: List<DomainChat>,
-    deviceChats: List<DomainChat>,
+    userChats: List<Chat>,
+    deviceChats: List<Chat>,
     currentChat: String?,
     deleteChat: (String) -> Unit = {},
     compact: Boolean,
@@ -597,8 +598,8 @@ fun MenuCloseButton(
 @Composable
 private fun HomePermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
-    userChats: List<DomainChat>,
-    deviceChats: List<DomainChat>,
+    userChats: List<Chat>,
+    deviceChats: List<Chat>,
     currentChat: String?,
     selectChat: (String?) -> Unit = {},
     deleteChat: (String) -> Unit = {},

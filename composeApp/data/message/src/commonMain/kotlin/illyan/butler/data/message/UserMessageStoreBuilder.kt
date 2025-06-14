@@ -27,7 +27,7 @@ fun provideUserMessageStore(
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
             require(key is MessageKey.Read.ByUserId) {
-                "Expected key to be of type MessageKey.Read.ByUserId, but was ${key::class.qualifiedName}"
+                "Expected key to be of mimeType MessageKey.Read.ByUserId, but was ${key::class.qualifiedName}"
             }
             messageLocalDataSource.getAccessibleMessagesForUser(key.userId)
         },
@@ -35,7 +35,7 @@ fun provideUserMessageStore(
             when (key) {
                 is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessages(local)
                 is MessageKey.Read.ByUserId -> messageLocalDataSource.upsertMessages(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
             }
         }
     ),

@@ -4,24 +4,27 @@ import illyan.butler.core.local.datasource.ChatLocalDataSource
 import illyan.butler.core.local.room.dao.ChatDao
 import illyan.butler.core.local.room.mapping.toDomainModel
 import illyan.butler.core.local.room.mapping.toRoomModel
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class ChatRoomDataSource(
     private val chatDao: ChatDao
 ) : ChatLocalDataSource {
-    override fun getChat(key: String): Flow<DomainChat?> {
-        return chatDao.getChatById(key).map { it?.toDomainModel() }
+    override fun getChat(id: Uuid): Flow<Chat?> {
+        return chatDao.getChatById(id).map { it?.toDomainModel() }
     }
 
-    override suspend fun upsertChat(chat: DomainChat) {
+    override suspend fun upsertChat(chat: Chat) {
         chatDao.upsertChat(chat.toRoomModel())
     }
 
-    override suspend fun replaceChat(oldChatId: String, newChat: DomainChat) {
+    override suspend fun replaceChat(oldChatId: String, newChat: Chat) {
         if (oldChatId == newChat.id) {
             upsertChat(newChat)
         } else {
@@ -41,13 +44,13 @@ class ChatRoomDataSource(
         chatDao.deleteAllChats()
     }
 
-    override fun getChatsByUser(userId: String): Flow<List<DomainChat>?> {
+    override fun getChatsByUser(userId: String): Flow<List<Chat>?> {
         return chatDao.getChatsByUser(userId).map { chats ->
             chats.map { it.toDomainModel() }
         }
     }
 
-    override suspend fun upsertChats(chats: List<DomainChat>) {
+    override suspend fun upsertChats(chats: List<Chat>) {
         chatDao.upsertChats(chats.map { it.toRoomModel() })
     }
 }

@@ -8,8 +8,12 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import illyan.butler.core.local.room.model.RoomMessage
+import illyan.butler.domain.model.SenderType
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Dao
 interface MessageDao {
     @Insert
@@ -25,7 +29,7 @@ interface MessageDao {
     suspend fun upsertMessages(messages: List<RoomMessage>): List<Long>
 
     @Transaction
-    suspend fun replaceMessage(oldMessageId: String, newMessage: RoomMessage) {
+    suspend fun replaceMessage(oldMessageId: Uuid, newMessage: RoomMessage) {
         deleteMessageById(oldMessageId)
         insertMessage(newMessage)
     }
@@ -43,26 +47,26 @@ interface MessageDao {
     suspend fun deleteMessages(messages: List<RoomMessage>)
 
     @Query("DELETE FROM messages WHERE id = :id")
-    suspend fun deleteMessageById(id: String)
+    suspend fun deleteMessageById(id: Uuid)
 
     @Query("DELETE FROM messages WHERE chatId = :chatId")
-    suspend fun deleteAllChatMessagesForChat(chatId: String)
+    suspend fun deleteAllChatMessagesForChat(chatId: Uuid)
 
-    @Query("DELETE FROM messages WHERE senderId = :senderId")
-    suspend fun deleteBySender(senderId: String)
+    @Query("DELETE FROM messages WHERE sender = :sender")
+    suspend fun deleteBySender(sender: SenderType)
 
     @Query("DELETE FROM messages")
     suspend fun deleteAllMessages()
 
     @Query("SELECT * FROM messages WHERE id = :id")
-    fun getMessageById(id: String): Flow<RoomMessage?>
+    fun getMessageById(id: Uuid): Flow<RoomMessage?>
 
     @Query("SELECT * FROM messages WHERE chatId = :chatId")
-    fun getMessagesByChatId(chatId: String): Flow<List<RoomMessage>>
+    fun getMessagesByChatId(chatId: Uuid): Flow<List<RoomMessage>>
 
-    @Query("SELECT * FROM messages WHERE senderId = :senderId")
-    fun getMessagesBySenderId(senderId: String): Flow<List<RoomMessage>>
+    @Query("SELECT * FROM messages WHERE sender = :sender")
+    fun getMessagesBySenderId(sender: SenderType): Flow<List<RoomMessage>>
 
     @Query("SELECT messages.* FROM messages JOIN chats ON messages.chatId = chats.id WHERE chats.ownerId = :userId")
-    fun getAccessibleMessagesForUser(userId: String): Flow<List<RoomMessage>>
+    fun getAccessibleMessagesForUser(userId: Uuid): Flow<List<RoomMessage>>
 }

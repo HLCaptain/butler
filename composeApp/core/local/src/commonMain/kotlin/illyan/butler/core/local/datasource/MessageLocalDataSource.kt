@@ -1,18 +1,21 @@
 package illyan.butler.core.local.datasource
 
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Message
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface MessageLocalDataSource {
-    suspend fun insertMessage(message: DomainMessage)
-    suspend fun insertMessages(messages: List<DomainMessage>)
-    suspend fun upsertMessage(message: DomainMessage)
-    suspend fun replaceMessage(oldMessageId: String, newMessage: DomainMessage)
-    suspend fun deleteMessageById(messageId: String)
+    suspend fun insertMessage(message: Message)
+    suspend fun insertMessages(messages: List<Message>)
+    suspend fun upsertMessage(message: Message)
+    suspend fun replaceMessage(oldMessageId: Uuid, newMessage: Message)
+    suspend fun deleteMessageById(messageId: Uuid)
     suspend fun deleteAllMessages()
-    suspend fun deleteAllMessagesForChat(chatId: String)
-    fun getMessageById(messageId: String): Flow<DomainMessage?>
-    fun getMessagesByChatId(chatId: String): Flow<List<DomainMessage>>
-    fun getAccessibleMessagesForUser(userId: String): Flow<List<DomainMessage>>
-    suspend fun upsertMessages(newMessages: List<DomainMessage>)
+    suspend fun deleteAllMessagesForChat(chatId: Uuid)
+    fun getMessageById(messageId: Uuid): Flow<Message?>
+    fun getMessagesByChatId(chatId: Uuid): Flow<List<Message>>
+    fun getAccessibleMessagesForUser(userId: Uuid): Flow<List<Message>>
+    suspend fun upsertMessages(newMessages: List<Message>)
 }

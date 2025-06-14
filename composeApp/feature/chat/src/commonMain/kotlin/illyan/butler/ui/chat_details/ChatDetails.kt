@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
@@ -39,7 +38,7 @@ import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerDropdownMenuBox
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.Capability
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.audio_speech_model
@@ -80,7 +79,7 @@ fun ChatDetails(
 @Composable
 fun ChatDetails(
     modifier: Modifier = Modifier,
-    chat: DomainChat?,
+    chat: Chat?,
     alternativeModels: List<ModelConfig>,
     setModel: ((ModelConfig?, Capability) -> Unit)? = null,
     actions: @Composable () -> Unit = {},

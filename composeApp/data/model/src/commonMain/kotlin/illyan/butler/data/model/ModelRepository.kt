@@ -1,7 +1,7 @@
 package illyan.butler.data.model
 
-import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
+import illyan.butler.shared.model.auth.ApiKeyCredential
 import kotlinx.coroutines.flow.Flow
 
 interface ModelRepository {

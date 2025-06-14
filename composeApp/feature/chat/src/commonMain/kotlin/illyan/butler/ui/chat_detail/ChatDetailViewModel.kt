@@ -7,11 +7,11 @@ import illyan.butler.audio.toWav
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
 import illyan.butler.data.error.ErrorRepository
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.ErrorCode
+import illyan.butler.domain.model.Message
 import illyan.butler.domain.model.ModelConfig
+import illyan.butler.domain.model.Resource
 import illyan.butler.settings.SettingsManager
 import io.github.aakira.napier.Napier
 import korlibs.audio.format.MP3
@@ -88,17 +88,17 @@ class ChatDetailViewModel(
         resources,
         selectedNewChatModel,
     ) { flows ->
-        val chat = flows[0] as DomainChat?
-        val messages = flows[1] as List<DomainMessage>?
+        val chat = flows[0] as Chat?
+        val messages = flows[1] as List<Message>?
         val recording = flows[2] as? Boolean == true
         val playing = flows[3] as? String
-        val resources = flows[4] as List<DomainResource>?
+        val resources = flows[4] as List<Resource>?
         val selectedModel = flows[5] as ModelConfig?
-        val sounds = resources?.filter { it.type.startsWith("audio") }
+        val sounds = resources?.filter { it.mimeType.startsWith("audio") }
             ?.associate {
-                it.id!! to try { it.data.toAudioData(it.type)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
+                it.id!! to try { it.data.toAudioData(it.mimeType)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
             } ?: emptyMap()
-        val images = resources?.filter { it.type.startsWith("image") }?.associate { it.id!! to it.data } ?: emptyMap()
+        val images = resources?.filter { it.mimeType.startsWith("image") }?.associate { it.id!! to it.data } ?: emptyMap()
 //        Napier.v {
 //            """
 //            ChatDetailState:

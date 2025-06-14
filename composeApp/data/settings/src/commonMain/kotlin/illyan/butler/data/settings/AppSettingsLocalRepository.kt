@@ -6,14 +6,17 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
-import illyan.butler.domain.model.ModelConfig
+import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class AppSettingsLocalRepository(
     private val datastore: DataStore<Preferences>,
@@ -45,10 +48,10 @@ class AppSettingsLocalRepository(
     override val currentHost: Flow<String?> = datastore.data.map { preferences ->
         preferences[hostKey]
     }
-    override val currentSignedInUserId: Flow<String?> = datastore.data.map { preferences ->
-        preferences[signedInUserKey]
+    override val signedInServers: Flow<Set<Source.Server>> = datastore.data.map { preferences ->
+        preferences[signedInUserKey]?.let { Json.decodeFromString(it) } ?: emptySet()
     }
-    override val defaultModel: Flow<ModelConfig?> = datastore.data.map { preferences ->
+    override val defaultModel: Flow<AiSource?> = datastore.data.map { preferences ->
         if (preferences[defaultModelKey] != null) {
             try {
                 Json.decodeFromString(preferences[defaultModelKey]!!)
@@ -75,17 +78,31 @@ class AppSettingsLocalRepository(
         }
     }
 
-    override suspend fun setSignedInUser(userId: String?) {
+    override suspend fun addServerSource(source: Source.Server) {
         datastore.edit { datastorePreferences ->
-            if (userId != null) {
-                datastorePreferences[signedInUserKey] = userId
-            } else {
+            val currentSources = datastorePreferences[signedInUserKey]?.let {
+                Json.decodeFromString<Set<Source.Server>>(it)
+            } ?: emptySet()
+            val updatedSources = currentSources + source
+            datastorePreferences[signedInUserKey] = Json.encodeToString(updatedSources)
+        }
+    }
+
+    override suspend fun removeServerSource(source: Source.Server) {
+        datastore.edit { datastorePreferences ->
+            val currentSources = datastorePreferences[signedInUserKey]?.let {
+                Json.decodeFromString<Set<Source.Server>>(it)
+            } ?: emptySet()
+            val updatedSources = currentSources - source
+            if (updatedSources.isEmpty()) {
                 datastorePreferences.remove(signedInUserKey)
+            } else {
+                datastorePreferences[signedInUserKey] = Json.encodeToString(updatedSources)
             }
         }
     }
 
-    override suspend fun setDefaultModel(model: ModelConfig?) {
+    override suspend fun setDefaultModel(model: AiSource?) {
         datastore.edit { datastorePreferences ->
             if (model != null) {
                 datastorePreferences[defaultModelKey] = Json.encodeToString(model)

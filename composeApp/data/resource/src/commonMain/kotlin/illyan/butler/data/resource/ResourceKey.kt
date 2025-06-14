@@ -6,9 +6,7 @@ sealed class ResourceKey {
     }
 
     sealed class Write : ResourceKey() {
-        data object Create : Write()
         data object Upsert : Write()
-        data object DeviceOnly : Write()
     }
 
     sealed class Delete : ResourceKey() {

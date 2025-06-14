@@ -1,15 +1,15 @@
 package illyan.butler.data.user
 
 import illyan.butler.core.local.room.mapping.toRoomModel
-import illyan.butler.domain.model.DomainAddress
-import illyan.butler.domain.model.DomainToken
-import illyan.butler.domain.model.DomainUser
+import illyan.butler.domain.model.Address
+import illyan.butler.domain.model.Token
+import illyan.butler.domain.model.User
 import illyan.butler.shared.model.identity.AddressDto
 import illyan.butler.shared.model.identity.UserDto
 import illyan.butler.shared.model.response.UserTokensResponse
 
-fun UserDto.toDomainModel(tokens: UserTokensResponse) = DomainUser(
-    id = id!!,
+fun UserDto.toDomainModel(tokens: UserTokensResponse) = User(
+    id = id!!,,
     email = email,
     username = username,
     displayName = displayName,
@@ -17,17 +17,17 @@ fun UserDto.toDomainModel(tokens: UserTokensResponse) = DomainUser(
     fullName = fullName,
     photoUrl = photoUrl,
     address = address?.toDomainModel(),
-    refreshToken = DomainToken(
-        token = tokens.refreshToken,
-        tokenExpirationMillis = tokens.refreshTokenExpirationMillis
-    ),
-    accessToken = DomainToken(
+    accessToken = Token(
         token = tokens.accessToken,
         tokenExpirationMillis = tokens.accessTokenExpirationMillis
+    ),
+    refreshToken = Token(
+        token = tokens.refreshToken,
+        tokenExpirationMillis = tokens.refreshTokenExpirationMillis
     )
 )
 
-fun AddressDto.toDomainModel() = DomainAddress(
+fun AddressDto.toDomainModel() = Address(
     street = street,
     city = city,
     state = state,

@@ -8,7 +8,7 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.error.ErrorRepository
 import illyan.butler.domain.model.ApiKeyCredential
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.DomainError
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -74,8 +74,8 @@ class HomeViewModel(
         val signedInUserId = flows[0] as String?
         val clientId = flows[1] as String?
         val errors = flows[2] as List<DomainError>
-        val userChats = flows[3] as List<DomainChat>
-        val deviceChats = flows[4] as List<DomainChat>
+        val userChats = flows[3] as List<Chat>
+        val deviceChats = flows[4] as List<Chat>
         val credentials = flows[5] as List<ApiKeyCredential>? ?: emptyList()
         val lastInteractionTimestampForChat = flows[6] as Map<String, Long?>
         Napier.v {

@@ -14,23 +14,23 @@ import org.koin.core.annotation.Single
 
 @Single
 class AuthHttpDataSource(
-    private val client: HttpClient,
+    private val unauthorizedClientFactory: (String) -> HttpClient,
 ) : AuthNetworkDataSource {
 
-    override suspend fun signup(credentials: UserRegistrationDto): UserLoginResponseDto {
-        return client.post("/signup") {
+    override suspend fun signup(credentials: UserRegistrationDto, endpoint: String): UserLoginResponseDto {
+        return unauthorizedClientFactory(endpoint).post("/signup") {
             setBody(credentials)
         }.body()
     }
 
-    override suspend fun login(credentials: UserLoginDto): UserLoginResponseDto {
-        return client.post("/login") {
+    override suspend fun login(credentials: UserLoginDto, endpoint: String): UserLoginResponseDto {
+        return unauthorizedClientFactory(endpoint).post("/login") {
             setBody(credentials)
         }.body()
     }
 
-    override suspend fun sendPasswordResetEmail(request: PasswordResetRequest): Boolean {
-        return client.post("/reset-password") {
+    override suspend fun sendPasswordResetEmail(request: PasswordResetRequest, endpoint: String): Boolean {
+        return unauthorizedClientFactory(endpoint).post("/reset-password") {
             setBody(request)
         }.status.isSuccess()
     }

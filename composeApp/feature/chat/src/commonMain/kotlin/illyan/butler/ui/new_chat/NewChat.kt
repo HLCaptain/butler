@@ -329,7 +329,7 @@ fun NewChat(
                             modelId = selectedModel.id,
                             providers = providerModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
                             server = serverModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
-                            selectModel = { modelConfig -> state.userId?.let { selectModel(modelConfig) } },
+                            selectModel = { modelConfig -> selectModel(modelConfig) },
                         )
                     }
                 } else {

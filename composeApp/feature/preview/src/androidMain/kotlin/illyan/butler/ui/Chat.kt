@@ -8,9 +8,9 @@ import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.theme.ButlerTheme
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.DomainModel
+import illyan.butler.domain.model.Message
 import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailState
 import illyan.butler.ui.chat_details.ChatDetails
@@ -31,7 +31,7 @@ fun ChatDetailPreview() {
             CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
                 ChatDetail(
                     state = ChatDetailState(
-                        chat = DomainChat(
+                        chat = Chat(
                             id = "1",
                             created = Clock.System.now().minus(3.days).toEpochMilliseconds(),
                             name = "Chat 1",
@@ -39,35 +39,35 @@ fun ChatDetailPreview() {
                             ownerId = "1",
                         ),
                         messages = listOf(
-                            DomainMessage(
+                            Message(
                                 id = "1",
                                 senderId = "1",
                                 messageContent = "Hello",
                                 time = Clock.System.now().minus(2.days).toEpochMilliseconds(),
                                 chatId = "1",
                             ),
-                            DomainMessage(
+                            Message(
                                 id = "2",
                                 senderId = "Cook GPT",
                                 messageContent = "Hi, what recipe would you like to cook today?",
                                 time = Clock.System.now().minus(1.days).toEpochMilliseconds(),
                                 chatId = "1",
                             ),
-                            DomainMessage(
+                            Message(
                                 id = "3",
                                 senderId = "1",
                                 messageContent = "I would like to cook a pizza",
                                 time = Clock.System.now().minus(1.days - 1.seconds).toEpochMilliseconds(),
                                 chatId = "1",
                             ),
-                            DomainMessage(
+                            Message(
                                 id = "4",
                                 senderId = "Cook GPT",
                                 messageContent = "Great! Here is a recipe for pizza\n\nIngredients:\n- 1 pizza dough\n- 1 cup of tomato sauce\n- 1 cup of mozzarella cheese\n\nInstructions:\n1. Preheat the oven to 400°F\n2. Roll out the pizza dough\n3. Spread the tomato sauce on the dough\n4. Sprinkle the cheese on top\n5. Bake for 15 minutes\n\nEnjoy your pizza!",
                                 time = Clock.System.now().minus(1.days - 2.seconds).toEpochMilliseconds(),
                                 chatId = "1",
                             ),
-                            DomainMessage(
+                            Message(
                                 id = "5",
                                 senderId = "1",
                                 messageContent = "Thank you!",
@@ -103,21 +103,21 @@ fun ChatListPreview() {
             CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
                 ChatList(
                     chats = listOf(
-                        DomainChat(
+                        Chat(
                             id = "1",
                             created = Clock.System.now().minus(3.days).toEpochMilliseconds(),
                             name = "Chat 1",
                             summary = "Chat 1 summary",
                             ownerId = "1",
                         ),
-                        DomainChat(
+                        Chat(
                             id = "2",
                             created = Clock.System.now().minus(2.days).toEpochMilliseconds(),
                             name = "Chat 2",
                             summary = "Chat 2 summary",
                             ownerId = "1",
                         ),
-                        DomainChat(
+                        Chat(
                             id = "3",
                             created = Clock.System.now().minus(1.days).toEpochMilliseconds(),
                             name = "Chat 3",
@@ -141,7 +141,7 @@ fun ChatDetailsPreview() {
     ButlerTheme {
         Surface {
             ChatDetails(
-                chat = DomainChat(
+                chat = Chat(
                     id = "1",
                     created = Clock.System.now().minus(3.days).toEpochMilliseconds(),
                     name = "Chat 1",

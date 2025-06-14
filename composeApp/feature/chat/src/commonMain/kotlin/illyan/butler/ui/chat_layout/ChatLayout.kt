@@ -1,13 +1,11 @@
 package illyan.butler.ui.chat_layout
 
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.LocalHazeStyle
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
+import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_details.ChatDetails
@@ -40,31 +39,32 @@ enum class ChatLayoutDestinations {
 fun ChatLayout(
     modifier: Modifier = Modifier,
     currentChat: String?,
+    onCurrentChatChanged: (String?) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
         val viewModel = koinViewModel<ChatDetailViewModel>()
         val state by viewModel.state.collectAsState()
         LaunchedEffect(currentChat) {
-            currentChat?.let { viewModel.loadChat(it) }
+            viewModel.loadChat(currentChat)
+        }
+        LaunchedEffect(state.chat) {
+            onCurrentChatChanged(state.chat?.id)
         }
         var destination by rememberSaveable(
             stateSaver = object : Saver<ChatLayoutDestinations?, Int> {
-                override fun restore(value: Int): ChatLayoutDestinations? {
-                    return ChatLayoutDestinations.entries[value]
-                }
-
-                override fun SaverScope.save(value: ChatLayoutDestinations?): Int? {
-                    return value?.ordinal
-                }
+                override fun restore(value: Int) = ChatLayoutDestinations.entries[value]
+                override fun SaverScope.save(value: ChatLayoutDestinations?) = value?.ordinal
             }
         ) {
             mutableStateOf<ChatLayoutDestinations?>(null)
         }
+        BackHandler(enabled = destination != null) {
+            destination = null
+        }
         val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
-            bottomSheetState = rememberStandardBottomSheetState(
-                initialValue = SheetValue.Hidden,
-                skipHiddenState = false
+            bottomSheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
             )
         )
         LaunchedEffect(destination) {
@@ -74,49 +74,49 @@ fun ChatLayout(
                 bottomSheetScaffoldState.bottomSheetState.expand()
             }
         }
-        LaunchedEffect(bottomSheetScaffoldState.bottomSheetState.targetValue) {
-            if (bottomSheetScaffoldState.bottomSheetState.targetValue == SheetValue.PartiallyExpanded) {
+        LaunchedEffect(bottomSheetScaffoldState.bottomSheetState.currentValue) {
+            if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Hidden) {
                 destination = null
             }
         }
-        Row(modifier = modifier) {
-            BottomSheetScaffold(
-                scaffoldState = bottomSheetScaffoldState,
-                sheetContent = {
-                    when (destination) {
-                        ChatLayoutDestinations.MODEL_SELECTION -> {
-                            NewChat(
-                                selectModel = { modelConfig ->
-                                    viewModel.selectNewChatModel(modelConfig)
-                                    destination = null
-                                },
-                            )
-                        }
-                        ChatLayoutDestinations.CHAT_SETTINGS -> {
-                            ChatDetails(
-                                chatId = currentChat
-                            )
-                        }
-                        else -> {}
+        BottomSheetScaffold(
+            modifier = modifier,
+            scaffoldState = bottomSheetScaffoldState,
+            sheetContent = {
+                when (destination) {
+                    ChatLayoutDestinations.MODEL_SELECTION -> {
+                        NewChat(
+                            selectModel = { modelConfig ->
+                                viewModel.selectNewChatModel(modelConfig)
+                                destination = null
+                            },
+                        )
                     }
+                    ChatLayoutDestinations.CHAT_SETTINGS -> {
+                        ChatDetails(
+                            chatId = currentChat
+                        )
+                    }
+                    else -> {}
                 }
-            ) { _ ->
-                Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp)) {
-                    ChatDetail(
-                        state = state,
-                        sendMessage = viewModel::sendMessage,
-                        toggleRecord = viewModel::toggleRecording,
-                        sendImage = viewModel::sendImage,
-                        playAudio = viewModel::playAudio,
-                        stopAudio = viewModel::stopAudio,
-                        refreshChat = viewModel::refreshChat,
-                        sendError = viewModel::sendError,
-                        navigationIcon = navigationIcon,
-                        navigateToChatSettings = { destination = ChatLayoutDestinations.CHAT_SETTINGS },
-                        navigateToModelSelection = { destination = ChatLayoutDestinations.MODEL_SELECTION },
-                    )
-                }
-            }
+            },
+            sheetDragHandle = null,
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
+            sheetContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
+        ) { _ ->
+            ChatDetail(
+                state = state,
+                sendMessage = viewModel::sendMessage,
+                toggleRecord = viewModel::toggleRecording,
+                sendImage = viewModel::sendImage,
+                playAudio = viewModel::playAudio,
+                stopAudio = viewModel::stopAudio,
+                refreshChat = viewModel::refreshChat,
+                sendError = viewModel::sendError,
+                navigationIcon = navigationIcon,
+                navigateToChatSettings = { destination = ChatLayoutDestinations.CHAT_SETTINGS },
+                navigateToModelSelection = { destination = ChatLayoutDestinations.MODEL_SELECTION },
+            )
         }
     }
 }

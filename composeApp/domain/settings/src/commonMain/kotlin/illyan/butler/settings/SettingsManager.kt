@@ -2,7 +2,7 @@ package illyan.butler.settings
 
 import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.DomainPreferences
-import illyan.butler.domain.model.ModelConfig
+import illyan.butler.shared.model.chat.AiSource
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
@@ -15,7 +15,7 @@ class SettingsManager(
     suspend fun setUserPreferences(preferences: DomainPreferences) {
         appRepository.setUserPreferences(preferences)
     }
-    suspend fun setDefaultModel(domainModel: ModelConfig?) {
+    suspend fun setDefaultModel(domainModel: AiSource?) {
         appRepository.setDefaultModel(domainModel)
     }
 }

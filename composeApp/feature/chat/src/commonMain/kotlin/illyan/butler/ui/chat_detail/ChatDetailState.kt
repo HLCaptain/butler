@@ -1,12 +1,12 @@
 package illyan.butler.ui.chat_detail
 
-import illyan.butler.domain.model.DomainChat
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Chat
+import illyan.butler.domain.model.Message
 import illyan.butler.domain.model.ModelConfig
 
 data class ChatDetailState(
-    val chat: DomainChat? = null,
-    val messages: List<DomainMessage>? = null,
+    val chat: Chat? = null,
+    val messages: List<Message>? = null,
     val isRecording: Boolean = false,
     val sounds: Map<String, Float> = emptyMap(),
     val playingAudio: String? = null,

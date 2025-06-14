@@ -6,11 +6,12 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class AppSettings @OptIn(ExperimentalUuidApi::class) constructor(
-    val clientId: String = Uuid.random().toString(),
+    val clientId: Uuid = Uuid.random(),
     val preferences: DomainPreferences = DomainPreferences.Default,
     val hostUrl: String = "",
     val signedInUserId: String? = null
 ) {
+    @OptIn(ExperimentalUuidApi::class)
     companion object {
         val Default = AppSettings()
     }

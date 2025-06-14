@@ -37,7 +37,7 @@ import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerDropdownMenu
 import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.delete_chat
 import illyan.butler.generated.resources.new_chat
@@ -46,7 +46,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ChatList(
     modifier: Modifier = Modifier,
-    chats: List<DomainChat>,
+    chats: List<Chat>,
     deviceOnlyChatIds: List<String>,
     selectedChat: String?,
     openChat: (String) -> Unit,
@@ -73,7 +73,7 @@ fun ChatList(
 @Composable
 fun ChatListItemCard(
     modifier: Modifier = Modifier,
-    chat: DomainChat,
+    chat: Chat,
     selected: Boolean,
     isDeviceOnly: Boolean,
     openChat: () -> Unit,

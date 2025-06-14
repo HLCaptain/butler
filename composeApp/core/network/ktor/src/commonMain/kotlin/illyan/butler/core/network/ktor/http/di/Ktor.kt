@@ -90,12 +90,13 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import illyan.butler.config.BuildConfig
+import illyan.butler.core.local.datasource.UserLocalDataSource
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
 import illyan.butler.data.error.ErrorRepository
-import illyan.butler.data.settings.AppRepository
-import illyan.butler.domain.model.ApiKeyCredential
+import illyan.butler.shared.model.auth.ApiKeyCredential
+import illyan.butler.shared.model.chat.Source
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.network.tls.CIOCipherSuites
@@ -106,20 +107,52 @@ import kotlinx.io.asSource
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.days
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 @ExperimentalSerializationApi
 @Single
-fun provideHttpClient(
+fun provideHttpClientFactory(
+    userDataSource: UserLocalDataSource,
+    errorRepository: ErrorRepository,
+): (Source.Server) -> HttpClient {
+    val hashMap = hashMapOf<Source.Server, HttpClient>()
+    return { source ->
+        hashMap.getOrPut(source) {
+            HttpClient(CIO) {
+                setupCioClient()
+                setupClient(
+                    userDataSource = userDataSource,
+                    errorRepository = errorRepository,
+                    endpoint = source.endpoint,
+                    userId = source.userId
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@ExperimentalSerializationApi
+@Single
+fun provideUnauthorizedHttpClient(
     userDao: UserDao,
-    appRepository: AppRepository,
-    errorRepository: ErrorRepository
-): HttpClient = HttpClient(CIO) {
-    setupCioClient()
-    setupClient(
-        userDao = userDao,
-        appRepository = appRepository,
-        errorRepository = errorRepository
-    )
+    errorRepository: ErrorRepository,
+): (String) -> HttpClient {
+    val hashMap = hashMapOf<String, HttpClient>()
+    return { endpoint ->
+        hashMap.getOrPut(endpoint) {
+            HttpClient(CIO) {
+                setupCioClient()
+                setupClient(
+                    userDao = userDao,
+                    errorRepository = errorRepository,
+                    endpoint = endpoint,
+                    userId = null
+                )
+            }
+        }
+    }
 }
 
 @Single

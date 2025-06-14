@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.illyan.butler.kotlinMultiplatformLibrary)
     alias(libs.plugins.kotlin.serialization)
@@ -7,6 +5,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.utils)
         implementation(libs.kotlinx.serialization.core)
     }

@@ -78,7 +78,7 @@ class ChatExposedDatabase(
             }
             chat.copy(
                 id = chatId.value.toString(),
-                created = createdMillis,
+                createdAt = createdMillis,
                 ownerId = userId
             )
         }
@@ -143,7 +143,7 @@ class ChatExposedDatabase(
             val userChatReferences = userChatQuery.map { it[Chats.id] }.toList()
             val userChats = userChatQuery.map { it.toChatDto() }.toList()
 
-            // Take the max of Chat.created and the max of Message.time for each Chat
+            // Take the max of Chat.createdAt and the max of Message.time for each Chat
             val chatAndLastMessageTime = Messages
                 .select(Messages.time.max())
                 .groupBy(Messages.chatId)
@@ -153,7 +153,7 @@ class ChatExposedDatabase(
                 .associate { it[Messages.chatId].value.toString() to it[Messages.time] }
 
             val chats = userChats
-                .sortedBy { chatAndLastMessageTime[it.id] ?: it.created }
+                .sortedBy { chatAndLastMessageTime[it.id] ?: it.createdAt }
                 .drop(offset)
                 .take(limit)
             chats
@@ -190,7 +190,7 @@ class ChatExposedDatabase(
                     (Chats.id inList userChatReferences) or ((Chats.id notInList userChatReferences) and (Chats.created lessEq timestamp))
                 }.map { chatRow -> chatRow.toChatDto() }
                 .toList()
-                .sortedByDescending { lastMessageOfChat[it.id] ?: it.created }
+                .sortedByDescending { lastMessageOfChat[it.id] ?: it.createdAt }
                 .take(limit)
             chats
         }
@@ -202,7 +202,7 @@ class ChatExposedDatabase(
             val userChatReferences = userChatQuery.map { it[Chats.id] }.toList()
             val userChats = userChatQuery.map { it.toChatDto() }.toList()
 
-            // Take the max of Chat.created and the max of Message.time for each Chat
+            // Take the max of Chat.createdAt and the max of Message.time for each Chat
             val chatAndLastMessageTime = Messages
                 .select(Messages.time.max())
                 .groupBy(Messages.chatId)
@@ -212,7 +212,7 @@ class ChatExposedDatabase(
                 .associate { it[Messages.chatId].value.toString() to it[Messages.time] }
 
             val chats = userChats
-                .sortedByDescending { chatAndLastMessageTime[it.id] ?: it.created }
+                .sortedByDescending { chatAndLastMessageTime[it.id] ?: it.createdAt }
                 .drop(offset)
                 .take(limit)
             chats
@@ -286,7 +286,7 @@ class ChatExposedDatabase(
 
     private fun ResultRow.toChatDto() = ChatDto(
         id = this[Chats.id].value.toString(),
-        created = this[Chats.created],
+        createdAt = this[Chats.created],
         name = this[Chats.name],
         ownerId = this[Chats.ownerId].value.toString(),
         models = this[Chats.models],
