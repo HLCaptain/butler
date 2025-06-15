@@ -126,8 +126,6 @@ import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.format
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -487,8 +485,7 @@ fun MessageList(
                                 val keyValueList = remember(message) {
                                     listOf(
                                         Res.string.message_id to message.id.toString(),
-                                        Res.string.timestamp to LocalDateTime.parse(message.createdAt.toString())
-                                            .format(LocalDateTime.Formats.ISO),
+                                        Res.string.timestamp to message.createdAt.toString(),
                                         Res.string.sender_id to when (val sender = message.sender) {
                                             is SenderType.User -> when (val source = sender.source) {
                                                 is Source.Server -> source.userId

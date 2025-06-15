@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
+import org.jetbrains.compose.reload.ComposeHotRun
 
 plugins {
     alias(libs.plugins.android.application)
@@ -181,4 +182,8 @@ aboutLibraries {
         prettyPrint = true
         outputPath = file("src/commonMain/composeResources/files/aboutlibraries.json")
     }
+}
+
+tasks.withType<ComposeHotRun>().configureEach {
+    mainClass.set("illyan.butler.MainKt")
 }

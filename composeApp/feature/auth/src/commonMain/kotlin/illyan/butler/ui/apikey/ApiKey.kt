@@ -111,7 +111,7 @@ import illyan.butler.generated.resources.delete
 import illyan.butler.generated.resources.edit
 import illyan.butler.generated.resources.error
 import illyan.butler.generated.resources.healthy
-import illyan.butler.generated.resources.name
+import illyan.butler.generated.resources.host
 import illyan.butler.generated.resources.next
 import illyan.butler.generated.resources.provider_url
 import illyan.butler.generated.resources.required
@@ -318,7 +318,7 @@ fun ApiKeyCredentialList(
     animationScope: AnimatedContentScope
 ) {
     val lazyGridState = rememberLazyGridState()
-    val minCellSize = 128.dp
+    val minCellSize = 164.dp
     LazyVerticalGrid(
         modifier = modifier,
         columns = GridCells.Adaptive(minCellSize),
@@ -522,7 +522,7 @@ fun ApiKeyCredentialGridItem(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.name),
+                    text = stringResource(Res.string.host),
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(

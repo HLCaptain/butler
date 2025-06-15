@@ -38,6 +38,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-hot-reload = { id = "org.jetbrains.compose.hot-reload", version = "1.0.0-alpha11" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.6.5" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
@@ -102,10 +103,10 @@ desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.5" }
 korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.1" }
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.10.0-beta04" }
-markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.34.0" }
+markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.35.0" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc12" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.2.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.3" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.4" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.7-SNAPSHOT" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.0.0" }
 
