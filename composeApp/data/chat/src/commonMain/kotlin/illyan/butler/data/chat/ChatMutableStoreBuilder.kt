@@ -6,6 +6,8 @@ import illyan.butler.core.network.datasource.ChatNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
 import illyan.butler.domain.model.Chat
+import illyan.butler.shared.model.chat.Source
+import kotlinx.coroutines.flow.emptyFlow
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -34,7 +36,11 @@ fun provideChatMutableStore(
 ) = MutableStoreBuilder.from(
     fetcher = Fetcher.ofFlow<ChatKey, Chat> { key ->
         require(key is ChatKey.Read.ByChatId)
-        chatNetworkDataSource.fetchByChatId(key.chatId)
+        if (key.source is Source.Server) {
+            chatNetworkDataSource.fetchByChatId(key.source, key.chatId)
+        } else {
+            emptyFlow()
+        }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
@@ -51,7 +57,7 @@ fun provideChatMutableStore(
         delete = { key ->
             require(key is ChatKey.Delete)
             if (!key.chat.deviceOnly) {
-                chatNetworkDataSource.delete(key.chat.id)
+                chatNetworkDataSource.delete(key.chat)
             }
             chatLocalDataSource.deleteChatById(key.chat.id)
         },
@@ -65,8 +71,12 @@ fun provideChatMutableStore(
         post = { key, output ->
             require(key is ChatKey.Write)
             val newChat = when (key) {
-                is ChatKey.Write.Create -> chatNetworkDataSource.upsert(output).also {
-                    chatLocalDataSource.replaceChat(output.id, it)
+                is ChatKey.Write.Create -> if (output.deviceOnly) {
+                    output // Do not upload device-only
+                } else {
+                    chatNetworkDataSource.create(output).also {
+                        chatLocalDataSource.replaceChat(output.id, it)
+                    }
                 }
                 is ChatKey.Write.Upsert -> if (output.deviceOnly) {
                     output // Do not upload device-only

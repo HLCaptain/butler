@@ -5,9 +5,10 @@ package illyan.butler.core.local.room.mapping
 import illyan.butler.core.local.room.model.RoomUser
 import illyan.butler.domain.model.User
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 fun RoomUser.toDomainModel() = User(
-    id = id,
+    id = Uuid.parse(id),
     endpoint = endpoint,
     email = email,
     username = username,
@@ -21,7 +22,7 @@ fun RoomUser.toDomainModel() = User(
 )
 
 fun User.toRoomModel() = RoomUser(
-    id = id,
+    id = id.toString(),
     endpoint = endpoint,
     email = email,
     username = username,

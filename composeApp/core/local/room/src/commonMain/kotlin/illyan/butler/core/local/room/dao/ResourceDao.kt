@@ -9,7 +9,6 @@ import androidx.room.Update
 import illyan.butler.core.local.room.model.RoomResource
 import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 @Dao
@@ -27,7 +26,7 @@ interface ResourceDao {
     suspend fun upsertResources(resources: List<RoomResource>)
 
     @Transaction
-    suspend fun replaceResource(oldResourceId: Uuid, newResource: RoomResource) {
+    suspend fun replaceResource(oldResourceId: String, newResource: RoomResource) {
         deleteResourceById(oldResourceId)
         insertResource(newResource)
     }
@@ -42,14 +41,14 @@ interface ResourceDao {
     suspend fun deleteResource(resource: RoomResource)
 
     @Query("DELETE FROM resource WHERE id = :id")
-    suspend fun deleteResourceById(id: Uuid)
+    suspend fun deleteResourceById(id: String)
 
     @Query("DELETE FROM resource")
     suspend fun deleteAllResources()
 
     @Query("SELECT * FROM resource WHERE id = :id")
-    fun getResourceById(id: Uuid): Flow<RoomResource?>
+    fun getResourceById(id: String): Flow<RoomResource?>
 
     @Query("SELECT * FROM resource WHERE id IN(:ids)")
-    fun getResourcesByIds(ids: List<Uuid>): Flow<List<RoomResource>>
+    fun getResourcesByIds(ids: List<String>): Flow<List<RoomResource>>
 }

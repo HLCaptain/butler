@@ -8,11 +8,11 @@ import illyan.butler.shared.model.chat.Source
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 
-fun ResourceDto.toDomainModel(server: Source.Server) = Resource(
+fun ResourceDto.toDomainModel(source: Source) = Resource(
     id = id,
     mimeType = type,
     data = data,
-    source = server,
+    source = source,
     createdAt = createdAt
 )
 

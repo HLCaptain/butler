@@ -8,7 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class UserMemoryRepository : UserRepository {
     private val users = MutableStateFlow<List<User>>(listOf())
@@ -19,7 +22,7 @@ class UserMemoryRepository : UserRepository {
         }
     }
 
-    override fun getUser(userId: String): Flow<User?> {
+    override fun getUser(userId: Uuid): Flow<User?> {
         return users.map { users ->
             users.firstOrNull { it.id == userId }
         }
@@ -33,14 +36,14 @@ class UserMemoryRepository : UserRepository {
         users.update { emptyList() }
     }
 
-    override suspend fun deleteUser(userId: String) {
+    override suspend fun deleteUser(userId: Uuid) {
         users.update { currentUsers ->
             currentUsers.filterNot { it.id == userId }
         }
     }
 
     override suspend fun refreshUserTokens(
-        userId: String,
+        userId: Uuid,
         accessToken: Token?,
         refreshToken: Token?
     ) {

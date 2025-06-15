@@ -10,7 +10,7 @@ import kotlin.uuid.Uuid
 interface MessageNetworkDataSource {
     fun fetchNewMessages(source: Source.Server): Flow<List<Message>>
 
-    fun fetchByChatId(chatId: Uuid): Flow<List<Message>>
+    fun fetchByChatId(source: Source.Server, chatId: Uuid): Flow<List<Message>>
 
     /**
      * Update a message.
@@ -18,11 +18,12 @@ interface MessageNetworkDataSource {
      */
     suspend fun upsert(message: Message): Message
 
+    suspend fun create(message: Message): Message
+
     /**
      * Delete a message.
      * @return true if the message is deleted.
      */
     suspend fun delete(message: Message): Boolean
-    fun fetchById(messageId: Uuid): Flow<Message>
-    fun fetchAvailableToUser(): Flow<List<Message>>
+    fun fetchById(source: Source.Server, messageId: Uuid): Flow<Message>
 }

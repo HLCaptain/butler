@@ -10,7 +10,8 @@ import kotlin.uuid.Uuid
 interface MessageRepository {
     fun getMessageFlow(messageId: Uuid, source: Source): Flow<Message?>
     fun getChatMessagesFlow(chatId: Uuid, source: Source): Flow<List<Message>>
-    fun getOwnerMessagesFlow(ownerId: Uuid): Flow<List<Message>>
+    fun getMessagesBySource(source: Source): Flow<List<Message>>
+    suspend fun create(message: Message): Uuid
     suspend fun upsert(message: Message): Uuid
     suspend fun delete(message: Message)
 }

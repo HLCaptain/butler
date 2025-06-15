@@ -47,7 +47,7 @@ import kotlin.uuid.Uuid
 class LlmService(
     private val coroutineScopeIO: CoroutineScope,
     private val getResource: suspend (resourceId: Uuid, ownerId: Uuid) -> ResourceDto,
-    private val createResource: suspend (chatId: Uuid, senderId: String, resource: ResourceDto) -> ResourceDto,
+    private val createResource: suspend (chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
     private val upsertMessage: suspend (message: MessageDto) -> MessageDto,
     private val getOpenAIClient: suspend (endpoint: String) -> OpenAI,
     private val upsertChat: suspend (chat: ChatDto) -> ChatDto,
@@ -186,7 +186,7 @@ class LlmService(
                         }
                         val modifiedConversation = conversation.toMutableList()
                         val lastMessageContent = ((modifiedConversation.lastOrNull()?.content?.let { "$it\n\n" } ?: "") + speechToTextContents.joinToString("\n\n")).trim('\n', ' ')
-                        modifiedConversation.removeLast()
+                        modifiedConversation.removeAt(modifiedConversation.lastIndex)
                         modifiedConversation.add(
                             lastMessage.toChatMessage(
                                 userId = chat.ownerId.toString(),
@@ -200,7 +200,7 @@ class LlmService(
                         val audioResource = generateSpeechFromText(chat, answer)
                         // Upload resource
                         // Send message with resourceId
-                        val newResourceId = audioResource?.let { createResource(chat.id, chatCompletionModelConfig.modelId, it).id }
+                        val newResourceId = audioResource?.let { createResource(chat.id, SenderType.Ai(chatCompletionModelConfig), it).id }
                         val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer, listOfNotNull(newResourceId)))
                         val newMessages = listOf(transcriptions, newMessage).map { it.id }
                         lastFewMessages[chat.id] = (lastFewMessages[chat.id].orEmpty().filter { it.id !in newMessages } + transcriptions + newMessage)
@@ -435,7 +435,7 @@ fun List<MessageDto>.toConversation(userId: String, resources: List<ResourceDto>
         val previousAndCurrentMessageFromUser = acc.lastOrNull()?.role == ChatRole.User && message.senderId == userId
         if (previousAndCurrentMessageFromAssistant || previousAndCurrentMessageFromUser) {
             val previousMessageContent = (acc.last().messageContent.takeIf { it is TextContent } as? TextContent)?.content
-            acc.removeLast()
+            acc.removeAt(acc.lastIndex)
             acc.add(message.toChatMessage(userId, previousMessageContent, resources))
             return@fold acc
         }
@@ -458,7 +458,7 @@ fun MessageDto.toChatMessage(
         val imageData = "data:${imageResource.type};base64,${Base64.encode(imageResource.data)}"
         content += ImagePart(imageData)
     }
-    if (!textPart.isNullOrBlank()) content += TextPart(textPart)
+    if (textPart.isNotBlank()) content += TextPart(textPart)
     return if (content.size == 1 && content[0] is TextPart) {
         // Only text
         ChatMessage(

@@ -15,7 +15,7 @@ class SettingsManager(
     suspend fun setUserPreferences(preferences: DomainPreferences) {
         appRepository.setUserPreferences(preferences)
     }
-    suspend fun setDefaultModel(domainModel: AiSource?) {
-        appRepository.setDefaultModel(domainModel)
+    suspend fun setDefaultModel(defaultModel: AiSource?) {
+        appRepository.setDefaultModel(defaultModel)
     }
 }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.ui.home
 
 import androidx.compose.animation.AnimatedContent
@@ -114,6 +116,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun Home(
@@ -212,9 +217,10 @@ fun Home(
     val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
         windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
     }
-    var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<String?>(null) }
+    var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<Uuid?>(null) }
     val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+    @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
     Scaffold(
         snackbarHost = { ErrorSnackbarHost(
             modifier = Modifier.widthIn(max = 420.dp),
@@ -222,7 +228,8 @@ fun Home(
             cleanError = viewModel::clearError,
         ) },
         containerColor = if (isAuthFlowEnded == true) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else MaterialTheme.colorScheme.surface
-    ) { _ ->
+    ) { innerPadding ->
+        @Suppress("UnusedContentLambdaTargetStateParameter")
         NavigationSuiteScaffoldLayout(
             layoutType = navigationSuiteLayout,
             navigationSuite = {
@@ -231,7 +238,7 @@ fun Home(
                     transitionSpec = {
                         slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() using SizeTransform(clip = true)
                     }
-                ) { _ ->
+                ) { navigationSuiteLayout ->
                     AnimatedVisibility(
                         visible = !isCompact && isAuthFlowEnded == true,
                         enter = slideInHorizontally { -it } + fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
@@ -240,8 +247,7 @@ fun Home(
                         VerticalNavBar(
                             modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
                             compact = isVerticalNavBarCompact,
-                            userChats = state.userChats,
-                            deviceChats = state.deviceChats,
+                            chats = state.chats,
                             isProfileDialogShowing = isProfileDialogShowing,
                             setProfileDialogShowing = { isProfileDialogShowing = it },
                             navigateToNewChat = { currentChat = null },
@@ -276,10 +282,7 @@ fun Home(
                         LaunchedEffect(isCompact) {
                             if (!isCompact) drawerState.close()
                         }
-                        val noChats = remember(state.userChats.size, state.deviceChats.size, state.localChats.size) {
-                            (state.userChats + state.deviceChats + state.localChats).isEmpty()
-                        }
-                        LaunchedEffect(noChats) {
+                        LaunchedEffect(state.chats.isEmpty()) {
                             coroutineScope.launch { drawerState.close() }
                         }
                         BackHandler(drawerState.isOpen) {
@@ -329,17 +332,15 @@ fun Home(
                                                 )
 
                                                 AnimatedVisibility(
-                                                    visible = (state.userChats + state.deviceChats).isEmpty(),
+                                                    visible = state.chats.isEmpty(),
                                                     enter = fadeIn(),
                                                     exit = fadeOut()
                                                 ) {
                                                     EmptyChatNavDrawerItem()
                                                 }
 
-                                                val chats = remember(state.userChats, state.deviceChats, state.lastInteractionTimestampForChat) {
-                                                    (state.userChats + state.deviceChats).sortedByDescending {
-                                                        state.lastInteractionTimestampForChat[it.id!!] ?: it.created
-                                                    }
+                                                val chats = remember(state.chats) {
+                                                    state.chats.sortedByDescending { it.lastUpdated }
                                                 }
                                                 ChatList(
                                                     chats = chats,
@@ -352,7 +353,6 @@ fun Home(
                                                         coroutineScope.launch { drawerState.close() }
                                                     },
                                                     selectedChat = currentChat,
-                                                    deviceOnlyChatIds = state.deviceChats.map { it.id!! }
                                                 )
                                             }
                                         }
@@ -425,12 +425,11 @@ private fun HomeNavRail(
 @Composable
 private fun VerticalNavBar(
     modifier: Modifier = Modifier,
-    selectChat: (String?) -> Unit = {},
+    selectChat: (Uuid?) -> Unit = {},
     isExpanded: Boolean,
-    userChats: List<Chat>,
-    deviceChats: List<Chat>,
-    currentChat: String?,
-    deleteChat: (String) -> Unit = {},
+    chats: List<Chat>,
+    currentChat: Uuid?,
+    deleteChat: (Chat) -> Unit = {},
     compact: Boolean,
     isProfileDialogShowing: Boolean,
     setProfileDialogShowing: (Boolean) -> Unit,
@@ -469,8 +468,7 @@ private fun VerticalNavBar(
                     selectChat(it)
                     if (!isExpanded) navRailExpanded = false
                 },
-                userChats = userChats,
-                deviceChats = deviceChats,
+                chats = chats,
                 deleteChat = deleteChat,
                 onProfileClick = { setProfileDialogShowing(true) },
                 navigateToNewChat = { navigateToNewChat(); navRailExpanded = false },
@@ -598,11 +596,10 @@ fun MenuCloseButton(
 @Composable
 private fun HomePermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
-    userChats: List<Chat>,
-    deviceChats: List<Chat>,
-    currentChat: String?,
-    selectChat: (String?) -> Unit = {},
-    deleteChat: (String) -> Unit = {},
+    chats: List<Chat>,
+    currentChat: Uuid?,
+    selectChat: (Uuid?) -> Unit = {},
+    deleteChat: (Chat) -> Unit = {},
     onProfileClick: () -> Unit = {},
     navigateToNewChat: () -> Unit,
     closeDrawer: () -> Unit = {},
@@ -636,7 +633,7 @@ private fun HomePermanentNavigationDrawerSheet(
                         onClick = navigateToNewChat
                     )
                     AnimatedVisibility(
-                        visible = (deviceChats + userChats).isEmpty(),
+                        visible = chats.isEmpty(),
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -644,8 +641,7 @@ private fun HomePermanentNavigationDrawerSheet(
                     }
                     ChatList(
                         modifier = Modifier,
-                        chats = userChats + deviceChats,
-                        deviceOnlyChatIds = deviceChats.map { it.id!! },
+                        chats = chats,
                         openChat = selectChat,
                         deleteChat = deleteChat,
                         selectedChat = currentChat,

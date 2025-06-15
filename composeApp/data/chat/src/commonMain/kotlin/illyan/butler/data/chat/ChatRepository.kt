@@ -11,5 +11,6 @@ interface ChatRepository {
     fun getChatFlow(chatId: Uuid, source: Source): Flow<Chat?>
     fun getChatFlowBySource(source: Source): Flow<List<Chat>?>
     suspend fun upsert(chat: Chat): Uuid
+    suspend fun create(chat: Chat): Uuid
     suspend fun deleteChat(chat: Chat)
 }

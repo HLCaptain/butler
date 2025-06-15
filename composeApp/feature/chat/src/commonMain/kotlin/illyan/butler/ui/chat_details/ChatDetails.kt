@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.ui.chat_details
 
 import androidx.compose.animation.core.animateFloatAsState
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
@@ -39,7 +42,6 @@ import illyan.butler.core.ui.components.ButlerDropdownMenuBox
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.Capability
 import illyan.butler.domain.model.Chat
-import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.audio_speech_model
 import illyan.butler.generated.resources.audio_transcription_model
@@ -53,13 +55,16 @@ import illyan.butler.generated.resources.name
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.summary
 import illyan.butler.generated.resources.unknown
+import illyan.butler.shared.model.chat.AiSource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun ChatDetails(
     modifier: Modifier = Modifier,
-    chatId: String?,
+    chatId: Uuid?,
     actions: @Composable () -> Unit = {}
 ) {
     val viewModel = koinViewModel<ChatDetailsViewModel>()
@@ -80,8 +85,8 @@ fun ChatDetails(
 fun ChatDetails(
     modifier: Modifier = Modifier,
     chat: Chat?,
-    alternativeModels: List<ModelConfig>,
-    setModel: ((ModelConfig?, Capability) -> Unit)? = null,
+    alternativeModels: List<AiSource>,
+    setModel: ((AiSource?, Capability) -> Unit)? = null,
     actions: @Composable () -> Unit = {},
 ) {
     Box {
@@ -120,7 +125,7 @@ fun ChatDetails(
                                 text = stringResource(Res.string.name),
                                 style = MaterialTheme.typography.labelLarge
                             )
-                            Text(chat?.name ?: stringResource(Res.string.new_chat))
+                            Text(chat?.title ?: stringResource(Res.string.new_chat))
                         }
                     }
                 }
@@ -146,7 +151,7 @@ fun ChatDetails(
                                 text = stringResource(Res.string.chat_id),
                                 style = MaterialTheme.typography.labelLarge
                             )
-                            Text(chat?.id ?: stringResource(Res.string.unknown))
+                            Text(chat?.id?.toString() ?: stringResource(Res.string.unknown))
                         }
                     }
                 }
@@ -182,9 +187,9 @@ fun ModelSetting(
     modifier: Modifier = Modifier,
     title: String,
     enabled: Boolean = true,
-    model: ModelConfig?,
-    alternatives: List<ModelConfig>,
-    setModel: ((ModelConfig?) -> Unit)? = null
+    model: AiSource?,
+    alternatives: List<AiSource>,
+    setModel: ((AiSource?) -> Unit)? = null
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     ButlerDropdownMenuBox(

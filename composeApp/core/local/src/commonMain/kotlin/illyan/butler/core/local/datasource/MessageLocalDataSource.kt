@@ -1,6 +1,7 @@
 package illyan.butler.core.local.datasource
 
 import illyan.butler.domain.model.Message
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -16,6 +17,6 @@ interface MessageLocalDataSource {
     suspend fun deleteAllMessagesForChat(chatId: Uuid)
     fun getMessageById(messageId: Uuid): Flow<Message?>
     fun getMessagesByChatId(chatId: Uuid): Flow<List<Message>>
-    fun getAccessibleMessagesForUser(userId: Uuid): Flow<List<Message>>
+    fun getMessagesBySource(source: Source): Flow<List<Message>>
     suspend fun upsertMessages(newMessages: List<Message>)
 }

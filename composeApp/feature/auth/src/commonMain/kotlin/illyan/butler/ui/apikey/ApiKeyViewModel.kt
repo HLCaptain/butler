@@ -2,10 +2,10 @@ package illyan.butler.ui.apikey
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.host.HostManager
 import illyan.butler.model.ModelManager
+import illyan.butler.shared.model.auth.ApiKeyCredential
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn

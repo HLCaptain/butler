@@ -5,6 +5,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.core.network.ktor)
 

@@ -5,8 +5,10 @@ import illyan.butler.domain.model.Token
 import illyan.butler.domain.model.User
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class UserRoomRepository(
     private val userLocalDataSource: UserLocalDataSource

@@ -9,6 +9,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 interface ResourceRepository {
     fun getResourceFlow(resourceId: Uuid, source: Source): Flow<Resource?>
+    suspend fun create(resource: Resource): Uuid
     suspend fun upsert(resource: Resource): Uuid
-    suspend fun deleteResource(resource: Resource)
+    suspend fun delete(resource: Resource)
 }

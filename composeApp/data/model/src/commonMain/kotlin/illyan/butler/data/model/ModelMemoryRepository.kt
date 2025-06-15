@@ -1,7 +1,8 @@
 package illyan.butler.data.model
 
-import illyan.butler.domain.model.DomainModel
 import illyan.butler.shared.model.auth.ApiKeyCredential
+import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.ApiType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.annotation.Single
@@ -9,47 +10,46 @@ import org.koin.core.annotation.Single
 @Single
 class ModelMemoryRepository : ModelRepository {
     private val availableModelsFromServer = listOf(
-        DomainModel(
-            name = "Model 1",
-            id = "model1",
-            ownedBy = "illyan",
-            endpoint = "http://localhost:8080",
+        AiSource.Server(
+            source = AiSource.Api(
+                modelId = "gpt-3.5-turbo",
+                endpoint = "http://localhost:8080",
+                apiType = ApiType.OPENAI
+            )
         ),
-        DomainModel(
-            name = "Model 2",
-            id = "model2",
-            ownedBy = "illyan",
-            endpoint = "http://localhost:8080",
+        AiSource.Server(
+            source = AiSource.Api(
+                modelId = "gpt-4",
+                endpoint = "http://localhost:8080",
+                apiType = ApiType.OPENAI
+            )
         ),
-        DomainModel(
-            name = "Model 3",
-            id = "model3",
-            ownedBy = "illyan",
-            endpoint = "http://localhost:8080",
-        )
+        AiSource.Server(
+            source = AiSource.Api(
+                modelId = "gpt-4o",
+                endpoint = "http://localhost:8080",
+                apiType = ApiType.OPENAI
+            )
+        ),
     )
     private val availableModelsFromProviders = listOf(
-        DomainModel(
-            name = "GPT-o3",
-            id = "gpt-o3",
-            ownedBy = "illyan",
-            endpoint = "http://localhost:8080",
+        AiSource.Api(
+            modelId = "gpt-3.5-turbo",
+            endpoint = "https://api.openai.com/v1/",
+            apiType = ApiType.OPENAI
         ),
-        DomainModel(
-            name = "TTS-3",
-            id = "tts-3",
-            ownedBy = "illyan",
-            endpoint = "http://localhost:8080",
+        AiSource.Api(
+            modelId = "gpt-4",
+            endpoint = "https://api.openai.com/v1/",
+            apiType = ApiType.OPENAI
         ),
-        DomainModel(
-            name = "GPT-6o",
-            id = "gpt-6o",
-            ownedBy = "illyan",
-            endpoint = "http://localhost:8080",
-        )
+        AiSource.Api(
+            modelId = "gpt-4o",
+            endpoint = "https://api.openai.com/v1/",
+            apiType = ApiType.OPENAI
+        ),
     )
-    override fun getAvailableModelsFromServer(): Flow<List<DomainModel>> = flowOf(availableModelsFromServer)
-    override fun getAvailableModelsFromProviders(): Flow<List<DomainModel>> = flowOf(availableModelsFromProviders)
+    override fun getAiSources(): Flow<List<AiSource>> = flowOf(availableModelsFromServer + availableModelsFromProviders)
     override val healthyHostCredentials: Flow<List<ApiKeyCredential>>
         get() = flowOf(emptyList())
 }

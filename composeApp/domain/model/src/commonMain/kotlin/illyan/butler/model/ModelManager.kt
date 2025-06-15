@@ -5,7 +5,6 @@ import org.koin.core.annotation.Single
 
 @Single
 class ModelManager(private val modelRepository: ModelRepository) {
-    fun getAvailableModelsFromServer() = modelRepository.getAvailableModelsFromServer()
-    fun getAvailableModelsFromProviders() = modelRepository.getAvailableModelsFromProviders()
+    fun getAiSources() = modelRepository.getAiSources()
     val healthyHostCredentials = modelRepository.healthyHostCredentials
 }

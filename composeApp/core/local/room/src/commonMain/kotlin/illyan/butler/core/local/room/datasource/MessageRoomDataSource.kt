@@ -5,6 +5,7 @@ import illyan.butler.core.local.room.dao.MessageDao
 import illyan.butler.core.local.room.mapping.toDomainModel
 import illyan.butler.core.local.room.mapping.toRoomModel
 import illyan.butler.domain.model.Message
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
@@ -29,11 +30,11 @@ class MessageRoomDataSource(
     }
 
     override suspend fun replaceMessage(oldMessageId: Uuid, newMessage: Message) {
-        messageDao.replaceMessage(oldMessageId, newMessage.toRoomModel())
+        messageDao.replaceMessage(oldMessageId.toString(), newMessage.toRoomModel())
     }
 
     override suspend fun deleteMessageById(messageId: Uuid) {
-        messageDao.deleteMessageById(messageId)
+        messageDao.deleteMessageById(messageId.toString())
     }
 
     override suspend fun deleteAllMessages() {
@@ -41,25 +42,25 @@ class MessageRoomDataSource(
     }
 
     override suspend fun deleteAllMessagesForChat(chatId: Uuid) {
-        messageDao.deleteAllChatMessagesForChat(chatId)
+        messageDao.deleteAllChatMessagesForChat(chatId.toString())
     }
 
     override fun getMessageById(messageId: Uuid): Flow<Message?> {
-        return messageDao.getMessageById(messageId).map { it?.toDomainModel() }
+        return messageDao.getMessageById(messageId.toString()).map { it?.toDomainModel() }
     }
 
     override suspend fun upsertMessages(newMessages: List<Message>) {
         messageDao.upsertMessages(newMessages.map { it.toRoomModel() })
     }
 
-    override fun getAccessibleMessagesForUser(userId: Uuid): Flow<List<Message>> {
-        return messageDao.getAccessibleMessagesForUser(userId).map { messages ->
+    override fun getMessagesBySource(source: Source): Flow<List<Message>> {
+        return messageDao.getMessagesBySource(source).map { messages ->
             messages.map { it.toDomainModel() }
         }
     }
 
     override fun getMessagesByChatId(chatId: Uuid): Flow<List<Message>> {
-        return messageDao.getMessagesByChatId(chatId).map { messages ->
+        return messageDao.getMessagesByChatId(chatId.toString()).map { messages ->
             messages.map { it.toDomainModel() }
         }
     }

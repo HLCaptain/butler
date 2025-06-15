@@ -1,15 +1,23 @@
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+
 package illyan.butler.data.user
 
-import illyan.butler.core.local.room.mapping.toRoomModel
 import illyan.butler.domain.model.Address
 import illyan.butler.domain.model.Token
 import illyan.butler.domain.model.User
 import illyan.butler.shared.model.identity.AddressDto
 import illyan.butler.shared.model.identity.UserDto
 import illyan.butler.shared.model.response.UserTokensResponse
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
 
-fun UserDto.toDomainModel(tokens: UserTokensResponse) = User(
-    id = id!!,,
+fun UserDto.toDomainModel(
+    tokens: UserTokensResponse,
+    endpoint: String,
+) = User(
+    id = id,
+    endpoint = endpoint,
     email = email,
     username = username,
     displayName = displayName,
@@ -19,12 +27,12 @@ fun UserDto.toDomainModel(tokens: UserTokensResponse) = User(
     address = address?.toDomainModel(),
     accessToken = Token(
         token = tokens.accessToken,
-        tokenExpirationMillis = tokens.accessTokenExpirationMillis
+        tokenExpiration = Instant.fromEpochMilliseconds(tokens.accessTokenExpirationMillis)
     ),
     refreshToken = Token(
         token = tokens.refreshToken,
-        tokenExpirationMillis = tokens.refreshTokenExpirationMillis
-    )
+        tokenExpiration = Instant.fromEpochMilliseconds(tokens.refreshTokenExpirationMillis)
+    ),
 )
 
 fun AddressDto.toDomainModel() = Address(
@@ -33,5 +41,3 @@ fun AddressDto.toDomainModel() = Address(
     state = state,
     zip = zip
 )
-
-fun UserDto.toRoomModel(tokens: UserTokensResponse) = toDomainModel(tokens).toRoomModel()

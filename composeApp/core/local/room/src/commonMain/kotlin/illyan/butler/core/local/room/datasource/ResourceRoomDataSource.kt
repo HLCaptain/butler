@@ -15,7 +15,7 @@ import kotlin.uuid.Uuid
 @Single
 class ResourceRoomDataSource(private val resourceDao: ResourceDao) : ResourceLocalDataSource {
     override fun getResource(resourceId: Uuid): Flow<Resource?> {
-        return resourceDao.getResourceById(resourceId).map { it?.toDomainModel() }
+        return resourceDao.getResourceById(resourceId.toString()).map { it?.toDomainModel() }
     }
 
     override suspend fun upsertResource(resource: Resource) {
@@ -23,11 +23,11 @@ class ResourceRoomDataSource(private val resourceDao: ResourceDao) : ResourceLoc
     }
 
     override suspend fun replaceResource(oldResourceId: Uuid, newResource: Resource) {
-        resourceDao.replaceResource(oldResourceId, newResource.toRoomModel())
+        resourceDao.replaceResource(oldResourceId.toString(), newResource.toRoomModel())
     }
 
     override suspend fun deleteResourceById(resourceId: Uuid) {
-        resourceDao.deleteResourceById(resourceId)
+        resourceDao.deleteResourceById(resourceId.toString())
     }
 
     override suspend fun deleteAllResources() {

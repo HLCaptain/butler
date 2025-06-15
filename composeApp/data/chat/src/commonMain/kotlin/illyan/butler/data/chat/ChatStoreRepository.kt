@@ -28,10 +28,10 @@ class ChatStoreRepository(
 
     override fun getChatFlow(chatId: Uuid, source: Source): Flow<Chat?> {
         return chatMutableStore.stream<StoreReadResponse<Chat>>(
-            StoreReadRequest.cached(ChatKey.Read.ByChatId(chatId), source is Source.Server)
+            StoreReadRequest.cached(ChatKey.Read.ByChatId(source, chatId), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("Read Response: ${it::class.qualifiedName}")
+            Napier.d("getChatFlow Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Chat is $data")
             data
@@ -41,20 +41,32 @@ class ChatStoreRepository(
     override fun getChatFlowBySource(source: Source): Flow<List<Chat>?> {
         return userChatStore.stream(
             StoreReadRequest.cached(
-                ChatKey.Read.ByOwnerId(
-                    when (source) {
-                        is Source.Server -> source.userId
-                        is Source.Device -> source.deviceId
-                    }
-                ),
+                ChatKey.Read.BySource(source),
                 source is Source.Server
             )
         ).map {
             it.throwIfError()
-            Napier.d("Read Response: ${it::class.qualifiedName}")
+            Napier.d("getChatFlowBySource Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Chat is $data")
             data
+        }
+    }
+
+    @OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class, ExperimentalTime::class)
+    override suspend fun create(chat: Chat): Uuid {
+        val writtenChat = chatMutableStore.write(
+            StoreWriteRequest.of(
+                key = ChatKey.Write.Create,
+                value = chat
+            )
+        )
+        Napier.d("Chat upserted: $writtenChat")
+        if (writtenChat is StoreWriteResponse.Success.Typed<*>) {
+            val domainChat = (writtenChat as? StoreWriteResponse.Success.Typed<Chat>)?.value
+            return domainChat?.id!!
+        } else {
+            throw IllegalStateException("Chat upsert failed")
         }
     }
 

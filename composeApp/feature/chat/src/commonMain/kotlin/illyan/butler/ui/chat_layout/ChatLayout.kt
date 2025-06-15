@@ -28,18 +28,20 @@ import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_details.ChatDetails
 import illyan.butler.ui.new_chat.NewChat
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 enum class ChatLayoutDestinations {
     MODEL_SELECTION,
     CHAT_SETTINGS,
 }
 
-@OptIn(ExperimentalHazeMaterialsApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalHazeMaterialsApi::class, ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 fun ChatLayout(
     modifier: Modifier = Modifier,
-    currentChat: String?,
-    onCurrentChatChanged: (String?) -> Unit,
+    currentChat: Uuid?,
+    onCurrentChatChanged: (Uuid?) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {

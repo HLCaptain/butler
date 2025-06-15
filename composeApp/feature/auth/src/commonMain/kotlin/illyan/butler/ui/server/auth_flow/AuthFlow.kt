@@ -55,12 +55,15 @@ import org.koin.compose.viewmodel.koinViewModel
 @Serializable
 sealed class AuthFlowDestination {
     @Serializable
-    data object Login : AuthFlowDestination()
+    data class Login(
+        val currentHost: String,
+    ) : AuthFlowDestination()
 
     @Serializable
     data class SignUp(
         val email: String,
         val password: String,
+        val currentHost: String,
     ) : AuthFlowDestination()
 
     @Serializable
@@ -162,7 +165,7 @@ fun AuthFlow(
                     .consumeWindowInsets(innerPadding),
                 navController = authNavController,
                 contentAlignment = Alignment.Center,
-                startDestination = if (state.hostSelected == true) AuthFlowDestination.Login else AuthFlowDestination.SelectHost,
+                startDestination = if (state.selectedHost != null) AuthFlowDestination.Login(state.selectedHost!!) else AuthFlowDestination.SelectHost,
                 enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
                 popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
                 exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
@@ -170,12 +173,18 @@ fun AuthFlow(
             ) {
                 composable<AuthFlowDestination.Login> {
                     Login(
-                        onSignUp = { email, password -> authNavController.navigate(
-                            AuthFlowDestination.SignUp(
-                                email,
-                                password
-                            )
-                        ) },
+                        currentHost = it.toRoute<AuthFlowDestination.Login>().currentHost,
+                        onSignUp = { email, password ->
+                            state.selectedHost?.let { selectedHost ->
+                                authNavController.navigate(
+                                    AuthFlowDestination.SignUp(
+                                        email,
+                                        password,
+                                        selectedHost
+                                    )
+                                )
+                            }
+                        },
                         onSelectHost = { authNavController.navigate(AuthFlowDestination.SelectHost) },
                         onAuthenticated = { authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true } }
                     )
@@ -194,10 +203,11 @@ fun AuthFlow(
                     }
                 }
                 composable<AuthFlowDestination.SignUp> {
-                    val (email, password) = it.toRoute<AuthFlowDestination.SignUp>()
+                    val (email, password, currentHost) = it.toRoute<AuthFlowDestination.SignUp>()
                     SignUp(
                         initialEmail = email,
                         initialPassword = password,
+                        currentHost = currentHost,
                         onSignUpSuccessful = {
                             authNavController.navigate(AuthFlowDestination.AuthSuccess) { launchSingleTop = true }
                         }

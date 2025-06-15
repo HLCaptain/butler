@@ -2,20 +2,15 @@ package illyan.butler.core.local.room.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import illyan.butler.domain.model.Source
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import illyan.butler.shared.model.chat.Source
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Entity(
     tableName = "resource",
 )
 data class RoomResource(
     @PrimaryKey
-    val id: Uuid,
-    val createdAt: Instant,
+    val id: String,
+    val createdAt: Long,
     val source: Source,
     val mimeType: String, // MIME mimeType
     val data: ByteArray

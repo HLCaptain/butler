@@ -115,12 +115,11 @@ import illyan.butler.core.ui.components.SmallMenuButton
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
-import illyan.butler.domain.model.DomainModel
-import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.companies
+import illyan.butler.generated.resources.device
 import illyan.butler.generated.resources.filters
 import illyan.butler.generated.resources.filters_coming_soon
 import illyan.butler.generated.resources.free
@@ -132,14 +131,17 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_models_to_chat_with
 import illyan.butler.generated.resources.search
 import illyan.butler.generated.resources.select
-import illyan.butler.generated.resources.select_host
 import illyan.butler.generated.resources.server
+import illyan.butler.shared.model.chat.AiSource
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun NewChat(
-    selectModel: (ModelConfig) -> Unit,
+    selectModel: (AiSource) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val viewModel = koinViewModel<NewChatViewModel>()
@@ -152,42 +154,39 @@ fun NewChat(
 }
 
 private fun filterModelsWithQuery(
-    models: List<DomainModel>?,
+    models: List<AiSource>?,
     query: String,
-): List<DomainModel>? {
+): List<AiSource>? {
     return if (query.isBlank()) models else models?.filter { model ->
-        model.displayName.contains(query, ignoreCase = true) || model.id.contains(query, ignoreCase = true)
+        model.displayName.contains(query, ignoreCase = true) ||
+                model.modelId.contains(query, ignoreCase = true)
     }
 }
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
-    ExperimentalHazeApi::class
+    ExperimentalHazeApi::class, ExperimentalUuidApi::class
 )
 @Composable
 fun NewChat(
     state: NewChatState,
-    selectModel: (ModelConfig) -> Unit,
+    selectModel: (AiSource) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var searchFilter by rememberSaveable { mutableStateOf("") }
     var freeFilterEnabled by rememberSaveable { mutableStateOf(false) }
-    val serverModels = remember(searchFilter, freeFilterEnabled, state.serverModels) {
-        val models = filterModelsWithQuery(state.serverModels, searchFilter)
-        if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
-    }
-    val providerModels = remember(searchFilter, freeFilterEnabled, state.providerModels) {
-        val models = filterModelsWithQuery(state.providerModels, searchFilter)
-        if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
-    }
-    val localModels = remember(searchFilter, freeFilterEnabled, state.localModels) {
-        val models = filterModelsWithQuery(state.localModels, searchFilter)
+    val filteredAiSources = remember(searchFilter, freeFilterEnabled, state.aiSources) {
+        val models = filterModelsWithQuery(state.aiSources, searchFilter)
         if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
     }
     val hazeState = remember { HazeState() }
-    var selectedModelId by rememberSaveable { mutableStateOf<String?>(null) }
-    BackHandler(enabled = selectedModelId != null) {
+    var selectedModelId by remember { mutableStateOf<String?>(null) }
+    val selectedModel = remember(selectedModelId, state.aiSources) {
+        if (selectedModelId == null) null
+        else state.aiSources?.firstOrNull { it.modelId == selectedModelId }
+    }
+    BackHandler(enabled = selectedModel != null) {
         selectedModelId = null
     }
     // FabState -> 0: close, 1: search, 2: filters
@@ -195,21 +194,11 @@ fun NewChat(
     var filtersMenuShown by rememberSaveable { mutableStateOf(false) }
     var searchFiltersShown by rememberSaveable { mutableStateOf(false) }
     val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
-    // TODO: refactor filters and save filters in local storage
     var filterByCompany by rememberSaveable { mutableStateOf(false) }
-    val models = remember(
-        serverModels,
-        providerModels,
-        localModels
-    ) {
-        if (serverModels != null || providerModels != null || localModels != null) {
-            (serverModels.orEmpty() + providerModels.orEmpty() + localModels.orEmpty()).sortedBy { it.id }
-        } else null
-    }
     SharedTransitionLayout {
-        val blurRadius by animateFloatAsState(if (selectedModelId != null) 32f else 0f)
-        val darkenRatio by animateFloatAsState(if (selectedModelId != null) 2.5f else 1f)
-        val overlayAlpha by animateFloatAsState(if (selectedModelId != null) 0.5f else 0f)
+        val blurRadius by animateFloatAsState(if (selectedModel != null) 32f else 0f)
+        val darkenRatio by animateFloatAsState(if (selectedModel != null) 2.5f else 1f)
+        val overlayAlpha by animateFloatAsState(if (selectedModel != null) 0.5f else 0f)
         val surfaceColor = MaterialTheme.colorScheme.surface
         Box(
             modifier = Modifier.graphicsLayer {
@@ -222,7 +211,7 @@ fun NewChat(
                         alpha = overlayAlpha
                     )
                 }
-            }.then(if (selectedModelId == null) Modifier else Modifier.focusProperties { canFocus = false })
+            }.then(if (selectedModel == null) Modifier else Modifier.focusProperties { canFocus = false })
         ) {
             Scaffold(
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -267,7 +256,7 @@ fun NewChat(
                                         isCompact = isCompact,
                                         hazeState = hazeState,
                                         setFabState = { fabState = it },
-                                        selectedModelId = selectedModelId,
+                                        selectedModel = selectedModel,
                                         freeFilterEnabled = freeFilterEnabled,
                                         setFreeFilterEnabled = { freeFilterEnabled = it },
                                         animatedVisibilityScope = this@AnimatedContent,
@@ -295,47 +284,39 @@ fun NewChat(
             ) { innerPadding ->
                 ModelList(
                     modifier = Modifier.hazeSource(hazeState),
-                    models = models,
+                    models = filteredAiSources,
                     filterByCompany = filterByCompany,
                     innerPadding = innerPadding,
-                    focusModelId = selectedModelId,
-                    onSelectModel = { selectedModelId = it },
+                    focusModel = selectedModel,
+                    onSelectModelId = { selectedModelId = it },
                     sharedTransitionScope = this@SharedTransitionLayout,
                 )
             }
         }
         AnimatedContent(
-            targetState = selectedModelId,
-        ) { id ->
-            id?.let {
-                val selectedModel = models?.firstOrNull { it.id == id }
-                if (selectedModel != null) {
-                    val modelIdWithoutCompany = if (filterByCompany) selectedModel.id.substringAfter('/') else id
-                    Box(
-                        modifier = Modifier.zIndex(1f).fillMaxSize().clickable(
-                            enabled = true,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { selectedModelId = null },
-                        ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ModelListItemExpanded(
-                            modifier = Modifier.mediumDialogWidth(),
-                            onClick = { selectedModelId = null },
-                            sharedTransitionScope = this@SharedTransitionLayout,
-                            animatedVisibilityScope = this@AnimatedContent,
-                            modelName = selectedModel.copy(id = modelIdWithoutCompany).displayName,
-                            modelId = selectedModel.id,
-                            providers = providerModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
-                            server = serverModels?.filter { it.id == id }?.map { it.endpoint } ?: emptyList(),
-                            selectModel = { modelConfig -> selectModel(modelConfig) },
-                        )
-                    }
-                } else {
-                    LaunchedEffect(Unit) {
-                        selectedModelId = null
-                    }
+            targetState = selectedModel,
+        ) { model ->
+            model?.let {
+                val modelIdWithoutCompany = if (filterByCompany) model.modelId.substringAfter('/') else model.modelId
+                Box(
+                    modifier = Modifier.zIndex(1f).fillMaxSize().clickable(
+                        enabled = true,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { selectedModelId = null },
+                    ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ModelListItemExpanded(
+                        modifier = Modifier.mediumDialogWidth(),
+                        onClick = { selectedModelId = null },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        modelName = AiSource.getNameFromId(modelIdWithoutCompany),
+                        modelId = model.modelId,
+                        aiSourceSelection = filteredAiSources.orEmpty().filter { it.modelId == model.modelId }.toPersistentSet(),
+                        selectModel = { aiSource -> selectModel(aiSource) },
+                    )
                 }
             }
         }
@@ -420,7 +401,9 @@ fun RegularFABs(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalUuidApi::class
+)
 @Composable
 fun SearchOpenFAB(
     searchFilter: String,
@@ -430,7 +413,7 @@ fun SearchOpenFAB(
     isCompact: Boolean,
     hazeState: HazeState,
     setFabState: (Int) -> Unit,
-    selectedModelId: String?,
+    selectedModel: AiSource?,
     freeFilterEnabled: Boolean,
     setFreeFilterEnabled: (Boolean) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -530,8 +513,8 @@ fun SearchOpenFAB(
                 }
             }
         }
-        LaunchedEffect(selectedModelId) {
-            if (selectedModelId == null) {
+        LaunchedEffect(selectedModel) {
+            if (selectedModel == null) {
                 focusRequester.requestFocus()
             } else {
                 focusRequester.freeFocus()
@@ -734,10 +717,10 @@ fun FiltersTab(
 @Composable
 fun ModelList(
     modifier: Modifier = Modifier,
-    models: List<DomainModel>?,
-    focusModelId: String?,
+    models: List<AiSource>?,
+    focusModel: AiSource?,
     filterByCompany: Boolean,
-    onSelectModel: (String?) -> Unit,
+    onSelectModelId: (String?) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     innerPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -746,11 +729,11 @@ fun ModelList(
     val companyModels = remember(models) {
         // Remove the "$company/" prefix from the model IDs
         models
-            ?.groupBy { it.id.substringBefore('/') }
+            ?.groupBy { it.modelId.substringBefore('/') }
             ?.mapValues { (company, models) ->
                 models.map { model ->
-                    model.id.removePrefix("$company/") to model
-                }.distinctBy { it.second.id }.sortedBy { it.second.id }
+                    model.modelId.removePrefix("$company/") to model
+                }.distinctBy { it.second.modelId }.sortedBy { it.second.modelId }
             }?.mapKeys { (company, _) ->
                 company.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
             }?.toList()?.sortedBy { it.first } ?: emptyList()
@@ -806,26 +789,26 @@ fun ModelList(
                         style = MaterialTheme.typography.headlineMedium,
                     )
                 }
-                items(items = models, key = { it.second.id }) { (modelIdWithoutCompany, model) ->
+                items(items = models, key = { it.second.modelId }) { (modelIdWithoutCompany, model) ->
                     ModelListItemCompact(
-                        onClick = { onSelectModel(model.id) },
+                        onClick = { onSelectModelId(model.modelId) },
                         modifier = Modifier.fillMaxWidth().animateItem(),
-                        modelName = model.copy(id = modelIdWithoutCompany).displayName,
-                        modelId = model.id,
+                        modelName = AiSource.getNameFromId(modelIdWithoutCompany),
+                        modelId = model.modelId,
                         sharedTransitionScope = sharedTransitionScope,
-                        isSelected = focusModelId == model.id,
+                        isSelected = focusModel == model,
                     )
                 }
             }
         } else {
-            items(items = (models ?: emptyList()), key = { it.id }) { model ->
+            items(items = (models ?: emptyList()), key = { it.modelId }) { model ->
                 ModelListItemCompact(
-                    onClick = { onSelectModel(model.id) },
+                    onClick = { onSelectModelId(model.modelId) },
                     modifier = Modifier.fillMaxWidth().animateItem(),
                     modelName = model.displayName,
-                    modelId = model.id,
+                    modelId = model.modelId,
                     sharedTransitionScope = sharedTransitionScope,
-                    isSelected = focusModelId == model.id,
+                    isSelected = focusModel == model,
                 )
             }
         }
@@ -915,9 +898,8 @@ fun ModelListItemExpanded(
     animatedVisibilityScope: AnimatedVisibilityScope,
     modelName: String,
     modelId: String,
-    providers: List<String>,
-    server: List<String>,
-    selectModel: (ModelConfig) -> Unit,
+    aiSourceSelection: PersistentSet<AiSource>,
+    selectModel: (AiSource) -> Unit,
     onClick: () -> Unit
 ) = with(sharedTransitionScope) {
     ButlerOutlinedCard(
@@ -1000,7 +982,8 @@ fun ModelListItemExpanded(
                     text = stringResource(Res.string.hosts),
                     style = MaterialTheme.typography.titleMedium
                 )
-                providers.forEach { provider ->
+                aiSourceSelection.forEach {
+                    val provider = it.endpoint
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -1018,39 +1001,21 @@ fun ModelListItemExpanded(
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            AnimatedVisibility(visible = provider in providers) {
-                                ButlerTag { Text(text = stringResource(Res.string.api)) }
+                            ButlerTag {
+                                Text(
+                                    text = stringResource(
+                                        when (it) {
+                                            is AiSource.Api -> Res.string.api
+                                            is AiSource.Server -> Res.string.server
+                                            else -> Res.string.device
+                                        }
+                                    )
+                                )
                             }
                         }
                         SmallMenuButton(
-                            onClick = { selectModel(ModelConfig(provider, modelId)) },
+                            onClick = { selectModel(it) },
                             text = stringResource(Res.string.select)
-                        )
-                    }
-                }
-                server.forEach { provider ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f, fill = false).skipToLookaheadSize(),
-                                text = provider,
-                                style = MaterialTheme.typography.bodyMedium,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            AnimatedVisibility(visible = provider in server) {
-                                ButlerTag { Text(text = stringResource(Res.string.server)) }
-                            }
-                        }
-                        SmallMenuButton(
-                            onClick = { selectModel(ModelConfig(provider, modelId)) },
-                            text = stringResource(Res.string.select_host)
                         )
                     }
                 }

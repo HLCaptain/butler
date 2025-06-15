@@ -9,8 +9,10 @@ import illyan.butler.domain.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class UserRoomDataSource(
     private val userDao: UserDao
@@ -20,7 +22,7 @@ class UserRoomDataSource(
     }
 
     override fun getUser(userId: Uuid): Flow<User?> {
-        return userDao.getUser(userId).map { it?.toDomainModel() }
+        return userDao.getUser(userId.toString()).map { it?.toDomainModel() }
     }
 
     override suspend fun upsertUser(user: User) {
@@ -32,10 +34,10 @@ class UserRoomDataSource(
     }
 
     override suspend fun deleteUser(userId: Uuid) {
-        userDao.deleteUser(userId)
+        userDao.deleteUser(userId.toString())
     }
 
     override suspend fun refreshUserTokens(userId: Uuid, accessToken: Token?, refreshToken: Token?) {
-        userDao.updateTokens(userId, accessToken?.toRoomModel(), refreshToken?.toRoomModel())
+        userDao.updateTokens(userId.toString(), accessToken?.toRoomModel(), refreshToken?.toRoomModel())
     }
 }

@@ -10,14 +10,11 @@ import illyan.butler.shared.model.chat.Source
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 
-fun ChatDto.toDomainModel(endpoint: String) = Chat(
+fun ChatDto.toDomainModel(source: Source) = Chat(
     id = id,
     createdAt = createdAt,
     title = name,
-    source = Source.Server(
-        userId = ownerId,
-        endpoint = endpoint,
-    ),
+    source = source,
     models = models.toDomainModel(),
     summary = summary,
 )
@@ -26,9 +23,12 @@ fun Chat.toNetworkModel() = ChatDto(
     id = id,
     createdAt = createdAt,
     name = title,
-    ownerId = (source as Source.Server).userId,
+    ownerId = when (source) {
+        is Source.Device -> (source as Source.Device).deviceId
+        is Source.Server -> (source as Source.Server).userId
+    },
     summary = summary,
-    models = models.mapValues { it.value as AiSource.Server }.toNetworkModel()
+    models = models.toNetworkModel()
 )
 
 fun Map<Capability, AiSource>.toNetworkModel(): Map<illyan.butler.shared.model.chat.Capability, AiSource> {

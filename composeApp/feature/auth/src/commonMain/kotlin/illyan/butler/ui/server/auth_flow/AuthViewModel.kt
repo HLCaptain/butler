@@ -20,7 +20,7 @@ class AuthViewModel(
     ) { isUserSignedIn, currentHost ->
         AuthState(
             isUserSignedIn = isUserSignedIn,
-            hostSelected = currentHost != null
+            selectedHost = currentHost
         )
     }.stateIn(
         scope = viewModelScope,

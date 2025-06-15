@@ -91,7 +91,6 @@ import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.datasource.UserLocalDataSource
-import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
 import illyan.butler.data.error.ErrorRepository
@@ -109,16 +108,18 @@ import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
-@ExperimentalSerializationApi
 @Single
-fun provideHttpClientFactory(
-    userDataSource: UserLocalDataSource,
-    errorRepository: ErrorRepository,
-): (Source.Server) -> HttpClient {
-    val hashMap = hashMapOf<Source.Server, HttpClient>()
-    return { source ->
-        hashMap.getOrPut(source) {
+class KtorHttpClientFactory(
+    private val userDataSource: UserLocalDataSource,
+    private val errorRepository: ErrorRepository
+) : (Source.Server) -> HttpClient {
+
+    private val hashMap = hashMapOf<Source.Server, HttpClient>()
+
+    @OptIn(ExperimentalUuidApi::class)
+    @ExperimentalSerializationApi
+    override fun invoke(source: Source.Server): HttpClient {
+        return hashMap.getOrPut(source) {
             HttpClient(CIO) {
                 setupCioClient()
                 setupClient(
@@ -132,20 +133,22 @@ fun provideHttpClientFactory(
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
-@ExperimentalSerializationApi
 @Single
-fun provideUnauthorizedHttpClient(
-    userDao: UserDao,
-    errorRepository: ErrorRepository,
-): (String) -> HttpClient {
-    val hashMap = hashMapOf<String, HttpClient>()
-    return { endpoint ->
-        hashMap.getOrPut(endpoint) {
+class KtorUnauthorizedHttpClientFactory(
+    private val userDataSource: UserLocalDataSource,
+    private val errorRepository: ErrorRepository
+) : (String) -> HttpClient {
+
+    private val hashMap = hashMapOf<String, HttpClient>()
+
+    @OptIn(ExperimentalUuidApi::class)
+    @ExperimentalSerializationApi
+    override fun invoke(endpoint: String): HttpClient {
+        return hashMap.getOrPut(endpoint) {
             HttpClient(CIO) {
                 setupCioClient()
                 setupClient(
-                    userDao = userDao,
+                    userDataSource = userDataSource,
                     errorRepository = errorRepository,
                     endpoint = endpoint,
                     userId = null

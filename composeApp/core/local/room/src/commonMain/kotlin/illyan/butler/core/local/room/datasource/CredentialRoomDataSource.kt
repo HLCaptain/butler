@@ -4,7 +4,7 @@ import illyan.butler.core.local.datasource.CredentialLocalDataSource
 import illyan.butler.core.local.room.dao.ApiKeyCredentialDao
 import illyan.butler.core.local.room.mapping.toDomainModel
 import illyan.butler.core.local.room.mapping.toRoomModel
-import illyan.butler.domain.model.ApiKeyCredential
+import illyan.butler.shared.model.auth.ApiKeyCredential
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single

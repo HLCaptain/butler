@@ -8,12 +8,7 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 interface ChatNetworkDataSource {
-    fun fetchNewChats(): Flow<List<Chat>>
-
-    /**
-     * Fetch chats the user is a member of.
-     */
-    suspend fun fetchPaginated(source: Source.Server, limit: Int, timestamp: Long): List<Chat>
+    fun fetchNewChats(source: Source.Server): Flow<List<Chat>>
 
     /**
      * Fetch all chats the user is a member of.
@@ -22,22 +17,18 @@ interface ChatNetworkDataSource {
 
     fun fetchByChatId(source: Source.Server, chatId: Uuid): Flow<Chat>
 
-    fun fetchByUserId(source: Source.Server, userId: Uuid): Flow<List<Chat>>
-
-    /**
-     * Fetch chats the user is a member of with a specific chatbot.
-     * TODO: make this paginated.
-     */
-    suspend fun fetchByModel(source: Source.Server, modelId: String): List<Chat>
+    fun fetchByUserId(source: Source.Server): Flow<List<Chat>>
 
     /**
      * Update a chat (i.e. add/remove members)
      */
-    suspend fun upsert(source: Source.Server, chat: Chat): Chat
+    suspend fun upsert(chat: Chat): Chat
+
+    suspend fun create(chat: Chat): Chat
 
     /**
      * Try to delete a chat from the user's perspective. Basically, the user leaves the chat.
      * @return true if chat is deleted.
      */
-    suspend fun delete(source: Source.Server, chatId: Uuid): Boolean
+    suspend fun delete(chat: Chat): Boolean
 }

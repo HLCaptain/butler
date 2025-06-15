@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.ui.chat_detail
 
 import androidx.compose.animation.AnimatedContent
@@ -54,6 +56,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -64,7 +67,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -95,7 +97,6 @@ import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.Message
-import illyan.butler.domain.model.ModelConfig
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.assistant
 import illyan.butler.generated.resources.free
@@ -115,6 +116,9 @@ import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
+import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.SenderType
+import illyan.butler.shared.model.chat.Source
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -122,18 +126,17 @@ import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun RefreshMessageEffect(
-    ownerId: String,
     lastMessage: Message?,
     noUpdateDelay: Duration,
     sentMessageAndLoading: Boolean,
@@ -142,11 +145,11 @@ fun RefreshMessageEffect(
     refreshErrorDelay: Duration,
     onRefreshError: () -> Unit
 ) {
-    LaunchedEffect(lastMessage?.senderId) {
+    LaunchedEffect(lastMessage?.sender) {
         // Last message is sent by the user
-        if (lastMessage?.senderId == ownerId ||
+        if (lastMessage?.sender is SenderType.User ||
             // Or last message is from bot, but the message is blank
-            lastMessage?.messageContent?.isBlank() == true) {
+            lastMessage?.content?.isBlank() == true) {
             delay(noUpdateDelay)
             onMessageUpdated(true)
         } else {
@@ -163,14 +166,14 @@ fun RefreshMessageEffect(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeApi::class, ExperimentalUuidApi::class)
 @Composable
 fun ChatDetail(
     state: ChatDetailState,
     sendMessage: (String) -> Unit,
-    sendImage: (ByteArray, String, String) -> Unit,
-    toggleRecord: (String) -> Unit,
-    playAudio: (String) -> Unit,
+    sendImage: (ByteArray, String) -> Unit,
+    toggleRecord: (Source) -> Unit,
+    playAudio: (Uuid) -> Unit,
     stopAudio: () -> Unit,
     refreshChat: () -> Unit,
     sendError: (ErrorCode) -> Unit,
@@ -181,12 +184,11 @@ fun ChatDetail(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val hazeState = remember { HazeState() }
     var sentMessageButNoUpdate by remember { mutableStateOf(false) }
-    val lastMessage = remember(state.messages) { state.messages?.maxByOrNull { it.time ?: 0L } }
-    var sentMessageAndLoading by remember(lastMessage?.senderId, state.chat?.ownerId) {
-        mutableStateOf(lastMessage?.senderId == state.chat?.ownerId)
+    val lastMessage = remember(state.messages) { state.messages?.maxByOrNull { it.createdAt.toEpochMilliseconds() } }
+    var sentMessageAndLoading by remember(lastMessage?.sender) {
+        mutableStateOf(lastMessage?.sender is SenderType.User)
     }
     RefreshMessageEffect(
-        ownerId = state.chat?.ownerId ?: "",
         lastMessage = lastMessage,
         noUpdateDelay = 10.seconds,
         sentMessageAndLoading = sentMessageAndLoading,
@@ -210,7 +212,7 @@ fun ChatDetail(
                 ),
                 title = {
                     Text(
-                        state.chat?.name ?: stringResource(Res.string.new_chat),
+                        state.chat?.title ?: stringResource(Res.string.new_chat),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -245,24 +247,17 @@ fun ChatDetail(
                         .imePadding()
                         .hazeEffect(hazeState)
                         .navigationBarsPadding(),
-                    sendMessage = sendMessage,
-                    sendImage = { content, type -> state.chat?.let { chat -> sendImage(content, type, chat.ownerId) } },
+                    sendMessage = { content -> sendMessage(content) },
+                    sendImage = { content, type -> sendImage(content, type) },
                     isRecording = state.isRecording,
-                    toggleRecord = { state.chat?.let { toggleRecord(it.ownerId) } },
+                    toggleRecord = { state.chat?.let { toggleRecord(it.source) } },
                     enabled = state.chat != null || state.selectedNewChatModel != null,
                 )
             }
         },
     ) { innerPadding ->
-        var widthOfBox by remember { mutableStateOf(0.dp) }
         Box(
-            modifier = Modifier.fillMaxSize().hazeSource(hazeState).layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                widthOfBox = placeable.width.toDp()
-                layout(placeable.width, placeable.height) {
-                    placeable.place(0, 0)
-                }
-            },
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
             contentAlignment = Alignment.Center
         ) {
             AnimatedContent(
@@ -275,6 +270,7 @@ fun ChatDetail(
             ) { chat ->
                 if (chat == null) {
                     StartChatModelInfo(
+                        modifier = Modifier.padding(innerPadding),
                         navigateToModelSelection = navigateToModelSelection,
                         selectedModel = state.selectedNewChatModel
                     )
@@ -292,8 +288,7 @@ fun ChatDetail(
                         } else {
                             MessageList(
                                 messages = state.messages ?: emptyList(),
-                                preferedWidth = 640.dp,
-                                userId = chat.ownerId,
+                                preferredWidth = 640.dp,
                                 sounds = state.sounds,
                                 playAudio = playAudio,
                                 playingAudio = state.playingAudio,
@@ -319,7 +314,7 @@ fun ChatDetail(
 @Composable
 private fun StartChatModelInfo(
     modifier: Modifier = Modifier,
-    selectedModel: ModelConfig? = null,
+    selectedModel: AiSource? = null,
     navigateToModelSelection: () -> Unit = {}
 ) {
     Box(
@@ -339,7 +334,7 @@ private fun StartChatModelInfo(
                 )
                 ModelInfo(
                     modifier = Modifier.fillMaxWidth(),
-                    modelConfig = selectedModel,
+                    aiSource = selectedModel,
                     onClick = navigateToModelSelection
                 )
             } else {
@@ -361,7 +356,7 @@ private fun StartChatModelInfo(
 @Composable
 fun ModelInfo(
     modifier: Modifier = Modifier,
-    modelConfig: ModelConfig,
+    aiSource: AiSource,
     onClick: () -> Unit
 ) {
     ButlerOutlinedCard(
@@ -381,20 +376,20 @@ fun ModelInfo(
                     PlainTooltipWithContent(
                         modifier = Modifier.weight(1f, fill = false),
                         onClick = onClick,
-                        tooltip = { Text(modelConfig.modelId) }
+                        tooltip = { Text(aiSource.modelId) }
                     ) { tooltipModifier ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))) {
                                 Text(
                                     modifier = tooltipModifier
                                         .padding(horizontal = 4.dp, vertical = 2.dp),
-                                    text = modelConfig.modelId.replace(":free", ""),
+                                    text = aiSource.modelId.replace(":free", ""),
                                     maxLines = 2,
                                     style = MaterialTheme.typography.titleLarge,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
-                            if (modelConfig.modelId.contains("free", ignoreCase = true)) {
+                            if (aiSource.modelId.contains("free", ignoreCase = true)) {
                                 ButlerTag {
                                     Text(text = stringResource(Res.string.free))
                                 }
@@ -411,7 +406,7 @@ fun ModelInfo(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = modelConfig.modelId,
+                    text = aiSource.modelId,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -420,7 +415,7 @@ fun ModelInfo(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = modelConfig.endpoint,
+                    text = aiSource.endpoint,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -443,16 +438,15 @@ expect fun ChatDetailBottomBar(
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
-    preferedWidth: Dp,
+    preferredWidth: Dp,
     messages: List<Message> = emptyList(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
-    playAudio: (String) -> Unit = {},
+    sounds: Map<Uuid, Float> = emptyMap(), // Resource ID and length in seconds
+    playAudio: (Uuid) -> Unit = {},
     stopAudio: () -> Unit = {},
     refreshChat: () -> Unit = {},
-    playingAudio: String? = null,
-    images: Map<String, ByteArray> = emptyMap(), // URIs of images
-    userId: String,
+    playingAudio: Uuid? = null,
+    images: Map<Uuid, ByteArray> = emptyMap(), // URIs of images
     sentMessageButNoUpdate: Boolean = false,
     sentMessageAndLoading: Boolean = false
 ) {
@@ -477,14 +471,14 @@ fun MessageList(
                 }
             }
         }
-        items(messages.withIndex().sortedByDescending { it.value.time }, key = { it.value.id!! }) { (index, message) ->
+        items(messages.withIndex().sortedByDescending { it.value.createdAt }, key = { it.value.id }) { (index, message) ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
-                    modifier = Modifier.widthIn(max = preferedWidth),
-                    contentAlignment = if (message.senderId == userId) Alignment.CenterEnd else Alignment.CenterStart
+                    modifier = Modifier.widthIn(max = preferredWidth),
+                    contentAlignment = if (message.sender is SenderType.User) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
                     Column {
                         RichTooltipWithContent(
@@ -492,20 +486,23 @@ fun MessageList(
                             tooltip = {
                                 val keyValueList = remember(message) {
                                     listOf(
-                                        Res.string.message_id to message.id,
-                                        Res.string.timestamp to message.time?.let {
-                                            Instant.fromEpochMilliseconds(it)
-                                                .toLocalDateTime(TimeZone.currentSystemDefault())
-                                                .format(LocalDateTime.Formats.ISO)
+                                        Res.string.message_id to message.id.toString(),
+                                        Res.string.timestamp to LocalDateTime.parse(message.createdAt.toString())
+                                            .format(LocalDateTime.Formats.ISO),
+                                        Res.string.sender_id to when (val sender = message.sender) {
+                                            is SenderType.User -> when (val source = sender.source) {
+                                                is Source.Server -> source.userId
+                                                is Source.Device -> source.deviceId
+                                            }.toString()
+                                            is SenderType.Ai -> sender.source.modelId
                                         },
-                                        Res.string.sender_id to message.senderId,
-                                    ).filter { it.second != null }
+                                    )
                                 }
                                 Column {
                                     keyValueList.forEach {
                                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             Text(text = stringResource(it.first))
-                                            Text(text = it.second!!)
+                                            Text(text = it.second)
                                         }
                                     }
                                 }
@@ -515,7 +512,6 @@ fun MessageList(
                             MessageItem(
                                 modifier = gestureAreaModifier.fillMaxWidth(),
                                 message = message,
-                                userId = userId,
                                 sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
                                 playAudio = playAudio,
                                 playingAudio = playingAudio,
@@ -556,14 +552,13 @@ fun MessageList(
 fun MessageItem(
     modifier: Modifier = Modifier,
     message: Message,
-    sounds: Map<String, Float> = emptyMap(), // Resource ID and length in seconds
-    playAudio: (String) -> Unit = {},
+    sounds: Map<Uuid, Float> = emptyMap(), // Resource ID and length in seconds
+    playAudio: (Uuid) -> Unit = {},
     stopAudio: () -> Unit = {},
-    playingAudio: String? = null,
+    playingAudio: Uuid? = null,
     images: List<ByteArray> = emptyList(),
-    userId: String
 ) {
-    val sentByUser = remember(message, userId) { message.senderId == userId }
+    val sentByUser = remember(message.sender) { message.sender is SenderType.User }
     Column(
         modifier = modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -595,7 +590,7 @@ fun MessageItem(
                 contentDescription = "Image"
             )
         }
-        if (!message.messageContent.isNullOrBlank()) {
+        if (!message.content.isNullOrBlank()) {
             val cardColors = ButlerCardDefaults.cardColors(
                 containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                 contentColor = if (sentByUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
@@ -619,7 +614,7 @@ fun MessageItem(
 //                            RichText(state = richTextState)
                             Markdown(
                                 modifier = Modifier, // Don't use the default fillMaxSize here.
-                                content = message.messageContent ?: "",
+                                content = message.content ?: "",
                                 colors = markdownColor(
                                     text = MaterialTheme.colorScheme.onSurface,
                                     codeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
@@ -639,16 +634,16 @@ fun MessageItem(
 
 @Composable
 fun AudioMessages(
-    resources: Map<String, Float>, // Audio to length in seconds
-    onPlay: (String) -> Unit = {},
+    resources: Map<Uuid, Float>, // Audio to length in seconds
+    onPlay: (Uuid) -> Unit = {},
     onStop: () -> Unit = {},
-    isPlaying: String? = null
+    isPlaying: Uuid? = null
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         resources.forEach { (resourceId, length) ->
-            var progress by remember { mutableStateOf(0f) }
+            var progress by remember { mutableFloatStateOf(0f) }
             val isActive = isPlaying == resourceId
 
             LaunchedEffect(isActive, progress) {

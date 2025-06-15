@@ -27,7 +27,7 @@ class ErrorMemoryRepository : ErrorRepository {
     override suspend fun reportError(throwable: Throwable) {
         Napier.e(throwable) { "Default throwable error reported" }
         val newEvent = DomainError.Event.Rich(
-            id = Uuid.random().toString(),
+            id = Uuid.random(),
             platform = getPlatformName(),
             exception = throwable.toString().split(":").first(),
             message = throwable.message ?: "",
@@ -49,7 +49,7 @@ class ErrorMemoryRepository : ErrorRepository {
                 Napier.e { "Custom server error reported: ${serverResponse.statusCodes}" }
                 serverResponse.statusCodes.forEach {
                     val domainResponse = DomainError.Response(
-                        id = Uuid.random().toString(),
+                        id = Uuid.random(),
                         httpStatusCode = response.status.value,
                         customErrorCode = it.code,
                         timestamp = response.responseTime.timestamp,
@@ -60,7 +60,7 @@ class ErrorMemoryRepository : ErrorRepository {
             } else {
                 Napier.e { "Default server error reported" }
                 val domainResponse = DomainError.Response(
-                    id = Uuid.random().toString(),
+                    id = Uuid.random(),
                     httpStatusCode = response.status.value,
                     customErrorCode = null,
                     timestamp = response.responseTime.timestamp
@@ -70,7 +70,7 @@ class ErrorMemoryRepository : ErrorRepository {
         } catch (t: Throwable) {
             Napier.e { "Default server error reported" }
             val domainResponse = DomainError.Response(
-                id = Uuid.random().toString(),
+                id = Uuid.random(),
                 httpStatusCode = response.status.value,
                 customErrorCode = null,
                 timestamp = response.responseTime.timestamp
@@ -83,7 +83,7 @@ class ErrorMemoryRepository : ErrorRepository {
     override suspend fun reportSimpleError(code: ErrorCode) {
         _errorEventFlow.emit(
             DomainError.Event.Simple(
-                id = Uuid.random().toString(),
+                id = Uuid.random(),
                 code = code,
                 timestamp = System.currentTimeMillis(),
             )

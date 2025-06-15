@@ -100,7 +100,6 @@ import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.mediumDialogWidth
-import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.add_api_key
@@ -119,6 +118,7 @@ import illyan.butler.generated.resources.required
 import illyan.butler.generated.resources.save
 import illyan.butler.generated.resources.test
 import illyan.butler.generated.resources.unknown
+import illyan.butler.shared.model.auth.ApiKeyCredential
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
@@ -233,10 +233,11 @@ fun ApiKeyScaffold(
                             credentials?.getOrNull(index)?.let {
                                 navController.navigate(
                                     ApiKeyCredentialEditItem(
-                                        it.name,
-                                        it.providerUrl,
-                                        it.apiKey,
-                                        index
+                                        // Host name based on providerUrl
+                                        name = it.providerUrl.substringAfter("https://").substringBefore("/"),
+                                        providerUrl = it.providerUrl,
+                                        apiKey = it.apiKey,
+                                        index = index
                                     )
                                 )
                             }
@@ -251,7 +252,6 @@ fun ApiKeyScaffold(
                 val (item, index) = remember(credentials) {
                     val editItem = it.toRoute<ApiKeyCredentialEditItem>()
                     ApiKeyCredential(
-                        name = editItem.name,
                         providerUrl = editItem.providerUrl,
                         apiKey = editItem.apiKey
                     ) to editItem.index
@@ -530,7 +530,7 @@ fun ApiKeyCredentialGridItem(
                         sharedContentState = rememberSharedContentState("api_key_name_$key"),
                         animatedVisibilityScope = animationScope
                     ).skipToLookaheadSize(),
-                    text = item.name.takeIf { !it.isNullOrBlank() }
+                    text = item.providerUrl.substringAfter("https://").substringBefore("/").takeIf { it.isNotBlank() }
                         ?: stringResource(Res.string.unknown),
                 )
                 Text(
@@ -601,7 +601,7 @@ fun ApiKeyCredentialGridItem(
                     .padding(end = 8.dp, bottom = 8.dp)
                     .animateContentSize(),
                 targetState = healthy
-            ) {
+            ) { healthy ->
                 Row(
                     modifier = Modifier,
                     verticalAlignment = Alignment.CenterVertically
@@ -639,7 +639,6 @@ fun EditApiKeyCredential(
     testCredential: (ApiKeyCredential) -> Unit = {},
     onBack: () -> Unit
 ) = with(sharedTransitionScope) {
-    var name by rememberSaveable(item.name) { mutableStateOf(item.name ?: "") }
     var providerUrl by rememberSaveable(item.providerUrl) { mutableStateOf(item.providerUrl) }
     var apiKey by rememberSaveable(item.apiKey) { mutableStateOf(item.apiKey) }
 
@@ -662,10 +661,8 @@ fun EditApiKeyCredential(
             ) {
                 ApiKeyItemFields(
                     modifier = Modifier.fillMaxWidth(),
-                    name = name,
                     providerUrl = providerUrl,
                     apiKey = apiKey,
-                    onNameChanged = { name = it },
                     onProviderUrlChanged = { providerUrl = it },
                     onApiKeyChanged = { apiKey = it },
                     sharedTransitionScope = sharedTransitionScope,
@@ -679,7 +676,7 @@ fun EditApiKeyCredential(
                     ButlerMediumOutlinedButton(
                         modifier = Modifier.weight(testTitle.length.toFloat()),
                         onClick = {
-                            testCredential(ApiKeyCredential(name, providerUrl, apiKey))
+                            testCredential(ApiKeyCredential(providerUrl, apiKey))
                         },
                         text = { Text(text = testTitle) },
                         leadingIcon = {
@@ -706,7 +703,7 @@ fun EditApiKeyCredential(
                             )
                         }).weight(saveTitle.length.toFloat()),
                         onClick = {
-                            saveCredential(ApiKeyCredential(name, providerUrl, apiKey))
+                            saveCredential(ApiKeyCredential(providerUrl, apiKey))
                         },
                         leadingIcon = {
                             Icon(
@@ -840,12 +837,10 @@ fun NewApiKeyCredential(
             ) {
                 ApiKeyItemFields(
                     modifier = Modifier.fillMaxWidth(),
-                    name = name,
                     providerUrl = providerUrl,
                     apiKey = apiKey,
                     showApiKeyError = apiKeyFieldBlank,
                     showProviderUrlError = providerUrlFieldBlank,
-                    onNameChanged = { name = it },
                     onProviderUrlChanged = { providerUrl = it },
                     onApiKeyChanged = { apiKey = it },
                     sharedTransitionScope = sharedTransitionScope,
@@ -858,7 +853,7 @@ fun NewApiKeyCredential(
                     ButlerMediumOutlinedButton(
                         modifier = Modifier.weight(testText.length.toFloat()),
                         onClick = {
-                            testCredential(ApiKeyCredential(name, providerUrl, apiKey))
+                            testCredential(ApiKeyCredential(providerUrl, apiKey))
                         },
                         text = {
                             Text(
@@ -898,7 +893,7 @@ fun NewApiKeyCredential(
                             if (apiKey.isBlank()) apiKeyFieldBlank = true
                             if (providerUrl.isBlank()) providerUrlFieldBlank = true
                             if (apiKey.isBlank() || providerUrl.isBlank()) return@ButlerMediumSolidButton
-                            saveCredential(ApiKeyCredential(name, providerUrl, apiKey))
+                            saveCredential(ApiKeyCredential(providerUrl, apiKey))
                         },
                         leadingIcon = {
                             Icon(
@@ -952,12 +947,10 @@ fun NewApiKeyCredential(
 fun ApiKeyItemFields(
     modifier: Modifier = Modifier,
     key: Int? = null,
-    name: String,
     providerUrl: String,
     apiKey: String,
     showProviderUrlError: Boolean = false,
     showApiKeyError: Boolean = false,
-    onNameChanged: (String) -> Unit,
     onProviderUrlChanged: (String) -> Unit,
     onApiKeyChanged: (String) -> Unit,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(8.dp),
@@ -968,16 +961,6 @@ fun ApiKeyItemFields(
         modifier = modifier.width(IntrinsicSize.Max),
         verticalArrangement = verticalArrangement
     ) {
-        ButlerTextField(
-            modifier = Modifier.fillMaxWidth().sharedElement(
-                sharedContentState = rememberSharedContentState(key?.let { "api_key_name_$it" } ?: "new_api_key_name"),
-                animatedVisibilityScope = animationScope
-            ),
-            value = name,
-            isOutlined = false,
-            onValueChange = onNameChanged,
-            label = { Text(text = stringResource(Res.string.name)) },
-        )
         ButlerTextField(
             modifier = Modifier.fillMaxWidth().sharedElement(
                 sharedContentState = rememberSharedContentState(key?.let { "api_key_provider_url_$it" } ?: "new_api_key_provider_url"),

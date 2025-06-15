@@ -8,15 +8,11 @@ import illyan.butler.shared.model.chat.Source
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-fun MessageDto.toDomainModel(endpoint: String) = Message(
+fun MessageDto.toDomainModel(source: Source) = Message(
     id = id,
     createdAt = Instant.fromEpochMilliseconds(time!!),
-    source = Source.Server(
-        userId = Uuid.parse(senderId),
-        endpoint = endpoint
-    ),
+    source = source,
     chatId = chatId,
     sender = sender,
     content = content,
@@ -31,4 +27,5 @@ fun Message.toNetworkModel() = MessageDto(
     resourceIds = resourceIds,
     time = createdAt.toEpochMilliseconds(),
     chatId = chatId,
+    status = status,
 )

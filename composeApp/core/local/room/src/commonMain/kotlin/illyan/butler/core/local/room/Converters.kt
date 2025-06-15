@@ -4,8 +4,11 @@ import androidx.room.TypeConverter
 import illyan.butler.core.local.room.model.RoomAddress
 import illyan.butler.core.local.room.model.RoomPreferences
 import illyan.butler.core.local.room.model.RoomToken
-import illyan.butler.domain.model.AiSource
 import illyan.butler.domain.model.Capability
+import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.MessageStatus
+import illyan.butler.shared.model.chat.SenderType
+import illyan.butler.shared.model.chat.Source
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.json.Json
@@ -14,6 +17,7 @@ import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 class Converters {
     @TypeConverter
     fun toString(list: List<String>): String {
@@ -70,42 +74,38 @@ class Converters {
         return Json.decodeFromString(RoomAddress.serializer(), databaseValue)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     @TypeConverter
-    fun toByteArray(databaseValue: Uuid): ByteArray {
-        return databaseValue.toByteArray()
-    }
+    fun toByteArray(databaseValue: Uuid) = databaseValue.toByteArray()
+    @TypeConverter
+    fun toUuid(databaseValue: ByteArray) = Uuid.fromByteArray(databaseValue)
 
-    @OptIn(ExperimentalUuidApi::class)
     @TypeConverter
-    fun toUuid(databaseValue: ByteArray): Uuid {
-        return Uuid.fromByteArray(databaseValue)
-    }
+    fun toLong(value: Instant) = value.toEpochMilliseconds()
+    @TypeConverter
+    fun toInstant(value: Long) = Instant.fromEpochMilliseconds(value)
 
-    @OptIn(ExperimentalTime::class)
     @TypeConverter
-    fun toLong(value: Instant): Long {
-        return value.toEpochMilliseconds()
-    }
+    fun toString(value: SenderType) = Json.encodeToString(SenderType.serializer(), value)
+    @TypeConverter
+    fun toSenderType(databaseValue: String) = Json.decodeFromString(SenderType.serializer(), databaseValue)
 
-    @OptIn(ExperimentalTime::class)
     @TypeConverter
-    fun toInstant(value: Long): Instant {
-        return Instant.fromEpochMilliseconds(value)
-    }
+    fun toInt(messageStatus: MessageStatus) = messageStatus.ordinal
+    @TypeConverter
+    fun toMessageStatus(databaseValue: Int) = MessageStatus.entries[databaseValue]
+
+    @TypeConverter
+    fun toString(source: Source) = Json.encodeToString(Source.serializer(), source)
+    @TypeConverter
+    fun toSource(databaseValue: String) = Json.decodeFromString(Source.serializer(), databaseValue)
 
     @Serializable
     data class StringPair(val first: String, val second: String)
 
     @TypeConverter
-    fun toString(pair: Pair<String, String>): String {
-        return Json.encodeToString(StringPair.serializer(), pair.toStringPair())
-    }
-
+    fun toString(pair: Pair<String, String>) = Json.encodeToString(StringPair.serializer(), pair.toStringPair())
     @TypeConverter
-    fun toPair(databaseValue: String): Pair<String, String> {
-        return Json.decodeFromString(StringPair.serializer(), databaseValue).toPair()
-    }
+    fun toPair(databaseValue: String) = Json.decodeFromString(StringPair.serializer(), databaseValue).toPair()
 
     @JvmName("modelsMapToString")
     @TypeConverter
