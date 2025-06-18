@@ -1,6 +1,7 @@
 package illyan.butler.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -74,7 +75,7 @@ fun ButlerCard(
             interactionSource = interactionSource,
             elevation = elevation,
             shape = shape,
-            content = { Column(modifier = Modifier.padding(contentPadding)) { content() } }
+            content = { Column(modifier = Modifier.focusable(enabled = false).padding(contentPadding)) { content() } }
         )
     } ?: Card(
         modifier = modifier,

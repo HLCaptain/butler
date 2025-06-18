@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.domain.model.FilterConfiguration
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
@@ -27,22 +28,25 @@ class AppSettingsLocalRepository(
         val signedInUserKey = stringPreferencesKey("signed_in_user")
         val defaultModelKey = stringPreferencesKey("default_model")
     }
-    override val appSettings: Flow<AppSettings?> = datastore.data.map { preferences ->
+
+    // allowStructuredMapKeys is required by Map<FilterOptions, Boolean> in FilterConfiguration
+    val filterConfigurationJsonParser = Json { allowStructuredMapKeys = true }
+    override val appSettings: Flow<AppSettings> = datastore.data.map { preferences ->
         if (preferences[appSettingsKey] != null) {
             try {
-                Json.decodeFromString(preferences[appSettingsKey]!!)
+                filterConfigurationJsonParser.decodeFromString(preferences[appSettingsKey]!!)
             } catch (e: Exception) {
                 Napier.e(e) { "Error decoding app settings, resetting to default" }
                 datastore.edit { datastorePreferences ->
-                    datastorePreferences[appSettingsKey] = Json.encodeToString(AppSettings.Default)
+                    datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(AppSettings.Default)
                 }
-                null
+                AppSettings.Default
             }
         } else {
             datastore.edit { datastorePreferences ->
-                datastorePreferences[appSettingsKey] = Json.encodeToString(AppSettings.Default)
+                datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(AppSettings.Default)
             }
-            null
+            AppSettings.Default
         }
     }
     override val currentHost: Flow<String?> = datastore.data.map { preferences ->
@@ -51,6 +55,7 @@ class AppSettingsLocalRepository(
     override val signedInServers: Flow<Set<Source.Server>> = datastore.data.map { preferences ->
         preferences[signedInUserKey]?.let { Json.decodeFromString(it) } ?: emptySet()
     }
+
     override val defaultModel: Flow<AiSource?> = datastore.data.map { preferences ->
         if (preferences[defaultModelKey] != null) {
             try {
@@ -73,7 +78,7 @@ class AppSettingsLocalRepository(
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
         datastore.edit { datastorePreferences ->
             appSettings.first()?.copy(preferences = preferences)?.let {
-                datastorePreferences[appSettingsKey] = Json.encodeToString(it)
+                datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(it)
             }
         }
     }
@@ -109,6 +114,20 @@ class AppSettingsLocalRepository(
             } else {
                 datastorePreferences.remove(defaultModelKey)
             }
+        }
+    }
+
+    override suspend fun setFilterConfiguration(filterConfiguration: FilterConfiguration) {
+        datastore.edit { datastorePreferences ->
+            appSettings.first().copy(filterConfiguration = filterConfiguration).let {
+                datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(it)
+            }
+        }
+    }
+
+    override suspend fun setAppSettings(appSettings: AppSettings) {
+        datastore.edit { datastorePreferences ->
+            datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(appSettings)
         }
     }
 }

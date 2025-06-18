@@ -94,18 +94,6 @@ class ChatDetailViewModel(
                 it.id to try { it.data.toAudioData(it.mimeType)!!.totalTime.seconds.toFloat() } catch (e: Exception) { Napier.e(e) { "Audio file encode error for audio $it" }; 0f }
             } ?: emptyMap()
         val images = resources?.filter { it.mimeType.startsWith("image") }?.associate { it.id to it.data } ?: emptyMap()
-//        Napier.v {
-//            """
-//            ChatDetailState:
-//            chat: ${chat?.id}
-//            messages: ${messages?.map { it.id }}
-//            isRecording: $recording
-//            playingAudio: $playing
-//            resources: ${resources?.map { it.id }}
-//            sounds: ${sounds.keys}
-//            images: ${images.keys}
-//            """.trimIndent()
-//        }
         ChatDetailState(
             chat = chat,
             messages = messages,
@@ -171,9 +159,16 @@ class ChatDetailViewModel(
         viewModelScope.launch {
             if (state.value.isRecording) {
                 val audioResource = audioManager.stopRecording()
-                chatIdStateFlow.value?.let {
-                    chatManager.sendAudioMessage(it, SenderType.User(source), audioResource)
+                val source = state.value.chat?.source ?: getSourceFromAiSource(state.value.selectedNewChatModel) ?: run {
+                    Napier.e("Chat source is null, cannot send audio message")
+                    return@launch
                 }
+                val chatId = if (chatIdStateFlow.value == null) {
+                    createNewChat(source)
+                } else {
+                    chatIdStateFlow.value ?: return@launch
+                }
+                chatManager.sendAudioMessage(chatId, SenderType.User(source), audioResource)
             } else {
                 audioManager.startRecording(source)
             }
@@ -186,10 +181,12 @@ class ChatDetailViewModel(
                 Napier.e("Chat source is null, cannot send image")
                 return@launch
             }
-            chatIdStateFlow.value?.let {
-                chatManager.sendImageMessage(it, imageContent, mimeType, SenderType.User(source))
-                Napier.d("Image sent")
+            val chatId = if (chatIdStateFlow.value == null) {
+                createNewChat(source)
+            } else {
+                chatIdStateFlow.value ?: return@launch
             }
+            chatManager.sendImageMessage(chatId, imageContent, mimeType, SenderType.User(source))
         }
     }
 

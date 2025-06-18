@@ -12,6 +12,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,13 +32,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
@@ -45,16 +50,19 @@ import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +91,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerLargeSolidButton
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.ButlerOutlinedCard
@@ -90,7 +99,6 @@ import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.ButlerTooltipDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
-import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.components.RichTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
@@ -105,7 +113,6 @@ import illyan.butler.generated.resources.message_id
 import illyan.butler.generated.resources.model_id
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_messages
-import illyan.butler.generated.resources.no_models_selected
 import illyan.butler.generated.resources.play
 import illyan.butler.generated.resources.refresh_chat
 import illyan.butler.generated.resources.select_model
@@ -186,6 +193,7 @@ fun ChatDetail(
     var sentMessageAndLoading by remember(lastMessage?.sender) {
         mutableStateOf(lastMessage?.sender is SenderType.User)
     }
+    val lazyListState = rememberLazyListState()
     RefreshMessageEffect(
         lastMessage = lastMessage,
         noUpdateDelay = 10.seconds,
@@ -195,7 +203,6 @@ fun ChatDetail(
         refreshErrorDelay = 20.seconds,
         onRefreshError = { sendError(ErrorCode.ChatRefreshError) }
     )
-
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surface,
@@ -253,6 +260,46 @@ fun ChatDetail(
                 )
             }
         },
+        floatingActionButtonPosition = FabPosition.Center,
+        floatingActionButton = {
+            var isScrollingToStart by remember { mutableStateOf(false) }
+            LaunchedEffect(lazyListState.isScrollInProgress) {
+                if (!lazyListState.isScrollInProgress && isScrollingToStart) {
+                    isScrollingToStart = false
+                }
+            }
+            val fabVisible by remember {
+                derivedStateOf {
+                    val notAtStart = lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0
+                    notAtStart && when {
+                        lazyListState.isScrollInProgress -> !isScrollingToStart
+                        else -> true
+                    }
+                }
+            }
+            val coroutineScope = rememberCoroutineScope()
+            AnimatedVisibility(
+                visible = fabVisible,
+                enter = fadeIn(tween(200)) + slideInVertically { it },
+                exit = fadeOut(tween(200)) + slideOutVertically { it }
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            lazyListState.animateScrollToItem(0)
+                            isScrollingToStart = true
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = null
+                    )
+                }
+            }
+
+        }
     ) { innerPadding ->
         Box(
             modifier = Modifier.fillMaxSize().hazeSource(hazeState),
@@ -293,6 +340,7 @@ fun ChatDetail(
                                 stopAudio = stopAudio,
                                 images = state.images,
                                 contentPadding = innerPadding,
+                                lazyListState = lazyListState,
                                 sentMessageButNoUpdate = sentMessageButNoUpdate,
                                 sentMessageAndLoading = sentMessageAndLoading,
                                 refreshChat = {
@@ -322,6 +370,7 @@ private fun StartChatModelInfo(
         Column(
             modifier = Modifier.fillMaxWidth().widthIn(max = 320.dp).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (selectedModel != null) {
                 Text(
@@ -331,20 +380,15 @@ private fun StartChatModelInfo(
                     textAlign = TextAlign.Center
                 )
                 ModelInfo(
-                    modifier = Modifier.fillMaxWidth(),
                     aiSource = selectedModel,
                     onClick = navigateToModelSelection
                 )
             } else {
-                Text(
-                    text = stringResource(Res.string.no_models_selected),
-                    style = MaterialTheme.typography.headlineLarge,
-                )
-            }
-            MediumMenuButton(
-                onClick = navigateToModelSelection
-            ) {
-                Text(text = stringResource(Res.string.select_model))
+                ButlerLargeSolidButton(
+                    onClick = navigateToModelSelection,
+                ) {
+                    Text(stringResource(Res.string.select_model))
+                }
             }
         }
     }
@@ -360,66 +404,66 @@ fun ModelInfo(
     ButlerOutlinedCard(
         modifier = modifier,
         contentPadding = ButlerCardDefaults.CompactContentPadding,
+        onClick = onClick
     ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    PlainTooltipWithContent(
-                        modifier = Modifier.weight(1f, fill = false),
-                        onClick = onClick,
-                        tooltip = { Text(aiSource.modelId) }
-                    ) { tooltipModifier ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))) {
-                                Text(
-                                    modifier = tooltipModifier
-                                        .padding(horizontal = 4.dp, vertical = 2.dp),
-                                    text = aiSource.modelId.replace(":free", ""),
-                                    maxLines = 2,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            if (aiSource.modelId.contains("free", ignoreCase = true)) {
-                                ButlerTag {
-                                    Text(text = stringResource(Res.string.free))
-                                }
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                PlainTooltipWithContent(
+                    onClick = onClick,
+                    tooltip = { Text(aiSource.modelId) }
+                ) { tooltipModifier ->
+                    val modelIdWithoutCompany = aiSource.modelId.replace(":free", "").substringAfter('/')
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))) {
+                            Text(
+                                modifier = tooltipModifier
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                text = AiSource.getNameFromId(modelIdWithoutCompany),
+                                maxLines = 2,
+                                style = MaterialTheme.typography.titleLarge,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (aiSource.modelId.contains("free", ignoreCase = true)) {
+                            ButlerTag {
+                                Text(text = stringResource(Res.string.free))
                             }
                         }
                     }
                 }
+                Column(
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.model_id),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = aiSource.modelId,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(Res.string.host),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = aiSource.endpoint,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
-            Column(
-                modifier = Modifier.padding(start = 8.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.model_id),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = aiSource.modelId,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(Res.string.host),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = aiSource.endpoint,
-                    style = MaterialTheme.typography.bodyMedium,
+            IconButton(onClick = onClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = stringResource(Res.string.select_model),
                 )
             }
         }
     }
-
 }
 
 @Composable
@@ -443,12 +487,12 @@ fun MessageList(
     playAudio: (Uuid) -> Unit = {},
     stopAudio: () -> Unit = {},
     refreshChat: () -> Unit = {},
+    lazyListState: LazyListState = rememberLazyListState(),
     playingAudio: Uuid? = null,
     images: Map<Uuid, ByteArray> = emptyMap(), // URIs of images
     sentMessageButNoUpdate: Boolean = false,
     sentMessageAndLoading: Boolean = false
 ) {
-    val lazyListState = rememberLazyListState()
     LaunchedEffect(messages.isEmpty()) {
         lazyListState.animateScrollToItem(0)
     }

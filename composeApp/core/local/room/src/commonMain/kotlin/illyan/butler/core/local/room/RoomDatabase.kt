@@ -39,3 +39,6 @@ fun getApiKeyCredentialDao(database: ButlerDatabase) = database.apiKeyCredential
 
 @Single
 fun getUserDao(database: ButlerDatabase) = database.userDao()
+
+@Single
+fun getUserTokensDao(database: ButlerDatabase) = database.userTokensDao()

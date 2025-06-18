@@ -4,9 +4,9 @@ package illyan.butler.ui.chat_details
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +21,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerDropdownMenuBox
 import illyan.butler.core.ui.utils.plus
@@ -65,7 +67,9 @@ import kotlin.uuid.Uuid
 fun ChatDetails(
     modifier: Modifier = Modifier,
     chatId: Uuid?,
-    actions: @Composable () -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
+    hazeState: HazeState = remember { HazeState() },
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val viewModel = koinViewModel<ChatDetailsViewModel>()
     val state by viewModel.state.collectAsState()
@@ -77,106 +81,115 @@ fun ChatDetails(
         chat = state.chat,
         alternativeModels = state.alternativeModels,
         setModel = viewModel::setModel,
-        actions = actions
+        hazeState = hazeState,
+        actions = actions,
+        navigationIcon = navigationIcon
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetails(
     modifier: Modifier = Modifier,
     chat: Chat?,
     alternativeModels: List<AiSource>,
     setModel: ((AiSource?, Capability) -> Unit)? = null,
-    actions: @Composable () -> Unit = {},
+    hazeState: HazeState = remember { HazeState() },
+    actions: @Composable RowScope.() -> Unit = {},
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
-    Box {
-        val hazeState = remember { HazeState() }
-        Scaffold(
-            modifier = modifier,
-            containerColor = Color.Transparent
-        ) { innerPadding ->
-            val aiMembers = remember(chat) {
-                mapOf(
-                    Capability.CHAT_COMPLETION to chat?.models[Capability.CHAT_COMPLETION],
-                    Capability.SPEECH_SYNTHESIS to chat?.models[Capability.SPEECH_SYNTHESIS],
-                    Capability.AUDIO_TRANSCRIPTION to chat?.models[Capability.AUDIO_TRANSCRIPTION],
-                    Capability.AUDIO_TRANSLATION to chat?.models[Capability.AUDIO_TRANSLATION],
-                    Capability.IMAGE_GENERATION to chat?.models[Capability.IMAGE_GENERATION]
-                )
-            }
-            LazyColumn(
-                modifier = Modifier.hazeSource(hazeState),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = innerPadding + PaddingValues(8.dp)
-            ) {
-                item {
+    Scaffold(
+        modifier = modifier.hazeEffect(hazeState),
+        topBar = {
+            TopAppBar(
+                modifier = Modifier.hazeEffect(hazeState),
+                title = {
                     Text(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         text = stringResource(Res.string.chat_details),
-                        style = MaterialTheme.typography.headlineSmall
                     )
-                }
-                item {
-                    SelectionContainer {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.name),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Text(chat?.title ?: stringResource(Res.string.new_chat))
-                        }
+                },
+                navigationIcon = navigationIcon ?: {},
+                colors = TopAppBarDefaults.topAppBarColors().copy(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
+                ),
+                actions = actions
+            )
+        },
+        containerColor = Color.Transparent
+    ) { innerPadding ->
+        val aiMembers = remember(chat) {
+            mapOf(
+                Capability.CHAT_COMPLETION to chat?.models[Capability.CHAT_COMPLETION],
+                Capability.SPEECH_SYNTHESIS to chat?.models[Capability.SPEECH_SYNTHESIS],
+                Capability.AUDIO_TRANSCRIPTION to chat?.models[Capability.AUDIO_TRANSCRIPTION],
+                Capability.AUDIO_TRANSLATION to chat?.models[Capability.AUDIO_TRANSLATION],
+                Capability.IMAGE_GENERATION to chat?.models[Capability.IMAGE_GENERATION]
+            )
+        }
+        LazyColumn(
+            modifier = Modifier.hazeSource(hazeState),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = innerPadding + PaddingValues(8.dp)
+        ) {
+            item {
+                SelectionContainer {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.name),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Text(chat?.title ?: stringResource(Res.string.new_chat))
                     }
-                }
-                item {
-                    SelectionContainer {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.summary),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Text(chat?.summary ?: stringResource(Res.string.unknown))
-                        }
-                    }
-                }
-                item {
-                    SelectionContainer {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.chat_id),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Text(chat?.id?.toString() ?: stringResource(Res.string.unknown))
-                        }
-                    }
-                }
-                items(aiMembers.toList(), key = { (capability, _) -> capability }) { (capability, model) ->
-                    ModelSetting(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = stringResource(
-                            when (capability) {
-                                Capability.CHAT_COMPLETION -> Res.string.chat_completion_model
-                                Capability.AUDIO_TRANSCRIPTION -> Res.string.audio_transcription_model
-                                Capability.AUDIO_TRANSLATION -> Res.string.audio_translation_model
-                                Capability.SPEECH_SYNTHESIS -> Res.string.audio_speech_model
-                                Capability.IMAGE_GENERATION -> Res.string.image_generations_model
-                            }
-                        ),
-                        model = model,
-                        enabled = capability != Capability.CHAT_COMPLETION && alternativeModels.any { it != model },
-                        alternatives = alternativeModels,
-                        setModel = { setModel?.invoke(it, capability) }
-                    )
                 }
             }
-        }
-        Box(modifier = Modifier.align(Alignment.TopEnd)) {
-            actions()
+            item {
+                SelectionContainer {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.summary),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Text(chat?.summary ?: stringResource(Res.string.unknown))
+                    }
+                }
+            }
+            item {
+                SelectionContainer {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.chat_id),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Text(chat?.id?.toString() ?: stringResource(Res.string.unknown))
+                    }
+                }
+            }
+            items(aiMembers.toList(), key = { (capability, _) -> capability }) { (capability, model) ->
+                ModelSetting(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(
+                        when (capability) {
+                            Capability.CHAT_COMPLETION -> Res.string.chat_completion_model
+                            Capability.AUDIO_TRANSCRIPTION -> Res.string.audio_transcription_model
+                            Capability.AUDIO_TRANSLATION -> Res.string.audio_translation_model
+                            Capability.SPEECH_SYNTHESIS -> Res.string.audio_speech_model
+                            Capability.IMAGE_GENERATION -> Res.string.image_generations_model
+                        }
+                    ),
+                    model = model,
+                    enabled = capability != Capability.CHAT_COMPLETION && alternativeModels.any { it != model },
+                    alternatives = alternativeModels,
+                    setModel = { setModel?.invoke(it, capability) }
+                )
+            }
         }
     }
 }

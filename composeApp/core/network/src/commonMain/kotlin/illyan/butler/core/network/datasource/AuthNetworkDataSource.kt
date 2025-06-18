@@ -1,9 +1,12 @@
 package illyan.butler.core.network.datasource
 
+import illyan.butler.domain.model.User
 import illyan.butler.shared.model.auth.PasswordResetRequest
 import illyan.butler.shared.model.auth.UserLoginDto
 import illyan.butler.shared.model.auth.UserLoginResponseDto
 import illyan.butler.shared.model.auth.UserRegistrationDto
+import illyan.butler.shared.model.chat.Source
+import kotlinx.coroutines.flow.Flow
 
 interface AuthNetworkDataSource {
     /**
@@ -23,4 +26,8 @@ interface AuthNetworkDataSource {
      * @return true if reset email is sent.
      */
     suspend fun sendPasswordResetEmail(request: PasswordResetRequest, endpoint: String): Boolean
+
+    fun getUser(source: Source.Server): Flow<User>
+
+    suspend fun updateUserData(user: User): User
 }

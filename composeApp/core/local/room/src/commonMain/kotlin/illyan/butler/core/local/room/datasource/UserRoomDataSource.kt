@@ -4,7 +4,6 @@ import illyan.butler.core.local.datasource.UserLocalDataSource
 import illyan.butler.core.local.room.dao.UserDao
 import illyan.butler.core.local.room.mapping.toDomainModel
 import illyan.butler.core.local.room.mapping.toRoomModel
-import illyan.butler.domain.model.Token
 import illyan.butler.domain.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -35,9 +34,5 @@ class UserRoomDataSource(
 
     override suspend fun deleteUser(userId: Uuid) {
         userDao.deleteUser(userId.toString())
-    }
-
-    override suspend fun refreshUserTokens(userId: Uuid, accessToken: Token?, refreshToken: Token?) {
-        userDao.updateTokens(userId.toString(), accessToken?.toRoomModel(), refreshToken?.toRoomModel())
     }
 }

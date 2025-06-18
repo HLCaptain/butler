@@ -26,7 +26,7 @@ import illyan.butler.data.settings.AppRepository
 import illyan.butler.data.settings.AppSettingsLocalRepository
 import illyan.butler.data.user.UserMemoryRepository
 import illyan.butler.data.user.UserRepository
-import illyan.butler.data.user.UserRoomRepository
+import illyan.butler.data.user.UserStoreRepository
 import org.koin.core.annotation.Single
 
 @Single
@@ -91,11 +91,11 @@ fun provideErrorRepository(
 @Single
 fun provideUserRepository(
     userMemoryRepository: UserMemoryRepository,
-    userRoomRepository: UserRoomRepository
+    userStoreRepository: UserStoreRepository
 ): UserRepository = if (BuildConfig.USE_MEMORY_DB) {
     userMemoryRepository
 } else {
-    userRoomRepository
+    userStoreRepository
 }
 
 @Single

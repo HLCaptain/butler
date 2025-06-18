@@ -1,7 +1,7 @@
 package illyan.butler.data.user
 
-import illyan.butler.domain.model.Token
 import illyan.butler.domain.model.User
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +22,9 @@ class UserMemoryRepository : UserRepository {
         }
     }
 
-    override fun getUser(userId: Uuid): Flow<User?> {
+    override fun getUser(source: Source.Server): Flow<User?> {
         return users.map { users ->
-            users.firstOrNull { it.id == userId }
+            users.firstOrNull { it.id == source.userId }
         }
     }
 
@@ -32,21 +32,9 @@ class UserMemoryRepository : UserRepository {
         return users.asStateFlow()
     }
 
-    override suspend fun deleteUserData() {
-        users.update { emptyList() }
-    }
-
     override suspend fun deleteUser(userId: Uuid) {
         users.update { currentUsers ->
             currentUsers.filterNot { it.id == userId }
         }
-    }
-
-    override suspend fun refreshUserTokens(
-        userId: Uuid,
-        accessToken: Token?,
-        refreshToken: Token?
-    ) {
-        // Mock implementation: No-op
     }
 }

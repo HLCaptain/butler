@@ -1,5 +1,6 @@
 package illyan.butler.domain.model
 
+import illyan.butler.shared.model.chat.FilterOption
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -14,6 +15,5 @@ data class User(
     val fullName: String?,
     val photoUrl: String?,
     val address: Address?,
-    val accessToken: Token?,
-    val refreshToken: Token?
+    val filters: Set<FilterOption>,
 )

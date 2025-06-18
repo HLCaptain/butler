@@ -32,9 +32,25 @@ fun Route.identityRoutes(tokenConfiguration: TokenConfiguration) {
 
     authenticate("refresh-jwt") {
         post("/refresh-access-token") {
-            val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-            val token = identityService.generateUserTokens(userId, tokenConfiguration)
-            call.respond(HttpStatusCode.Created, token)
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.payload?.getClaim(Claim.USER_ID)?.toString()?.trim('\"', ' ')
+            if (!userId.isNullOrBlank()) {
+                val token = identityService.generateUserTokens(userId, tokenConfiguration)
+                call.respond(HttpStatusCode.Created, token)
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "User not authenticated")
+            }
+        }
+
+        get("/me") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.payload?.getClaim(Claim.USER_ID)?.toString()?.trim('\"', ' ')
+            if (!userId.isNullOrBlank()) {
+                val user = identityService.getUser(userId)
+                call.respond(HttpStatusCode.OK, user)
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "User not authenticated")
+            }
         }
     }
 

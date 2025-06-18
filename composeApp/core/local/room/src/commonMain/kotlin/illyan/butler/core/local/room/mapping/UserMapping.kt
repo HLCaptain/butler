@@ -17,8 +17,7 @@ fun RoomUser.toDomainModel() = User(
     fullName = fullName,
     photoUrl = photoUrl,
     address = address?.toDomainModel(),
-    accessToken = accessToken?.toDomainModel(),
-    refreshToken = refreshToken?.toDomainModel()
+    filters = filterOptions,
 )
 
 fun User.toRoomModel() = RoomUser(
@@ -31,6 +30,5 @@ fun User.toRoomModel() = RoomUser(
     fullName = fullName,
     photoUrl = photoUrl,
     address = address?.toRoomModel(),
-    accessToken = accessToken?.toRoomModel(),
-    refreshToken = refreshToken?.toRoomModel()
+    filterOptions = filters,
 )

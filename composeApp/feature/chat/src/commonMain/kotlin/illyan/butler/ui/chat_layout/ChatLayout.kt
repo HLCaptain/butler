@@ -1,7 +1,11 @@
 package illyan.butler.ui.chat_layout
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -13,13 +17,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.LocalHazeStyle
+import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.utils.BackHandler
@@ -53,58 +61,86 @@ fun ChatLayout(
         LaunchedEffect(state.chat) {
             onCurrentChatChanged(state.chat?.id)
         }
-        var destination by rememberSaveable(
+        var targetDestination by rememberSaveable(
             stateSaver = object : Saver<ChatLayoutDestinations?, Int> {
                 override fun restore(value: Int) = ChatLayoutDestinations.entries[value]
                 override fun SaverScope.save(value: ChatLayoutDestinations?) = value?.ordinal
             }
         ) {
-            mutableStateOf<ChatLayoutDestinations?>(null)
+            mutableStateOf(null)
         }
-        BackHandler(enabled = destination != null) {
-            destination = null
+        var destination by remember { mutableStateOf(targetDestination ?: ChatLayoutDestinations.MODEL_SELECTION) }
+        BackHandler(enabled = targetDestination != null) {
+            targetDestination = null
         }
         val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
             bottomSheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             )
         )
-        LaunchedEffect(destination) {
-            if (destination == null) {
+        LaunchedEffect(targetDestination) {
+            if (targetDestination == null) {
                 bottomSheetScaffoldState.bottomSheetState.hide()
             } else {
+                targetDestination?.let { destination = it }
                 bottomSheetScaffoldState.bottomSheetState.expand()
             }
         }
         LaunchedEffect(bottomSheetScaffoldState.bottomSheetState.currentValue) {
             if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Hidden) {
-                destination = null
+                targetDestination = null
             }
         }
+        val hazeState = remember { HazeState() }
         BottomSheetScaffold(
-            modifier = modifier,
+            modifier = modifier.hazeSource(hazeState),
             scaffoldState = bottomSheetScaffoldState,
             sheetContent = {
-                when (destination) {
-                    ChatLayoutDestinations.MODEL_SELECTION -> {
-                        NewChat(
-                            selectModel = { modelConfig ->
-                                viewModel.selectNewChatModel(modelConfig)
-                                destination = null
-                            },
-                        )
+                CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))) {
+                    when (destination) {
+                        ChatLayoutDestinations.MODEL_SELECTION -> {
+                            NewChat(
+                                selectModel = { modelConfig ->
+                                    viewModel.selectNewChatModel(modelConfig)
+                                    targetDestination = null
+                                },
+                                hazeState = hazeState,
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = { targetDestination = null },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                        ChatLayoutDestinations.CHAT_SETTINGS -> {
+                            ChatDetails(
+                                chatId = currentChat,
+                                hazeState = hazeState,
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = { targetDestination = null },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
-                    ChatLayoutDestinations.CHAT_SETTINGS -> {
-                        ChatDetails(
-                            chatId = currentChat
-                        )
-                    }
-                    else -> {}
                 }
             },
             sheetDragHandle = null,
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
-            sheetContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(0.dp),
+            sheetContainerColor = Color.Transparent,
         ) { _ ->
             ChatDetail(
                 state = state,
@@ -116,8 +152,12 @@ fun ChatLayout(
                 refreshChat = viewModel::refreshChat,
                 sendError = viewModel::sendError,
                 navigationIcon = navigationIcon,
-                navigateToChatSettings = { destination = ChatLayoutDestinations.CHAT_SETTINGS },
-                navigateToModelSelection = { destination = ChatLayoutDestinations.MODEL_SELECTION },
+                navigateToChatSettings = {
+                    targetDestination = if (targetDestination == null) ChatLayoutDestinations.CHAT_SETTINGS else null
+                },
+                navigateToModelSelection = {
+                    targetDestination = if (targetDestination == null) ChatLayoutDestinations.MODEL_SELECTION else null
+                },
             )
         }
     }

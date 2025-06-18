@@ -51,6 +51,7 @@ kotlin {
         implementation(projects.composeApp.feature.home)
         implementation(projects.composeApp.feature.auth)
         implementation(projects.composeApp.feature.chat)
+        implementation(projects.composeApp.feature.dashboard)
         implementation(projects.composeApp.feature.error)
         implementation(projects.composeApp.feature.onboarding)
         implementation(projects.composeApp.feature.permission)

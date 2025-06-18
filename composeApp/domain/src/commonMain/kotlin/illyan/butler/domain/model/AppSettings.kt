@@ -8,8 +8,7 @@ import kotlin.uuid.Uuid
 data class AppSettings @OptIn(ExperimentalUuidApi::class) constructor(
     val clientId: Uuid = Uuid.random(),
     val preferences: DomainPreferences = DomainPreferences.Default,
-    val hostUrl: String = "",
-    val signedInUserId: String? = null
+    val filterConfiguration: FilterConfiguration = FilterConfiguration.Default,
 ) {
     @OptIn(ExperimentalUuidApi::class)
     companion object {

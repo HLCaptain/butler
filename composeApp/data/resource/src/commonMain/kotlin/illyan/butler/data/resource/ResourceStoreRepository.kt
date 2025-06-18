@@ -31,7 +31,7 @@ class ResourceStoreRepository(
                 StoreReadRequest.cached(ResourceKey.Read.ByResourceId(source, resourceId), source is Source.Server)
             ).map {
                 it.throwIfError()
-                Napier.d("Read Response: ${it::class.qualifiedName}")
+                Napier.d("getResourceFlow Read Response: ${it::class.qualifiedName}")
                 val data = it.dataOrNull()
                 Napier.d("Resource id: ${data?.id}")
                 data

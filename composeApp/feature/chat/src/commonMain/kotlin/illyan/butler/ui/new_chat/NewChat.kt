@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
@@ -50,13 +51,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
@@ -65,10 +64,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -115,13 +114,14 @@ import illyan.butler.core.ui.components.SmallMenuButton
 import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
+import illyan.butler.domain.model.FilterConfiguration
+import illyan.butler.domain.model.FilterType
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.api
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.companies
 import illyan.butler.generated.resources.device
 import illyan.butler.generated.resources.filters
-import illyan.butler.generated.resources.filters_coming_soon
 import illyan.butler.generated.resources.free
 import illyan.butler.generated.resources.free_models_only
 import illyan.butler.generated.resources.hosts
@@ -133,7 +133,10 @@ import illyan.butler.generated.resources.search
 import illyan.butler.generated.resources.select
 import illyan.butler.generated.resources.server
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.FilterOption
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -142,6 +145,7 @@ import kotlin.uuid.ExperimentalUuidApi
 @Composable
 fun NewChat(
     selectModel: (AiSource) -> Unit,
+    hazeState: HazeState = remember { HazeState() },
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val viewModel = koinViewModel<NewChatViewModel>()
@@ -149,6 +153,8 @@ fun NewChat(
     NewChat(
         state = state,
         selectModel = selectModel,
+        onFilterChanged = viewModel::onFilterChanged,
+        hazeState = hazeState,
         navigationIcon = navigationIcon,
     )
 }
@@ -171,16 +177,23 @@ private fun filterModelsWithQuery(
 fun NewChat(
     state: NewChatState,
     selectModel: (AiSource) -> Unit,
+    onFilterChanged: (FilterConfiguration) -> Unit,
+    hazeState: HazeState = remember { HazeState() },
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var searchFilter by rememberSaveable { mutableStateOf("") }
-    var freeFilterEnabled by rememberSaveable { mutableStateOf(false) }
-    val filteredAiSources = remember(searchFilter, freeFilterEnabled, state.aiSources) {
-        val models = filterModelsWithQuery(state.aiSources, searchFilter)
-        if (freeFilterEnabled) filterModelsWithQuery(models, "free") else models
+    val regexFilters = state.filterConfiguration.filterOptions.mapNotNull { (filter, enabled) -> if (!enabled) null else filter as? FilterOption.RegexFilter }
+    val filteredAiSources = remember(
+        searchFilter,
+        regexFilters,
+        state.aiSources
+    ) {
+        val queries = regexFilters.map { it.pattern } + searchFilter
+        queries.fold(state.aiSources) { models, pattern ->
+            filterModelsWithQuery(models, pattern)
+        }
     }
-    val hazeState = remember { HazeState() }
     var selectedModelId by remember { mutableStateOf<String?>(null) }
     val selectedModel = remember(selectedModelId, state.aiSources) {
         if (selectedModelId == null) null
@@ -190,11 +203,11 @@ fun NewChat(
         selectedModelId = null
     }
     // FabState -> 0: close, 1: search, 2: filters
-    var fabState by rememberSaveable { mutableIntStateOf(0) }
+    var filtersFabOpen by rememberSaveable { mutableStateOf(false) }
     var filtersMenuShown by rememberSaveable { mutableStateOf(false) }
     var searchFiltersShown by rememberSaveable { mutableStateOf(false) }
     val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
-    var filterByCompany by rememberSaveable { mutableStateOf(false) }
+    val filterByCompany = state.filterConfiguration.selectedFilterType == FilterType.COMPANIES
     SharedTransitionLayout {
         val blurRadius by animateFloatAsState(if (selectedModel != null) 32f else 0f)
         val darkenRatio by animateFloatAsState(if (selectedModel != null) 2.5f else 1f)
@@ -214,7 +227,7 @@ fun NewChat(
             }.then(if (selectedModel == null) Modifier else Modifier.focusProperties { canFocus = false })
         ) {
             Scaffold(
-                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                modifier = Modifier.hazeEffect(hazeState).nestedScroll(scrollBehavior.nestedScrollConnection),
                 topBar = {
                     TopAppBar(
                         modifier = Modifier.hazeEffect(hazeState) {
@@ -235,50 +248,55 @@ fun NewChat(
                         ),
                     )
                 },
+                containerColor = Color.Transparent,
                 floatingActionButton = {
-                    Column(Modifier.consumeWindowInsets(WindowInsets.systemBars)) {
-                        AnimatedContent(targetState = fabState) { fab ->
-                            when (fab) {
-                                0 -> {
-                                    RegularFABs(
-                                        isCompact = isCompact,
-                                        setFabState = { fabState = it },
-                                        animatedVisibilityScope = this@AnimatedContent,
-                                        sharedTransitionScope = this@SharedTransitionLayout
-                                    )
-                                }
-                                1 -> {
-                                    SearchOpenFAB(
-                                        searchFilter = searchFilter,
-                                        setSearchFilter = { searchFilter = it },
-                                        searchFiltersShown = searchFiltersShown,
-                                        setSearchFiltersShown = { searchFiltersShown = it },
-                                        isCompact = isCompact,
-                                        hazeState = hazeState,
-                                        setFabState = { fabState = it },
-                                        selectedModel = selectedModel,
-                                        freeFilterEnabled = freeFilterEnabled,
-                                        setFreeFilterEnabled = { freeFilterEnabled = it },
-                                        animatedVisibilityScope = this@AnimatedContent,
-                                        sharedTransitionScope = this@SharedTransitionLayout
-                                    )
-                                }
-                                2 -> {
-                                    FiltersOpenFAB(
-                                        filtersMenuShown = filtersMenuShown,
-                                        setFiltersMenuShown = { filtersMenuShown = it },
-                                        isCompact = isCompact,
-                                        filterByCompany = filterByCompany,
-                                        setFilterByCompany = { filterByCompany = it },
-                                        hazeState = hazeState,
-                                        setFabState = { fabState = it },
-                                        animatedVisibilityScope = this@AnimatedContent,
-                                        sharedTransitionScope = this@SharedTransitionLayout
-                                    )
-                                }
+                    AnimatedContent(targetState = filtersFabOpen) { isFabOpen ->
+                        Column(
+                            modifier = Modifier.consumeWindowInsets(WindowInsets.systemBars),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            if (!isFabOpen) {
+                                FiltersFAB(
+                                    isCompact = isCompact,
+                                    onFabShowChanged = { filtersFabOpen = it },
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    sharedTransitionScope = this@SharedTransitionLayout
+                                )
+                            } else {
+                                FiltersOpenFAB(
+                                    filtersMenuShown = filtersMenuShown,
+                                    setFiltersMenuShown = { filtersMenuShown = it },
+                                    isCompact = isCompact,
+                                    filterByCompany = filterByCompany,
+                                    filters = state.filterConfiguration.filterOptions.toPersistentMap(),
+                                    setFilterEnabled = { filter, enabled ->
+                                        onFilterChanged(
+                                            state.filterConfiguration.copy(
+                                                filterOptions = state.filterConfiguration.filterOptions + (filter to enabled),
+                                            )
+                                        )
+                                    },
+                                    setFilterByCompany = { onFilterChanged(state.filterConfiguration.copy(selectedFilterType = if (it) FilterType.COMPANIES else FilterType.MODEL_ID)) },
+                                    hazeState = hazeState,
+                                    onFabShowChanged = { filtersFabOpen = it },
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    sharedTransitionScope = this@SharedTransitionLayout
+                                )
                             }
+                            SearchOpenFAB(
+                                searchFilter = searchFilter,
+                                setSearchFilter = { searchFilter = it },
+                                searchFiltersShown = searchFiltersShown,
+                                setSearchFiltersShown = { searchFiltersShown = it },
+                                isCompact = isCompact,
+                                hazeState = hazeState,
+                                selectedModel = selectedModel,
+                                animatedVisibilityScope = this@AnimatedContent,
+                                sharedTransitionScope = this@SharedTransitionLayout
+                            )
+                            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
                         }
-                        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
                     }
                 }
             ) { innerPadding ->
@@ -315,7 +333,7 @@ fun NewChat(
                         modelName = AiSource.getNameFromId(modelIdWithoutCompany),
                         modelId = model.modelId,
                         aiSourceSelection = filteredAiSources.orEmpty().filter { it.modelId == model.modelId }.toPersistentSet(),
-                        selectModel = { aiSource -> selectModel(aiSource) },
+                        selectModel = { aiSource -> selectModel(aiSource); selectedModelId = null },
                     )
                 }
             }
@@ -325,77 +343,56 @@ fun NewChat(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun RegularFABs(
+fun FiltersFAB(
     isCompact: Boolean,
-    setFabState: (Int) -> Unit,
+    onFabShowChanged: (Boolean) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
     sharedTransitionScope: SharedTransitionScope
 ) = with(sharedTransitionScope) {
-    Column(horizontalAlignment = Alignment.End) {
-        SmallFloatingActionButton(
+    val filtersIcon = movableContentOf {
+        Icon(
+            modifier = Modifier.sharedElement(
+                rememberSharedContentState(key = "filter_icon"),
+                animatedVisibilityScope = animatedVisibilityScope
+            ),
+            imageVector = Icons.Rounded.FilterList,
+            contentDescription = stringResource(Res.string.filters)
+        )
+    }
+    if (isCompact) {
+        FloatingActionButton(
             modifier = Modifier.sharedBounds(
                 sharedContentState = rememberSharedContentState("filter_fab"),
                 animatedVisibilityScope = animatedVisibilityScope,
-                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
             ),
-            onClick = { setFabState(2) },
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            onClick = { onFabShowChanged(true) },
         ) {
-            Icon(
-                imageVector = Icons.Rounded.FilterList,
-                contentDescription = stringResource(Res.string.filters)
-            )
+            filtersIcon()
         }
-        if (isCompact) {
-            FloatingActionButton(
-                modifier = Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState("search_fab"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                ),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                onClick = { setFabState(1) },
+    } else {
+        ExtendedFloatingActionButton(
+            modifier = Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState("search_fab"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+            ),
+            onClick = { onFabShowChanged(true) },
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
+                filtersIcon()
+                Text(
                     modifier = Modifier.sharedElement(
-                        rememberSharedContentState(key = "search_icon"),
+                        sharedContentState = rememberSharedContentState("filters_text"),
                         animatedVisibilityScope = animatedVisibilityScope
-                    ),
-                    imageVector = Icons.Rounded.Search,
-                    contentDescription = stringResource(Res.string.search)
+                    ).skipToLookaheadSize(),
+                    text = stringResource(Res.string.filters)
                 )
-            }
-        } else {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState("search_fab"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                ),
-                onClick = { setFabState(1) },
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        modifier = Modifier.sharedElement(
-                            sharedContentState = rememberSharedContentState(key = "search_icon"),
-                            animatedVisibilityScope = animatedVisibilityScope
-                        ),
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = stringResource(Res.string.search)
-                    )
-                    Text(
-                        modifier = Modifier.sharedElement(
-                            sharedContentState = rememberSharedContentState("search_filter"),
-                            animatedVisibilityScope = animatedVisibilityScope
-                        ).skipToLookaheadSize(),
-                        text = stringResource(Res.string.search)
-                    )
-                }
             }
         }
     }
@@ -412,10 +409,7 @@ fun SearchOpenFAB(
     setSearchFiltersShown: (Boolean) -> Unit,
     isCompact: Boolean,
     hazeState: HazeState,
-    setFabState: (Int) -> Unit,
     selectedModel: AiSource?,
-    freeFilterEnabled: Boolean,
-    setFreeFilterEnabled: (Boolean) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
     sharedTransitionScope: SharedTransitionScope
 ) = with(sharedTransitionScope) {
@@ -431,21 +425,6 @@ fun SearchOpenFAB(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedIconToggleButton(
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                checked = searchFiltersShown,
-                onCheckedChange = setSearchFiltersShown,
-                border = BorderStroke(width = if (searchFiltersShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.primary),
-                colors = IconButtonDefaults.iconToggleButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Tune,
-                    contentDescription = stringResource(Res.string.filters)
-                )
-            }
             ButlerTextField(
                 modifier = Modifier
                     .weight(1f)
@@ -470,48 +449,6 @@ fun SearchOpenFAB(
                     )
                 }
             )
-            FilledIconButton(
-                onClick = { setFabState(0) },
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = stringResource(Res.string.close)
-                )
-            }
-        }
-        ButlerDropdownMenu(
-            expanded = searchFiltersShown,
-            onDismissRequest = { setSearchFiltersShown(false) },
-        ) {
-            ButlerDropdownMenuDefaults.DropdownMenuItem {
-                Text(
-                    text = stringResource(Res.string.filters),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-            }
-            CompositionLocalProvider(
-                LocalMinimumInteractiveComponentSize provides 40.dp
-            ) {
-                ButlerDropdownMenuDefaults.DropdownMenuItem(
-                    onClick = {
-                        setFreeFilterEnabled(!freeFilterEnabled)
-                    },
-                    leadingIcon = {
-                        Text(text = "$")
-                    },
-                    trailingIcon = {
-                        ButlerCheckbox(
-                            checked = freeFilterEnabled,
-                            onCheckedChange = setFreeFilterEnabled
-                        )
-                    }
-                ) {
-                    Text(
-                        text = stringResource(Res.string.free_models_only),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
         }
         LaunchedEffect(selectedModel) {
             if (selectedModel == null) {
@@ -531,8 +468,10 @@ fun FiltersOpenFAB(
     isCompact: Boolean,
     filterByCompany: Boolean,
     setFilterByCompany: (Boolean) -> Unit,
+    filters: PersistentMap<FilterOption, Boolean>,
+    setFilterEnabled: (FilterOption, Boolean) -> Unit,
     hazeState: HazeState,
-    setFabState: (Int) -> Unit,
+    onFabShowChanged: (Boolean) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
     sharedTransitionScope: SharedTransitionScope
 ) = with(sharedTransitionScope) {
@@ -558,7 +497,9 @@ fun FiltersOpenFAB(
                     border = BorderStroke(width = if (filtersMenuShown) 2.dp else 0.dp, color = MaterialTheme.colorScheme.secondary),
                     colors = IconButtonDefaults.iconToggleButtonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.secondary
+                        contentColor = MaterialTheme.colorScheme.secondary,
+                        checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        checkedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
                     Icon(
@@ -568,7 +509,7 @@ fun FiltersOpenFAB(
                 }
 
                 FilledIconButton(
-                    onClick = { setFabState(0) },
+                    onClick = { onFabShowChanged(false) },
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -599,10 +540,44 @@ fun FiltersOpenFAB(
             onDismissRequest = { setFiltersMenuShown(false) },
             matchTextFieldWidth = false
         ) {
-            Text(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                text = stringResource(Res.string.filters_coming_soon)
-            )
+            ButlerDropdownMenuDefaults.DropdownMenuItem {
+                Text(
+                    text = stringResource(Res.string.filters),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+            filters.forEach { (filter, enabled) ->
+                ButlerDropdownMenuDefaults.DropdownMenuItem(
+                    onClick = {
+                        setFilterEnabled(filter, !enabled)
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = when (filter) {
+                                FilterOption.FreeRegexFilter -> Icons.Rounded.AttachMoney
+                                is FilterOption.RegexFilter -> Icons.Rounded.Search
+                            },
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = {
+                        ButlerCheckbox(
+                            checked = enabled,
+                            onCheckedChange = { enabled ->
+                                setFilterEnabled(filter, enabled)
+                            }
+                        )
+                    }
+                ) {
+                    Text(
+                        text = when (filter) {
+                            FilterOption.FreeRegexFilter -> stringResource(Res.string.free_models_only)
+                            is FilterOption.RegexFilter -> "\"${filter.pattern}\""
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
     }
 }
@@ -620,7 +595,7 @@ fun FiltersTab(
     val indicatorPadding = 6.dp
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(100))
+            .clip(CircleShape)
             .hazeEffect(hazeState, HazeMaterials.ultraThin())
             .border(
                 1.dp,
@@ -637,7 +612,7 @@ fun FiltersTab(
                     modifier = Modifier
                         .tabIndicatorOffset(selectedIndex, matchContentSize = false)
                         .padding(indicatorPadding)
-                        .clip(RoundedCornerShape(100))
+                        .clip(CircleShape)
                         .hazeEffect(hazeState, HazeMaterials.thin(MaterialTheme.colorScheme.primaryContainer)),
                     height = with(LocalDensity.current) { tabRowHeightPx.toDp() - indicatorPadding },
                     color = Color.Transparent
@@ -663,7 +638,7 @@ fun FiltersTab(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(indicatorPadding)
-                            .clip(RoundedCornerShape(100))
+                            .clip(CircleShape)
                             .indication(
                                 interactionSource = interactionSources[index],
                                 indication = LocalIndication.current
@@ -837,6 +812,9 @@ fun ModelListItemCompact(
             ),
             onClick = onClick,
             contentPadding = ButlerCardDefaults.CompactContentPadding,
+            colors = ButlerCardDefaults.cardColors(
+                containerColor = Color.Transparent
+            )
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically

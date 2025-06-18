@@ -11,12 +11,14 @@ import illyan.butler.core.local.room.dao.DataHistoryDao
 import illyan.butler.core.local.room.dao.MessageDao
 import illyan.butler.core.local.room.dao.ResourceDao
 import illyan.butler.core.local.room.dao.UserDao
+import illyan.butler.core.local.room.dao.UserTokensDao
 import illyan.butler.core.local.room.model.RoomApiKeyCredential
 import illyan.butler.core.local.room.model.RoomChat
 import illyan.butler.core.local.room.model.RoomDataHistory
 import illyan.butler.core.local.room.model.RoomMessage
 import illyan.butler.core.local.room.model.RoomResource
 import illyan.butler.core.local.room.model.RoomUser
+import illyan.butler.core.local.room.model.RoomUserTokens
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
@@ -28,9 +30,10 @@ expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
         RoomDataHistory::class,
         RoomResource::class,
         RoomUser::class,
-        RoomApiKeyCredential::class
+        RoomApiKeyCredential::class,
+        RoomUserTokens::class
     ],
-    version = 9
+    version = 11
 )
 @ConstructedBy(ButlerDatabaseCtor::class)
 @TypeConverters(Converters::class)
@@ -40,5 +43,6 @@ abstract class ButlerDatabase : RoomDatabase() {
     abstract fun dataHistoryDao(): DataHistoryDao
     abstract fun resourceDao(): ResourceDao
     abstract fun apiKeyCredentialDao(): ApiKeyCredentialDao
+    abstract fun userTokensDao(): UserTokensDao
     abstract fun userDao(): UserDao
 }

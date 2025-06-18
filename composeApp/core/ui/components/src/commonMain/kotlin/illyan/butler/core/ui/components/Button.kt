@@ -16,6 +16,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -452,7 +453,7 @@ fun ButlerTextButton(
     contentPadding: PaddingValues = ButlerButtonDefaults.MediumContentPadding,
     interactionSource: MutableInteractionSource? = null,
     content: @Composable (RowScope.() -> Unit)
-) = Button(
+) = TextButton(
     modifier = modifier,
     onClick = onClick,
     enabled = enabled,
@@ -583,10 +584,10 @@ object ButlerButtonDefaults {
 
     @Composable
     fun solidButtonColors(
-        contentColor: Color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor: Color = MaterialTheme.colorScheme.primaryContainer.ensureContrastWith(MaterialTheme.colorScheme.primary),
         containerColor: Color = MaterialTheme.colorScheme.primary
     ) = ButtonDefaults.buttonColors().copy(
-        contentColor = contentColor.ensureContrastWith(containerColor),
+        contentColor = contentColor,
         containerColor = containerColor,
         disabledContentColor = MaterialTheme.colorScheme.surface,
         disabledContainerColor = containerColor.copy(alpha = DisabledAlpha),
@@ -594,13 +595,13 @@ object ButlerButtonDefaults {
 
     @Composable
     fun solidButtonPrimaryColors() = solidButtonColors(
-        contentColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.primaryContainer.ensureContrastWith(MaterialTheme.colorScheme.primary),
         containerColor = MaterialTheme.colorScheme.primary
     )
 
     @Composable
     fun solidButtonSecondaryColors() = solidButtonColors(
-        contentColor = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.secondaryContainer.ensureContrastWith(MaterialTheme.colorScheme.secondary),
         containerColor = MaterialTheme.colorScheme.secondary
     )
 
@@ -615,10 +616,10 @@ object ButlerButtonDefaults {
     @Composable
     fun solidButtonInvertedColors(
         contentColor: Color = MaterialTheme.colorScheme.primary,
-        containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+        containerColor: Color = MaterialTheme.colorScheme.primaryContainer.ensureContrastWith(MaterialTheme.colorScheme.primary),
     ) = ButtonDefaults.buttonColors().copy(
         contentColor = contentColor,
-        containerColor = containerColor.ensureContrastWith(contentColor, 4.5),
+        containerColor = containerColor,
         disabledContentColor = contentColor,
         disabledContainerColor = containerColor.copy(alpha = DisabledAlpha)
     )
@@ -626,13 +627,13 @@ object ButlerButtonDefaults {
     @Composable
     fun solidButtonPrimaryInvertedColors() = solidButtonInvertedColors(
         contentColor = MaterialTheme.colorScheme.primary,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        containerColor = MaterialTheme.colorScheme.primaryContainer.ensureContrastWith(MaterialTheme.colorScheme.primary),
     )
 
     @Composable
     fun solidButtonSecondaryInvertedColors() = solidButtonInvertedColors(
         contentColor = MaterialTheme.colorScheme.secondary,
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        containerColor = MaterialTheme.colorScheme.secondaryContainer.ensureContrastWith(MaterialTheme.colorScheme.secondary),
     )
 
     @Composable

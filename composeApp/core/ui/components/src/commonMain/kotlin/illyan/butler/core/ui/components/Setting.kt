@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -85,7 +86,7 @@ fun BooleanSetting(
 fun <T : Any> DropdownSetting(
     selectedValue: T? = null,
     isDropdownOpen: Boolean = false,
-    onDismissRequest: () -> Unit = {},
+    onToggleDropdown: () -> Unit = {},
     values: Iterable<T> = emptyList(),
     text: @Composable (T) -> Unit = { Text(it.toString()) },
     getValueLeadingIcon: (T) -> ImageVector? = { null },
@@ -96,7 +97,7 @@ fun <T : Any> DropdownSetting(
 ) {
     SettingItem(
         settingName = settingName,
-        onClick = onDismissRequest,
+        onClick = onToggleDropdown,
         enabled = enabled,
     ) {
         Row(
@@ -108,7 +109,9 @@ fun <T : Any> DropdownSetting(
                 targetState = selectedValue,
                 label = "Dropdown setting text",
             ) { state ->
-                state?.let { text(it) }
+                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                    state?.let { text(it) }
+                }
             }
             Icon(
                 imageVector = if (isDropdownOpen) {
@@ -121,7 +124,7 @@ fun <T : Any> DropdownSetting(
         }
         ButlerDropdownMenu(
             expanded = isDropdownOpen,
-            onDismissRequest = onDismissRequest,
+            onDismissRequest = onToggleDropdown,
             popupProperties = PopupProperties(focusable = true)
         ) {
             ButlerDropdownMenuDefaults.DropdownMenuList(
@@ -131,7 +134,7 @@ fun <T : Any> DropdownSetting(
                 valueText = text,
                 getValueLeadingIcon = getValueLeadingIcon,
                 getValueTrailingIcon = getValueTrailingIcon,
-                onDismissRequest = onDismissRequest
+                onDismissRequest = onToggleDropdown
             )
         }
     }

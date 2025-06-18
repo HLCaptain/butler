@@ -2,6 +2,7 @@ package illyan.butler.data.settings
 
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.domain.model.FilterConfiguration
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,7 @@ class AppMemoryRepository : AppRepository {
     private val _currentSignedInUser = MutableStateFlow<Set<Source.Server>>(emptySet())
     private val _defaultModel = MutableStateFlow<AiSource?>(null)
 
-    override val appSettings: Flow<AppSettings?> = _appSettings.asStateFlow()
+    override val appSettings: Flow<AppSettings> = _appSettings.asStateFlow()
     override val currentHost: Flow<String?> = _currentHost.asStateFlow()
     override val signedInServers: Flow<Set<Source.Server>> = _currentSignedInUser.asStateFlow()
     override val defaultModel: Flow<AiSource?> = _defaultModel.asStateFlow()
@@ -38,5 +39,13 @@ class AppMemoryRepository : AppRepository {
 
     override suspend fun removeServerSource(source: Source.Server) {
         _currentSignedInUser.update { it + source }
+    }
+
+    override suspend fun setFilterConfiguration(filterConfiguration: FilterConfiguration) {
+        _appSettings.update { it.copy(filterConfiguration = filterConfiguration) }
+    }
+
+    override suspend fun setAppSettings(appSettings: AppSettings) {
+        _appSettings.update { appSettings }
     }
 }

@@ -46,7 +46,7 @@ class ProfileViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val signedInUser = authManager.signedInServers
         .flatMapLatest { servers ->
-            servers.firstOrNull()?.let { authManager.getUser(it.userId) } ?: flowOf(null)
+            servers.firstOrNull()?.let { authManager.getUser(it) } ?: flowOf(null)
         }
         .stateIn(
             viewModelScope,

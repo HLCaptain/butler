@@ -538,7 +538,7 @@ fun UserSettings(
                     DropdownSetting(
                         settingName = stringResource(Res.string.theme),
                         isDropdownOpen = isDropdownOpen,
-                        onDismissRequest = { isDropdownOpen = !isDropdownOpen },
+                        onToggleDropdown = { isDropdownOpen = !isDropdownOpen },
                         selectValue = onThemeChange,
                         selectedValue = preferences.theme,
                         values = Theme.entries.toList(),

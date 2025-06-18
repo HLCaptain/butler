@@ -2,6 +2,7 @@ package illyan.butler.data.settings
 
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.domain.model.FilterConfiguration
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +11,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 interface AppRepository {
-    val appSettings: Flow<AppSettings?>
+    val appSettings: Flow<AppSettings>
     val currentHost: Flow<String?>
     val signedInServers: Flow<Set<Source.Server>>
     val defaultModel: Flow<AiSource?>
@@ -21,4 +22,6 @@ interface AppRepository {
     suspend fun addServerSource(source: Source.Server)
     suspend fun removeServerSource(source: Source.Server)
     suspend fun setDefaultModel(model: AiSource?)
+    suspend fun setFilterConfiguration(filterConfiguration: FilterConfiguration)
+    suspend fun setAppSettings(appSettings: AppSettings)
 }

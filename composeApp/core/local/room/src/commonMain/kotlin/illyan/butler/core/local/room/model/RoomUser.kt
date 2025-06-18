@@ -2,6 +2,7 @@ package illyan.butler.core.local.room.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import illyan.butler.shared.model.chat.FilterOption
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
@@ -17,6 +18,5 @@ data class RoomUser(
     val fullName: String?,
     val photoUrl: String?,
     val address: RoomAddress?,
-    val accessToken: RoomToken?,
-    val refreshToken: RoomToken?
+    val filterOptions: Set<FilterOption>
 )

@@ -24,6 +24,8 @@
     <string name="profile">Profile</string>
     <string name="unknown">Unknown</string>
     <string name="user_id">User ID</string>
+    <string name="select_user">Select users</string>
+    <string name="add_user">Add user</string>
     <string name="locked">Locked</string>
     <string name="hidden_field_string">********</string>
     <string name="copied_to_clipboard">Copied to Clipboard!</string>
@@ -57,6 +59,7 @@
     <string name="select">Select</string>
     <string name="search">Search</string>
     <string name="filters">Filters</string>
+    <string name="add_filter">Add filter</string>
     <string name="filters_coming_soon">More filter options are coming soon! 🍵</string>
     <string name="free">Free</string>
     <string name="free_models_only">Free models only</string>
@@ -92,6 +95,15 @@
     <string name="no_models_selected">No models selected</string>
     <string name="back">Back</string>
     <string name="menu">Menu</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="auth">Authentication</string>
+    <string name="history">History</string>
+    <string name="customization">Customization</string>
+    <string name="account">Account</string>
+    <string name="display_name">Display name</string>
+    <string name="photo_url">Photo URL</string>
+    <string name="full_name">Full name</string>
+    <string name="reset">Reset</string>
     <string name="dismiss">Dismiss</string>
     <string name="turn_on">Turn on</string>
     <string name="settings">Settings</string>
@@ -120,6 +132,8 @@
     <string name="stop">Stop</string>
     <string name="play">Play</string>
     <string name="none">None</string>
+    <string name="no_logged_in_users_status_message_title">No Accounts</string>
+    <string name="no_logged_in_users_status_message_description">No accounts added yet. To view and modify account details, please sign in through a Butler server instance!</string>
     <string name="no_models_to_chat_with">No models to chat with</string>
     <string name="turn_on_analytics">Turn on analytics</string>
     <string name="turn_on_analytics_description">Analytics help the development of Butler to provide a more stable and better experience. By turning on analytics, you anonymously send event data, crash logs and performance metrics to us. App restart may be required for the setting to be active.</string>
@@ -141,6 +155,7 @@
 
     <!-- About -->
     <string name="about">About</string>
+    <string name="about_x">About %1$s</string>
     <string name="app_description_brief">Butler is an open-source AI chat app that allows you to chat with various AI models. Select from an OpenAI API endpoint or host your own!</string>
     <string name="libraries">Libraries</string>
     <string name="support_app">Support Butler</string>

@@ -3,9 +3,10 @@
 package illyan.butler.core.network.ktor.http
 
 import illyan.butler.config.BuildConfig
-import illyan.butler.core.local.datasource.UserLocalDataSource
+import illyan.butler.core.local.datasource.CredentialLocalDataSource
 import illyan.butler.data.error.ErrorRepository
 import illyan.butler.domain.model.Token
+import illyan.butler.domain.model.UserTokens
 import illyan.butler.shared.model.response.UserTokensResponse
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClientConfig
@@ -54,7 +55,7 @@ fun HttpClientConfig<CIOEngineConfig>.setupCioClient() {
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalUuidApi::class)
 fun HttpClientConfig<*>.setupClient(
-    userDataSource: UserLocalDataSource,
+    credentialDataSource: CredentialLocalDataSource,
     errorRepository: ErrorRepository,
     endpoint: String,
     userId: Uuid?,
@@ -96,11 +97,11 @@ fun HttpClientConfig<*>.setupClient(
                     Napier.d { "User is not signed in" }
                     null
                 } else {
-                    val currentUser = userDataSource.getUser(userId).first()
-                    val accessMillis = currentUser?.accessToken?.tokenExpiration?.toEpochMilliseconds()
-                    val refreshMillis = currentUser?.refreshToken?.tokenExpiration?.toEpochMilliseconds()
-                    val accessToken = currentUser?.accessToken?.token
-                    val refreshToken = currentUser?.refreshToken?.token
+                    val userTokens = credentialDataSource.getUserTokens(userId).first()
+                    val accessMillis = userTokens?.accessToken?.tokenExpiration?.toEpochMilliseconds()
+                    val refreshMillis = userTokens?.refreshToken?.tokenExpiration?.toEpochMilliseconds()
+                    val accessToken = userTokens?.accessToken?.token
+                    val refreshToken = userTokens?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
                     if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
                         Napier.d { "No access or refresh token found in app settings" }
@@ -120,11 +121,11 @@ fun HttpClientConfig<*>.setupClient(
             }
             refreshTokens {
                 if (userId != null) {
-                    val currentUser = userDataSource.getUser(userId).first()
-                    val accessMillis = currentUser?.accessToken?.tokenExpiration?.toEpochMilliseconds()
-                    val refreshMillis = currentUser?.refreshToken?.tokenExpiration?.toEpochMilliseconds()
-                    val accessToken = currentUser?.accessToken?.token
-                    val refreshToken = currentUser?.refreshToken?.token
+                    val userTokens = credentialDataSource.getUserTokens(userId).first()
+                    val accessMillis = userTokens?.accessToken?.tokenExpiration?.toEpochMilliseconds()
+                    val refreshMillis = userTokens?.refreshToken?.tokenExpiration?.toEpochMilliseconds()
+                    val accessToken = userTokens?.accessToken?.token
+                    val refreshToken = userTokens?.refreshToken?.token
                     val currentMillis = Clock.System.now().toEpochMilliseconds()
                     if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
                         Napier.d { "No access or refresh token found in app settings" }
@@ -138,10 +139,12 @@ fun HttpClientConfig<*>.setupClient(
                         client.post("/refresh-access-token") {
                             oldTokens?.refreshToken?.let { bearerAuth(it) }
                         }.body<UserTokensResponse>().run {
-                            userDataSource.refreshUserTokens(
+                            credentialDataSource.upsertUserTokens(
                                 userId,
-                                Token(accessToken, Instant.fromEpochMilliseconds(accessTokenExpirationMillis)),
-                                Token(refreshToken, Instant.fromEpochMilliseconds(refreshTokenExpirationMillis))
+                                UserTokens(
+                                    accessToken = Token(accessToken, Instant.fromEpochMilliseconds(accessTokenExpirationMillis)),
+                                    refreshToken = Token(refreshToken, Instant.fromEpochMilliseconds(refreshTokenExpirationMillis))
+                                )
                             )
                             BearerTokens(accessToken, refreshToken)
                         }

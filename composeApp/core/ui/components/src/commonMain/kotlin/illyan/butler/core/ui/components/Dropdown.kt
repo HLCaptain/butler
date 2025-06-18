@@ -313,7 +313,7 @@ object ButlerDropdownMenuDefaults {
         Column(modifier = Modifier.focusable(enabled = true)) {
             values.forEachIndexed { index, value ->
                 val leadingIcon = remember { getValueLeadingIcon(value) }
-                val trailingIcon = remember {
+                val trailingIcon = remember(selectedValue) {
                     val icon = getValueTrailingIcon(value)
                     if (value == selectedValue) Icons.Rounded.Check else icon
                 }

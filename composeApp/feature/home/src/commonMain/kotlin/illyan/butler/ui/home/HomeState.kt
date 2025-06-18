@@ -10,5 +10,5 @@ data class HomeState @OptIn(ExperimentalUuidApi::class) constructor(
     val signedInUserId: Uuid? = null,
     val errors: List<DomainError> = listOf(),
     val chats: List<Chat> = listOf(),
-    val credentials: List<ApiKeyCredential> = listOf(),
+    val credentials: List<ApiKeyCredential>? = null,
 )

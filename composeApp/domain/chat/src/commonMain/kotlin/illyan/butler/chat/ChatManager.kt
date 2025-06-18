@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.time.ExperimentalTime
@@ -236,9 +235,9 @@ class ChatManager(
         resources: List<Resource>,
     ): Uuid {
         val resourceIds = resources.map { resource ->
-            resourceRepository.upsert(resource)
+            resourceRepository.create(resource)
         }
-        return messageRepository.upsert(
+        return messageRepository.create(
             Message(
                 chatId = chatId,
                 source = sender.source,
@@ -271,10 +270,8 @@ class ChatManager(
         message: Message,
     ) = messageRepository.create(message).also {
         Napier.v { "Message sent with ID: $it" }
-        if (message.source is Source.Device) {
-            coroutineScopeIO.launch {
-                answerOpenAIChat(message.chatId)
-            }
+        if (message.source is Source.Device && message.sender is SenderType.User) {
+            answerOpenAIChat(message.chatId)
         }
     }
 

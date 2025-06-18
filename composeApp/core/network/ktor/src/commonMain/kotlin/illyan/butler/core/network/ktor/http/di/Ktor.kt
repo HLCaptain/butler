@@ -90,7 +90,7 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import illyan.butler.config.BuildConfig
-import illyan.butler.core.local.datasource.UserLocalDataSource
+import illyan.butler.core.local.datasource.CredentialLocalDataSource
 import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
 import illyan.butler.data.error.ErrorRepository
@@ -110,7 +110,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @Single
 class KtorHttpClientFactory(
-    private val userDataSource: UserLocalDataSource,
+    private val credentialDataSource: CredentialLocalDataSource,
     private val errorRepository: ErrorRepository
 ) : (Source.Server) -> HttpClient {
 
@@ -123,7 +123,7 @@ class KtorHttpClientFactory(
             HttpClient(CIO) {
                 setupCioClient()
                 setupClient(
-                    userDataSource = userDataSource,
+                    credentialDataSource = credentialDataSource,
                     errorRepository = errorRepository,
                     endpoint = source.endpoint,
                     userId = source.userId
@@ -135,7 +135,7 @@ class KtorHttpClientFactory(
 
 @Single
 class KtorUnauthorizedHttpClientFactory(
-    private val userDataSource: UserLocalDataSource,
+    private val credentialDataSource: CredentialLocalDataSource,
     private val errorRepository: ErrorRepository
 ) : (String) -> HttpClient {
 
@@ -148,7 +148,7 @@ class KtorUnauthorizedHttpClientFactory(
             HttpClient(CIO) {
                 setupCioClient()
                 setupClient(
-                    userDataSource = userDataSource,
+                    credentialDataSource = credentialDataSource,
                     errorRepository = errorRepository,
                     endpoint = endpoint,
                     userId = null

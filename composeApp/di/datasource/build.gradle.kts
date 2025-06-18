@@ -12,6 +12,8 @@ kotlin {
         implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.core.network)
 
+        implementation(projects.composeApp.domain)
+
         implementation(libs.kotlinx.coroutines)
     }
 }

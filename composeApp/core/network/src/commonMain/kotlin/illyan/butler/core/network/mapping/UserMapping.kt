@@ -1,19 +1,15 @@
 @file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
-package illyan.butler.data.user
+package illyan.butler.core.network.mapping
 
 import illyan.butler.domain.model.Address
-import illyan.butler.domain.model.Token
 import illyan.butler.domain.model.User
 import illyan.butler.shared.model.identity.AddressDto
 import illyan.butler.shared.model.identity.UserDto
-import illyan.butler.shared.model.response.UserTokensResponse
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 
 fun UserDto.toDomainModel(
-    tokens: UserTokensResponse,
     endpoint: String,
 ) = User(
     id = id,
@@ -25,17 +21,29 @@ fun UserDto.toDomainModel(
     fullName = fullName,
     photoUrl = photoUrl,
     address = address?.toDomainModel(),
-    accessToken = Token(
-        token = tokens.accessToken,
-        tokenExpiration = Instant.fromEpochMilliseconds(tokens.accessTokenExpirationMillis)
-    ),
-    refreshToken = Token(
-        token = tokens.refreshToken,
-        tokenExpiration = Instant.fromEpochMilliseconds(tokens.refreshTokenExpirationMillis)
-    ),
+    filters = filters
 )
 
 fun AddressDto.toDomainModel() = Address(
+    street = street,
+    city = city,
+    state = state,
+    zip = zip
+)
+
+fun User.toNetworkModel() = UserDto(
+    id = id,
+    email = email,
+    username = username,
+    displayName = displayName,
+    phone = phone,
+    fullName = fullName,
+    photoUrl = photoUrl,
+    address = address?.toNetworkModel(),
+    filters = filters
+)
+
+fun Address.toNetworkModel() = AddressDto(
     street = street,
     city = city,
     state = state,

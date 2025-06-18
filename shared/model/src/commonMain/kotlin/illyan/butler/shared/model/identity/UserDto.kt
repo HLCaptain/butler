@@ -1,5 +1,6 @@
 package illyan.butler.shared.model.identity
 
+import illyan.butler.shared.model.chat.FilterOption
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -14,5 +15,6 @@ data class UserDto(
     val phone: String? = null,
     val fullName: String? = null,
     val photoUrl: String? = null,
-    val address: AddressDto? = null
+    val address: AddressDto? = null,
+    val filters: Set<FilterOption>
 )

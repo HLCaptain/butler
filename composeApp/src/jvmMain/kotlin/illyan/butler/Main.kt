@@ -28,6 +28,7 @@ import illyan.butler.model.ModelManager
 import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
+import illyan.butler.ui.DashboardFeatureModule
 import illyan.butler.ui.OnboardingFeatureModule
 import illyan.butler.ui.error.ErrorFeatureModule
 import illyan.butler.ui.home.HomeFeatureModule
@@ -47,6 +48,7 @@ fun main() = application {
     startKoin {
         val featureModules = listOf(AuthFeatureModule().module,
             ChatFeatureModule().module,
+            DashboardFeatureModule().module,
             ErrorFeatureModule().module,
             HomeFeatureModule().module,
             OnboardingFeatureModule().module,

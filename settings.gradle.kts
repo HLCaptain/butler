@@ -63,6 +63,7 @@ include(":composeApp:di:repository")
 
 include(":composeApp:feature:auth")
 include(":composeApp:feature:chat")
+include(":composeApp:feature:dashboard")
 include(":composeApp:feature:error")
 include(":composeApp:feature:home")
 include(":composeApp:feature:onboarding")
