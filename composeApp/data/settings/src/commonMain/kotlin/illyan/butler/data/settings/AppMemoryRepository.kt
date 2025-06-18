@@ -20,7 +20,6 @@ class AppMemoryRepository : AppRepository {
     private val _currentHost = MutableStateFlow<String?>(null)
     private val _currentSignedInUser = MutableStateFlow<Set<Source.Server>>(emptySet())
     private val _defaultModel = MutableStateFlow<AiSource?>(null)
-    override val selectedPromptConfiguration = MutableStateFlow<PromptConfiguration?>(null)
     override val appSettings: Flow<AppSettings> = _appSettings.asStateFlow()
     override val currentHost: Flow<String?> = _currentHost.asStateFlow()
     override val signedInServers: Flow<Set<Source.Server>> = _currentSignedInUser.asStateFlow()
@@ -51,7 +50,7 @@ class AppMemoryRepository : AppRepository {
     }
 
     override suspend fun setSelectedPromptConfiguration(promptConfiguration: PromptConfiguration?) {
-        selectedPromptConfiguration.update { promptConfiguration }
+        _appSettings.update { it.copy(selectedPromptConfiguration = promptConfiguration) }
     }
 
     override suspend fun setPromptConfigurations(promptConfigurations: List<PromptConfiguration>) {

@@ -159,7 +159,6 @@ import illyan.butler.generated.resources.username
 import illyan.butler.shared.llm.SystemPromptBuilder
 import illyan.butler.shared.llm.generateSystemPrompt
 import illyan.butler.shared.model.chat.FilterOption
-import illyan.butler.shared.model.chat.PromptConfiguration
 import kotlinx.collections.immutable.PersistentSet
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -213,7 +212,6 @@ fun Dashboard(
         onAddAuth = onAddAuth,
         onChangeAppSettings = viewModel::changeAppSettings,
         libraries = libraries,
-        setSelectedPromptConfiguration = viewModel::setSelectedPromptConfiguration,
     )
 }
 
@@ -229,7 +227,6 @@ fun DashboardScaffold(
     onChangeAppSettings: (AppSettings) -> Unit,
     onAddAuth: () -> Unit,
     libraries: State<Libs?>,
-    setSelectedPromptConfiguration: (PromptConfiguration?) -> Unit,
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
@@ -310,8 +307,6 @@ fun DashboardScaffold(
                                 onChangeAppSettings = onChangeAppSettings,
                                 currentUser = state.selectedUser,
                                 saveUser = saveUser,
-                                selectedPromptConfiguration = state.selectedPromptConfiguration,
-                                setSelectedPromptConfiguration = setSelectedPromptConfiguration
                             )
 //                            DashboardTab.History -> HistoryTabContent()
 //                            DashboardTab.Analytics -> AnalyticsTabContent()
@@ -785,10 +780,8 @@ fun AccountDeviceTabContent(
 fun CustomizationTabContent(
     currentUser: User?,
     saveUser: (User) -> Unit,
-    selectedPromptConfiguration: PromptConfiguration?,
     appSettings: AppSettings?,
     onChangeAppSettings: (AppSettings) -> Unit,
-    setSelectedPromptConfiguration: (PromptConfiguration?) -> Unit
 ) {
     // Display customization options
     Column(
@@ -814,8 +807,7 @@ fun CustomizationTabContent(
                 currentUser = currentUser,
                 saveUser = saveUser,
                 appSettings = appSettings,
-                setSelectedPromptConfiguration = setSelectedPromptConfiguration,
-                selectedPromptConfiguration = selectedPromptConfiguration
+                onChangeAppSettings = onChangeAppSettings,
             )
         }
     }
@@ -825,10 +817,9 @@ fun CustomizationTabContent(
 fun PromptSettings(
     modifier: Modifier = Modifier,
     currentUser: User?,
-    selectedPromptConfiguration: PromptConfiguration?,
     saveUser: (User) -> Unit,
     appSettings: AppSettings,
-    setSelectedPromptConfiguration: (PromptConfiguration?) -> Unit
+    onChangeAppSettings: (AppSettings) -> Unit,
 ) {
     // Display prompt configuration options
     Column(
@@ -876,20 +867,22 @@ fun PromptSettings(
             ButlerMediumTextButton(
                 onClick = {
                     // Set the selected prompt configuration as the favorite
-                    setSelectedPromptConfiguration(
-                        if (selectedPromptConfiguration?.name == promptConfigurations.getOrNull(selectedIndex)?.name) {
-                            null // Unselect if already selected
-                        } else {
-                            promptConfigurations.getOrNull(selectedIndex)
-                        }
+                    onChangeAppSettings(
+                        appSettings.copy(
+                            selectedPromptConfiguration = if (appSettings.selectedPromptConfiguration?.name == promptConfigurations.getOrNull(selectedIndex)?.name) {
+                                null // Unselect if already selected
+                            } else {
+                                promptConfigurations.getOrNull(selectedIndex)
+                            }
+                        )
                     )
                 },
                 enabled = promptConfigurations.isNotEmpty(),
                 trailingIcon = {
-                    val imageVector = if (selectedPromptConfiguration?.name == promptConfigurations.getOrNull(selectedIndex)?.name) {
-                        Icons.Rounded.StarBorder
-                    } else {
+                    val imageVector = if (appSettings.selectedPromptConfiguration?.name == promptConfigurations.getOrNull(selectedIndex)?.name) {
                         Icons.Rounded.Star
+                    } else {
+                        Icons.Rounded.StarBorder
                     }
                     Icon(
                         imageVector = imageVector,
@@ -898,7 +891,7 @@ fun PromptSettings(
                 }
             ) {
                 Text(
-                    text = if (selectedPromptConfiguration?.name == promptConfigurations.getOrNull(selectedIndex)?.name) {
+                    text = if (appSettings.selectedPromptConfiguration?.name == promptConfigurations.getOrNull(selectedIndex)?.name) {
                         stringResource(Res.string.selected)
                     } else {
                         stringResource(Res.string.select)

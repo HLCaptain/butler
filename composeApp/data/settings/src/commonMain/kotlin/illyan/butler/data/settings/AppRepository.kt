@@ -17,6 +17,7 @@ interface AppRepository {
     val signedInServers: Flow<Set<Source.Server>>
     val defaultModel: Flow<AiSource?>
     val selectedPromptConfiguration: Flow<PromptConfiguration?>
+        get() = appSettings.map { it.selectedPromptConfiguration }
     val isUserSignedIn: Flow<Boolean>
         get() = signedInServers.map { it.isNotEmpty() }
 

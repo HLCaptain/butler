@@ -6,7 +6,6 @@ import illyan.butler.auth.AuthManager
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.User
 import illyan.butler.settings.SettingsManager
-import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.Source
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,13 +33,11 @@ class DashboardViewModel(
         authManager.signedInUsers,
         settingsManager.appSettings,
         selectedUserSource.flatMapLatest { it?.let { authManager.getUser(it) } ?: flowOf(null) },
-        settingsManager.selectedPromptConfiguration
-    ) { users, settings, selectedUser, prompt ->
+    ) { users, settings, selectedUser ->
         DashboardState(
             users = users.toPersistentSet(),
             selectedUser = selectedUser,
             appSettings = settings,
-            selectedPromptConfiguration = prompt
         )
     }.stateIn(
         scope = viewModelScope,
@@ -61,12 +58,6 @@ class DashboardViewModel(
     fun changeAppSettings(appSettings: AppSettings) {
         viewModelScope.launch {
             settingsManager.updateAppSettings(appSettings)
-        }
-    }
-
-    fun setSelectedPromptConfiguration(promptConfiguration: PromptConfiguration?) {
-        viewModelScope.launch {
-            settingsManager.setSelectedPromptConfiguration(promptConfiguration)
         }
     }
 }

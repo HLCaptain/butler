@@ -25,7 +25,6 @@ class AppSettingsLocalRepository(
 ) : AppRepository {
     companion object {
         val appSettingsKey = stringPreferencesKey("app_settings")
-        val selectedPromptConfigurationKey = stringPreferencesKey("selected_prompt_configuration")
         val hostKey = stringPreferencesKey("host")
         val signedInUserKey = stringPreferencesKey("signed_in_user")
         val defaultModelKey = stringPreferencesKey("default_model")
@@ -133,30 +132,11 @@ class AppSettingsLocalRepository(
         }
     }
 
-    override val selectedPromptConfiguration: Flow<PromptConfiguration?>
-        get() = datastore.data.map { preferences ->
-            if (preferences[selectedPromptConfigurationKey] != null) {
-                try {
-                    Json.decodeFromString(preferences[selectedPromptConfigurationKey]!!)
-                } catch (e: Exception) {
-                    Napier.e(e) { "Error decoding selected prompt configuration, resetting to null" }
-                    datastore.edit { datastorePreferences ->
-                        datastorePreferences.remove(selectedPromptConfigurationKey)
-                    }
-                    null
-                }
-            } else {
-                null
-            }
-        }
-
     override suspend fun setSelectedPromptConfiguration(promptConfiguration: PromptConfiguration?) {
         datastore.edit { datastorePreferences ->
-            if (promptConfiguration != null) {
-                datastorePreferences[selectedPromptConfigurationKey] = Json.encodeToString(promptConfiguration)
-            } else {
-                datastorePreferences.remove(selectedPromptConfigurationKey)
-            }
+            val currentSettings = appSettings.first()
+            val updatedSettings = currentSettings.copy(selectedPromptConfiguration = promptConfiguration)
+            datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(updatedSettings)
         }
     }
 

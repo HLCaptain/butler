@@ -11,6 +11,7 @@ data class AppSettings @OptIn(ExperimentalUuidApi::class) constructor(
     val preferences: DomainPreferences = DomainPreferences.Default,
     val filterConfiguration: FilterConfiguration = FilterConfiguration.Default,
     val promptConfigurations: List<PromptConfiguration> = listOf(PromptConfiguration.Default),
+    val selectedPromptConfiguration: PromptConfiguration? = PromptConfiguration.Default,
 ) {
     @OptIn(ExperimentalUuidApi::class)
     companion object {
