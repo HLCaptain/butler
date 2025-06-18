@@ -22,6 +22,7 @@ plugins {
     alias(libs.plugins.buildconfig) apply false
     alias(libs.plugins.aboutlibraries) apply false
     alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.compose.hot.reload) apply false
     alias(libs.plugins.androidx.room) apply false
 
     // Convention plugins

@@ -1,14 +1,19 @@
+@file:OptIn(ExperimentalTime::class)
+
 package illyan.butler.core.local.room.mapping
 
 import illyan.butler.core.local.room.model.RoomToken
-import illyan.butler.domain.model.DomainToken
+import illyan.butler.domain.model.Token
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-fun DomainToken.toRoomModel() = RoomToken(
+@OptIn(ExperimentalTime::class)
+fun Token.toRoomModel() = RoomToken(
     token = token,
-    tokenExpirationMillis = tokenExpirationMillis
+    tokenExpirationMillis = tokenExpiration.toEpochMilliseconds()
 )
 
-fun RoomToken.toDomainModel() = DomainToken(
+fun RoomToken.toDomainModel() = Token(
     token = token,
-    tokenExpirationMillis = tokenExpirationMillis
+    tokenExpiration = Instant.fromEpochMilliseconds(tokenExpirationMillis)
 )

@@ -9,6 +9,7 @@ class ComposeMultiplatformLibraryPlugin : KotlinMultiplatformLibraryPlugin() {
         with(pluginManager) {
             apply(defaultLibs.findPlugin("compose.compiler").get().get().pluginId)
             apply(defaultLibs.findPlugin("jetbrains.compose").get().get().pluginId)
+            apply(defaultLibs.findPlugin("compose.hot.reload").get().get().pluginId)
         }
         extensions.configure<KotlinMultiplatformExtension>(::configureComposeMultiplatformLibrary)
         extensions.configure<LibraryExtension> { buildFeatures { compose = true } }

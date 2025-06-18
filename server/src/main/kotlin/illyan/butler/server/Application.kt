@@ -5,8 +5,10 @@ import illyan.butler.server.plugins.configureCompression
 import illyan.butler.server.plugins.configureDependencyInjection
 import illyan.butler.server.plugins.configureMonitoring
 import illyan.butler.server.plugins.configureRouting
+import illyan.butler.server.plugins.configureSSE
 import illyan.butler.server.plugins.configureSerialization
 import illyan.butler.server.plugins.configureStatusPages
+import illyan.butler.server.plugins.configureWebSockets
 import illyan.butler.shared.model.authenticate.TokenConfiguration
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
@@ -45,9 +47,11 @@ fun Application.module() {
 
     configureMonitoring()
     configureDependencyInjection()
-    configureAuthentication()
     configureSerialization()
-    configureStatusPages()
     configureCompression()
+    configureAuthentication()
+    configureStatusPages()
+    configureSSE()
+    configureWebSockets()
     configureRouting(tokenConfig)
 }

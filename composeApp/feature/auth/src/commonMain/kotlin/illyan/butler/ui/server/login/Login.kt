@@ -42,6 +42,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
+    currentHost: String,
     onSignUp: (String, String) -> Unit,
     onSelectHost: () -> Unit,
     onAuthenticated: () -> Unit
@@ -57,7 +58,13 @@ fun Login(
         modifier = modifier.padding(16.dp).imePadding(),
         isUserSigningIn = state.isSigningIn,
         signInAnonymously = null, // TODO: Implement sign in anonymously
-        signInWithEmailAndPassword = viewModel::signInWithEmailAndPassword,
+        signInWithEmailAndPassword = { email, password ->
+            viewModel.signInWithEmailAndPassword(
+                email = email,
+                password = password,
+                endpoint = currentHost
+            )
+        },
         navigateToSignUp = onSignUp,
         selectHost = onSelectHost
     )

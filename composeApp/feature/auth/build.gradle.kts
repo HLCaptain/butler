@@ -6,6 +6,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.utils)
@@ -17,6 +19,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.core)
+        implementation(libs.kotlinx.serialization.json)
 
         implementation(libs.napier)
     }

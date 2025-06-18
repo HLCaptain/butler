@@ -1,10 +1,9 @@
-package illyan.butler.domain.model
+package illyan.butler.shared.model.auth
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ApiKeyCredential(
-    val name: String?,
     val providerUrl: String,
     val apiKey: String
 )

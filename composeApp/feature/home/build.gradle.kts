@@ -7,6 +7,8 @@ plugins {
 kotlin {
 
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.config)
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
@@ -19,6 +21,7 @@ kotlin {
         implementation(projects.composeApp.domain.chat)
         implementation(projects.composeApp.feature.auth)
         implementation(projects.composeApp.feature.chat)
+        implementation(projects.composeApp.feature.dashboard)
         implementation(projects.composeApp.feature.onboarding)
         implementation(projects.composeApp.feature.profile)
         implementation(projects.composeApp.feature.error)

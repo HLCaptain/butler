@@ -1,30 +1,30 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.core.network.mapping
 
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.shared.model.chat.ChatDto
+import illyan.butler.shared.model.chat.Source
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
-fun ChatDto.toDomainModel() = DomainChat(
+fun ChatDto.toDomainModel(source: Source) = Chat(
     id = id,
-    created = created,
-    name = name,
-    ownerId = ownerId,
-    chatCompletionModel = chatCompletionModel,
-    audioTranscriptionModel = audioTranscriptionModel,
-    audioTranslationModel = audioTranslationModel,
-    imageGenerationsModel = imageGenerationsModel,
-    audioSpeechModel = audioSpeechModel,
+    createdAt = createdAt,
+    title = name,
+    source = source,
+    models = models,
     summary = summary,
 )
 
-fun DomainChat.toNetworkModel() = ChatDto(
+fun Chat.toNetworkModel() = ChatDto(
     id = id,
-    created = created,
-    name = name,
-    ownerId = ownerId,
-    chatCompletionModel = chatCompletionModel,
-    audioTranscriptionModel = audioTranscriptionModel,
-    audioTranslationModel = audioTranslationModel,
-    imageGenerationsModel = imageGenerationsModel,
-    audioSpeechModel = audioSpeechModel,
+    createdAt = createdAt,
+    name = title,
+    ownerId = when (source) {
+        is Source.Device -> (source as Source.Device).deviceId
+        is Source.Server -> (source as Source.Server).userId
+    },
     summary = summary,
+    models = models
 )

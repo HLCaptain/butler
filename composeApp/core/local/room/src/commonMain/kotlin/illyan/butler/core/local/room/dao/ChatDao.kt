@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import illyan.butler.core.local.room.model.RoomChat
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -51,14 +52,14 @@ interface ChatDao {
     @Query("DELETE FROM chats WHERE id IN(:ids)")
     suspend fun deleteChatsWithIds(ids: List<String>)
 
-    @Query("DELETE FROM chats WHERE ownerId = :userId")
-    suspend fun deleteChatsByUserId(userId: String)
+    @Query("DELETE FROM chats WHERE source = :source")
+    suspend fun deleteChatsBySource(source: Source)
 
     @Query("SELECT * FROM chats WHERE id = :id")
     fun getChatById(id: String): Flow<RoomChat?>
 
-    @Query("SELECT * FROM chats WHERE ownerId = :userId")
-    fun getChatsByUser(userId: String): Flow<List<RoomChat>>
+    @Query("SELECT * FROM chats WHERE source = :source")
+    fun getChatsBySource(source: Source): Flow<List<RoomChat>>
 
     @Query("SELECT * FROM chats WHERE id IN(:ids)")
     fun getChatsById(ids: List<String>): Flow<List<RoomChat>>

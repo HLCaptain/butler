@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -85,22 +86,18 @@ fun BooleanSetting(
 fun <T : Any> DropdownSetting(
     selectedValue: T? = null,
     isDropdownOpen: Boolean = false,
-    onDismissRequest: () -> Unit = {},
+    onToggleDropdown: () -> Unit = {},
     values: Iterable<T> = emptyList(),
-    getValueName: @Composable (T) -> String = { it.toString() },
+    text: @Composable (T) -> Unit = { Text(it.toString()) },
     getValueLeadingIcon: (T) -> ImageVector? = { null },
     getValueTrailingIcon: (T) -> ImageVector? = { null },
     selectValue: (T) -> Unit,
     settingName: String,
-    textStyle: TextStyle = MaterialTheme.typography.labelLarge,
-    fontWeight: FontWeight = FontWeight.Normal,
     enabled: Boolean = true,
 ) {
     SettingItem(
         settingName = settingName,
-        onClick = onDismissRequest,
-        titleStyle = textStyle,
-        titleWeight = fontWeight,
+        onClick = onToggleDropdown,
         enabled = enabled,
     ) {
         Row(
@@ -112,11 +109,8 @@ fun <T : Any> DropdownSetting(
                 targetState = selectedValue,
                 label = "Dropdown setting text",
             ) { state ->
-                state?.let {
-                    Text(
-                        text = getValueName(it),
-                        style = textStyle,
-                    )
+                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                    state?.let { text(it) }
                 }
             }
             Icon(
@@ -130,17 +124,17 @@ fun <T : Any> DropdownSetting(
         }
         ButlerDropdownMenu(
             expanded = isDropdownOpen,
-            onDismissRequest = onDismissRequest,
+            onDismissRequest = onToggleDropdown,
             popupProperties = PopupProperties(focusable = true)
         ) {
             ButlerDropdownMenuDefaults.DropdownMenuList(
                 values = values.toList(),
                 selectedValue = selectedValue,
                 selectValue = selectValue,
-                getValueName = getValueName,
+                valueText = text,
                 getValueLeadingIcon = getValueLeadingIcon,
                 getValueTrailingIcon = getValueTrailingIcon,
-                onDismissRequest = onDismissRequest
+                onDismissRequest = onToggleDropdown
             )
         }
     }

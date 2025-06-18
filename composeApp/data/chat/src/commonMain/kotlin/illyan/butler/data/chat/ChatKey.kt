@@ -1,19 +1,22 @@
 package illyan.butler.data.chat
 
-sealed class ChatKey {
-    sealed class Read : ChatKey() {
-        data class ByChatId(val chatId: String) : Read()
-        data class ByUserId(val userId: String) : Read()
+import illyan.butler.domain.model.Chat
+import illyan.butler.shared.model.chat.Source
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+@OptIn(ExperimentalUuidApi::class)
+sealed interface ChatKey {
+    sealed interface Read : ChatKey {
+        val source: Source
+        data class ByChatId(override val source: Source, val chatId: Uuid) : Read
+        data class BySource(override val source: Source) : Read
     }
 
-    sealed class Write : ChatKey() {
-        data object Create : Write()
-        data object Upsert : Write()
-        data object DeviceOnly : Write()
+    sealed interface Write : ChatKey {
+        data object Create : Write
+        data object Upsert : Write
     }
 
-    sealed class Delete : ChatKey() {
-        data class ByChatId(val chatId: String, val deviceOnly: Boolean) : Delete()
-        data class ByUserId(val userId: String, val deviceOnly: Boolean) : Delete()
-    }
+    data class Delete(val chat: Chat) : ChatKey
 }

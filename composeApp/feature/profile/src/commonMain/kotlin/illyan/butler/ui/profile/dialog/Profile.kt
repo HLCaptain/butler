@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,7 +39,7 @@ import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.CopiedToKeyboardTooltip
-import illyan.butler.core.ui.components.MediumMenuButton
+import illyan.butler.core.ui.components.SmallMenuButton
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.ButlerTheme
@@ -74,20 +73,17 @@ fun ProfileDialog(
     val userUUID by viewModel.userUUID.collectAsState()
     val isUserSignedIn by viewModel.isUserSignedIn.collectAsState()
     val isUserSigningOut by viewModel.isUserSigningOut.collectAsState()
-    val userPhotoUrl by viewModel.userPhotoUrl.collectAsState()
-    val email by viewModel.userEmail.collectAsState()
-    val phone by viewModel.userPhoneNumber.collectAsState()
-    val name by viewModel.userName.collectAsState()
+    val signedInUser by viewModel.signedInUser.collectAsState()
     val confidentialInfo = listOf(
-        stringResource(Res.string.name) to name,
-        stringResource(Res.string.email) to email,
-        stringResource(Res.string.phone) to phone
+        stringResource(Res.string.name) to signedInUser?.displayName,
+        stringResource(Res.string.email) to signedInUser?.email,
+        stringResource(Res.string.phone) to signedInUser?.phone
     )
     ProfileDialogContent(
         userUUID = userUUID,
         isUserSignedIn = isUserSignedIn,
         isUserSigningOut = isUserSigningOut,
-        userPhotoUrl = userPhotoUrl,
+        userPhotoUrl = signedInUser?.photoUrl,
         confidentialInfo = confidentialInfo,
         showConfidentialInfoInitially = false,
         onSignOut = viewModel::signOut,
@@ -152,7 +148,6 @@ fun ProfileDialogContent(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileButtons(
     modifier: Modifier = Modifier,
@@ -189,13 +184,6 @@ fun ProfileButtons(
                 ) {
                     Text(text = stringResource(Res.string.sign_out))
                 }
-//                if (BuildConfig.DEBUG) {
-//                    Button(
-//                        onClick = resetTutorialAndSignOut
-//                    ) {
-//                        Text(text = "Reset tutorial and sign out")
-//                    }
-//                }
             } else if (isUserSignedIn == false) {
                 ButlerMediumSolidButton(
                     onClick = onLogin
@@ -257,7 +245,7 @@ private fun PreviewProfileDialogScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileTitleScreen(
     modifier: Modifier = Modifier,
@@ -434,17 +422,14 @@ fun ProfileMenu(
     onShowAboutScreen: (() -> Unit)? = null,
     onShowSettingsScreen: () -> Unit = {},
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy((-12).dp)
-    ) {
+    Column(modifier = modifier) {
         onShowAboutScreen?.let {
-            MediumMenuButton(
+            SmallMenuButton(
                 onClick = it,
                 text = stringResource(Res.string.about)
             )
         }
-        MediumMenuButton(
+        SmallMenuButton(
             onClick = onShowSettingsScreen,
             text = stringResource(Res.string.settings)
         )

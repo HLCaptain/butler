@@ -1,31 +1,15 @@
 package illyan.butler.ui.chat_layout
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.DismissibleDrawerSheet
-import androidx.compose.material3.DismissibleNavigationDrawer
-import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PermanentDrawerSheet
-import androidx.compose.material3.Surface
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,209 +18,147 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.window.core.layout.WindowWidthSizeClass
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.LocalHazeStyle
+import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.utils.BackHandler
-import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailViewModel
 import illyan.butler.ui.chat_details.ChatDetails
 import illyan.butler.ui.new_chat.NewChat
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalHazeMaterialsApi::class)
+enum class ChatLayoutDestinations {
+    MODEL_SELECTION,
+    CHAT_SETTINGS,
+}
+
+@OptIn(ExperimentalHazeMaterialsApi::class, ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 fun ChatLayout(
     modifier: Modifier = Modifier,
-    currentChat: String?,
-    selectChat: (String?) -> Unit,
+    currentChat: Uuid?,
+    onCurrentChatChanged: (Uuid?) -> Unit,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
-    var isChatDetailsOpen by rememberSaveable(currentChat) { mutableStateOf(false) }
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val notExpanded = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    BackHandler(isChatDetailsOpen) {
-        isChatDetailsOpen = false
-    }
-    LaunchedEffect(drawerState.isOpen) {
-        // Closed by gesture in compact mode
-        if (notExpanded && !drawerState.isOpen) {
-            isChatDetailsOpen = false
+    CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
+        val viewModel = koinViewModel<ChatDetailViewModel>()
+        val state by viewModel.state.collectAsState()
+        LaunchedEffect(currentChat) {
+            viewModel.loadChat(currentChat)
         }
-    }
-    LaunchedEffect(isChatDetailsOpen) {
-        if (isChatDetailsOpen) {
-            drawerState.open()
-        } else {
-            drawerState.close()
+        LaunchedEffect(state.chat) {
+            onCurrentChatChanged(state.chat?.id)
         }
-    }
-
-    LaunchedEffect(currentChat) {
-        if (currentChat == null) {
-            isChatDetailsOpen = false
-        }
-    }
-    var drawerContentWidthInPixels by remember { mutableStateOf(0) }
-    var permanentDrawerWidthInPixels by remember { mutableStateOf(0) }
-    val drawerOpenRatio = remember(
-        notExpanded,
-        drawerState.currentOffset,
-        drawerContentWidthInPixels,
-        permanentDrawerWidthInPixels
-    ) {
-        ((if (notExpanded)
-                (drawerState.currentOffset / drawerContentWidthInPixels) + 1
-        else {
-            permanentDrawerWidthInPixels / drawerContentWidthInPixels.toFloat()
-        }).takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
-    }
-    ReverseLayoutDirection {
-        CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin()) {
-            DismissibleNavigationDrawer(
-                drawerState = drawerState,
-                drawerContent = {
-                    DismissibleDrawerSheet(
-                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
-                        drawerContentColor = MaterialTheme.colorScheme.onSurface,
-                        drawerShape = RectangleShape,
-                    ) {
-                        ReverseLayoutDirection {
-                            Box(modifier = Modifier.fillMaxHeight()) {
-                                ChatDetails(
-                                    modifier = Modifier.onSizeChanged {
-                                        drawerContentWidthInPixels = it.width
-                                    },
-                                    chatId = currentChat,
-                                    actions = {
-                                        IconButton(
-                                            modifier = Modifier.padding(end = 4.dp, top = 8.dp),
-                                            onClick = { isChatDetailsOpen = false }
-                                        ) {
-                                            Icon(Icons.Rounded.Close, contentDescription = null)
-                                        }
-                                    },
-                                )
-                            }
-                        }
-                    }
-                },
-                gesturesEnabled = isChatDetailsOpen && notExpanded
-            ) {
-                ReverseLayoutDirection {
-                    val viewModel = koinViewModel<ChatDetailViewModel>()
-                    val state by viewModel.state.collectAsState()
-                    LaunchedEffect(currentChat) {
-                        currentChat?.let { viewModel.loadChat(it) }
-                    }
-                    Row(modifier = modifier) {
-                        Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp)) {
-                            AnimatedContent(
-                                modifier = Modifier.weight(1f).clip(
-                                    RoundedCornerShape(
-                                        topEnd = 24.dp * drawerOpenRatio,
-                                        bottomEnd = 24.dp * drawerOpenRatio,
-                                    )
-                                ),
-                                targetState = currentChat != null,
-                                transitionSpec = {
-                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200)) using SizeTransform(clip = false) { _, _ -> tween(0) }
-                                }
-                            ) { chatSelected ->
-                                if (chatSelected) {
-                                    ChatDetail(
-                                        state = state,
-                                        sendMessage = viewModel::sendMessage,
-                                        toggleRecord = viewModel::toggleRecording,
-                                        sendImage = viewModel::sendImage,
-                                        playAudio = viewModel::playAudio,
-                                        stopAudio = viewModel::stopAudio,
-                                        navigationIcon = navigationIcon,
-                                        toggleChatDetails = { isChatDetailsOpen = !isChatDetailsOpen },
-                                        isChatDetailsOpenRatio = drawerOpenRatio,
-                                        refreshChat = viewModel::refreshChat,
-                                        sendError = viewModel::sendError
-                                    )
-                                } else {
-                                    NewChat(
-                                        selectNewChat = selectChat,
-                                        navigationIcon = navigationIcon
-                                    )
-                                }
-                            }
-                        }
-                        AnimatedVisibility(
-                            modifier = Modifier.onSizeChanged {
-                                permanentDrawerWidthInPixels = it.width
-                            },
-                            visible = !notExpanded && isChatDetailsOpen,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally()
-                        ) {
-                            PermanentDrawerSheet(
-                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation((0.2).dp),
-                                drawerContentColor = MaterialTheme.colorScheme.onSurface
-                            ) {
-                                Box(modifier = Modifier.fillMaxHeight()) {
-                                    ChatDetails(
-                                        modifier = Modifier.onSizeChanged {
-                                            drawerContentWidthInPixels = it.width
-                                        },
-                                        chatId = currentChat,
-                                        actions = {
-                                            IconButton(
-                                                modifier = Modifier.padding(end = 4.dp, top = 8.dp),
-                                                onClick = { isChatDetailsOpen = false }
-                                            ) {
-                                                Icon(Icons.Rounded.Close, contentDescription = null)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    // Area to open and close the chat details if not in compact mode
-                    // Capture gestures to open and close the chat details
-//                    var dragStartX by remember { mutableStateOf(-1f) }
-//                    val density = LocalDensity.current
-//                    val dragThreshold = 24.dp
-//                    Box(
-//                        modifier = Modifier
-//                            .fillMaxHeight()
-//                            .offset(x = 12.dp)
-//                            .width(64.dp)
-//                            .onDrag(
-//                                enabled = !compact,
-//                                onDragStart = { dragStartX = it.x },
-//                                onDrag = { offset ->
-//                                    if (dragStartX != -1f) {
-//                                        with(density) {
-//                                            val delta = offset.x - dragStartX
-//                                            if (delta > dragThreshold.toPx()) {
-//                                                isChatDetailsOpen = true
-//                                            } else if (delta < -dragThreshold.toPx()) {
-//                                                isChatDetailsOpen = false
-//                                            }
-//                                        }
-//                                    }
-//                                },
-//                                onDragEnd = { dragStartX = -1f },
-//                                onDragCancel = { dragStartX = -1f }
-//                        )
-//                    )
-                }
+        var targetDestination by rememberSaveable(
+            stateSaver = object : Saver<ChatLayoutDestinations?, Int> {
+                override fun restore(value: Int) = ChatLayoutDestinations.entries[value]
+                override fun SaverScope.save(value: ChatLayoutDestinations?) = value?.ordinal
             }
+        ) {
+            mutableStateOf(null)
+        }
+        var destination by remember { mutableStateOf(targetDestination ?: ChatLayoutDestinations.MODEL_SELECTION) }
+        BackHandler(enabled = targetDestination != null) {
+            targetDestination = null
+        }
+        val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+            bottomSheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            )
+        )
+        LaunchedEffect(targetDestination) {
+            if (targetDestination == null) {
+                bottomSheetScaffoldState.bottomSheetState.hide()
+            } else {
+                targetDestination?.let { destination = it }
+                bottomSheetScaffoldState.bottomSheetState.expand()
+            }
+        }
+        LaunchedEffect(bottomSheetScaffoldState.bottomSheetState.currentValue) {
+            if (bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Hidden) {
+                targetDestination = null
+            }
+        }
+        val hazeState = remember { HazeState() }
+        BottomSheetScaffold(
+            modifier = modifier.hazeSource(hazeState),
+            scaffoldState = bottomSheetScaffoldState,
+            sheetContent = {
+                CompositionLocalProvider(LocalHazeStyle provides HazeMaterials.thin(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))) {
+                    when (destination) {
+                        ChatLayoutDestinations.MODEL_SELECTION -> {
+                            NewChat(
+                                selectModel = { modelConfig ->
+                                    viewModel.selectNewChatModel(modelConfig)
+                                    targetDestination = null
+                                },
+                                hazeState = hazeState,
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = { targetDestination = null },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                        ChatLayoutDestinations.CHAT_SETTINGS -> {
+                            ChatDetails(
+                                chatId = currentChat,
+                                hazeState = hazeState,
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = { targetDestination = null },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            sheetDragHandle = null,
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(0.dp),
+            sheetContainerColor = Color.Transparent,
+        ) { _ ->
+            ChatDetail(
+                state = state,
+                sendMessage = viewModel::sendMessage,
+                toggleRecord = viewModel::toggleRecording,
+                sendImage = viewModel::sendImage,
+                playAudio = viewModel::playAudio,
+                stopAudio = viewModel::stopAudio,
+                refreshChat = viewModel::refreshChat,
+                sendError = viewModel::sendError,
+                navigationIcon = navigationIcon,
+                navigateToChatSettings = {
+                    targetDestination = if (targetDestination == null) ChatLayoutDestinations.CHAT_SETTINGS else null
+                },
+                navigateToModelSelection = {
+                    targetDestination = if (targetDestination == null) ChatLayoutDestinations.MODEL_SELECTION else null
+                },
+            )
         }
     }
 }

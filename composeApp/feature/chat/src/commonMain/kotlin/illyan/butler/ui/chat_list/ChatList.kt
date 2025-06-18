@@ -37,33 +37,34 @@ import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerDropdownMenu
 import illyan.butler.core.ui.components.ButlerDropdownMenuDefaults
 import illyan.butler.core.ui.utils.lowerContrastWithBlendTo
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.delete_chat
 import illyan.butler.generated.resources.new_chat
 import org.jetbrains.compose.resources.stringResource
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun ChatList(
     modifier: Modifier = Modifier,
-    chats: List<DomainChat>,
-    deviceOnlyChatIds: List<String>,
-    selectedChat: String?,
-    openChat: (String) -> Unit,
-    deleteChat: (String) -> Unit,
+    chats: List<Chat>,
+    selectedChat: Uuid?,
+    openChat: (Uuid) -> Unit,
+    deleteChat: (Chat) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(8.dp),
     ) {
-        items(chats, key = { it.id!! }) { chat ->
+        items(chats, key = { it.id }) { chat ->
             ChatListItemCard(
                 modifier = Modifier.animateItem(),
                 chat = chat,
                 selected = chat.id == selectedChat,
-                openChat = { openChat(chat.id!!) },
-                deleteChat = { deleteChat(chat.id!!) },
-                isDeviceOnly = chat.id in deviceOnlyChatIds
+                openChat = { openChat(chat.id) },
+                deleteChat = { deleteChat(chat) },
             )
         }
     }
@@ -73,9 +74,8 @@ fun ChatList(
 @Composable
 fun ChatListItemCard(
     modifier: Modifier = Modifier,
-    chat: DomainChat,
+    chat: Chat,
     selected: Boolean,
-    isDeviceOnly: Boolean,
     openChat: () -> Unit,
     deleteChat: () -> Unit,
 ) {
@@ -103,7 +103,7 @@ fun ChatListItemCard(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val chatName = chat.name ?: stringResource(Res.string.new_chat)
+                val chatName = chat.title ?: stringResource(Res.string.new_chat)
                 val style = when (chatName.length) {
                     in 0..10 -> MaterialTheme.typography.titleLarge
                     in 11..20 -> MaterialTheme.typography.titleMedium
@@ -116,7 +116,7 @@ fun ChatListItemCard(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 2
                 )
-                AnimatedVisibility(visible = isDeviceOnly) {
+                AnimatedVisibility(visible = chat.deviceOnly) {
                     Icon(
                         imageVector = Icons.Rounded.CloudOff,
                         contentDescription = null,

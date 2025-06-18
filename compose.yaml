@@ -1,6 +1,67 @@
 services:
-  server:
+  postgres:
+    image: postgres:17
+    container_name: butler-postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "${DATABASE_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  local-ai:
+    image: localai/localai:latest-gpu-nvidia-cuda-12
+    container_name: local-ai
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]
+    # Use the NVIDIA runtime for GPU support if you have one
+#    environment:
+#      - NVIDIA_VISIBLE_DEVICES=all
+#      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    runtime: nvidia
+
+  butler-server:
+    container_name: butler-server
     build:
-      context: .
       dockerfile: Dockerfile
-    image: illyan1337/butler-server:latest
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_USERNAME: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_DRIVER: "postgresql"
+      DATABASE_PORT: 5432
+      DATABASE_HOST: "butler-postgres"
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_REALM: ${JWT_REALM}
+      KTOR_PORT: 8080
+      KTOR_DEVELOPMENT: ${KTOR_DEVELOPMENT}
+      KTOR_ENVIRONMENT: ${KTOR_ENVIRONMENT}
+      KTOR_DEFAULT_CONTENT_TYPE: application/json
+      OPEN_AI_API_URLS_AND_KEYS: ${OPEN_AI_API_URLS_AND_KEYS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      local-ai:
+        condition: service_started
+
+volumes:
+  postgres_data:

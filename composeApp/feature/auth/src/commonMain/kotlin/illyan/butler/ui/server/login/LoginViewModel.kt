@@ -21,7 +21,6 @@ package illyan.butler.ui.server.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -46,9 +45,9 @@ class LoginViewModel(
         initialValue = LoginScreenState()
     )
 
-    fun signInWithEmailAndPassword(email: String, password: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            authManager.login(email, password)
+    fun signInWithEmailAndPassword(email: String, password: String, endpoint: String) {
+        viewModelScope.launch {
+            authManager.login(email, password, endpoint)
         }
     }
 }

@@ -34,10 +34,11 @@ import org.koin.compose.viewmodel.koinViewModel
 fun SignUp(
     initialEmail: String = "",
     initialPassword: String = "",
+    currentHost: String,
     onSignUpSuccessful: () -> Unit
 ) {
-    val screenModel = koinViewModel<SignUpViewModel>()
-    val state by screenModel.state.collectAsState()
+    val viewModel = koinViewModel<SignUpViewModel>()
+    val state by viewModel.state.collectAsState()
     // Make your Compose Multiplatform UI
 
     // TODO: implement oath authentication
@@ -53,7 +54,13 @@ fun SignUp(
         state = state,
         initialEmail = initialEmail,
         initialPassword = initialPassword,
-        signUp = screenModel::signUpAndLogin
+        signUp = { email, password ->
+            viewModel.signUpAndLogin(
+                email = email,
+                password = password,
+                endpoint = currentHost
+            )
+        }
     )
 }
 

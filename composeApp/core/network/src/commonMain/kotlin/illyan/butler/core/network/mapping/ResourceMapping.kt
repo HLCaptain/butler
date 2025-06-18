@@ -1,16 +1,24 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.core.network.mapping
 
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
 import illyan.butler.shared.model.chat.ResourceDto
+import illyan.butler.shared.model.chat.Source
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
-fun ResourceDto.toDomainModel() = DomainResource(
+fun ResourceDto.toDomainModel(source: Source) = Resource(
     id = id,
-    type = type,
-    data = data
+    mimeType = type,
+    data = data,
+    source = source,
+    createdAt = createdAt
 )
 
-fun DomainResource.toNetworkModel() = ResourceDto(
+fun Resource.toNetworkModel() = ResourceDto(
     id = id,
-    type = type,
-    data = data
+    type = mimeType,
+    data = data,
+    createdAt = createdAt,
 )

@@ -3,7 +3,6 @@ package illyan.butler.ui.server.signup
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -21,9 +20,9 @@ class SignUpViewModel(
         SignUpScreenState(isUserSignedIn, isUserSigningIn)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SignUpScreenState())
 
-    fun signUpAndLogin(email: String, password: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            authManager.signUpAndLogin(email, password)
+    fun signUpAndLogin(email: String, password: String, endpoint: String) {
+        viewModelScope.launch {
+            authManager.signUpAndLogin(email, password, endpoint)
         }
     }
 }

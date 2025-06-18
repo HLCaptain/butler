@@ -1,39 +1,34 @@
 package illyan.butler.core.network.datasource
 
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface ChatNetworkDataSource {
-    fun fetchNewChats(): Flow<List<DomainChat>>
-
-    /**
-     * Fetch chats the user is a member of.
-     */
-    suspend fun fetchPaginated(limit: Int, timestamp: Long): List<DomainChat>
+    fun fetchNewChats(source: Source.Server): Flow<List<Chat>>
 
     /**
      * Fetch all chats the user is a member of.
      */
-    suspend fun fetch(): List<DomainChat>
+    suspend fun fetch(source: Source.Server): List<Chat>
 
-    fun fetchByChatId(chatId: String): Flow<DomainChat>
+    fun fetchByChatId(source: Source.Server, chatId: Uuid): Flow<Chat>
 
-    fun fetchByUserId(userId: String): Flow<List<DomainChat>>
-
-    /**
-     * Fetch chats the user is a member of with a specific chatbot.
-     * TODO: make this paginated.
-     */
-    suspend fun fetchByModel(modelId: String): List<DomainChat>
+    fun fetchByUserId(source: Source.Server): Flow<List<Chat>>
 
     /**
      * Update a chat (i.e. add/remove members)
      */
-    suspend fun upsert(chat: DomainChat): DomainChat
+    suspend fun upsert(chat: Chat): Chat
+
+    suspend fun create(chat: Chat): Chat
 
     /**
      * Try to delete a chat from the user's perspective. Basically, the user leaves the chat.
      * @return true if chat is deleted.
      */
-    suspend fun delete(id: String): Boolean
+    suspend fun delete(chat: Chat): Boolean
 }

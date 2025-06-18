@@ -1,24 +1,28 @@
 package illyan.butler.core.local.room.model
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
+import illyan.butler.shared.model.chat.Source
 
 @Entity(
     tableName = "resource",
-    primaryKeys = ["id"]
 )
 data class RoomResource(
+    @PrimaryKey
     val id: String,
-    val mimeType: String,
+    val createdAt: Long,
+    val source: Source,
+    val mimeType: String, // MIME mimeType
     val data: ByteArray
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as illyan.butler.core.local.room.model.RoomResource
+        other as RoomResource
 
         if (id != other.id) return false
-        if (mimeType != other.mimeType) return false
+        if (this@RoomResource.mimeType != other.mimeType) return false
         if (!data.contentEquals(other.data)) return false
 
         return true

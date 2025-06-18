@@ -538,17 +538,19 @@ fun UserSettings(
                     DropdownSetting(
                         settingName = stringResource(Res.string.theme),
                         isDropdownOpen = isDropdownOpen,
-                        onDismissRequest = { isDropdownOpen = !isDropdownOpen },
+                        onToggleDropdown = { isDropdownOpen = !isDropdownOpen },
                         selectValue = onThemeChange,
                         selectedValue = preferences.theme,
                         values = Theme.entries.toList(),
-                        getValueName = { theme ->
-                            when (theme) {
-                                Theme.System -> stringResource(Res.string.system)
-                                Theme.Light -> stringResource(Res.string.light)
-                                Theme.Dark -> stringResource(Res.string.dark)
-                                Theme.DayNightCycle -> stringResource(Res.string.day_night_cycle)
-                            }
+                        text = { theme ->
+                            Text(
+                                text = when (theme) {
+                                    Theme.System -> stringResource(Res.string.system)
+                                    Theme.Light -> stringResource(Res.string.light)
+                                    Theme.Dark -> stringResource(Res.string.dark)
+                                    Theme.DayNightCycle -> stringResource(Res.string.day_night_cycle)
+                                }
+                            )
                         },
                         getValueLeadingIcon = { theme ->
                             when (theme) {

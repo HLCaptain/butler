@@ -1,11 +1,11 @@
 package illyan.butler.data.message
 
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Message
+import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.StoreReadRequest
@@ -15,61 +15,66 @@ import org.mobilenativefoundation.store.store5.StoreWriteResponse
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
 @Single
 class MessageStoreRepository(
     messageMutableStoreBuilder: MessageMutableStoreBuilder,
     chatMessageStoreBuilder: ChatMessageStoreBuilder,
     userMessageStoreBuilder: UserMessageStoreBuilder
 ) : MessageRepository {
-    @OptIn(ExperimentalStoreApi::class)
+
     val messageMutableStore = messageMutableStoreBuilder.store
     val chatMessageMutableStore = chatMessageStoreBuilder.store
     private val userMessageStore = userMessageStoreBuilder.store
 
-    @OptIn(ExperimentalStoreApi::class)
-    override fun getMessageFlow(messageId: String, deviceOnly: Boolean): Flow<DomainMessage?> {
-        return messageMutableStore.stream<StoreReadResponse<DomainMessage>>(
-            StoreReadRequest.cached(MessageKey.Read.ByMessageId(messageId), !deviceOnly)
+    override fun getMessageFlow(messageId: Uuid, source: Source): Flow<Message?> {
+        return messageMutableStore.stream<StoreReadResponse<Message>>(
+            StoreReadRequest.cached(MessageKey.Read.ByMessageId(source, messageId), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("Read Response: ${it::class.qualifiedName}")
+            Napier.d("getMessageFlow Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Message: $data")
             data
         }
     }
 
-    override fun getChatMessagesFlow(chatId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
+    override fun getChatMessagesFlow(chatId: Uuid, source: Source): Flow<List<Message>> {
         return chatMessageMutableStore.stream(
-            StoreReadRequest.cached(MessageKey.Read.ByChatId(chatId), !deviceOnly)
+            StoreReadRequest.cached(MessageKey.Read.ByChatId(source, chatId), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("Read Response: ${it::class.qualifiedName}")
+            Napier.d("getChatMessagesFlow Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
             data
         }.filterNotNull()
     }
 
-    @OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class)
-    override suspend fun upsert(message: DomainMessage, deviceOnly: Boolean): String {
+    override suspend fun create(message: Message): Uuid {
         return (messageMutableStore.write(
             StoreWriteRequest.of(
-                key = if (deviceOnly) MessageKey.Write.DeviceOnly else if (message.id == null) MessageKey.Write.Create else MessageKey.Write.Upsert,
-                value = message.copy(
-                    id = message.id ?: Uuid.random().toString(), // ID cannot be null on write
-                    time = if (deviceOnly) message.time ?: Clock.System.now().toEpochMilliseconds() else message.time
-                ),
+                key = MessageKey.Write.Create,
+                value = message
             )
-        ) as? StoreWriteResponse.Success.Typed<DomainMessage>)?.value?.id!!
+        ) as? StoreWriteResponse.Success.Typed<Message>)?.value?.id ?: throw IllegalStateException("Message creation failed")
     }
 
-    override fun getUserMessagesFlow(userId: String, deviceOnly: Boolean): Flow<List<DomainMessage>> {
+    override suspend fun upsert(message: Message): Uuid {
+        return (messageMutableStore.write(
+            StoreWriteRequest.of(
+                key = MessageKey.Write.Upsert,
+                value = message
+            )
+        ) as? StoreWriteResponse.Success.Typed<Message>)?.value?.id ?: throw IllegalStateException("Message upsert failed")
+    }
+
+    override fun getMessagesBySource(source: Source): Flow<List<Message>> {
         return userMessageStore.stream(
-            StoreReadRequest.cached(MessageKey.Read.ByUserId(userId), !deviceOnly)
+            StoreReadRequest.cached(MessageKey.Read.BySource(source), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("Read Response: ${it::class.qualifiedName}")
+            Napier.d("getMessagesBySource Read Response: ${it::class.qualifiedName}")
             val data = it.dataOrNull()
             Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
             data
@@ -77,7 +82,7 @@ class MessageStoreRepository(
     }
 
     @OptIn(ExperimentalStoreApi::class)
-    override suspend fun delete(message: DomainMessage, deviceOnly: Boolean) {
-        messageMutableStore.clear(MessageKey.Delete(message.id!!, message.chatId, deviceOnly))
+    override suspend fun delete(message: Message) {
+        messageMutableStore.clear(MessageKey.Delete(message))
     }
 }

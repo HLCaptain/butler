@@ -8,12 +8,13 @@ pluginManagement {
         maven("https://jitpack.io")
         maven("https://central.sonatype.com/")
         maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
+        maven("https://packages.jetbrains.team/maven/p/firework/dev")
         gradlePluginPortal()
     }
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 rootProject.name = "Butler"
@@ -62,6 +63,7 @@ include(":composeApp:di:repository")
 
 include(":composeApp:feature:auth")
 include(":composeApp:feature:chat")
+include(":composeApp:feature:dashboard")
 include(":composeApp:feature:error")
 include(":composeApp:feature:home")
 include(":composeApp:feature:onboarding")

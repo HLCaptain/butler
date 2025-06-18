@@ -1,30 +1,21 @@
-FROM gradle:8.11-jdk21 AS build
+# Stage 1: Cache Gradle dependencies
+FROM gradle:latest AS cache
+RUN mkdir -p /home/gradle/cache_home
+ENV GRADLE_USER_HOME=/home/gradle/cache_home
+COPY --chown=gradle:gradle /server/ /build-logic/ /gradle/ /home/gradle/src/
+WORKDIR /home/gradle/src
+RUN gradle :server:dependencies --no-daemon || true
 
+# Stage 2: Build Application
+FROM gradle:latest AS build
+COPY --from=cache /home/gradle/cache_home /home/gradle/.gradle
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
-RUN gradle buildFatJar --no-daemon
+RUN gradle :server:buildFatJar --no-daemon
 
-FROM eclipse-temurin:23
-
-ARG JWT_SECRET=your_jwt_secret
-ARG JWT_ISSUER=yout_jwt_issuer
-ARG JWT_AUDIENCE=your_jwt_audience
-ARG JWT_REALM=your_jwt_realm
-ARG KTOR_PORT=8080
-ARG KTOR_DEVELOPMENT=false
-ARG KTOR_DEFAULT_CONTENT_TYPE=application/json
-
-ENV JWT_SECRET=$JWT_SECRET
-ENV JWT_ISSUER=$JWT_ISSUER
-ENV JWT_AUDIENCE=$JWT_AUDIENCE
-ENV JWT_REALM=$JWT_REALM
-ENV KTOR_PORT=$KTOR_PORT
-ENV KTOR_DEVELOPMENT=$KTOR_DEVELOPMENT
-ENV KTOR_DEFAULT_CONTENT_TYPE=$KTOR_DEFAULT_CONTENT_TYPE
-
-EXPOSE $KTOR_PORT
-
+# Stage 3: Create the Runtime Image
+FROM eclipse-temurin:23 AS runtime
+EXPOSE 8080
 RUN mkdir /app
 COPY --from=build /home/gradle/src/server/build/libs/*.jar /app/butler_server.jar
-
 ENTRYPOINT ["java", "-jar", "/app/butler_server.jar"]

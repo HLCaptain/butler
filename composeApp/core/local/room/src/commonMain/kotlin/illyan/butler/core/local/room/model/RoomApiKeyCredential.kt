@@ -1,13 +1,11 @@
 package illyan.butler.core.local.room.model
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-@Entity(
-    tableName = "api_key_credentials",
-    primaryKeys = ["providerUrl"],
-)
+@Entity(tableName = "api_key_credentials")
 data class RoomApiKeyCredential(
-    val name: String?,
+    @PrimaryKey
     val providerUrl: String,
     val apiKey: String
 )

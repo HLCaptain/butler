@@ -7,6 +7,8 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.shared.model)
 
+        implementation(projects.composeApp.core.sync)
+        implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.core.local)
         implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.core.network)
@@ -16,5 +18,7 @@ kotlin {
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.napier)
+
+        implementation(libs.store)
     }
 }

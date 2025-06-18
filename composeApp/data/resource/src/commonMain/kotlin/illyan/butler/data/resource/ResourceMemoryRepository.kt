@@ -1,6 +1,7 @@
 package illyan.butler.data.resource
 
-import illyan.butler.domain.model.DomainResource
+import illyan.butler.domain.model.Resource
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -8,21 +9,34 @@ import org.koin.core.annotation.Single
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class ResourceMemoryRepository : ResourceRepository {
-    val resources = mutableMapOf<String, MutableStateFlow<DomainResource?>>()
-    override fun getResourceFlow(resourceId: String, deviceOnly: Boolean): Flow<DomainResource?> {
-        return resources.getOrPut(resourceId) { MutableStateFlow(null) }
+    val resources = mutableSetOf<Resource>()
+
+    override suspend fun delete(resource: Resource) {
+        resources.remove(resource)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    override suspend fun upsert(resource: DomainResource, deviceOnly: Boolean): String {
-        val resourceWithId = if (resource.id == null) resource.copy(id = Uuid.random().toString()) else resource
-        resources.getOrPut(resourceWithId.id!!) { MutableStateFlow(null) }.update { resourceWithId }
-        return resourceWithId.id!!
+    override fun getResourceFlow(
+        resourceId: Uuid,
+        source: Source
+    ): Flow<Resource?> {
+        val resourceFlow = MutableStateFlow<Resource?>(null)
+        resourceFlow.update {
+            resources.find { it.id == resourceId && it.source == source }
+        }
+        return resourceFlow
     }
 
-    override suspend fun deleteResource(resourceId: String, deviceOnly: Boolean): Boolean {
-        return resources.remove(resourceId) != null
+    override suspend fun upsert(resource: Resource): Uuid {
+        resources.removeIf { it.id == resource.id }
+        resources.add(resource)
+        return resource.id
+    }
+
+    override suspend fun create(resource: Resource): Uuid {
+        resources.add(resource)
+        return resource.id
     }
 }

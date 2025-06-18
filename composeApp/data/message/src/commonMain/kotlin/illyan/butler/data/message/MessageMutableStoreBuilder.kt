@@ -5,7 +5,10 @@ import illyan.butler.core.local.datasource.MessageLocalDataSource
 import illyan.butler.core.network.datasource.MessageNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.domain.model.DomainMessage
+import illyan.butler.domain.model.Message
+import illyan.butler.shared.model.chat.MessageStatus
+import illyan.butler.shared.model.chat.Source
+import kotlinx.coroutines.flow.emptyFlow
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -13,6 +16,8 @@ import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
 @Single
 class MessageMutableStoreBuilder(
@@ -24,15 +29,19 @@ class MessageMutableStoreBuilder(
     val store = provideMessageMutableStore(messageLocalDataSource, messageNetworkDataSource, dataHistoryLocalDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class)
+@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class, ExperimentalTime::class)
 fun provideMessageMutableStore(
     messageLocalDataSource: MessageLocalDataSource,
     messageNetworkDataSource: MessageNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
-    fetcher = Fetcher.ofFlow<MessageKey, DomainMessage> { key ->
+    fetcher = Fetcher.ofFlow<MessageKey, Message> { key ->
         require(key is MessageKey.Read.ByMessageId)
-        messageNetworkDataSource.fetchById(key.messageId)
+        if (key.source is Source.Server) {
+            messageNetworkDataSource.fetchById(key.source, key.messageId)
+        } else {
+            emptyFlow()
+        }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
@@ -41,17 +50,17 @@ fun provideMessageMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                MessageKey.Write.Create, MessageKey.Write.Upsert, MessageKey.Write.DeviceOnly -> messageLocalDataSource.upsertMessage(local)
+                MessageKey.Write.Create, MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessage(local)
                 is MessageKey.Read.ByMessageId -> messageLocalDataSource.upsertMessage(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
             require(key is MessageKey.Delete)
-            if (!key.deviceOnly) {
-                messageNetworkDataSource.delete(key.messageId, key.chatId)
+            if (!key.message.deviceOnly) {
+                messageNetworkDataSource.delete(key.message)
             }
-            messageLocalDataSource.deleteMessageById(key.messageId)
+            messageLocalDataSource.deleteMessageById(key.message.id)
         },
         deleteAll = {
             messageLocalDataSource.deleteAllMessages()
@@ -63,11 +72,18 @@ fun provideMessageMutableStore(
         post = { key, output ->
             require(key is MessageKey.Write)
             val newMessage = when (key) {
-                is MessageKey.Write.Create -> messageNetworkDataSource.upsert(output).also {
-                    messageLocalDataSource.replaceMessage(it.id!!, it)
+                is MessageKey.Write.Create -> if (output.deviceOnly) {
+                    output.copy(status = MessageStatus.SENT) // Do not upload device-only messages
+                } else {
+                    messageNetworkDataSource.upsert(output).also {
+                        messageLocalDataSource.replaceMessage(it.id, it)
+                    }
                 }
-                is MessageKey.Write.Upsert -> messageNetworkDataSource.upsert(output)
-                is MessageKey.Write.DeviceOnly -> output // Do not upload device-only messages
+                is MessageKey.Write.Upsert -> if (output.deviceOnly) {
+                    output // Do not upload device-only messages
+                } else {
+                    messageNetworkDataSource.upsert(output)
+                }
             }
             UpdaterResult.Success.Typed(newMessage)
         },
@@ -75,6 +91,6 @@ fun provideMessageMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        DomainMessage::class.qualifiedName.toString()
+        Message::class.qualifiedName.toString()
     ) { it.toString() }
 )

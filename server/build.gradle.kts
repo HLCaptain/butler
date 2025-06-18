@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.compression)
+    implementation(libs.ktor.server.sse)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test)
     implementation(libs.logback.classic)
@@ -69,21 +70,25 @@ dependencies {
     // Koin DI
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.ktor)
+    implementation(libs.koin.logger.slf4j)
     implementation(libs.koin.core)
     implementation(platform(libs.koin.annotations.bom))
     implementation(libs.koin.annotations)
     ksp(libs.koin.ksp)
 
     // Database
+    implementation(libs.postgresql.r2dbc)
     implementation(libs.postgresql)
     implementation(libs.exposed.core)
-    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.r2dbc)
+    implementation(libs.exposed.jdbc) // Required for SchemaUtils
     implementation(libs.exposed.dao)
     implementation(libs.exposed.json)
 
     // Security
     implementation(libs.commons.codec)
     implementation(libs.spring.security.crypto)
+    implementation(libs.bouncycastle) // Required for spring.security.crypto
 
     // Ktor Client
     implementation(libs.ktor.core)

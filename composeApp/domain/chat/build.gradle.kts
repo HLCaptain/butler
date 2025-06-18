@@ -15,13 +15,15 @@ kotlin {
         implementation(projects.composeApp.data.credential)
         implementation(projects.composeApp.data.message)
         implementation(projects.composeApp.data.resource)
+        implementation(projects.composeApp.data.error)
 
         implementation(projects.composeApp.di)
         implementation(projects.composeApp.di.coroutines)
 
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.auth)
-        implementation(projects.composeApp.data.error)
+        implementation(projects.composeApp.domain.model)
+        implementation(projects.composeApp.domain.settings)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.io)

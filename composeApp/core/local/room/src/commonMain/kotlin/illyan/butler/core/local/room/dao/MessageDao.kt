@@ -8,8 +8,12 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import illyan.butler.core.local.room.model.RoomMessage
+import illyan.butler.shared.model.chat.SenderType
+import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 @Dao
 interface MessageDao {
     @Insert
@@ -48,8 +52,8 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE chatId = :chatId")
     suspend fun deleteAllChatMessagesForChat(chatId: String)
 
-    @Query("DELETE FROM messages WHERE senderId = :senderId")
-    suspend fun deleteBySender(senderId: String)
+    @Query("DELETE FROM messages WHERE sender = :sender")
+    suspend fun deleteBySender(sender: SenderType)
 
     @Query("DELETE FROM messages")
     suspend fun deleteAllMessages()
@@ -60,9 +64,9 @@ interface MessageDao {
     @Query("SELECT * FROM messages WHERE chatId = :chatId")
     fun getMessagesByChatId(chatId: String): Flow<List<RoomMessage>>
 
-    @Query("SELECT * FROM messages WHERE senderId = :senderId")
-    fun getMessagesBySenderId(senderId: String): Flow<List<RoomMessage>>
+    @Query("SELECT * FROM messages WHERE sender = :sender")
+    fun getMessagesBySenderId(sender: SenderType): Flow<List<RoomMessage>>
 
-    @Query("SELECT messages.* FROM messages JOIN chats ON messages.chatId = chats.id WHERE chats.ownerId = :userId")
-    fun getAccessibleMessagesForUser(userId: String): Flow<List<RoomMessage>>
+    @Query("SELECT * FROM messages WHERE source = :source")
+    fun getMessagesBySource(source: Source): Flow<List<RoomMessage>>
 }

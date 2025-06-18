@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.ui.error
 
 import androidx.compose.animation.Crossfade
@@ -8,10 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import illyan.butler.domain.model.DomainError
 import io.ktor.http.HttpStatusCode
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun ErrorDialogContent(
-    cleanError: (String) -> Unit,
+    cleanError: (Uuid) -> Unit,
     errors: List<DomainError>,
 ) {
     Crossfade(
@@ -39,7 +43,7 @@ fun ErrorDialogContent(
 @Composable
 private fun AppErrorContent(
     appErrors: List<DomainError.Event.Rich>,
-    clearError: (String) -> Unit
+    clearError: (Uuid) -> Unit
 ) {
     appErrors.maxByOrNull { it.timestamp }?.let {
         ButlerErrorDialogContent(
@@ -52,7 +56,7 @@ private fun AppErrorContent(
 @Composable
 private fun ServerErrorContent(
     serverErrors: List<DomainError.Response>,
-    clearError: (String) -> Unit
+    clearError: (Uuid) -> Unit
 ) {
     serverErrors.maxByOrNull { it.timestamp }?.let {
         ButlerErrorDialogContent(

@@ -36,8 +36,8 @@ class ChatService(
         return chatDatabase.createChat(userId, chat)
     }
 
-    override suspend fun editChat(userId: String, chat: ChatDto) {
-        chatDatabase.editChat(userId, chat)
+    override suspend fun editChat(userId: String, chat: ChatDto): ChatDto {
+        return chatDatabase.editChat(userId, chat)
     }
 
     override suspend fun deleteChat(userId: String, chatId: String): Boolean {

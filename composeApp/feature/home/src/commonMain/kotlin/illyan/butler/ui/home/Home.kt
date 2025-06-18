@@ -1,9 +1,11 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package illyan.butler.ui.home
 
+import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -35,13 +37,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.DismissibleDrawerSheet
 import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -66,6 +71,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,47 +80,69 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.mikepenz.aboutlibraries.Libs
-import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import illyan.butler.core.ui.components.ButlerDialog
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.PlainTooltipWithContent
-import illyan.butler.core.ui.components.mediumDialogWidth
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.DomainError
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.create_new_chat
+import illyan.butler.generated.resources.dashboard
 import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
-import illyan.butler.generated.resources.profile
+import illyan.butler.generated.resources.search
 import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.chat_list.ChatList
+import illyan.butler.ui.dashboard.Dashboard
 import illyan.butler.ui.error.ErrorDialogContent
 import illyan.butler.ui.error.ErrorSnackbarHost
 import illyan.butler.ui.onboard_flow.OnboardFlow
-import illyan.butler.ui.profile.about.AboutDialogContent
-import illyan.butler.ui.profile.dialog.ProfileDialog
-import illyan.butler.ui.profile.settings.UserSettings
-import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.reflect.KClass
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+@Keep
+enum class HomeDestinations(val referenceRoute: KClass<*>) {
+    Home(HomeDestination::class),
+    Dashboard(DashboardDestination::class),
+    Onboard(OnboardDestination::class),
+}
+
+@Serializable
+data object HomeDestination
+@Serializable
+data object DashboardDestination
+@Serializable
+data class OnboardDestination(val nextRouteIndex: Int) {
+    val nextRoute get() = HomeDestinations.entries[nextRouteIndex]
+}
 
 @Composable
 fun Home(
@@ -122,75 +150,13 @@ fun Home(
 ) {
     val viewModel = koinViewModel<HomeViewModel>()
     val state by viewModel.state.collectAsState()
-    var isProfileDialogShowing by rememberSaveable(state.signedInUserId) { mutableStateOf(false) }
-    var initialLoadingDelayPassed by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(100)
-        initialLoadingDelayPassed = true
-    }
-    var isAuthFlowEnded by rememberSaveable(
+    val areThereValidCredentials = remember(
         state.signedInUserId,
         state.credentials,
-        initialLoadingDelayPassed
-    ) { mutableStateOf(if (initialLoadingDelayPassed) (state.signedInUserId != null || state.credentials.isNotEmpty()) else null) }
-    val profileNavController = rememberNavController()
-    val animationTime = 200
-    ButlerDialog(
-        isDialogOpen = isProfileDialogShowing,
-        isDialogFullscreen = profileNavController.currentBackStackEntry?.destination?.route == "libraries",
-        onDismissDialog = {
-            Napier.d { "Dialog dismissed, previous entry: ${profileNavController.previousBackStackEntry?.destination}" }
-            if (profileNavController.previousBackStackEntry != null) {
-                Napier.d { "Navigating up" }
-                profileNavController.navigateUp()
-            } else {
-                Napier.d { "Closing dialog" }
-                isProfileDialogShowing = false
-            }
-        },
-        onDialogClosed = {},
     ) {
-        NavHost(
-            navController = profileNavController,
-            contentAlignment = Alignment.Center,
-            sizeTransform = { SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> tween(animationTime) }) },
-            startDestination = "profile",
-            enterTransition = { slideInHorizontally(tween(animationTime)) { it / 8 } + fadeIn(tween(animationTime)) },
-            popEnterTransition = { slideInHorizontally(tween(animationTime)) { -it / 8 } + fadeIn(tween(animationTime)) },
-            exitTransition = { slideOutHorizontally(tween(animationTime)) { -it / 8 } + fadeOut(tween(animationTime)) },
-            popExitTransition = { slideOutHorizontally(tween(animationTime)) { it / 8 } + fadeOut(tween(animationTime)) }
-        ) {
-            composable("profile") {
-                ProfileDialog(
-                    onShowSettingsScreen = { profileNavController.navigate("settings") },
-                    onLogin = {
-                        isAuthFlowEnded = false
-                        isProfileDialogShowing = false
-                    },
-                    onClose = {
-                        isProfileDialogShowing = false
-                    },
-                    onAbout = { profileNavController.navigate("about") }
-                )
-            }
-            composable("settings") {
-                UserSettings()
-            }
-            composable("about") {
-                AboutDialogContent(
-                    modifier = Modifier.mediumDialogWidth()
-                    // FIXME: LibrariesContainer is not compatible in Compose Multiplatform 1.8.0 yet.
-//                    onNavigateToLibraries = { profileNavController.navigate("libraries") },
-                )
-            }
-            composable("libraries") {
-                val libs by libraries
-                LibrariesContainer(
-                    modifier = Modifier.fillMaxSize(),
-                    libraries = libs
-                )
-            }
-        }
+        if (state.signedInUserId == null &&
+            state.credentials == null
+        ) null else state.signedInUserId != null || state.credentials.orEmpty().isNotEmpty()
     }
 
     val numberOfDialogErrors = state.errors.filter { it !is DomainError.Event.Simple }.size
@@ -217,177 +183,250 @@ fun Home(
     val isVerticalNavBarCompact = remember(windowSizeClass.windowWidthSizeClass) {
         windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.EXPANDED
     }
-    var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<String?>(null) }
+    var currentChat by rememberSaveable(state.signedInUserId) { mutableStateOf<Uuid?>(null) }
     val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     val isExpanded = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED
+    val navController = rememberNavController()
+    @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         snackbarHost = { ErrorSnackbarHost(
             modifier = Modifier.widthIn(max = 420.dp),
             errors = state.errors.mapNotNull { it as? DomainError.Event.Simple },
             cleanError = viewModel::clearError,
         ) },
-        containerColor = if (isAuthFlowEnded == true) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else MaterialTheme.colorScheme.surface
-    ) { _ ->
-        NavigationSuiteScaffoldLayout(
-            layoutType = navigationSuiteLayout,
-            navigationSuite = {
-                AnimatedContent(
-                    targetState = navigationSuiteLayout,
-                    transitionSpec = {
-                        slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() using SizeTransform(clip = true)
-                    }
-                ) { _ ->
-                    AnimatedVisibility(
-                        visible = !isCompact && isAuthFlowEnded == true,
-                        enter = slideInHorizontally { -it } + fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
-                        exit = slideOutHorizontally { -it } + fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
-                    ) {
-                        VerticalNavBar(
-                            modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
-                            compact = isVerticalNavBarCompact,
-                            userChats = state.userChats,
-                            deviceChats = state.deviceChats,
-                            isProfileDialogShowing = isProfileDialogShowing,
-                            setProfileDialogShowing = { isProfileDialogShowing = it },
-                            navigateToNewChat = { currentChat = null },
-                            selectChat = { currentChat = it },
-                            deleteChat = {
-                                viewModel.deleteChat(it)
-                                if (currentChat == it) currentChat = null
-                            },
-                            currentChat = currentChat,
-                            isExpanded = isExpanded
-                        )
-                    }
-                }
-            }
-        ) {
-            Surface(modifier = Modifier.fillMaxSize(), tonalElevation = 0.dp) {
-                AnimatedContent(
-                    targetState = isAuthFlowEnded,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() }
-                ) { isHome ->
-                    if (isHome == null) return@AnimatedContent
-                    if (isHome) {
-                        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                        var drawerContentWidthInPixels by remember { mutableStateOf(0) }
-                        val drawerOpenRatio = remember(
-                            drawerState.currentOffset,
-                            drawerContentWidthInPixels
-                        ) {
-                            (((drawerState.currentOffset / drawerContentWidthInPixels) + 1).takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
-                        }
-                        val coroutineScope = rememberCoroutineScope()
-                        LaunchedEffect(isCompact) {
-                            if (!isCompact) drawerState.close()
-                        }
-                        BackHandler(drawerState.isOpen) {
-                            coroutineScope.launch { drawerState.close() }
-                        }
-                        DismissibleNavigationDrawer(
-                            drawerState = drawerState,
-                            gesturesEnabled = isCompact,
-                            drawerContent = {
-                                CompositionLocalProvider(LocalAbsoluteTonalElevation provides LocalAbsoluteTonalElevation.current + 2.dp) {
-                                    DismissibleDrawerSheet(
-                                        modifier = Modifier
-                                            .widthIn(max = 280.dp)
-                                            .fillMaxHeight(),
-                                        drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current),
-                                        drawerContentColor = MaterialTheme.colorScheme.onSurface,
-                                        windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
-                                    ) {
-                                        NavigationDrawerContent(
-                                            modifier = Modifier.padding(vertical = 8.dp).onSizeChanged {
-                                                drawerContentWidthInPixels = it.width
-                                            },
-                                            closeDrawer = { coroutineScope.launch { drawerState.close() } },
-                                            closeButtonPadding = DrawerCloseButtonPadding,
-                                            bottomContent = {
-                                                NavDrawerItem(
-                                                    modifier = Modifier
-                                                        .systemBarsPadding()
-                                                        .imePadding()
-                                                        .padding(bottom = 8.dp),
-                                                    onClick = { isProfileDialogShowing = true },
-                                                    icon = Icons.Filled.Person,
-                                                    stringResource = Res.string.profile
-                                                )
-                                            }
-                                        ) {
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                            ) {
-                                                NewChatFABExtended(
-                                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                                                    onClick = {
-                                                        currentChat = null
-                                                        coroutineScope.launch { drawerState.close() }
-                                                    }
-                                                )
-
-                                                AnimatedVisibility(
-                                                    visible = (state.userChats + state.deviceChats).isEmpty(),
-                                                    enter = fadeIn(),
-                                                    exit = fadeOut()
-                                                ) {
-                                                    EmptyChatNavDrawerItem()
-                                                }
-
-                                                val chats = remember(state.userChats, state.deviceChats, state.lastInteractionTimestampForChat) {
-                                                    (state.userChats + state.deviceChats).sortedByDescending {
-                                                        state.lastInteractionTimestampForChat[it.id!!] ?: it.created
-                                                    }
-                                                }
-                                                ChatList(
-                                                    chats = chats,
-                                                    deleteChat = {
-                                                        viewModel.deleteChat(it)
-                                                        if (currentChat == it) currentChat = null
-                                                    },
-                                                    openChat = {
-                                                        currentChat = it
-                                                        coroutineScope.launch { drawerState.close() }
-                                                    },
-                                                    selectedChat = currentChat,
-                                                    deviceOnlyChatIds = state.deviceChats.map { it.id!! }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                        ) {
-                            Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
-                                ChatLayout(
-                                    modifier = Modifier.fillMaxSize().clip(
-                                        RoundedCornerShape(
-                                            topStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp,
-                                            bottomStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp
-                                        )
-                                    ),
-                                    currentChat = currentChat,
+        containerColor = if (areThereValidCredentials == true) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else MaterialTheme.colorScheme.surface
+    ) { innerPadding ->
+        AnimatedContent(
+            modifier = Modifier.fillMaxSize(),
+            targetState = areThereValidCredentials,
+            transitionSpec = { fadeIn() togetherWith fadeOut() using SizeTransform(clip = true) }
+        ) { areThereValidCredentials ->
+            areThereValidCredentials?.let { areThereValidCredentials ->
+                var chatFilterText by rememberSaveable { mutableStateOf("") }
+                @Suppress("UnusedContentLambdaTargetStateParameter")
+                NavigationSuiteScaffoldLayout(
+                    layoutType = navigationSuiteLayout,
+                    navigationSuite = {
+                        AnimatedContent(
+                            targetState = navigationSuiteLayout,
+                            transitionSpec = {
+                                slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() using SizeTransform(clip = true)
+                            }
+                        ) { navigationSuiteLayout ->
+                            val currentBackStackEntry by navController.currentBackStackEntryAsState()
+                            var navRailExpanded by rememberSaveable { mutableStateOf(!isVerticalNavBarCompact) }
+                            AnimatedVisibility(
+                                visible = !isCompact && areThereValidCredentials && currentBackStackEntry?.destination?.hasRoute(HomeDestination::class) == true,
+                                enter = slideInHorizontally { -it } + fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                                exit = slideOutHorizontally { -it } + fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
+                            ) {
+                                VerticalNavBar(
+                                    modifier = Modifier.imePadding().navigationBarsPadding().displayCutoutPadding(),
+                                    navRailExpanded = navRailExpanded,
+                                    onNavRailExpandChanged = { navRailExpanded = it},
+                                    chats = state.chats,
+                                    navigateToDashboard = { navController.navigate(DashboardDestination) },
+                                    navigateToNewChat = {
+                                        currentChat = null
+                                        navRailExpanded = false
+                                    },
                                     selectChat = { currentChat = it },
-                                    navigationIcon = {
-                                        if (isCompact) {
-                                            HamburgerButton {
-                                                coroutineScope.launch {
-                                                    if (drawerState.isOpen) drawerState.close() else drawerState.open()
-                                                }
-                                            }
-                                        }
-                                    }
+                                    deleteChat = {
+                                        viewModel.deleteChat(it)
+                                        if (currentChat == it) currentChat = null
+                                    },
+                                    currentChat = currentChat,
+                                    isExpanded = isExpanded,
+                                    onChatFilterTextChange = { chatFilterText = it },
+                                    chatFilterText = chatFilterText,
                                 )
                             }
                         }
-                    } else {
-                        Box(
+                    }
+                ) {
+                    Surface(modifier = Modifier.fillMaxSize(), tonalElevation = 0.dp) {
+                        LaunchedEffect(areThereValidCredentials) {
+                            if (areThereValidCredentials) {
+                                if (state.signedInUserId != null || state.credentials.orEmpty().isNotEmpty()) {
+                                    navController.navigate(HomeDestination) {
+                                        popUpTo(OnboardDestination::class) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+                            } else {
+                                navController.navigate(HomeDestination) {
+                                    popUpTo(HomeDestination) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                        NavHost(
+                            navController = navController,
+                            startDestination = if (areThereValidCredentials) HomeDestination else OnboardDestination(HomeDestinations.Home.ordinal),
                             modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            enterTransition = { fadeIn() },
+                            exitTransition = { fadeOut() },
+                            popEnterTransition = { fadeIn() },
+                            popExitTransition = { fadeOut() }
                         ) {
-                            OnboardFlow(
-                                authSuccessEnded = { isAuthFlowEnded = true },
-                            )
+                            composable<DashboardDestination> {
+                                Dashboard(
+                                    onBack = navController::navigateUp,
+                                    onAddAuth = { navController.navigate(OnboardDestination(HomeDestinations.Dashboard.ordinal)) },
+                                    libraries = libraries
+                                )
+                            }
+                            composable<HomeDestination> {
+                                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                                var drawerContentWidthInPixels by remember { mutableIntStateOf(0) }
+                                val drawerOpenRatio = remember(
+                                    drawerState.currentOffset,
+                                    drawerContentWidthInPixels
+                                ) {
+                                    (((drawerState.currentOffset / drawerContentWidthInPixels) + 1).takeIf { !it.isNaN() } ?: 0f).coerceIn(0f, 1f)
+                                }
+                                val coroutineScope = rememberCoroutineScope()
+                                LaunchedEffect(isCompact) {
+                                    if (!isCompact) drawerState.close()
+                                }
+                                LaunchedEffect(state.chats.isEmpty()) {
+                                    coroutineScope.launch { drawerState.close() }
+                                }
+                                BackHandler(drawerState.isOpen) {
+                                    coroutineScope.launch { drawerState.close() }
+                                }
+                                DismissibleNavigationDrawer(
+                                    drawerState = drawerState,
+                                    gesturesEnabled = isCompact,
+                                    drawerContent = {
+                                        CompositionLocalProvider(LocalAbsoluteTonalElevation provides LocalAbsoluteTonalElevation.current + 2.dp) {
+                                            DismissibleDrawerSheet(
+                                                modifier = Modifier
+                                                    .widthIn(max = 280.dp)
+                                                    .fillMaxHeight(),
+                                                drawerContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current),
+                                                drawerContentColor = MaterialTheme.colorScheme.onSurface,
+                                                windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+                                            ) {
+                                                NavigationDrawerContent(
+                                                    modifier = Modifier.padding(vertical = 8.dp).onSizeChanged {
+                                                        drawerContentWidthInPixels = it.width
+                                                    },
+                                                    closeDrawer = { coroutineScope.launch { drawerState.close() } },
+                                                    closeButtonPadding = DrawerCloseButtonPadding,
+                                                    bottomContent = {
+                                                        NavDrawerItem(
+                                                            modifier = Modifier
+                                                                .systemBarsPadding()
+                                                                .imePadding()
+                                                                .padding(bottom = 8.dp),
+                                                            onClick = { navController.navigate(DashboardDestination) },
+                                                            icon = Icons.Rounded.Dashboard,
+                                                            stringResource = Res.string.dashboard
+                                                        )
+                                                    }
+                                                ) {
+                                                    Column(
+                                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        NewChatFABExtended(
+                                                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                                            onClick = {
+                                                                currentChat = null
+                                                                coroutineScope.launch { drawerState.close() }
+                                                            }
+                                                        )
+
+                                                        AnimatedVisibility(
+                                                            visible = state.chats.isEmpty(),
+                                                            enter = fadeIn(),
+                                                            exit = fadeOut()
+                                                        ) {
+                                                            EmptyChatNavDrawerItem()
+                                                        }
+
+                                                        AnimatedVisibility(
+                                                            visible = state.chats.isNotEmpty(),
+                                                            enter = fadeIn(),
+                                                            exit = fadeOut()
+                                                        ) {
+                                                            ChatFilterTextField(
+                                                                value = chatFilterText,
+                                                                onValueChange = { chatFilterText = it },
+                                                            )
+                                                        }
+
+                                                        val chats = remember(state.chats, chatFilterText) {
+                                                            state.chats.sortedByDescending { it.lastUpdated }.filter { chat ->
+                                                                chat.title?.contains(chatFilterText, ignoreCase = true) == true ||
+                                                                        chat.summary?.contains(chatFilterText, ignoreCase = true) == true ||
+                                                                        (chat.title == null && chat.summary == null)
+                                                            }
+                                                        }
+
+                                                        ChatList(
+                                                            chats = chats,
+                                                            deleteChat = {
+                                                                viewModel.deleteChat(it)
+                                                                if (currentChat == it) currentChat = null
+                                                            },
+                                                            openChat = {
+                                                                currentChat = it
+                                                                coroutineScope.launch { drawerState.close() }
+                                                            },
+                                                            selectedChat = currentChat,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                ) {
+                                    Surface(color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)) {
+                                        ChatLayout(
+                                            modifier = Modifier.fillMaxSize().clip(
+                                                RoundedCornerShape(
+                                                    topStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp,
+                                                    bottomStart = if (isCompact) 24.dp * drawerOpenRatio else 24.dp
+                                                )
+                                            ),
+                                            currentChat = currentChat,
+                                            onCurrentChatChanged = { currentChat = it },
+                                            navigationIcon = {
+                                                if (isCompact) {
+                                                    HamburgerButton {
+                                                        coroutineScope.launch {
+                                                            if (drawerState.isOpen) drawerState.close() else drawerState.open()
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            composable<OnboardDestination> {
+                                val route = it.toRoute<OnboardDestination>()
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    OnboardFlow(
+                                        authSuccessEnded = {
+                                            if (navController.previousBackStackEntry?.destination?.hasRoute(route.nextRoute.referenceRoute) == true) {
+                                                navController.navigateUp()
+                                            } else {
+                                                navController.navigate(route.nextRoute) {
+                                                    popUpTo(OnboardDestination::class) { inclusive = true }
+                                                    launchSingleTop = true
+                                                }
+                                            }
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -397,9 +436,34 @@ fun Home(
 }
 
 @Composable
+fun ChatFilterTextField(
+    modifier: Modifier = Modifier,
+    value: String = "",
+    onValueChange: (String) -> Unit = {},
+) {
+    ButlerTextField(
+        modifier = modifier.padding(horizontal = 8.dp),
+        value = value,
+        onValueChange = onValueChange,
+        isOutlined = true,
+        isCompact = true,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null
+            )
+        },
+        placeholder = { Text(stringResource(Res.string.search)) },
+    )
+}
+
+
+@Composable
 private fun HomeNavRail(
     modifier: Modifier = Modifier,
+    isSearchEnabled: Boolean,
     navigateToNewChat: () -> Unit,
+    searchChat: () -> Unit,
     expandNavRail: () -> Unit,
     bottomContent: @Composable () -> Unit = {},
     content: @Composable () -> Unit
@@ -411,6 +475,9 @@ private fun HomeNavRail(
         header = {
             HamburgerButton(expandNavRail)
             NewChatFAB(navigateToNewChat)
+            if (isSearchEnabled) {
+                SearchChatFAB(searchChat)
+            }
         }
     ) {
         Spacer(Modifier.weight(0.5f))
@@ -423,18 +490,24 @@ private fun HomeNavRail(
 @Composable
 private fun VerticalNavBar(
     modifier: Modifier = Modifier,
-    selectChat: (String?) -> Unit = {},
+    selectChat: (Uuid?) -> Unit = {},
     isExpanded: Boolean,
-    userChats: List<DomainChat>,
-    deviceChats: List<DomainChat>,
-    currentChat: String?,
-    deleteChat: (String) -> Unit = {},
-    compact: Boolean,
-    isProfileDialogShowing: Boolean,
-    setProfileDialogShowing: (Boolean) -> Unit,
+    chats: List<Chat>,
+    chatFilterText: String,
+    currentChat: Uuid?,
+    deleteChat: (Chat) -> Unit = {},
+    navRailExpanded: Boolean,
+    onNavRailExpandChanged: (Boolean) -> Unit,
+    onChatFilterTextChange: (String) -> Unit,
+    navigateToDashboard: (Boolean) -> Unit,
     navigateToNewChat: () -> Unit,
 ) {
-    var navRailExpanded by rememberSaveable(compact) { mutableStateOf(!compact) }
+    var focusChatSearch by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(navRailExpanded) {
+        if (navRailExpanded && focusChatSearch) {
+            focusChatSearch = false
+        }
+    }
     AnimatedContent(
         targetState = !navRailExpanded,
         transitionSpec = {
@@ -447,16 +520,20 @@ private fun VerticalNavBar(
     ) { isCompact ->
         if (isCompact) {
             HomeNavRail(
-                navigateToNewChat = { navigateToNewChat(); navRailExpanded = false },
-                expandNavRail = { navRailExpanded = true },
+                navigateToNewChat = navigateToNewChat,
+                isSearchEnabled = chats.isNotEmpty(),
+                expandNavRail = { onNavRailExpandChanged(true) },
                 bottomContent = {
                     NavRailItem(
                         modifier = Modifier.systemBarsPadding().imePadding().padding(bottom = 8.dp),
-                        icon = Icons.Filled.Person,
-                        stringResource = Res.string.profile,
-                        onClick = { setProfileDialogShowing(true) },
-                        selected = isProfileDialogShowing
+                        icon = Icons.Rounded.Dashboard,
+                        stringResource = Res.string.dashboard,
+                        onClick = { navigateToDashboard(true) },
                     )
+                },
+                searchChat = {
+                    onNavRailExpandChanged(true)
+                    focusChatSearch = true
                 },
                 content = {}
             )
@@ -465,15 +542,17 @@ private fun VerticalNavBar(
                 modifier = modifier.statusBarsPadding(),
                 selectChat = {
                     selectChat(it)
-                    if (!isExpanded) navRailExpanded = false
+                    if (!isExpanded) onNavRailExpandChanged(false)
                 },
-                userChats = userChats,
-                deviceChats = deviceChats,
+                focusChatSearch = focusChatSearch,
+                chats = chats,
                 deleteChat = deleteChat,
-                onProfileClick = { setProfileDialogShowing(true) },
-                navigateToNewChat = { navigateToNewChat(); navRailExpanded = false },
-                closeDrawer = { navRailExpanded = false },
-                currentChat = currentChat
+                onProfileClick = { navigateToDashboard(true) },
+                navigateToNewChat = { navigateToNewChat() },
+                closeDrawer = { onNavRailExpandChanged(false) },
+                currentChat = currentChat,
+                chatFilterText = chatFilterText,
+                onChatFilterTextChange = onChatFilterTextChange
             )
         }
     }
@@ -527,6 +606,27 @@ fun NavDrawerItem(
 }
 
 @Composable
+fun SearchChatFAB(onClick: () -> Unit) {
+    PlainTooltipWithContent(
+        enabledGestures = getTooltipGestures(),
+        tooltip = { Text(stringResource(Res.string.search)) },
+    ) { gestureAreaModifier ->
+        FloatingActionButton(
+            modifier = gestureAreaModifier,
+            onClick = onClick,
+            contentColor = MaterialTheme.colorScheme.onSecondary,
+            containerColor = MaterialTheme.colorScheme.secondary,
+            elevation = FloatingActionButtonDefaults.loweredElevation()
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = stringResource(Res.string.search)
+            )
+        }
+    }
+}
+
+@Composable
 fun NewChatFAB(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
         enabledGestures = getTooltipGestures(),
@@ -534,10 +634,12 @@ fun NewChatFAB(onClick: () -> Unit = {}) {
     ) { gestureAreaModifier ->
         FloatingActionButton(
             modifier = gestureAreaModifier,
-            onClick = onClick
+            onClick = onClick,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                imageVector = Icons.Rounded.Add,
                 contentDescription = stringResource(Res.string.new_chat)
             )
         }
@@ -596,12 +698,14 @@ fun MenuCloseButton(
 @Composable
 private fun HomePermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
-    userChats: List<DomainChat>,
-    deviceChats: List<DomainChat>,
-    currentChat: String?,
-    selectChat: (String?) -> Unit = {},
-    deleteChat: (String) -> Unit = {},
+    chats: List<Chat>,
+    currentChat: Uuid?,
+    chatFilterText: String,
+    focusChatSearch: Boolean,
+    selectChat: (Uuid?) -> Unit = {},
+    deleteChat: (Chat) -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onChatFilterTextChange: (String) -> Unit = {},
     navigateToNewChat: () -> Unit,
     closeDrawer: () -> Unit = {},
 ) {
@@ -621,8 +725,8 @@ private fun HomePermanentNavigationDrawerSheet(
                             .imePadding()
                             .padding(bottom = 8.dp),
                         onClick = onProfileClick,
-                        icon = Icons.Filled.Person,
-                        stringResource = Res.string.profile
+                        icon = Icons.Rounded.Dashboard,
+                        stringResource = Res.string.dashboard
                     )
                 }
             ) {
@@ -634,16 +738,40 @@ private fun HomePermanentNavigationDrawerSheet(
                         onClick = navigateToNewChat
                     )
                     AnimatedVisibility(
-                        visible = (deviceChats + userChats).isEmpty(),
+                        visible = chats.isEmpty(),
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
                         EmptyChatNavDrawerItem()
                     }
+                    AnimatedVisibility(
+                        visible = chats.isNotEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        val focusRequester = remember { FocusRequester() }
+                        ChatFilterTextField(
+                            modifier.focusRequester(focusRequester),
+                            value = chatFilterText,
+                            onValueChange = onChatFilterTextChange,
+                        )
+                        LaunchedEffect(focusChatSearch) {
+                            if (focusChatSearch) {
+                                focusRequester.requestFocus()
+                            }
+                        }
+                    }
+
+                    val filteredChats = remember(chats, chatFilterText) {
+                        chats.sortedByDescending { it.lastUpdated }.filter { chat ->
+                            chat.title?.contains(chatFilterText, ignoreCase = true) == true ||
+                                    chat.summary?.contains(chatFilterText, ignoreCase = true) == true ||
+                                    (chat.title == null && chat.summary == null)
+                        }
+                    }
                     ChatList(
                         modifier = Modifier,
-                        chats = userChats + deviceChats,
-                        deviceOnlyChatIds = deviceChats.map { it.id!! },
+                        chats = filteredChats,
                         openChat = selectChat,
                         deleteChat = deleteChat,
                         selectedChat = currentChat,

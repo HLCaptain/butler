@@ -13,7 +13,7 @@ kotlin {
         implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.core.local.room)
 
-        implementation(projects.composeApp.data.host)
+        implementation(projects.composeApp.data.settings)
 
         implementation(projects.composeApp.domain)
 

@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
+import org.jetbrains.compose.reload.ComposeHotRun
 
 plugins {
     alias(libs.plugins.android.application)
@@ -50,6 +51,7 @@ kotlin {
         implementation(projects.composeApp.feature.home)
         implementation(projects.composeApp.feature.auth)
         implementation(projects.composeApp.feature.chat)
+        implementation(projects.composeApp.feature.dashboard)
         implementation(projects.composeApp.feature.error)
         implementation(projects.composeApp.feature.onboarding)
         implementation(projects.composeApp.feature.permission)
@@ -141,7 +143,7 @@ android {
 
     packaging {
         resources {
-            excludes += "/META-INF/**"
+//            excludes += "/META-INF/**"
         }
     }
 
@@ -163,7 +165,7 @@ compose.desktop.application {
     }
 
     buildTypes.release.proguard {
-        version = "7.6.0"
+        version = "7.7.0"
         // FIXME: make JVM prod work with Proguard
         isEnabled = false
 //        optimize = true
@@ -181,4 +183,8 @@ aboutLibraries {
         prettyPrint = true
         outputPath = file("src/commonMain/composeResources/files/aboutlibraries.json")
     }
+}
+
+tasks.withType<ComposeHotRun>().configureEach {
+    mainClass.set("illyan.butler.MainKt")
 }

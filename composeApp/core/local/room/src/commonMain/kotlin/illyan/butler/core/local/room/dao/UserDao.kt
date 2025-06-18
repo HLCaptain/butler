@@ -1,12 +1,14 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.core.local.room.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import illyan.butler.core.local.room.model.RoomToken
 import illyan.butler.core.local.room.model.RoomUser
 import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
 
 @Dao
 interface UserDao {
@@ -24,7 +26,4 @@ interface UserDao {
 
     @Query("SELECT * FROM users WHERE id = :userId")
     fun getUser(userId: String): Flow<RoomUser?>
-
-    @Query("UPDATE users SET accessToken = :accessToken, refreshToken = :refreshToken WHERE id = :userId")
-    suspend fun updateTokens(userId: String, accessToken: RoomToken?, refreshToken: RoomToken?): Int
 }

@@ -5,7 +5,9 @@ import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.core.network.datasource.ChatNetworkDataSource
 import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
-import illyan.butler.domain.model.DomainChat
+import illyan.butler.domain.model.Chat
+import illyan.butler.shared.model.chat.Source
+import kotlinx.coroutines.flow.emptyFlow
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Fetcher
@@ -13,6 +15,8 @@ import org.mobilenativefoundation.store.store5.MutableStoreBuilder
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.Updater
 import org.mobilenativefoundation.store.store5.UpdaterResult
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
 @Single
 class ChatMutableStoreBuilder(
@@ -24,15 +28,19 @@ class ChatMutableStoreBuilder(
     val store = provideChatMutableStore(chatLocalDataSource, chatNetworkDataSource, dataHistoryLocalDataSource)
 }
 
-@OptIn(ExperimentalStoreApi::class)
+@OptIn(ExperimentalStoreApi::class, ExperimentalUuidApi::class, ExperimentalTime::class)
 fun provideChatMutableStore(
     chatLocalDataSource: ChatLocalDataSource,
     chatNetworkDataSource: ChatNetworkDataSource,
     dataHistoryLocalDataSource: DataHistoryLocalDataSource
 ) = MutableStoreBuilder.from(
-    fetcher = Fetcher.ofFlow<ChatKey, DomainChat> { key ->
+    fetcher = Fetcher.ofFlow<ChatKey, Chat> { key ->
         require(key is ChatKey.Read.ByChatId)
-        chatNetworkDataSource.fetchByChatId(key.chatId)
+        if (key.source is Source.Server) {
+            chatNetworkDataSource.fetchByChatId(key.source, key.chatId)
+        } else {
+            emptyFlow()
+        }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
@@ -41,17 +49,17 @@ fun provideChatMutableStore(
         },
         writer = { key, local ->
             when (key) {
-                ChatKey.Write.Create, ChatKey.Write.Upsert, ChatKey.Write.DeviceOnly -> chatLocalDataSource.upsertChat(local)
+                ChatKey.Write.Create, ChatKey.Write.Upsert -> chatLocalDataSource.upsertChat(local)
                 is ChatKey.Read.ByChatId -> chatLocalDataSource.upsertChat(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key type: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
             }
         },
         delete = { key ->
-            require(key is ChatKey.Delete.ByChatId)
-            if (!key.deviceOnly) {
-                chatNetworkDataSource.delete(key.chatId)
+            require(key is ChatKey.Delete)
+            if (!key.chat.deviceOnly) {
+                chatNetworkDataSource.delete(key.chat)
             }
-            chatLocalDataSource.deleteChatById(key.chatId)
+            chatLocalDataSource.deleteChatById(key.chat.id)
         },
         deleteAll = {
             chatLocalDataSource.deleteAllChats()
@@ -63,11 +71,18 @@ fun provideChatMutableStore(
         post = { key, output ->
             require(key is ChatKey.Write)
             val newChat = when (key) {
-                is ChatKey.Write.Create -> chatNetworkDataSource.upsert(output.copy(id = null)).also {
-                    chatLocalDataSource.replaceChat(output.id!!, it)
+                is ChatKey.Write.Create -> if (output.deviceOnly) {
+                    output // Do not upload device-only
+                } else {
+                    chatNetworkDataSource.create(output).also {
+                        chatLocalDataSource.replaceChat(output.id, it)
+                    }
                 }
-                is ChatKey.Write.Upsert -> chatNetworkDataSource.upsert(output)
-                is ChatKey.Write.DeviceOnly -> output // Do not upload device-only chats
+                is ChatKey.Write.Upsert -> if (output.deviceOnly) {
+                    output // Do not upload device-only
+                } else {
+                    chatNetworkDataSource.upsert(output)
+                }
             }
             UpdaterResult.Success.Typed(newChat)
         },
@@ -75,6 +90,6 @@ fun provideChatMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        DomainChat::class.qualifiedName.toString()
+        Chat::class.qualifiedName.toString()
     ) { it.toString() }
 )

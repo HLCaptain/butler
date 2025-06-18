@@ -2,6 +2,7 @@ package illyan.butler.ui.chat_detail
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import illyan.butler.shared.model.chat.AiSource
 
 @Composable
 actual fun ChatDetailBottomBar(
@@ -9,7 +10,9 @@ actual fun ChatDetailBottomBar(
     sendMessage: (String) -> Unit,
     sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean,
-    toggleRecord: () -> Unit
+    toggleRecord: () -> Unit,
+    enabled: Boolean,
+    currentModel: AiSource?
 ) {
     MessageField(
         modifier = modifier,
@@ -23,5 +26,7 @@ actual fun ChatDetailBottomBar(
         recordAudioEnabled = true, // Desktop doesn't need permission
         requestGalleryAccess = {},
         requestRecordAudioAccess = {},
+        enabled = enabled,
+        currentModel = currentModel
     )
 }

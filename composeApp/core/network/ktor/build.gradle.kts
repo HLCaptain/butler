@@ -7,7 +7,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.shared.model)
 
-        implementation(projects.composeApp.core.local.room)
+        implementation(projects.composeApp.core.local)
         implementation(projects.composeApp.core.network)
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.config)

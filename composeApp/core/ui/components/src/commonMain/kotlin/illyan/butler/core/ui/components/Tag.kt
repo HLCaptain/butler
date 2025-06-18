@@ -89,7 +89,7 @@ object ButlerTagDefaults {
 
     @Composable
     fun tertiaryTagColors() = ButlerButtonDefaults.solidButtonColors(
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        containerColor = MaterialTheme.colorScheme.onTertiary,
         contentColor = MaterialTheme.colorScheme.tertiary,
     ).toCardColors()
 
@@ -104,7 +104,7 @@ object ButlerTagDefaults {
 
     @Composable
     fun tertiaryInvertedTagColors() = ButlerButtonDefaults.solidButtonInvertedColors(
-        containerColor = MaterialTheme.colorScheme.tertiary,
-        contentColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        containerColor = MaterialTheme.colorScheme.primary,
     ).toCardColors()
 }

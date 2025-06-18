@@ -90,12 +90,12 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import illyan.butler.config.BuildConfig
-import illyan.butler.core.local.room.dao.UserDao
+import illyan.butler.core.local.datasource.CredentialLocalDataSource
 import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
 import illyan.butler.data.error.ErrorRepository
-import illyan.butler.data.settings.AppRepository
-import illyan.butler.domain.model.ApiKeyCredential
+import illyan.butler.shared.model.auth.ApiKeyCredential
+import illyan.butler.shared.model.chat.Source
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.network.tls.CIOCipherSuites
@@ -106,20 +106,56 @@ import kotlinx.io.asSource
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import kotlin.time.Duration.Companion.days
+import kotlin.uuid.ExperimentalUuidApi
 
-@ExperimentalSerializationApi
 @Single
-fun provideHttpClient(
-    userDao: UserDao,
-    appRepository: AppRepository,
-    errorRepository: ErrorRepository
-): HttpClient = HttpClient(CIO) {
-    setupCioClient()
-    setupClient(
-        userDao = userDao,
-        appRepository = appRepository,
-        errorRepository = errorRepository
-    )
+class KtorHttpClientFactory(
+    private val credentialDataSource: CredentialLocalDataSource,
+    private val errorRepository: ErrorRepository
+) : (Source.Server) -> HttpClient {
+
+    private val hashMap = hashMapOf<Source.Server, HttpClient>()
+
+    @OptIn(ExperimentalUuidApi::class)
+    @ExperimentalSerializationApi
+    override fun invoke(source: Source.Server): HttpClient {
+        return hashMap.getOrPut(source) {
+            HttpClient(CIO) {
+                setupCioClient()
+                setupClient(
+                    credentialDataSource = credentialDataSource,
+                    errorRepository = errorRepository,
+                    endpoint = source.endpoint,
+                    userId = source.userId
+                )
+            }
+        }
+    }
+}
+
+@Single
+class KtorUnauthorizedHttpClientFactory(
+    private val credentialDataSource: CredentialLocalDataSource,
+    private val errorRepository: ErrorRepository
+) : (String) -> HttpClient {
+
+    private val hashMap = hashMapOf<String, HttpClient>()
+
+    @OptIn(ExperimentalUuidApi::class)
+    @ExperimentalSerializationApi
+    override fun invoke(endpoint: String): HttpClient {
+        return hashMap.getOrPut(endpoint) {
+            HttpClient(CIO) {
+                setupCioClient()
+                setupClient(
+                    credentialDataSource = credentialDataSource,
+                    errorRepository = errorRepository,
+                    endpoint = endpoint,
+                    userId = null
+                )
+            }
+        }
+    }
 }
 
 @Single

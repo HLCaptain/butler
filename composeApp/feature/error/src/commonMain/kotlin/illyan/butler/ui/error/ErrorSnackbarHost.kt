@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.ui.error
 
 import androidx.compose.material3.SnackbarDuration
@@ -13,12 +15,14 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.error_message_chat_refresh
 import illyan.butler.generated.resources.error_message_response_long
 import org.jetbrains.compose.resources.stringResource
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun ErrorSnackbarHost(
     modifier: Modifier = Modifier,
     errors: List<DomainError.Event.Simple>,
-    cleanError: (String) -> Unit,
+    cleanError: (Uuid) -> Unit,
 ) {
     val hostState = remember { SnackbarHostState() }
     val errorCodeMessages = mapOf(

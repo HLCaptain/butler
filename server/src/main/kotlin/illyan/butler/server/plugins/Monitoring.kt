@@ -11,6 +11,7 @@ import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
@@ -36,7 +37,7 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.exporter.prometheus.PrometheusHttpServer
-import io.opentelemetry.instrumentation.ktor.v3_0.server.KtorServerTracing
+import io.opentelemetry.instrumentation.ktor.v3_0.KtorServerTelemetry
 import io.opentelemetry.instrumentation.resources.ContainerResource
 import io.opentelemetry.instrumentation.resources.HostResource
 import io.opentelemetry.instrumentation.resources.OsResource
@@ -50,7 +51,6 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
-import io.opentelemetry.semconv.ResourceAttributes
 import io.opentelemetry.semconv.ServiceAttributes
 import kotlinx.datetime.Clock
 import org.slf4j.event.Level
@@ -81,7 +81,6 @@ fun Application.configureMonitoring() {
         .merge(Resource.create(Attributes.builder()
             .put(ServiceAttributes.SERVICE_NAME, BuildConfig.PROJECT_NAME)
             .put(ServiceAttributes.SERVICE_VERSION, BuildConfig.PROJECT_VERSION)
-            .put(ResourceAttributes.DEPLOYMENT_ENVIRONMENT, AppConfig.DEPLOYMENT_ENVIRONMENT)
             .build()))
 
     // Connecting to Jaeger
@@ -113,7 +112,7 @@ fun Application.configureMonitoring() {
 
 //    val otlp = AutoConfiguredOpenTelemetrySdk.initialize().openTelemetrySdk
 
-    install(KtorServerTracing) {
+    install(KtorServerTelemetry) {
         setOpenTelemetry(otlp)
 
         knownMethods(HttpMethod.DefaultMethods)
@@ -135,7 +134,8 @@ fun Application.configureMonitoring() {
             }
         }
 
-        attributeExtractor {
+
+        attributesExtractor {
             onStart {
                 attributes.put("start-time", Clock.System.now().toEpochMilliseconds())
                 attributes.put("http.target", request.path())
@@ -175,7 +175,7 @@ fun Application.configureMonitoring() {
     }
 
     routing {
-//        openAPI(path = "openapi")
+        openAPI(path = "openapi")
 //        swaggerUI(path = "openapi")
         get("/metrics") {
             call.respond(appMicrometerRegistry.scrape())

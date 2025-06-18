@@ -1,10 +1,9 @@
 package illyan.butler.server.data.schema
 
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 object UserPasswords : Table() {
-    val userId = varchar("userId", NanoIdUtils.DEFAULT_SIZE)
-    val hash = text("hash")
+    val userId = reference("userId", Users.id)
+    val passwordHash = text("passwordHash")
     override val primaryKey = PrimaryKey(userId)
 }

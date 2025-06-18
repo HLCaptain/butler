@@ -1,10 +1,15 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.core.local.room.mapping
 
 import illyan.butler.core.local.room.model.RoomUser
-import illyan.butler.domain.model.DomainUser
+import illyan.butler.domain.model.User
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-fun RoomUser.toDomainModel() = DomainUser(
-    id = id,
+fun RoomUser.toDomainModel() = User(
+    id = Uuid.parse(id),
+    endpoint = endpoint,
     email = email,
     username = username,
     displayName = displayName,
@@ -12,12 +17,13 @@ fun RoomUser.toDomainModel() = DomainUser(
     fullName = fullName,
     photoUrl = photoUrl,
     address = address?.toDomainModel(),
-    accessToken = accessToken?.toDomainModel(),
-    refreshToken = refreshToken?.toDomainModel()
+    filters = filterOptions,
+    promptConfigurations = customPrompts
 )
 
-fun DomainUser.toRoomModel() = RoomUser(
-    id = id,
+fun User.toRoomModel() = RoomUser(
+    id = id.toString(),
+    endpoint = endpoint,
     email = email,
     username = username,
     displayName = displayName,
@@ -25,6 +31,6 @@ fun DomainUser.toRoomModel() = RoomUser(
     fullName = fullName,
     photoUrl = photoUrl,
     address = address?.toRoomModel(),
-    accessToken = accessToken?.toRoomModel(),
-    refreshToken = refreshToken?.toRoomModel()
+    filterOptions = filters,
+    customPrompts = promptConfigurations
 )

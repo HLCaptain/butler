@@ -6,6 +6,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.resources)
         implementation(projects.composeApp.core.ui.utils)
@@ -16,6 +18,7 @@ kotlin {
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.model)
         implementation(projects.composeApp.domain.audio)
+        implementation(projects.composeApp.domain.settings)
         implementation(projects.composeApp.feature.permission)
 
 //        implementation(compose.material3AdaptiveNavigationSuite)

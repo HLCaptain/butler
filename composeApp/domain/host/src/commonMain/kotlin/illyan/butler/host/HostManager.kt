@@ -4,8 +4,8 @@ import illyan.butler.core.network.datasource.HostNetworkDataSource
 import illyan.butler.core.network.ktor.http.di.provideOpenAIClient
 import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.host.HostRepository
-import illyan.butler.domain.model.ApiKeyCredential
 import illyan.butler.domain.model.DomainModel
+import illyan.butler.shared.model.auth.ApiKeyCredential
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
