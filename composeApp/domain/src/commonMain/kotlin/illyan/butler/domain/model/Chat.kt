@@ -1,8 +1,8 @@
 package illyan.butler.domain.model
 
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.Source
-import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -18,12 +18,3 @@ data class Chat @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class) cons
     val lastUpdated: Instant = Clock.System.now(),
     val models: Map<Capability, AiSource> = emptyMap(),
 ) : Entity
-
-@Serializable
-enum class Capability {
-    CHAT_COMPLETION,
-    AUDIO_TRANSCRIPTION,
-    AUDIO_TRANSLATION,
-    IMAGE_GENERATION,
-    SPEECH_SYNTHESIS
-}

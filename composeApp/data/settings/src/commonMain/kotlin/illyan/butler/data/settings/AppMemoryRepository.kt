@@ -4,6 +4,7 @@ import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,7 @@ class AppMemoryRepository : AppRepository {
     private val _currentHost = MutableStateFlow<String?>(null)
     private val _currentSignedInUser = MutableStateFlow<Set<Source.Server>>(emptySet())
     private val _defaultModel = MutableStateFlow<AiSource?>(null)
-
+    override val selectedPromptConfiguration = MutableStateFlow<PromptConfiguration?>(null)
     override val appSettings: Flow<AppSettings> = _appSettings.asStateFlow()
     override val currentHost: Flow<String?> = _currentHost.asStateFlow()
     override val signedInServers: Flow<Set<Source.Server>> = _currentSignedInUser.asStateFlow()
@@ -47,5 +48,13 @@ class AppMemoryRepository : AppRepository {
 
     override suspend fun setAppSettings(appSettings: AppSettings) {
         _appSettings.update { appSettings }
+    }
+
+    override suspend fun setSelectedPromptConfiguration(promptConfiguration: PromptConfiguration?) {
+        selectedPromptConfiguration.update { promptConfiguration }
+    }
+
+    override suspend fun setPromptConfigurations(promptConfigurations: List<PromptConfiguration>) {
+        _appSettings.update { it.copy(promptConfigurations = promptConfigurations) }
     }
 }

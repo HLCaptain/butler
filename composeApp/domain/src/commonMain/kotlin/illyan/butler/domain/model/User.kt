@@ -1,6 +1,7 @@
 package illyan.butler.domain.model
 
 import illyan.butler.shared.model.chat.FilterOption
+import illyan.butler.shared.model.chat.PromptConfiguration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -16,4 +17,5 @@ data class User(
     val photoUrl: String?,
     val address: Address?,
     val filters: Set<FilterOption>,
+    val promptConfigurations: List<PromptConfiguration>,
 )

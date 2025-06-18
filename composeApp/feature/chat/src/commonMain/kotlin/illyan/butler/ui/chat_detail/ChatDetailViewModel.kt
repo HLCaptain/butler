@@ -13,6 +13,7 @@ import illyan.butler.domain.model.Message
 import illyan.butler.domain.model.Resource
 import illyan.butler.settings.SettingsManager
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.SenderType
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
@@ -121,9 +122,9 @@ class ChatDetailViewModel(
         }
     }
 
-    private suspend fun createNewChat(source: Source): Uuid {
+    private suspend fun createNewChat(source: Source, capabilities: Set<Capability> = setOf(Capability.CHAT_COMPLETION)): Uuid {
         val aiSource = selectedNewChatModel.filterNotNull().first()
-        return chatManager.startNewChat(source, aiSource).also { loadChat(it) }
+        return chatManager.startNewChat(source, aiSource, capabilities).also { loadChat(it) }
     }
 
     private suspend fun getSourceFromAiSource(aiSource: AiSource?): Source? {

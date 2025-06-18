@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.auth.AuthManager
 import illyan.butler.chat.ChatManager
-import illyan.butler.domain.model.Capability
 import illyan.butler.model.ModelManager
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.Source
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

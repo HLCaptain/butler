@@ -42,7 +42,6 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import illyan.butler.core.ui.components.ButlerDropdownMenuBox
 import illyan.butler.core.ui.utils.plus
-import illyan.butler.domain.model.Capability
 import illyan.butler.domain.model.Chat
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.audio_speech_model
@@ -58,6 +57,7 @@ import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.summary
 import illyan.butler.generated.resources.unknown
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.uuid.ExperimentalUuidApi

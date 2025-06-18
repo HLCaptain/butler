@@ -37,13 +37,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.DismissibleDrawerSheet
 import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -77,6 +80,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
@@ -92,6 +97,7 @@ import androidx.navigation.toRoute
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.mikepenz.aboutlibraries.Libs
 import illyan.butler.core.ui.components.ButlerDialog
+import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.BackHandler
@@ -105,6 +111,7 @@ import illyan.butler.generated.resources.dashboard
 import illyan.butler.generated.resources.menu
 import illyan.butler.generated.resources.new_chat
 import illyan.butler.generated.resources.no_chats
+import illyan.butler.generated.resources.search
 import illyan.butler.ui.chat_layout.ChatLayout
 import illyan.butler.ui.chat_list.ChatList
 import illyan.butler.ui.dashboard.Dashboard
@@ -196,6 +203,7 @@ fun Home(
             transitionSpec = { fadeIn() togetherWith fadeOut() using SizeTransform(clip = true) }
         ) { areThereValidCredentials ->
             areThereValidCredentials?.let { areThereValidCredentials ->
+                var chatFilterText by rememberSaveable { mutableStateOf("") }
                 @Suppress("UnusedContentLambdaTargetStateParameter")
                 NavigationSuiteScaffoldLayout(
                     layoutType = navigationSuiteLayout,
@@ -229,7 +237,9 @@ fun Home(
                                         if (currentChat == it) currentChat = null
                                     },
                                     currentChat = currentChat,
-                                    isExpanded = isExpanded
+                                    isExpanded = isExpanded,
+                                    onChatFilterTextChange = { chatFilterText = it },
+                                    chatFilterText = chatFilterText,
                                 )
                             }
                         }
@@ -286,7 +296,6 @@ fun Home(
                                 BackHandler(drawerState.isOpen) {
                                     coroutineScope.launch { drawerState.close() }
                                 }
-
                                 DismissibleNavigationDrawer(
                                     drawerState = drawerState,
                                     gesturesEnabled = isCompact,
@@ -337,9 +346,25 @@ fun Home(
                                                             EmptyChatNavDrawerItem()
                                                         }
 
-                                                        val chats = remember(state.chats) {
-                                                            state.chats.sortedByDescending { it.lastUpdated }
+                                                        AnimatedVisibility(
+                                                            visible = state.chats.isNotEmpty(),
+                                                            enter = fadeIn(),
+                                                            exit = fadeOut()
+                                                        ) {
+                                                            ChatFilterTextField(
+                                                                value = chatFilterText,
+                                                                onValueChange = { chatFilterText = it },
+                                                            )
                                                         }
+
+                                                        val chats = remember(state.chats, chatFilterText) {
+                                                            state.chats.sortedByDescending { it.lastUpdated }.filter { chat ->
+                                                                chat.title?.contains(chatFilterText, ignoreCase = true) == true ||
+                                                                        chat.summary?.contains(chatFilterText, ignoreCase = true) == true ||
+                                                                        (chat.title == null && chat.summary == null)
+                                                            }
+                                                        }
+
                                                         ChatList(
                                                             chats = chats,
                                                             deleteChat = {
@@ -411,9 +436,34 @@ fun Home(
 }
 
 @Composable
+fun ChatFilterTextField(
+    modifier: Modifier = Modifier,
+    value: String = "",
+    onValueChange: (String) -> Unit = {},
+) {
+    ButlerTextField(
+        modifier = modifier.padding(horizontal = 8.dp),
+        value = value,
+        onValueChange = onValueChange,
+        isOutlined = true,
+        isCompact = true,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null
+            )
+        },
+        placeholder = { Text(stringResource(Res.string.search)) },
+    )
+}
+
+
+@Composable
 private fun HomeNavRail(
     modifier: Modifier = Modifier,
+    isSearchEnabled: Boolean,
     navigateToNewChat: () -> Unit,
+    searchChat: () -> Unit,
     expandNavRail: () -> Unit,
     bottomContent: @Composable () -> Unit = {},
     content: @Composable () -> Unit
@@ -425,6 +475,9 @@ private fun HomeNavRail(
         header = {
             HamburgerButton(expandNavRail)
             NewChatFAB(navigateToNewChat)
+            if (isSearchEnabled) {
+                SearchChatFAB(searchChat)
+            }
         }
     ) {
         Spacer(Modifier.weight(0.5f))
@@ -440,13 +493,21 @@ private fun VerticalNavBar(
     selectChat: (Uuid?) -> Unit = {},
     isExpanded: Boolean,
     chats: List<Chat>,
+    chatFilterText: String,
     currentChat: Uuid?,
     deleteChat: (Chat) -> Unit = {},
     navRailExpanded: Boolean,
-    onNavRailExpandChanged: (Boolean) -> Unit = {},
+    onNavRailExpandChanged: (Boolean) -> Unit,
+    onChatFilterTextChange: (String) -> Unit,
     navigateToDashboard: (Boolean) -> Unit,
     navigateToNewChat: () -> Unit,
 ) {
+    var focusChatSearch by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(navRailExpanded) {
+        if (navRailExpanded && focusChatSearch) {
+            focusChatSearch = false
+        }
+    }
     AnimatedContent(
         targetState = !navRailExpanded,
         transitionSpec = {
@@ -460,6 +521,7 @@ private fun VerticalNavBar(
         if (isCompact) {
             HomeNavRail(
                 navigateToNewChat = navigateToNewChat,
+                isSearchEnabled = chats.isNotEmpty(),
                 expandNavRail = { onNavRailExpandChanged(true) },
                 bottomContent = {
                     NavRailItem(
@@ -468,6 +530,10 @@ private fun VerticalNavBar(
                         stringResource = Res.string.dashboard,
                         onClick = { navigateToDashboard(true) },
                     )
+                },
+                searchChat = {
+                    onNavRailExpandChanged(true)
+                    focusChatSearch = true
                 },
                 content = {}
             )
@@ -478,12 +544,15 @@ private fun VerticalNavBar(
                     selectChat(it)
                     if (!isExpanded) onNavRailExpandChanged(false)
                 },
+                focusChatSearch = focusChatSearch,
                 chats = chats,
                 deleteChat = deleteChat,
                 onProfileClick = { navigateToDashboard(true) },
                 navigateToNewChat = { navigateToNewChat() },
                 closeDrawer = { onNavRailExpandChanged(false) },
-                currentChat = currentChat
+                currentChat = currentChat,
+                chatFilterText = chatFilterText,
+                onChatFilterTextChange = onChatFilterTextChange
             )
         }
     }
@@ -537,6 +606,27 @@ fun NavDrawerItem(
 }
 
 @Composable
+fun SearchChatFAB(onClick: () -> Unit) {
+    PlainTooltipWithContent(
+        enabledGestures = getTooltipGestures(),
+        tooltip = { Text(stringResource(Res.string.search)) },
+    ) { gestureAreaModifier ->
+        FloatingActionButton(
+            modifier = gestureAreaModifier,
+            onClick = onClick,
+            contentColor = MaterialTheme.colorScheme.onSecondary,
+            containerColor = MaterialTheme.colorScheme.secondary,
+            elevation = FloatingActionButtonDefaults.loweredElevation()
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = stringResource(Res.string.search)
+            )
+        }
+    }
+}
+
+@Composable
 fun NewChatFAB(onClick: () -> Unit = {}) {
     PlainTooltipWithContent(
         enabledGestures = getTooltipGestures(),
@@ -544,10 +634,12 @@ fun NewChatFAB(onClick: () -> Unit = {}) {
     ) { gestureAreaModifier ->
         FloatingActionButton(
             modifier = gestureAreaModifier,
-            onClick = onClick
+            onClick = onClick,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                imageVector = Icons.Rounded.Add,
                 contentDescription = stringResource(Res.string.new_chat)
             )
         }
@@ -608,9 +700,12 @@ private fun HomePermanentNavigationDrawerSheet(
     modifier: Modifier = Modifier,
     chats: List<Chat>,
     currentChat: Uuid?,
+    chatFilterText: String,
+    focusChatSearch: Boolean,
     selectChat: (Uuid?) -> Unit = {},
     deleteChat: (Chat) -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onChatFilterTextChange: (String) -> Unit = {},
     navigateToNewChat: () -> Unit,
     closeDrawer: () -> Unit = {},
 ) {
@@ -649,9 +744,34 @@ private fun HomePermanentNavigationDrawerSheet(
                     ) {
                         EmptyChatNavDrawerItem()
                     }
+                    AnimatedVisibility(
+                        visible = chats.isNotEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        val focusRequester = remember { FocusRequester() }
+                        ChatFilterTextField(
+                            modifier.focusRequester(focusRequester),
+                            value = chatFilterText,
+                            onValueChange = onChatFilterTextChange,
+                        )
+                        LaunchedEffect(focusChatSearch) {
+                            if (focusChatSearch) {
+                                focusRequester.requestFocus()
+                            }
+                        }
+                    }
+
+                    val filteredChats = remember(chats, chatFilterText) {
+                        chats.sortedByDescending { it.lastUpdated }.filter { chat ->
+                            chat.title?.contains(chatFilterText, ignoreCase = true) == true ||
+                                    chat.summary?.contains(chatFilterText, ignoreCase = true) == true ||
+                                    (chat.title == null && chat.summary == null)
+                        }
+                    }
                     ChatList(
                         modifier = Modifier,
-                        chats = chats,
+                        chats = filteredChats,
                         openChat = selectChat,
                         deleteChat = deleteChat,
                         selectedChat = currentChat,

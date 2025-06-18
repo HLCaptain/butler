@@ -73,6 +73,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
@@ -84,17 +86,20 @@ import coil3.compose.SubcomposeAsyncImageContent
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.rememberMarkdownState
 import dev.chrisbanes.haze.ExperimentalHazeApi
 import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import illyan.butler.core.ui.components.ButlerButtonDefaults
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
 import illyan.butler.core.ui.components.ButlerOutlinedCard
+import illyan.butler.core.ui.components.ButlerSmallTextButton
 import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.ButlerTooltipDefaults
@@ -121,6 +126,8 @@ import illyan.butler.generated.resources.send
 import illyan.butler.generated.resources.send_message
 import illyan.butler.generated.resources.sender_id
 import illyan.butler.generated.resources.stop
+import illyan.butler.generated.resources.system
+import illyan.butler.generated.resources.system_prompt
 import illyan.butler.generated.resources.timestamp
 import illyan.butler.generated.resources.you
 import illyan.butler.shared.model.chat.AiSource
@@ -257,6 +264,7 @@ fun ChatDetail(
                     isRecording = state.isRecording,
                     toggleRecord = { state.chat?.let { toggleRecord(it.source) } },
                     enabled = state.chat != null || state.selectedNewChatModel != null,
+                    currentModel = state.selectedNewChatModel
                 )
             }
         },
@@ -347,7 +355,7 @@ fun ChatDetail(
                                     sentMessageButNoUpdate = false
                                     sentMessageAndLoading = true
                                     refreshChat()
-                                }
+                                },
                             )
                         }
                     }
@@ -474,6 +482,7 @@ expect fun ChatDetailBottomBar(
     isRecording: Boolean = false,
     toggleRecord: () -> Unit,
     enabled: Boolean = true,
+    currentModel: AiSource? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -515,7 +524,7 @@ fun MessageList(
         }
         items(messages.withIndex().sortedByDescending { it.value.createdAt }, key = { it.value.id }) { (index, message) ->
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.animateItem().fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
@@ -523,6 +532,7 @@ fun MessageList(
                     contentAlignment = if (message.sender is SenderType.User) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
                     Column {
+                        val systemString = stringResource(Res.string.system)
                         RichTooltipWithContent(
                             enabledGestures = getTooltipGestures(),
                             tooltip = {
@@ -536,6 +546,7 @@ fun MessageList(
                                                 is Source.Device -> source.deviceId
                                             }.toString()
                                             is SenderType.Ai -> sender.source.modelId
+                                            is SenderType.System -> systemString
                                         },
                                     )
                                 }
@@ -590,6 +601,52 @@ fun MessageList(
 }
 
 @Composable
+fun SystemMessageItem(
+    modifier: Modifier = Modifier,
+    message: Message,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ButlerOutlinedCard(
+        modifier = modifier.padding(8.dp),
+        contentPadding = ButlerCardDefaults.CompactContentPadding,
+        onClick = { expanded = !expanded },
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            ButlerSmallTextButton(
+                onClick = { expanded = !expanded },
+                trailingIcon = {
+                    Icon(
+                        imageVector = if (expanded) Icons.Rounded.KeyboardArrowDown else Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        contentDescription = null
+                    )
+                },
+                colors = ButlerButtonDefaults.textButtonGrayColors()
+            ) {
+                Text(
+                    text = stringResource(Res.string.system_prompt),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = message.content ?: "",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun MessageItem(
     modifier: Modifier = Modifier,
     message: Message,
@@ -599,6 +656,7 @@ fun MessageItem(
     playingAudio: Uuid? = null,
     images: List<ByteArray> = emptyList(),
 ) {
+
     val sentByUser = remember(message.sender) { message.sender is SenderType.User }
     Column(
         modifier = modifier.padding(8.dp),
@@ -606,65 +664,84 @@ fun MessageItem(
         horizontalAlignment = if (sentByUser) Alignment.End else Alignment.Start
     ) {
         Text(
-            text = stringResource(if (sentByUser) Res.string.you else Res.string.assistant),
+            text = stringResource(
+                when (message.sender) {
+                    is SenderType.User -> Res.string.you
+                    is SenderType.Ai -> Res.string.assistant
+                    is SenderType.System -> Res.string.system
+                },
+            ),
             style = MaterialTheme.typography.labelMedium
         )
-        if (sounds.isNotEmpty()) {
-            AudioMessages(
-                resources = sounds,
-                onPlay = playAudio,
-                onStop = stopAudio,
-                isPlaying = playingAudio
+        if (message.sender == SenderType.System) {
+            SystemMessageItem(
+                modifier = Modifier.fillMaxWidth(),
+                message = message
             )
-        }
-        images.forEach { image ->
-            SubcomposeAsyncImage(
-                modifier = Modifier
-                    .sizeIn(maxHeight = 400.dp, maxWidth = if (sentByUser) 480.dp else 640.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                model = image,
-                loading = { MediumCircularProgressIndicator() },
-                error = { Text("Error loading image") },
-                success = { _ ->
-                    SubcomposeAsyncImageContent()
-                },
-                contentDescription = "Image"
-            )
-        }
-        if (!message.content.isNullOrBlank()) {
-            val cardColors = ButlerCardDefaults.cardColors(
-                containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                contentColor = if (sentByUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            )
-            ReverseLayoutDirection(enabled = sentByUser) {
-                ButlerCard(
-                    modifier = Modifier.then(
-                        if (sentByUser) Modifier.widthIn(max = 320.dp) else Modifier
-                    ),
-                    colors = cardColors,
-                    contentPadding = ButlerCardDefaults.CompactContentPadding
-                ) {
-                    ReverseLayoutDirection(enabled = sentByUser) {
-                        SelectionContainer {
-                            // TODO: Use rich text state when code blocks are supported
+        } else {
+            if (sounds.isNotEmpty()) {
+                AudioMessages(
+                    resources = sounds,
+                    onPlay = playAudio,
+                    onStop = stopAudio,
+                    isPlaying = playingAudio
+                )
+            }
+            images.forEach { image ->
+                SubcomposeAsyncImage(
+                    modifier = Modifier
+                        .sizeIn(maxHeight = 400.dp, maxWidth = if (sentByUser) 480.dp else 640.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    model = image,
+                    loading = { MediumCircularProgressIndicator() },
+                    error = { Text("Error loading image") },
+                    success = { _ ->
+                        SubcomposeAsyncImageContent()
+                    },
+                    contentDescription = "Image"
+                )
+            }
+            if (!message.content.isNullOrBlank()) {
+                val cardColors = ButlerCardDefaults.cardColors(
+                    containerColor = if (sentByUser) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                    contentColor = if (sentByUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
+                ReverseLayoutDirection(enabled = sentByUser) {
+                    ButlerCard(
+                        modifier = Modifier.then(
+                            if (sentByUser) Modifier.widthIn(max = 320.dp) else Modifier
+                        ),
+                        colors = cardColors,
+                        contentPadding = ButlerCardDefaults.CompactContentPadding
+                    ) {
+                        ReverseLayoutDirection(enabled = sentByUser) {
+                            SelectionContainer {
+                                // TODO: Use rich text state when code blocks are supported
 //                            val richTextState = rememberRichTextState()
 //                            LaunchedEffect(message.messageContent) {
 //                                richTextState.setMarkdown(message.messageContent ?: "")
 //                            }
 //                            RichText(state = richTextState)
-                            Markdown(
-                                modifier = Modifier, // Don't use the default fillMaxSize here.
-                                content = message.content ?: "",
-                                colors = markdownColor(
-                                    text = MaterialTheme.colorScheme.onSurface,
-                                    codeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-                                    inlineCodeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-                                    dividerColor = MaterialTheme.colorScheme.outline,
-                                    tableBackground = MaterialTheme.colorScheme.surface,
-                                ),
-                                typography = markdownTypography()
-                            )
+                                var validMarkdownContent by remember(message.content) { mutableStateOf(message.content) }
+                                LaunchedEffect(message.content) {
+                                    // Validate markdown content to avoid rendering issues
+                                    validMarkdownContent = message.content?.takeIf { it.isNotBlank() } ?: validMarkdownContent
+                                }
+                                val markdownState = rememberMarkdownState(validMarkdownContent ?: "")
+                                Markdown(
+                                    modifier = Modifier, // Don't use the default fillMaxSize here.
+                                    markdownState = markdownState,
+                                    colors = markdownColor(
+                                        text = MaterialTheme.colorScheme.onSurface,
+                                        codeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                                        inlineCodeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                                        dividerColor = MaterialTheme.colorScheme.outline,
+                                        tableBackground = MaterialTheme.colorScheme.surface,
+                                    ),
+                                    typography = markdownTypography()
+                                )
+                            }
                         }
                     }
                 }
@@ -730,7 +807,8 @@ fun MessageField(
     recordAudioEnabled: Boolean = false,
     requestGalleryAccess: () -> Unit,
     requestRecordAudioAccess: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    currentModel: AiSource? = null
 ) {
     Row(
         modifier = modifier.padding(8.dp),
@@ -797,11 +875,13 @@ fun MessageField(
             }
         }
         var textMessage by rememberSaveable { mutableStateOf("") }
+        val focusRequester = remember { FocusRequester() }
         ButlerTextField(
             modifier = Modifier
                 .weight(1f, fill = true)
                 .padding(horizontal = 4.dp)
-                .heightIn(max = 128.dp),
+                .heightIn(max = 128.dp)
+                .focusRequester(focusRequester),
             value = textMessage,
             onValueChange = { textMessage = it },
             placeholder = { Text(stringResource(Res.string.send_message)) },
@@ -810,6 +890,12 @@ fun MessageField(
             isOutlined = false,
             enabled = enabled
         )
+
+        LaunchedEffect(currentModel) {
+            if (enabled && currentModel != null) {
+                focusRequester.requestFocus()
+            }
+        }
 
         IconButton(
             onClick = {

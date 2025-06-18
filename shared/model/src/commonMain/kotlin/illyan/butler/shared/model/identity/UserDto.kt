@@ -1,6 +1,7 @@
 package illyan.butler.shared.model.identity
 
 import illyan.butler.shared.model.chat.FilterOption
+import illyan.butler.shared.model.chat.PromptConfiguration
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -16,5 +17,6 @@ data class UserDto(
     val fullName: String? = null,
     val photoUrl: String? = null,
     val address: AddressDto? = null,
-    val filters: Set<FilterOption>
+    val filters: Set<FilterOption>,
+    val customPrompts: List<PromptConfiguration> = emptyList(),
 )

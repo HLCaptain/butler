@@ -28,5 +28,6 @@ data class MessageDto(
             is Source.Device -> sender.source.deviceId
             is Source.Server -> sender.source.userId
         }.toString()
+        is SenderType.System -> "system"
     }
 }

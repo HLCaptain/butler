@@ -23,6 +23,7 @@ kotlin {
         implementation(projects.composeApp.domain)
         implementation(projects.composeApp.domain.auth)
         implementation(projects.composeApp.domain.model)
+        implementation(projects.composeApp.domain.settings)
 
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.io)

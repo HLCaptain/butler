@@ -16,6 +16,7 @@ import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.open_app_settings
 import illyan.butler.generated.resources.permission_request_denied_description
 import illyan.butler.generated.resources.permission_request_denied_title
+import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.ui.permission.PermissionRequestScreen
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
@@ -33,7 +34,8 @@ actual fun ChatDetailBottomBar(
     sendImage: (ByteArray, String) -> Unit,
     isRecording: Boolean,
     toggleRecord: () -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    currentModel: AiSource?
 ) {
     var showAppRationaleWithPermission by rememberSaveable { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -74,7 +76,8 @@ actual fun ChatDetailBottomBar(
         recordAudioEnabled = true,
         requestGalleryAccess = { showAppRationaleWithPermission = galleryPermissionState.permission },
         requestRecordAudioAccess = { showAppRationaleWithPermission = recordAudioPermissionState.permission },
-        enabled = enabled
+        enabled = enabled,
+        currentModel = currentModel
     )
     ButlerDialog(
         isDialogOpen = showAppRationaleWithPermission != null,

@@ -43,7 +43,11 @@ import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
+private const val CONTENT_TYPE_IMAGE = "image"
+private const val CONTENT_TYPE_AUDIO = "audio"
+private const val RESOURCE_TYPE_AUDIO_MP3 = "audio/mp3"
+
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 class LlmService(
     private val coroutineScopeIO: CoroutineScope,
     private val getResource: suspend (resourceId: Uuid, ownerId: Uuid) -> ResourceDto,
@@ -54,7 +58,6 @@ class LlmService(
     private val errorInMessageResponse: suspend (message: MessageDto?) -> Unit,
     private val removeMessage: suspend (message: MessageDto) -> Unit,
 ) {
-    private val lastFewMessages = mutableMapOf<Uuid, List<MessageDto>>()
     @OptIn(ExperimentalTime::class)
     suspend fun answerChat(
         chat: ChatDto,
@@ -62,173 +65,179 @@ class LlmService(
         previousChats: List<ChatDto> = emptyList(),
         regenerateMessage: MessageDto? = null
     ) {
-        var chat = chat
         Napier.v("Answering chat ${chat.id}")
-        val chatCompletionModelConfig = chat.models[Capability.CHAT_COMPLETION]!!
-        var messages = chatMessages.sortedBy { it.time }
-        if (messages.isEmpty()) {
+
+        val (initialMessages, lastMessage, isRegenerating) = prepareConversation(chatMessages, regenerateMessage)
+        if (initialMessages.isEmpty()) {
             Napier.v("No messages in chat, skipping")
             return
         }
-        // Then last message is by a user
-        var lastMessage = if (regenerateMessage != null) {
-            messages.first { it.id == regenerateMessage.id }
+
+        if (lastMessage.senderId != chat.ownerId.toString() && !isRegenerating) {
+            Napier.v("Last message is not from the user, skipping answer generation.")
+            updateChatNameAndSummary(chat, initialMessages, emptyList())
+            return
+        }
+
+        val resources = initialMessages.map { message -> message.resourceIds.map { getResource(it, chat.ownerId) } }.flatten()
+        val conversation = initialMessages.toConversation(chat.ownerId.toString(), resources)
+
+        val updatedMessages = when {
+            lastMessage.resourceIds.isEmpty() -> handleTextMessage(chat, conversation, previousChats, regenerateMessage)
+            else -> handleResourceMessage(chat, lastMessage, conversation, previousChats, regenerateMessage, resources)
+        }
+
+        updateChatNameAndSummary(chat, initialMessages + updatedMessages, resources)
+    }
+
+    private suspend fun prepareConversation(
+        chatMessages: List<MessageDto>,
+        regenerateMessage: MessageDto?
+    ): Triple<List<MessageDto>, MessageDto, Boolean> {
+        var messages = chatMessages.sortedBy { it.time }
+        val isRegenerating = regenerateMessage != null
+        val lastMessage = if (isRegenerating) {
+            messages.first { it.id == regenerateMessage!!.id }
         } else {
             messages.last()
         }
-        val resources = messages.map { message -> message.resourceIds.map { getResource(it, chat.ownerId) } }.flatten()
-        var conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId.toString(), resources)
-        if (lastMessage.senderId != chat.ownerId.toString() && lastMessage.content.isNullOrBlank()) {
-            Napier.v("Last message from AI is blank, regenerating new response.")
+
+        if (lastMessage.senderId != regenerateMessage?.senderId && lastMessage.content.isNullOrBlank()) {
+            Napier.v("Last message from AI is blank, removing it.")
             removeMessage(lastMessage)
-            // Removing last message from conversation
-            messages = messages.filter { lastMessage.id != it.id }
-            if (messages.isEmpty()) {
-                Napier.v("No messages in chat, skipping")
-                return
-            }
-            lastFewMessages[chat.id] = messages
-            conversation = messages.takeWhile { it.time!! <= lastMessage.time!! }.toConversation(chat.ownerId.toString(), resources)
-            lastMessage = if (regenerateMessage != null) {
-                messages.first { it.id == regenerateMessage.id }
-            } else {
-                messages.last()
-            }
+            messages = messages.filter { it.id != lastMessage.id }
         }
-        if (lastMessage.senderId != chat.ownerId.toString() && regenerateMessage == null && !lastMessage.content.isNullOrBlank()) {
-            var updatedChat = chat
-            coroutineScopeIO.launch {
-                combine(
-                    generateNewChatNameIfNeededStream(chat, conversation),
-                    generateSummaryForChatIfNeededStream(chat, conversation)
-                ) { name, summary ->
-                    updatedChat = when {
-                        name != null && summary != null -> upsertChat(updatedChat.copy(name = name, summary = summary))
-                        name != null -> upsertChat(updatedChat.copy(name = name))
-                        summary != null -> upsertChat(updatedChat.copy(summary = summary))
-                        else -> {
-                            Napier.v { "Name and summary generation ended. Chat name: ${updatedChat.name}, summary: ${updatedChat.summary}" }
-                            cancel()
-                            return@combine
-                        }
-                    }
-                }.catch {
-                    Napier.e("Error while generating name and summary", it)
-                    cancel()
-                }.launchIn(this)
-            }
-            Napier.v("Last message is not by user, skipping")
-            return
+        return Triple(messages, messages.last(), isRegenerating)
+    }
+
+    private suspend fun handleTextMessage(
+        chat: ChatDto,
+        conversation: List<ChatMessage>,
+        previousChats: List<ChatDto>,
+        regenerateMessage: MessageDto?
+    ): List<MessageDto> {
+        Napier.v("Handling text message")
+        val answerFlow = answerChatWithTextAndContextStream(chat, conversation, previousChats)
+        var updatedAnswer: MessageDto? = null
+
+        val firstAnswer = try {
+            answerFlow.firstOrNull { !it.isNullOrBlank() }
+        } catch (e: Exception) {
+            Napier.e("Error getting first answer", e)
+            errorInMessageResponse(null)
+            return emptyList()
         }
-        val updatedChat = if (lastMessage.resourceIds.isEmpty()) {
-            // Last message is simple text
-            // Answer with simple text
-            Napier.v("Last message is simple text, answering with text")
-            val answerFlow = answerChatWithTextAndContextStream(chat, conversation, previousChats)
-            var updatedAnswer: MessageDto? = null
-            try {
-                // Getting the first response
-                updatedAnswer = answerFlow.firstOrNull { !it.isNullOrBlank() }?.let { toNewMessage(regenerateMessage, chat, it) }
-            } catch (e: Exception) {
-                Napier.e("Error while getting answer", e)
-                errorInMessageResponse(null)
-                return
-            }
-            // Inserting the response, getting new local UUID
-            updatedAnswer = updatedAnswer?.let { upsertMessage(it) }
-            // Listening for further responses and updating the message
-            coroutineScopeIO.launch {
-                answerFlow.catch {
-                    Napier.e("Error accepting chat completion stream", it)
-                    updatedAnswer?.let { errorInMessageResponse(it) }
-                    cancel()
-                }.collect { answer ->
-                    // Stopping on null: answering ended
-                    if (answer == null) {
-                        Napier.v("Answer is null, completion ended, final answer: $updatedAnswer")
-                        cancel()
-                        return@collect
-                    }
-                    // Getting updated message instance and updating it
-                    updatedAnswer = toNewMessage(updatedAnswer ?: regenerateMessage, chat, answer)
-                    updatedAnswer = updatedAnswer?.let { upsertMessage(it) }
-                }
-            }
-            // Updating the chat with new message instance (message will get updated using listener above)
-            updatedAnswer?.let { answer ->
-                lastFewMessages[chat.id!!] = lastFewMessages[chat.id].orEmpty().filter { it.id != answer.id } + answer
-            }
-            chat
-        } else {
-            // Describe image
-            // For audio, reply with text and audio
-            val lastMessageResources = lastMessage.resourceIds.mapNotNull { id -> resources.find { it.id == id } }
-            lastMessageResources.groupBy { it.type }.map { (type, resources) ->
-                when (type.split("/").first()) {
-                    "image" -> {
-                        Napier.v("Resource is an image, answering with text")
-                        val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
-                        val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer))
-                        lastFewMessages[chat.id] = (lastFewMessages[chat.id].orEmpty().filter { it.id != newMessage.id } + newMessage)
-                    }
-                    "audio" -> {
-                        Napier.v("Resource is audio, transcribing and answering with text and audio")
-                        val speechToTextContents = resources.map { resource ->
-                            if (resource.type.startsWith("audio")) {
-                                transcribeAudio(chat, resource)
-                            } else {
-                                null
-                            }
-                        }
-                        if (speechToTextContents.any { it == null }) {
-                            Napier.v("Failed to transcribe ${speechToTextContents.filter { it == null }.size} audio messages, skipping")
-                            return
-                        }
-                        val modifiedConversation = conversation.toMutableList()
-                        val lastMessageContent = ((modifiedConversation.lastOrNull()?.content?.let { "$it\n\n" } ?: "") + speechToTextContents.joinToString("\n\n")).trim('\n', ' ')
-                        modifiedConversation.removeAt(modifiedConversation.lastIndex)
-                        modifiedConversation.add(
-                            lastMessage.toChatMessage(
-                                userId = chat.ownerId.toString(),
-                                previousMessageContent = lastMessageContent,
-                                resources = resources
-                            )
-                        )
-                        // Append transcription to last message
-                        val transcriptions = upsertMessage(lastMessage.copy(content = lastMessageContent))
-                        val answer = answerChatWithTextAndContext(chat, modifiedConversation, previousChats)
-                        val audioResource = generateSpeechFromText(chat, answer)
-                        // Upload resource
-                        // Send message with resourceId
-                        val newResourceId = audioResource?.let { createResource(chat.id, SenderType.Ai(chatCompletionModelConfig), it).id }
-                        val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer, listOfNotNull(newResourceId)))
-                        val newMessages = listOf(transcriptions, newMessage).map { it.id }
-                        lastFewMessages[chat.id] = (lastFewMessages[chat.id].orEmpty().filter { it.id !in newMessages } + transcriptions + newMessage)
-                    }
-                    else -> {
-                        Napier.v { "Resource type $type not supported" }
-                    }
-                }
-            }
-            chat
+
+        if (firstAnswer == null) {
+            Napier.v("Got empty answer, finishing.")
+            return emptyList()
         }
-        val updatedConversation = lastFewMessages[chat.id]!!.sortedBy { it.time }.toConversation(chat.ownerId.toString(), resources)
+
+        updatedAnswer = toNewMessage(regenerateMessage, chat, firstAnswer).let { upsertMessage(it) }
+        val initialMessage = updatedAnswer
+
         coroutineScopeIO.launch {
-            var freshChat = updatedChat
-            combine(
-                generateNewChatNameIfNeededStream(updatedChat, updatedConversation),
-                generateSummaryForChatIfNeededStream(updatedChat, updatedConversation)
-            ) { chatName, chatSummary ->
-                freshChat = when {
-                    chatName != null && chatSummary != null -> upsertChat(freshChat.copy(name = chatName, summary = chatSummary))
-                    chatName != null -> upsertChat(freshChat.copy(name = chatName))
-                    chatSummary != null -> upsertChat(freshChat.copy(summary = chatSummary))
-                    else -> {
-                        Napier.v { "Name and summary generation ended. Chat name: ${freshChat.name}, summary: ${freshChat.summary}" }
-                        cancel()
-                        freshChat
-                    }
+            answerFlow.catch {
+                Napier.e("Error in chat completion stream", it)
+                updatedAnswer?.let { msg -> errorInMessageResponse(msg) }
+                cancel()
+            }.collect { answer ->
+                if (answer == null) {
+                    Napier.v("Completion ended for message: ${updatedAnswer?.id}")
+                    cancel()
+                    return@collect
                 }
+                updatedAnswer = toNewMessage(updatedAnswer, chat, answer).let { upsertMessage(it) }
+            }
+        }
+        return listOfNotNull(initialMessage)
+    }
+
+    private suspend fun handleResourceMessage(
+        chat: ChatDto,
+        lastMessage: MessageDto,
+        conversation: List<ChatMessage>,
+        previousChats: List<ChatDto>,
+        regenerateMessage: MessageDto?,
+        resources: List<ResourceDto>
+    ): List<MessageDto> {
+        Napier.v("Handling resource message")
+        val lastMessageResources = lastMessage.resourceIds.mapNotNull { id -> resources.find { it.id == id } }
+        val messages = mutableListOf<MessageDto>()
+
+        lastMessageResources.groupBy { it.type.substringBefore('/') }.forEach { (type, res) ->
+            when (type) {
+                CONTENT_TYPE_IMAGE -> {
+                    Napier.v("Resource is an image, answering with text")
+                    val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
+                    val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer))
+                    messages.add(newMessage)
+                }
+                CONTENT_TYPE_AUDIO -> {
+                    Napier.v("Resource is audio, transcribing and answering with text and audio")
+                    val transcriptionResult = handleAudioResource(chat, res, conversation, previousChats, regenerateMessage, lastMessage)
+                    messages.addAll(transcriptionResult)
+                }
+                else -> Napier.w("Unsupported resource type: $type")
+            }
+        }
+        return messages
+    }
+
+    private suspend fun handleAudioResource(
+        chat: ChatDto,
+        resources: List<ResourceDto>,
+        conversation: List<ChatMessage>,
+        previousChats: List<ChatDto>,
+        regenerateMessage: MessageDto?,
+        originalMessage: MessageDto
+    ): List<MessageDto> {
+        val speechToTextContents = resources.mapNotNull { resource ->
+            transcribeAudio(chat, resource)
+        }
+
+        if (speechToTextContents.size != resources.size) {
+            Napier.w("Failed to transcribe all audio messages")
+        }
+
+        val lastMessageInConversation = conversation.last()
+        val newContent = ((lastMessageInConversation.content?.let { "$it\n\n" } ?: "") + speechToTextContents.joinToString("\n\n")).trim()
+
+        val updatedOriginalMessage = upsertMessage(originalMessage.copy(content = newContent))
+
+        val modifiedConversation = conversation.dropLast(1) + ChatMessage(
+            role = lastMessageInConversation.role,
+            content = newContent
+        )
+
+        val answer = answerChatWithTextAndContext(chat, modifiedConversation, previousChats)
+        val audioResource = generateSpeechFromText(chat, answer)
+        val chatCompletionModelConfig = chat.models[Capability.CHAT_COMPLETION]!!
+        val newResourceId = audioResource?.let { createResource(chat.id, SenderType.Ai(chatCompletionModelConfig), it).id }
+        val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer, listOfNotNull(newResourceId)))
+
+        return listOf(updatedOriginalMessage, newMessage)
+    }
+
+    private fun updateChatNameAndSummary(
+        chat: ChatDto,
+        messages: List<MessageDto>,
+        resources: List<ResourceDto>
+    ) {
+        val conversation = messages.toConversation(chat.ownerId.toString(), resources)
+        var currentChat = chat
+        coroutineScopeIO.launch {
+            combine(
+                generateNewChatNameIfNeededStream(currentChat, conversation),
+                generateSummaryForChatIfNeededStream(currentChat, conversation)
+            ) { name, summary ->
+                val newName = name ?: currentChat.name
+                val newSummary = summary ?: currentChat.summary
+                if (newName != currentChat.name || newSummary != currentChat.summary) {
+                    currentChat = upsertChat(currentChat.copy(name = newName, summary = newSummary))
+                }
+            }.catch {
+                Napier.e("Error while generating name and summary", it)
             }.launchIn(this)
         }
     }
@@ -237,43 +246,50 @@ class LlmService(
         regeneratedMessage: MessageDto?,
         chat: ChatDto,
         answer: String,
-        resourceIds: List<Uuid> = regeneratedMessage?.resourceIds ?: emptyList()
-    ) = MessageDto(
-        id = regeneratedMessage?.id ?: Uuid.random(),
+        resourceIds: List<Uuid> = emptyList()
+    ) = regeneratedMessage?.copy(
+        content = answer,
+        resourceIds = resourceIds.ifEmpty { regeneratedMessage.resourceIds }
+    ) ?: MessageDto(
+        id = Uuid.random(),
         sender = SenderType.Ai(chat.models[Capability.CHAT_COMPLETION]!!),
         chatId = chat.id,
         content = answer,
-        time = regeneratedMessage?.time ?: Clock.System.now().toEpochMilliseconds(),
+        time = Clock.System.now().toEpochMilliseconds(),
         resourceIds = resourceIds
     )
+
+    private fun generateAttributeStream(
+        chatId: Uuid,
+        currentValue: String?,
+        attributeName: String,
+        prompt: String,
+        modelConfig: AiSource,
+        conversation: List<ChatMessage>
+    ): Flow<String?> {
+        if (!currentValue.isNullOrBlank()) {
+            Napier.v { "Not generating new chat $attributeName, already exists: \"$currentValue\"" }
+            return flowOf(null)
+        }
+        Napier.v { "Generating new chat $attributeName for chat $chatId" }
+        val newConversation = conversation + ChatMessage(role = ChatRole.System, content = prompt)
+        return answerChatWithTextStream(modelConfig, newConversation)
+    }
 
     private fun generateSummaryForChatIfNeededStream(
         chat: ChatDto,
         conversation: List<ChatMessage>,
     ): Flow<String?> {
-        if (!chat.summary.isNullOrBlank()) {
-            Napier.v { "Not generating new chat summary, already exists: \"${chat.summary}\"" }
-            return flowOf(null)
-        }
-        Napier.v { "Generating new chat summary for chat ${chat.id}" }
-        val newChatSummaryPrompt = "\n\nPlease provide a summary of this conversation. No more than 200 characters. ANSWER WITH ONLY THE SUMMARY, NOTHING ELSE."
-        val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatSummaryPrompt))
-        val modelConfig = chat.models[Capability.CHAT_COMPLETION]!!
-        return answerChatWithTextStream(modelConfig, newConversation)
+        val prompt = "\n\nPlease provide a summary of this conversation. No more than 200 characters. ANSWER WITH ONLY THE SUMMARY, NOTHING ELSE."
+        return generateAttributeStream(chat.id, chat.summary, "summary", prompt, chat.models[Capability.CHAT_COMPLETION]!!, conversation)
     }
 
     private fun generateNewChatNameIfNeededStream(
         chat: ChatDto,
         conversation: List<ChatMessage>,
     ): Flow<String?> {
-        if (!chat.name.isNullOrBlank()) {
-            Napier.v { "Not generating new chat name, already exists: \"${chat.name}\"" }
-            return flowOf(null)
-        }
-        Napier.v { "Generating new chat name for chat ${chat.id}" }
-        val newChatNamePrompt = "\n\nPlease provide the name for this conversation about a few words. No more than 40 characters. ANSWER WITH ONLY THE NAME, NOTHING ELSE."
-        val newConversation = conversation + ChatMessage(role = ChatRole.System, messageContent = TextContent(newChatNamePrompt))
-        return answerChatWithTextStream(chat.models[Capability.CHAT_COMPLETION]!!, newConversation)
+        val prompt = "\n\nPlease provide the name for this conversation about a few words. No more than 40 characters. ANSWER WITH ONLY THE NAME, NOTHING ELSE."
+        return generateAttributeStream(chat.id, chat.name, "name", prompt, chat.models[Capability.CHAT_COMPLETION]!!, conversation)
     }
 
     private suspend fun answerChatWithTextAndContext(
@@ -473,3 +489,4 @@ fun MessageDto.toChatMessage(
         )
     }
 }
+

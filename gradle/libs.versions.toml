@@ -1,10 +1,10 @@
 [versions]
 butler-name = "2.3.0-alpha"
 butler-code = "6"
-kotlin = "2.2.0-RC2"
+kotlin = "2.2.0-RC3"
 android-minSdk = "26"
 android-compileSdk = "36"
-ksp = "2.2.0-RC2-2.0.2"
+ksp = "2.2.0-RC3-2.0.2"
 agp = "8.11.0-rc02"
 compose = "1.8.2"
 compose-android = "1.8.2"

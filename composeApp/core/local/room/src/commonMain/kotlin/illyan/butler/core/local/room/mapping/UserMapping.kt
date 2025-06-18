@@ -18,6 +18,7 @@ fun RoomUser.toDomainModel() = User(
     photoUrl = photoUrl,
     address = address?.toDomainModel(),
     filters = filterOptions,
+    promptConfigurations = customPrompts
 )
 
 fun User.toRoomModel() = RoomUser(
@@ -31,4 +32,5 @@ fun User.toRoomModel() = RoomUser(
     photoUrl = photoUrl,
     address = address?.toRoomModel(),
     filterOptions = filters,
+    customPrompts = promptConfigurations
 )

@@ -2,8 +2,8 @@ package illyan.butler.core.local.room.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import illyan.butler.domain.model.Capability
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.Source
 
 @Entity(

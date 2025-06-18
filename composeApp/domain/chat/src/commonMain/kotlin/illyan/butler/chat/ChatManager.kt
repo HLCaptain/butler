@@ -10,13 +10,15 @@ import illyan.butler.data.error.ErrorRepository
 import illyan.butler.data.message.MessageRepository
 import illyan.butler.data.resource.ResourceRepository
 import illyan.butler.di.KoinNames
-import illyan.butler.domain.model.Capability
 import illyan.butler.domain.model.Chat
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.Message
 import illyan.butler.domain.model.Resource
+import illyan.butler.settings.SettingsManager
 import illyan.butler.shared.llm.LlmService
+import illyan.butler.shared.llm.SystemPromptBuilder
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.SenderType
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
@@ -48,6 +50,7 @@ class ChatManager(
     private val resourceRepository: ResourceRepository,
     private val credentialRepository: CredentialRepository,
     private val errorRepository: ErrorRepository,
+    private val settingsManager: SettingsManager,
 ) {
     val userChats = authManager.signedInServers.flatMapLatest { servers ->
         if (servers.isEmpty()) {
@@ -126,7 +129,7 @@ class ChatManager(
         removeMessage = { message ->
             Napier.v { "Removing message ${message.id} from device" }
             messageRepository.delete(message.toDomainModel(deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null")))
-        }
+        },
     )
 
     private val userResources = userMessages.flatMapLatest { messages ->
@@ -193,16 +196,32 @@ class ChatManager(
     fun getResources(resourceIds: List<Uuid>) = combine(userResources, deviceResources) { user, device -> (user + device).filter { resource -> resource?.id?.let { resourceIds.contains(it) } ?: false } }
     suspend fun startNewChat(
         chatSource: Source,
-        aiSource: AiSource
+        aiSource: AiSource,
+        capabilities: Set<Capability> = setOf(Capability.CHAT_COMPLETION),
     ): Uuid {
         return chatRepository.upsert(
             Chat(
                 source = chatSource,
-                models = mapOf(
-                    Capability.CHAT_COMPLETION to aiSource
-                )
+                models = capabilities.associateWith { aiSource }
             ),
-        )
+        ).also { chatId ->
+            // Send system message
+            val promptConfiguration = settingsManager.selectedPromptConfiguration.first()
+            promptConfiguration?.let {
+                Napier.v { "Sending system message for chat $chatId with configuration: $it" }
+                messageRepository.upsert(
+                    Message(
+                        chatId = chatId,
+                        source = chatSource,
+                        sender = SenderType.System,
+                        content =
+                            SystemPromptBuilder()
+                                .withConfiguration(it)
+                                .build()
+                    )
+                )
+            }
+        }
     }
 
     private suspend fun answerOpenAIChat(chatId: Uuid, previousMessages: List<Message> = emptyList()) {

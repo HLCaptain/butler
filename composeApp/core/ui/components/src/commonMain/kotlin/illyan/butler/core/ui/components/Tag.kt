@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.utils.animatePaddingValuesAsState
-import illyan.butler.core.ui.utils.ensureContrastWith
 import illyan.butler.core.ui.utils.toCardColors
 
 @Composable
@@ -90,7 +89,7 @@ object ButlerTagDefaults {
 
     @Composable
     fun tertiaryTagColors() = ButlerButtonDefaults.solidButtonColors(
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer.ensureContrastWith(MaterialTheme.colorScheme.tertiary),
+        containerColor = MaterialTheme.colorScheme.onTertiary,
         contentColor = MaterialTheme.colorScheme.tertiary,
     ).toCardColors()
 
@@ -105,7 +104,7 @@ object ButlerTagDefaults {
 
     @Composable
     fun tertiaryInvertedTagColors() = ButlerButtonDefaults.solidButtonInvertedColors(
-        contentColor = MaterialTheme.colorScheme.primaryContainer,
-        containerColor = MaterialTheme.colorScheme.tertiary.ensureContrastWith(MaterialTheme.colorScheme.primaryContainer, 4.5),
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        containerColor = MaterialTheme.colorScheme.primary,
     ).toCardColors()
 }

@@ -8,6 +8,7 @@ import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ class AppSettingsLocalRepository(
 ) : AppRepository {
     companion object {
         val appSettingsKey = stringPreferencesKey("app_settings")
+        val selectedPromptConfigurationKey = stringPreferencesKey("selected_prompt_configuration")
         val hostKey = stringPreferencesKey("host")
         val signedInUserKey = stringPreferencesKey("signed_in_user")
         val defaultModelKey = stringPreferencesKey("default_model")
@@ -128,6 +130,42 @@ class AppSettingsLocalRepository(
     override suspend fun setAppSettings(appSettings: AppSettings) {
         datastore.edit { datastorePreferences ->
             datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(appSettings)
+        }
+    }
+
+    override val selectedPromptConfiguration: Flow<PromptConfiguration?>
+        get() = datastore.data.map { preferences ->
+            if (preferences[selectedPromptConfigurationKey] != null) {
+                try {
+                    Json.decodeFromString(preferences[selectedPromptConfigurationKey]!!)
+                } catch (e: Exception) {
+                    Napier.e(e) { "Error decoding selected prompt configuration, resetting to null" }
+                    datastore.edit { datastorePreferences ->
+                        datastorePreferences.remove(selectedPromptConfigurationKey)
+                    }
+                    null
+                }
+            } else {
+                null
+            }
+        }
+
+    override suspend fun setSelectedPromptConfiguration(promptConfiguration: PromptConfiguration?) {
+        datastore.edit { datastorePreferences ->
+            if (promptConfiguration != null) {
+                datastorePreferences[selectedPromptConfigurationKey] = Json.encodeToString(promptConfiguration)
+            } else {
+                datastorePreferences.remove(selectedPromptConfigurationKey)
+            }
+        }
+    }
+
+    override suspend fun setPromptConfigurations(promptConfigurations: List<PromptConfiguration>) {
+        datastore.edit { datastorePreferences ->
+            appSettings.first().copy(promptConfigurations = promptConfigurations).let {
+                datastorePreferences[appSettingsKey] =
+                    filterConfigurationJsonParser.encodeToString(it)
+            }
         }
     }
 }

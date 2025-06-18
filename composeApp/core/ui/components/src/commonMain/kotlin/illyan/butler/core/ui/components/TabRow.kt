@@ -2,7 +2,9 @@ package illyan.butler.core.ui.components
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.ScrollState
@@ -100,7 +102,7 @@ fun ButlerScrollableTabRow(
                 )
             },
             divider = {},
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = Color.Transparent,
             edgePadding = (contentPadding - indicatorPadding).calculateTopPadding(),
             scrollState = scrollState,
@@ -283,7 +285,7 @@ fun Modifier.tabIndicatorOffset(currentTabPosition: TabPosition): Modifier =
         val currentTabWidth by
         animateDpAsState(
             targetValue = currentTabPosition.width,
-            animationSpec = TabRowIndicatorSpec
+            animationSpec = TabRowIndicatorWidthSpec
         )
         val indicatorOffset by
         animateDpAsState(
@@ -499,7 +501,10 @@ private val ScrollableTabRowScrollSpec: AnimationSpec<Float> =
     tween(durationMillis = 250, easing = FastOutSlowInEasing)
 
 private val TabRowIndicatorSpec: AnimationSpec<Dp> =
-    tween(durationMillis = 250, easing = FastOutSlowInEasing)
+    spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)
+
+private val TabRowIndicatorWidthSpec: AnimationSpec<Dp> =
+    spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessHigh)
 
 private val ScrollableTabRowMinimumTabWidth = 90.dp
 

@@ -4,13 +4,15 @@ import androidx.room.TypeConverter
 import illyan.butler.core.local.room.model.RoomAddress
 import illyan.butler.core.local.room.model.RoomPreferences
 import illyan.butler.core.local.room.model.RoomToken
-import illyan.butler.domain.model.Capability
 import illyan.butler.shared.model.chat.AiSource
+import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.FilterOption
 import illyan.butler.shared.model.chat.MessageStatus
+import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.SenderType
 import illyan.butler.shared.model.chat.Source
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.json.Json
@@ -115,16 +117,17 @@ class Converters {
     @TypeConverter
     fun toFilterSet(databaseValue: String) = structuredKeyMapConverter.decodeFromString(SetSerializer(FilterOption.serializer()), databaseValue)
 
+    @JvmName("promptConfigurationListToString")
+    @TypeConverter
+    fun toString(promptConfigurations: List<PromptConfiguration>) = Json.encodeToString(ListSerializer(PromptConfiguration.serializer()), promptConfigurations)
+    @TypeConverter
+    fun toPromptConfigurationList(databaseValue: String) = Json.decodeFromString(ListSerializer(PromptConfiguration.serializer()), databaseValue)
+
     @JvmName("modelsMapToString")
     @TypeConverter
-    fun toString(models: Map<Capability, AiSource>): String {
-        return Json.encodeToString(MapSerializer(Capability.serializer(), AiSource.serializer()), models)
-    }
-
+    fun toString(models: Map<Capability, AiSource>) = Json.encodeToString(MapSerializer(Capability.serializer(), AiSource.serializer()), models)
     @TypeConverter
-    fun toModelsMap(databaseValue: String): Map<Capability, AiSource> {
-        return Json.decodeFromString(MapSerializer(Capability.serializer(), AiSource.serializer()), databaseValue)
-    }
+    fun toModelsMap(databaseValue: String) = Json.decodeFromString(MapSerializer(Capability.serializer(), AiSource.serializer()), databaseValue)
 }
 
 private fun Pair<String, String>.toStringPair(): Converters.StringPair {

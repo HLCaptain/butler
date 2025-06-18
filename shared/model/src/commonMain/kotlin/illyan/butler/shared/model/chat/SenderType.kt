@@ -13,4 +13,6 @@ sealed interface SenderType {
     data class User(val source: Source) : SenderType // a user (human) sent this message
     @Serializable
     data class Ai(val source: AiSource) : SenderType // an AI (machine) sent this message
+    @Serializable
+    data object System : SenderType // the system sent this message, e.g. a notification or an error message
 }
