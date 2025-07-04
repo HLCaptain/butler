@@ -15,9 +15,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.koin.core.annotation.Single
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalTime::class)
 @Single
 class ErrorMemoryRepository : ErrorRepository {
     private val _errorEventFlow = MutableSharedFlow<DomainError>()
@@ -34,7 +37,7 @@ class ErrorMemoryRepository : ErrorRepository {
             stackTrace = throwable.stackTraceToString(),
             os = getOsName(),
             metadata = getSystemMetadata(),
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             state = ErrorState.NEW
         )
         _errorEventFlow.emit(newEvent)
@@ -85,7 +88,7 @@ class ErrorMemoryRepository : ErrorRepository {
             DomainError.Event.Simple(
                 id = Uuid.random(),
                 code = code,
-                timestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
             )
         )
     }

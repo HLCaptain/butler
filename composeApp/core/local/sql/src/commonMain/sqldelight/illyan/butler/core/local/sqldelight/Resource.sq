@@ -1,0 +1,20 @@
+CREATE TABLE resources (
+    id TEXT PRIMARY KEY NOT NULL,
+    createdAt INTEGER NOT NULL,
+    mimeType TEXT NOT NULL,
+    data BLOB NOT NULL,
+    source TEXT NOT NULL -- JSON serialized Source
+);
+
+insertOrReplaceResource:
+INSERT OR REPLACE INTO resources(id, createdAt, mimeType, data, source)
+VALUES (?, ?, ?, ?, ?);
+
+selectResourceById:
+SELECT * FROM resources WHERE id = ?;
+
+deleteResource:
+DELETE FROM resources WHERE id = ?;
+
+deleteAllResources:
+DELETE FROM resources;

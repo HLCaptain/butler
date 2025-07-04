@@ -29,14 +29,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.android.annotation.KoinViewModel
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @KoinViewModel
 class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
-    private val theme = settingsManager.userPreferences.map { it?.theme }
+    private val theme = settingsManager.userPreferences.map { it.theme }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val dynamicColorEnabled = settingsManager.userPreferences
@@ -70,6 +71,7 @@ class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun isNight(): Boolean {
         val systemTimeZone = TimeZone.currentSystemDefault()
         val now = Clock.System.now()

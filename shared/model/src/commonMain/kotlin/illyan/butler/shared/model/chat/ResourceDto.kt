@@ -19,7 +19,7 @@ data class ResourceDto(
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other == null || this::class != other::class) return false
 
         other as ResourceDto
 
@@ -31,7 +31,7 @@ data class ResourceDto(
     }
 
     override fun hashCode(): Int {
-        var result = id?.hashCode() ?: 0
+        var result = id.hashCode()
         result = 31 * result + type.hashCode()
         result = 31 * result + data.contentHashCode()
         return result

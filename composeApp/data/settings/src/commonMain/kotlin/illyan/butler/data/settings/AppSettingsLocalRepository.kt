@@ -1,9 +1,7 @@
 package illyan.butler.data.settings
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
@@ -18,134 +16,89 @@ import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Single
 import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalSettingsApi::class)
 @Single
 class AppSettingsLocalRepository(
-    private val datastore: DataStore<Preferences>,
+    private val settings: FlowSettings,
 ) : AppRepository {
     companion object {
-        val appSettingsKey = stringPreferencesKey("app_settings")
-        val hostKey = stringPreferencesKey("host")
-        val signedInUserKey = stringPreferencesKey("signed_in_user")
-        val defaultModelKey = stringPreferencesKey("default_model")
+        val appSettingsKey = "app_settings"
+        val hostKey = "host"
+        val serverSourcesKey = "server_sources"
+        val defaultModelKey = "default_model"
     }
 
     // allowStructuredMapKeys is required by Map<FilterOptions, Boolean> in FilterConfiguration
     val filterConfigurationJsonParser = Json { allowStructuredMapKeys = true }
-    override val appSettings: Flow<AppSettings> = datastore.data.map { preferences ->
-        if (preferences[appSettingsKey] != null) {
-            try {
-                filterConfigurationJsonParser.decodeFromString(preferences[appSettingsKey]!!)
-            } catch (e: Exception) {
-                Napier.e(e) { "Error decoding app settings, resetting to default" }
-                datastore.edit { datastorePreferences ->
-                    datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(AppSettings.Default)
-                }
-                AppSettings.Default
-            }
-        } else {
-            datastore.edit { datastorePreferences ->
-                datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(AppSettings.Default)
-            }
-            AppSettings.Default
-        }
-    }
-    override val currentHost: Flow<String?> = datastore.data.map { preferences ->
-        preferences[hostKey]
-    }
-    override val signedInServers: Flow<Set<Source.Server>> = datastore.data.map { preferences ->
-        preferences[signedInUserKey]?.let { Json.decodeFromString(it) } ?: emptySet()
+
+    override val appSettings: Flow<AppSettings> = settings.getStringOrNullFlow(appSettingsKey).map {
+        it?.let { filterConfigurationJsonParser.decodeFromString<AppSettings>(it) } ?: AppSettings.Default
     }
 
-    override val defaultModel: Flow<AiSource?> = datastore.data.map { preferences ->
-        if (preferences[defaultModelKey] != null) {
-            try {
-                Json.decodeFromString(preferences[defaultModelKey]!!)
-            } catch (e: Exception) {
-                Napier.e(e) { "Error decoding default model, resetting to default" }
-                datastore.edit { datastorePreferences ->
-                    datastorePreferences.remove(defaultModelKey)
-                }
-                null
-            }
-        } else {
-            datastore.edit { datastorePreferences ->
-                datastorePreferences.remove(defaultModelKey)
-            }
-            null
-        }
+    override val currentHost: Flow<String?> = settings.getStringOrNullFlow(hostKey)
+
+    override val signedInServers: Flow<Set<Source.Server>> = settings.getStringOrNullFlow(serverSourcesKey).map {
+        it?.let { filterConfigurationJsonParser.decodeFromString<Set<Source.Server>>(it) } ?: emptySet()
     }
+
+    override val defaultModel: Flow<AiSource?> =
+        settings.getStringOrNullFlow(defaultModelKey).map {
+            it?.let { Json.decodeFromString<AiSource>(it) }
+        }
 
     override suspend fun setUserPreferences(preferences: DomainPreferences) {
-        datastore.edit { datastorePreferences ->
-            appSettings.first()?.copy(preferences = preferences)?.let {
-                datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(it)
-            }
-        }
+        Napier.d { "setUserPreferences: $preferences" }
+        val currentSettings = appSettings.first()
+        val newSettings = currentSettings.copy(preferences = preferences)
+        setAppSettings(newSettings)
     }
 
     override suspend fun addServerSource(source: Source.Server) {
-        datastore.edit { datastorePreferences ->
-            val currentSources = datastorePreferences[signedInUserKey]?.let {
-                Json.decodeFromString<Set<Source.Server>>(it)
-            } ?: emptySet()
-            val updatedSources = currentSources + source
-            datastorePreferences[signedInUserKey] = Json.encodeToString(updatedSources)
-        }
+        Napier.d { "addServerSource: $source" }
+        val currentSources = signedInServers.first().toMutableSet()
+        currentSources.add(source)
+        settings.putString(serverSourcesKey, filterConfigurationJsonParser.encodeToString(currentSources))
     }
 
     override suspend fun removeServerSource(source: Source.Server) {
-        datastore.edit { datastorePreferences ->
-            val currentSources = datastorePreferences[signedInUserKey]?.let {
-                Json.decodeFromString<Set<Source.Server>>(it)
-            } ?: emptySet()
-            val updatedSources = currentSources - source
-            if (updatedSources.isEmpty()) {
-                datastorePreferences.remove(signedInUserKey)
-            } else {
-                datastorePreferences[signedInUserKey] = Json.encodeToString(updatedSources)
-            }
-        }
+        Napier.d { "removeServerSource: $source" }
+        val currentSources = signedInServers.first().toMutableSet()
+        currentSources.remove(source)
+        settings.putString(serverSourcesKey, filterConfigurationJsonParser.encodeToString(currentSources))
     }
 
     override suspend fun setDefaultModel(model: AiSource?) {
-        datastore.edit { datastorePreferences ->
-            if (model != null) {
-                datastorePreferences[defaultModelKey] = Json.encodeToString(model)
-            } else {
-                datastorePreferences.remove(defaultModelKey)
-            }
+        Napier.d { "setDefaultModel: $model" }
+        if (model == null) {
+            settings.remove(defaultModelKey)
+        } else {
+            settings.putString(defaultModelKey, Json.encodeToString(model))
         }
     }
 
     override suspend fun setFilterConfiguration(filterConfiguration: FilterConfiguration) {
-        datastore.edit { datastorePreferences ->
-            appSettings.first().copy(filterConfiguration = filterConfiguration).let {
-                datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(it)
-            }
-        }
+        Napier.d { "setFilterConfiguration: $filterConfiguration" }
+        val currentSettings = appSettings.first()
+        val newSettings = currentSettings.copy(filterConfiguration = filterConfiguration)
+        setAppSettings(newSettings)
     }
 
     override suspend fun setAppSettings(appSettings: AppSettings) {
-        datastore.edit { datastorePreferences ->
-            datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(appSettings)
-        }
+        Napier.d { "setAppSettings: $appSettings" }
+        settings.putString(appSettingsKey, filterConfigurationJsonParser.encodeToString(appSettings))
     }
 
     override suspend fun setSelectedPromptConfiguration(promptConfiguration: PromptConfiguration?) {
-        datastore.edit { datastorePreferences ->
-            val currentSettings = appSettings.first()
-            val updatedSettings = currentSettings.copy(selectedPromptConfiguration = promptConfiguration)
-            datastorePreferences[appSettingsKey] = filterConfigurationJsonParser.encodeToString(updatedSettings)
-        }
+        Napier.d { "setSelectedPromptConfiguration: $promptConfiguration" }
+        val currentSettings = appSettings.first()
+        val newSettings = currentSettings.copy(selectedPromptConfiguration = promptConfiguration)
+        setAppSettings(newSettings)
     }
 
     override suspend fun setPromptConfigurations(promptConfigurations: List<PromptConfiguration>) {
-        datastore.edit { datastorePreferences ->
-            appSettings.first().copy(promptConfigurations = promptConfigurations).let {
-                datastorePreferences[appSettingsKey] =
-                    filterConfigurationJsonParser.encodeToString(it)
-            }
-        }
+        Napier.d { "setPromptConfigurations: $promptConfigurations" }
+        val currentSettings = appSettings.first()
+        val newSettings = currentSettings.copy(promptConfigurations = promptConfigurations)
+        setAppSettings(newSettings)
     }
 }

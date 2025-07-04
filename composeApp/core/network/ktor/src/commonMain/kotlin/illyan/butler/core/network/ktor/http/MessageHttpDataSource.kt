@@ -26,12 +26,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class, ExperimentalSerializationApi::class)
 @Single
 class MessageHttpDataSource(
     private val clientFactory: KtorHttpClientFactory
@@ -78,7 +79,7 @@ class MessageHttpDataSource(
     override suspend fun create(message: Message): Message {
         val serverSource = (message.source as? Source.Server) ?: throw IllegalArgumentException("Message source must be a server source")
         return try {
-            val newMessage = clientFactory(serverSource).post("/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>().toDomainModel(serverSource)
+            val newMessage = clientFactory.getBySource(serverSource).post("/chats/${message.chatId}/messages") { setBody(message) }.body<MessageDto>().toDomainModel(serverSource)
             dontUpdateMessage.add(newMessage)
             newMessage.copy(status = MessageStatus.RECEIVED)
         } catch (e: Exception) {
@@ -88,7 +89,7 @@ class MessageHttpDataSource(
             dontUpdateMessage.add(newMessage)
             newMessagesStateFlow.update { newMessages ->
                 val existingMessages = newMessages[serverSource].orEmpty().toMutableList()
-                existingMessages.removeIf { it.id == newMessage.id } // Remove any existing message with the same ID
+                existingMessages.removeAll { it.id == newMessage.id } // Remove any existing message with the same ID
                 newMessages + (serverSource to (existingMessages + newMessage))
             }
         }
@@ -98,25 +99,25 @@ class MessageHttpDataSource(
         val serverSource = (message.source as? Source.Server) ?: throw IllegalArgumentException("Message source must be a server source")
         return try {
             if (message !in dontUpdateMessage) {
-                clientFactory(serverSource).put("/chats/${message.chatId}/messages/${message.id}") { setBody(message) }.body<MessageDto>().toDomainModel(serverSource)
+                clientFactory.getBySource(serverSource).put("/chats/${message.chatId}/messages/${message.id}") { setBody(message) }.body<MessageDto>().toDomainModel(serverSource)
             } else {
-                dontUpdateMessage.removeIf { it.id == message.id }
+                dontUpdateMessage.removeAll { it.id == message.id }
                 message
             }.copy(status = MessageStatus.RECEIVED)
         } catch (e: Exception) {
             Napier.e("Failed to upsert message: ${e.message}", e)
             message.copy(status = MessageStatus.ERROR)
         }.also { newMessage ->
-            newMessagesStateFlow.update {
-                val existingMessages = it[serverSource].orEmpty().toMutableList()
-                existingMessages.removeIf { it.id == newMessage.id } // Remove any existing message with the same ID
-                it + (serverSource to (existingMessages + newMessage))
+            newMessagesStateFlow.update { newMessages ->
+                val existingMessages = newMessages[serverSource].orEmpty().toMutableList()
+                existingMessages.removeAll { it.id == newMessage.id } // Remove any existing message with the same ID
+                newMessages + (serverSource to (existingMessages + newMessage))
             }
         }
     }
 
     override suspend fun delete(message: Message): Boolean {
-        return clientFactory(message.source as Source.Server).delete("/chats/${message.chatId}/messages/${message.id}").status.isSuccess()
+        return clientFactory.getBySource(message.source as Source.Server).delete("/chats/${message.chatId}/messages/${message.id}").status.isSuccess()
     }
 
     override fun fetchById(source: Source.Server, messageId: Uuid): Flow<Message> {
@@ -124,6 +125,6 @@ class MessageHttpDataSource(
     }
 
     private suspend fun fetchByUser(source: Source.Server): List<Message> {
-        return clientFactory(source).get("/messages").body()
+        return clientFactory.getBySource(source).get("/messages").body()
     }
 }

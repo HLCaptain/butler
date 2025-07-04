@@ -1,0 +1,29 @@
+CREATE TABLE users (
+    id TEXT PRIMARY KEY NOT NULL,
+    endpoint TEXT NOT NULL,
+    email TEXT NOT NULL,
+    username TEXT,
+    displayName TEXT,
+    phone TEXT,
+    fullName TEXT,
+    photoUrl TEXT,
+    address TEXT, -- JSON serialized RoomAddress
+    filterOptions TEXT NOT NULL, -- JSON serialized Set<FilterOption>
+    customPrompts TEXT NOT NULL -- JSON serialized List<PromptConfiguration>
+);
+
+insertOrReplaceUser:
+INSERT OR REPLACE INTO users(id, endpoint, email, username, displayName, phone, fullName, photoUrl, address, filterOptions, customPrompts)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllUsers:
+SELECT * FROM users;
+
+selectUserById:
+SELECT * FROM users WHERE id = ?;
+
+deleteUser:
+DELETE FROM users WHERE id = ?;
+
+deleteAllUsers:
+DELETE FROM users;

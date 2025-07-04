@@ -32,7 +32,7 @@ class MessageStoreRepository(
             StoreReadRequest.cached(MessageKey.Read.ByMessageId(source, messageId), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("getMessageFlow Read Response: ${it::class.qualifiedName}")
+            Napier.d("getMessageFlow Read Response: ${it::class.simpleName}")
             val data = it.dataOrNull()
             Napier.d("Message: $data")
             data
@@ -44,7 +44,7 @@ class MessageStoreRepository(
             StoreReadRequest.cached(MessageKey.Read.ByChatId(source, chatId), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("getChatMessagesFlow Read Response: ${it::class.qualifiedName}")
+            Napier.d("getChatMessagesFlow Read Response: ${it::class.simpleName}")
             val data = it.dataOrNull()
             Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
             data
@@ -74,7 +74,7 @@ class MessageStoreRepository(
             StoreReadRequest.cached(MessageKey.Read.BySource(source), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("getMessagesBySource Read Response: ${it::class.qualifiedName}")
+            Napier.d("getMessagesBySource Read Response: ${it::class.simpleName}")
             val data = it.dataOrNull()
             Napier.d("Last 5 messages: ${data?.map { message -> message.id }?.takeLast(5)}")
             data

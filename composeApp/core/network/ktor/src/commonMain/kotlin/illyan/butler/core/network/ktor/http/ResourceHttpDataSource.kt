@@ -24,11 +24,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalSerializationApi::class)
 @Single
 class ResourceHttpDataSource(
     private val clientFactory: KtorHttpClientFactory,
@@ -51,7 +52,7 @@ class ResourceHttpDataSource(
     }
 
     override suspend fun delete(resource: Resource): Boolean {
-        return clientFactory(resource.source as Source.Server).delete("/resources/${resource.id}").status.isSuccess()
+        return clientFactory.getBySource(resource.source as Source.Server).delete("/resources/${resource.id}").status.isSuccess()
     }
 
     override fun fetchNewResources(source: Source.Server): Flow<List<Resource>> {
@@ -78,7 +79,7 @@ class ResourceHttpDataSource(
 
     override suspend fun create(resource: Resource): Resource {
         val source = resource.source as? Source.Server ?: throw IllegalArgumentException("Resource source must be a Server source")
-        val newResource = clientFactory(source).post("/resources") { setBody(resource) }.body<ResourceDto>().toDomainModel(source)
+        val newResource = clientFactory.getBySource(source).post("/resources") { setBody(resource) }.body<ResourceDto>().toDomainModel(source)
         dontUpdateResource.add(newResource)
         return newResource
     }
@@ -86,9 +87,9 @@ class ResourceHttpDataSource(
     override suspend fun upsert(resource: Resource): Resource {
         val source = resource.source as? Source.Server ?: throw IllegalArgumentException("Resource source must be a Server source")
         return if (resource !in dontUpdateResource) {
-            clientFactory(source).put("/resources/${resource.id}") { setBody(resource) }.body<ResourceDto>().toDomainModel(source)
+            clientFactory.getBySource(source).put("/resources/${resource.id}") { setBody(resource) }.body<ResourceDto>().toDomainModel(source)
         } else {
-            dontUpdateResource.removeIf { it.id == resource.id }
+            dontUpdateResource.removeAll { it.id == resource.id }
             resource
         }
     }
@@ -98,6 +99,6 @@ class ResourceHttpDataSource(
     }
 
     private suspend fun fetchByUserOnce(source: Source.Server): List<Resource> {
-        return clientFactory(source).get("/resources").body<List<ResourceDto>>().map { it.toDomainModel(source) }
+        return clientFactory.getBySource(source).get("/resources").body<List<ResourceDto>>().map { it.toDomainModel(source) }
     }
 }

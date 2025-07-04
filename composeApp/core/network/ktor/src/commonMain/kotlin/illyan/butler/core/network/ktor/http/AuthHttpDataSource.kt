@@ -31,29 +31,29 @@ class AuthHttpDataSource(
 ) : AuthNetworkDataSource {
 
     override suspend fun signup(credentials: UserRegistrationDto, endpoint: String): UserLoginResponseDto {
-        return unauthorizedClientFactory(endpoint).post("/signup") {
+        return unauthorizedClientFactory.getByUrl(endpoint).post("/signup") {
             setBody(credentials)
         }.body()
     }
 
     override suspend fun login(credentials: UserLoginDto, endpoint: String): UserLoginResponseDto {
-        return unauthorizedClientFactory(endpoint).post("/login") {
+        return unauthorizedClientFactory.getByUrl(endpoint).post("/login") {
             setBody(credentials)
         }.body()
     }
 
     override suspend fun sendPasswordResetEmail(request: PasswordResetRequest, endpoint: String): Boolean {
-        return unauthorizedClientFactory(endpoint).post("/reset-password") {
+        return unauthorizedClientFactory.getByUrl(endpoint).post("/reset-password") {
             setBody(request)
         }.status.isSuccess()
     }
 
     override fun getUser(source: Source.Server): Flow<User> = flow {
-        emit(clientFactory(source).get("/me").body<UserDto>().toDomainModel(source.endpoint))
+        emit(clientFactory.getBySource(source).get("/me").body<UserDto>().toDomainModel(source.endpoint))
     }
 
     override suspend fun updateUserData(user: User): User {
-        return clientFactory(Source.Server(user.id, user.endpoint)).post("/me") {
+        return clientFactory.getBySource(Source.Server(user.id, user.endpoint)).post("/me") {
             setBody(user.toNetworkModel())
         }.body<UserDto>().toDomainModel(user.endpoint)
     }

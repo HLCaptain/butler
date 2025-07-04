@@ -31,7 +31,7 @@ class ChatStoreRepository(
             StoreReadRequest.cached(ChatKey.Read.ByChatId(source, chatId), source is Source.Server)
         ).map {
             it.throwIfError()
-            Napier.d("getChatFlow Read Response: ${it::class.qualifiedName}")
+            Napier.d("getChatFlow Read Response: ${it::class.simpleName}")
             val data = it.dataOrNull()
             Napier.d("Chat is $data")
             data
@@ -39,6 +39,7 @@ class ChatStoreRepository(
     }
 
     override fun getChatFlowBySource(source: Source): Flow<List<Chat>?> {
+        Napier.d("getChatFlowBySource called with source: $source")
         return userChatStore.stream(
             StoreReadRequest.cached(
                 ChatKey.Read.BySource(source),
@@ -46,7 +47,7 @@ class ChatStoreRepository(
             )
         ).map {
             it.throwIfError()
-            Napier.d("getChatFlowBySource Read Response: ${it::class.qualifiedName}")
+            Napier.d("getChatFlowBySource Read Response: ${it::class.simpleName}")
             val data = it.dataOrNull()
             Napier.d("Chat is $data")
             data

@@ -10,5 +10,6 @@ kotlin {
         implementation(projects.composeApp.data.error)
 
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.napier)
     }
 }

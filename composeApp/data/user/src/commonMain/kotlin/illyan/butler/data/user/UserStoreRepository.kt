@@ -34,7 +34,7 @@ class UserStoreRepository(
                 StoreReadRequest.cached(UserKey.Read.BySource(source), true)
             ).map {
                 it.throwIfError()
-                Napier.d("getUser Read Response: ${it::class.qualifiedName}")
+                Napier.d("getUser Read Response: ${it::class.simpleName}")
                 val data = it.dataOrNull()
                 Napier.d("User ID: ${data?.id}")
                 data

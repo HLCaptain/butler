@@ -18,14 +18,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 @Single
 class AndroidAudioRecorder(
@@ -132,6 +133,7 @@ class AndroidAudioRecorder(
         return header + pcmData
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun writeAudioData() = withContext(Dispatchers.IO) {
         val data = ByteArray(minBufferSize)
         val outputStream = try {

@@ -1,11 +1,13 @@
 package illyan.butler
 
 import android.app.Application
+import com.russhwolf.settings.ExperimentalSettingsApi
 import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
 import illyan.butler.core.local.datastore.getDataStore
 import illyan.butler.core.local.room.RoomCoreModule
+import illyan.butler.core.local.settings.createSettings
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
 import illyan.butler.data.credential.CredentialDataModule
@@ -20,7 +22,7 @@ import illyan.butler.di.RepositoryModule
 import illyan.butler.di.coroutines.CoroutineModule
 import illyan.butler.di.datasource.DataSourceModule
 import illyan.butler.host.HostDomainModule
-import illyan.butler.model.ModelManager
+import illyan.butler.model.ModelDomainModule
 import illyan.butler.settings.SettingsDomainModule
 import illyan.butler.ui.AuthFeatureModule
 import illyan.butler.ui.ChatFeatureModule
@@ -35,11 +37,12 @@ import illyan.butler.utils.initNapier
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
-import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.ksp.generated.module
 
 class MainApplication : Application() {
+    @OptIn(ExperimentalSettingsApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -47,52 +50,60 @@ class MainApplication : Application() {
         startKoin {
             androidLogger()
             androidContext(applicationContext)
-            val featureModules = listOf(
-                AuthFeatureModule().module,
-                ChatFeatureModule().module,
-                DashboardFeatureModule().module,
-                ErrorFeatureModule().module,
-                HomeFeatureModule().module,
-                OnboardingFeatureModule().module,
-                PermissionFeatureModule().module,
-                ProfileFeatureModule().module,
-                ThemeFeatureModule().module
-            )
-            val domainModules = listOf(
-                AudioDomainModule().module,
-                AuthDomainModule().module,
-                ChatDomainModule().module,
-                HostDomainModule().module,
-                SettingsDomainModule().module,
-                module { singleOf(::ModelManager) }
-            )
-            val dataModules = listOf(
-                ChatDataModule().module,
-                CredentialDataModule().module,
-                HostDataModule().module,
-                MessageDataModule().module,
-                ModelDataModule().module,
-                ResourceDataModule().module,
-                SettingsDataModule().module,
-                UserDataModule().module
-            )
-            val coreModules = listOf(
-                RoomCoreModule().module,
-                KtorCoreModule().module,
-                DataSourceModule().module,
+
+            modules(
                 module {
                     single { getDataStore(androidContext()) }
+                    single { createSettings(androidContext()) }
                 },
-            )
-            modules(
-                ErrorDataModule().module,
-                CoroutineModule().module, // Must be after ErrorDataModule
-                *coreModules.toTypedArray(),
-                *dataModules.toTypedArray(),
-                RepositoryModule().module,
-                *domainModules.toTypedArray(),
-                *featureModules.toTypedArray()
+                *commonModules().toTypedArray()
             )
         }
     }
+}
+
+fun commonModules(): List<Module> {
+    val featureModules = listOf(
+        AuthFeatureModule().module,
+        ChatFeatureModule().module,
+        DashboardFeatureModule().module,
+        ErrorFeatureModule().module,
+        HomeFeatureModule().module,
+        OnboardingFeatureModule().module,
+        PermissionFeatureModule().module,
+        ProfileFeatureModule().module,
+        ThemeFeatureModule().module
+    )
+    val domainModules = listOf(
+        AudioDomainModule().module,
+        AuthDomainModule().module,
+        ChatDomainModule().module,
+        HostDomainModule().module,
+        ModelDomainModule().module,
+        SettingsDomainModule().module
+    )
+    val dataModules = listOf(
+        ChatDataModule().module,
+        CredentialDataModule().module,
+        HostDataModule().module,
+        MessageDataModule().module,
+        ModelDataModule().module,
+        ResourceDataModule().module,
+        SettingsDataModule().module,
+        UserDataModule().module
+    )
+    val coreModules = listOf(
+        RoomCoreModule().module,
+        KtorCoreModule().module,
+        DataSourceModule().module
+    )
+    return listOf(
+        ErrorDataModule().module,
+        CoroutineModule().module, // Must be after ErrorDataModule
+        *coreModules.toTypedArray(),
+        *dataModules.toTypedArray(),
+        RepositoryModule().module,
+        *domainModules.toTypedArray(),
+        *featureModules.toTypedArray()
+    )
 }

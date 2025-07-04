@@ -1,9 +1,9 @@
 package illyan.butler.shared.llm
 
 import illyan.butler.shared.model.chat.PromptConfiguration
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

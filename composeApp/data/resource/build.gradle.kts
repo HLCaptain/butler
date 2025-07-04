@@ -9,7 +9,6 @@ kotlin {
         implementation(projects.composeApp.core.sync)
         implementation(projects.composeApp.core.local)
         implementation(projects.composeApp.core.network)
-        implementation(projects.composeApp.core.local.room)
         implementation(projects.composeApp.domain)
         implementation(projects.shared.model)
 

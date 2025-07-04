@@ -23,11 +23,12 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalSerializationApi::class)
 @Single
 class ChatHttpDataSource(
     private val clientFactory: KtorHttpClientFactory,
@@ -73,7 +74,7 @@ class ChatHttpDataSource(
     }
 
     override suspend fun fetch(source: Source.Server): List<Chat> {
-        return clientFactory(source).get("/chats").body<List<ChatDto>>().map { it.toDomainModel(source) }
+        return clientFactory.getBySource(source).get("/chats").body<List<ChatDto>>().map { it.toDomainModel(source) }
     }
 
     // To avoid needless updates to chats right after they are createdAt
@@ -81,7 +82,7 @@ class ChatHttpDataSource(
 
     override suspend fun create(chat: Chat): Chat {
         val serverSource = (chat.source as? Source.Server) ?: throw IllegalArgumentException("Chat source must be a server source")
-        val newChat = clientFactory(serverSource).post("/chats") { setBody(chat.toNetworkModel()) }.body<ChatDto>().toDomainModel(serverSource)
+        val newChat = clientFactory.getBySource(serverSource).post("/chats") { setBody(chat.toNetworkModel()) }.body<ChatDto>().toDomainModel(serverSource)
         dontUpdateChat.add(newChat)
         return newChat.also { newChatsStateFlow.update { chats -> (chats ?: emptySet()) + setOf(it) } }
     }
@@ -89,14 +90,14 @@ class ChatHttpDataSource(
     override suspend fun upsert(chat: Chat): Chat {
         val serverSource = (chat.source as? Source.Server) ?: throw IllegalArgumentException("Chat source must be a server source")
         return if (chat !in dontUpdateChat) {
-            clientFactory(serverSource).put("/chats/${chat.id}") { setBody(chat.toNetworkModel()) }.body<ChatDto>().toDomainModel(serverSource)
+            clientFactory.getBySource(serverSource).put("/chats/${chat.id}") { setBody(chat.toNetworkModel()) }.body<ChatDto>().toDomainModel(serverSource)
         } else {
-            dontUpdateChat.removeIf { it.id == chat.id }
+            dontUpdateChat.removeAll { it.id == chat.id }
             chat
         }.also { newChatsStateFlow.update { chats -> (chats ?: emptySet()) + setOf(it) } }
     }
 
     override suspend fun delete(chat: Chat): Boolean {
-        return clientFactory(chat.source as Source.Server).delete("/chats/${chat.id}").status.isSuccess()
+        return clientFactory.getBySource(chat.source as Source.Server).delete("/chats/${chat.id}").status.isSuccess()
     }
 }
