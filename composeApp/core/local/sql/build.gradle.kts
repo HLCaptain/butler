@@ -14,6 +14,7 @@ kotlin {
         implementation(projects.composeApp.config)
         implementation(projects.composeApp.core.local)
         implementation(projects.composeApp.domain)
+        implementation(projects.composeApp.di)
 
         implementation(libs.kotlinx.serialization.json)
         implementation(libs.kotlinx.datetime)

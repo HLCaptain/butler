@@ -1,16 +1,13 @@
 package illyan.butler.core.local.sqldelight.datasource
 
-import app.cash.sqldelight.coroutines.asFlow
-import app.cash.sqldelight.coroutines.mapToList
-import app.cash.sqldelight.coroutines.mapToOneOrNull
 import illyan.butler.core.local.datasource.ChatLocalDataSource
+import illyan.butler.core.local.sqldelight.DatabaseHelper
 import illyan.butler.core.local.sqldelight.db.ButlerDatabase
 import illyan.butler.core.local.sqldelight.mapping.toDomainModel
 import illyan.butler.core.local.sqldelight.mapping.toSqlDelightModel
 import illyan.butler.domain.model.Chat
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
@@ -21,62 +18,77 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 @Single
 class ChatSqlDelightDataSource(
-    private val database: ButlerDatabase
+    private val databaseHelper: DatabaseHelper<ButlerDatabase>
 ) : ChatLocalDataSource {
 
     override fun getChat(chatId: Uuid): Flow<Chat?> {
         Napier.d { "Getting chat with id: $chatId" }
-        return database.chatQueries.selectChatById(chatId.toString())
-            .asFlow()
-            .mapToOneOrNull(Dispatchers.Default)
-            .map { it?.toDomainModel() }
+        return databaseHelper.queryAsOneFlow {
+            chatQueries.selectChatById(chatId.toString())
+        }.map { it.toDomainModel() }
     }
 
     override fun getChatsBySource(source: Source): Flow<List<Chat>> {
         Napier.d { "Getting chats with source: $source" }
-        return database.chatQueries.selectChatsBySource(Json.encodeToString(source))
-            .asFlow()
-            .mapToList(Dispatchers.Default)
-            .map { chats -> chats.map { it.toDomainModel() } }
+        return databaseHelper.queryAsListFlow {
+            chatQueries.selectChatsBySource(Json.encodeToString(source))
+        }.map { chats ->
+            chats.map { it.toDomainModel() }
+        }
     }
 
     override suspend fun upsertChat(chat: Chat) {
         Napier.d { "Upserting chat with id: ${chat.id}" }
         val sqlDelightChat = chat.toSqlDelightModel()
-        database.chatQueries.insertOrReplaceChat(
-            id = sqlDelightChat.id,
-            createdAt = sqlDelightChat.createdAt,
-            source = sqlDelightChat.source,
-            title = sqlDelightChat.title,
-            summary = sqlDelightChat.summary,
-            lastUpdated = sqlDelightChat.lastUpdated,
-            models = sqlDelightChat.models
-        )
+        databaseHelper.withDatabase {
+            chatQueries.insertOrReplaceChat(
+                id = sqlDelightChat.id,
+                createdAt = sqlDelightChat.createdAt,
+                source = sqlDelightChat.source,
+                title = sqlDelightChat.title,
+                summary = sqlDelightChat.summary,
+                lastUpdated = sqlDelightChat.lastUpdated,
+                models = sqlDelightChat.models
+            )
+        }
     }
 
     override suspend fun replaceChat(oldChatId: Uuid, newChat: Chat) {
         Napier.d { "Replacing chat with id: $oldChatId with new chat with id: ${newChat.id}" }
-        database.transaction {
-            database.chatQueries.deleteChat(oldChatId.toString())
-            upsertChat(newChat)
+        databaseHelper.withDatabase {
+            transaction {
+                chatQueries.deleteChat(oldChatId.toString())
+                upsertChat(newChat)
+            }
         }
     }
 
     override suspend fun deleteChatById(chatId: Uuid) {
         Napier.d { "Deleting chat with id: $chatId" }
-        database.chatQueries.deleteChat(chatId.toString())
+        databaseHelper.withDatabase { chatQueries.deleteChat(chatId.toString()) }
     }
 
     override suspend fun deleteAllChats() {
         Napier.d { "Deleting all chats" }
-        database.chatQueries.deleteAllChats()
+        databaseHelper.withDatabase {
+            chatQueries.deleteAllChats()
+        }
     }
 
     override suspend fun upsertChats(chats: List<Chat>) {
         Napier.d { "Upserting ${chats.size} chats" }
-        database.transaction {
+        databaseHelper.withDatabase {
             chats.forEach { chat ->
-                upsertChat(chat)
+                val sqlDelightChat = chat.toSqlDelightModel()
+                chatQueries.insertOrReplaceChat(
+                    id = sqlDelightChat.id,
+                    createdAt = sqlDelightChat.createdAt,
+                    source = sqlDelightChat.source,
+                    title = sqlDelightChat.title,
+                    summary = sqlDelightChat.summary,
+                    lastUpdated = sqlDelightChat.lastUpdated,
+                    models = sqlDelightChat.models
+                )
             }
         }
     }

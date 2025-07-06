@@ -1,14 +1,12 @@
 package illyan.butler.core.local.sqldelight.datasource
 
-import app.cash.sqldelight.coroutines.asFlow
-import app.cash.sqldelight.coroutines.mapToOneOrNull
 import illyan.butler.core.local.datasource.ResourceLocalDataSource
+import illyan.butler.core.local.sqldelight.DatabaseHelper
 import illyan.butler.core.local.sqldelight.db.ButlerDatabase
 import illyan.butler.core.local.sqldelight.mapping.toDomainModel
 import illyan.butler.core.local.sqldelight.mapping.toSqlDelightModel
 import illyan.butler.domain.model.Resource
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
@@ -18,44 +16,58 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 @Single
 class ResourceSqlDelightDataSource(
-    private val database: ButlerDatabase
+    private val databaseHelper: DatabaseHelper<ButlerDatabase>
 ) : ResourceLocalDataSource {
 
     override fun getResource(resourceId: Uuid): Flow<Resource?> {
         Napier.d { "Getting resource with id: $resourceId" }
-        return database.resourceQueries.selectResourceById(resourceId.toString())
-            .asFlow()
-            .mapToOneOrNull(Dispatchers.Default)
-            .map { it?.toDomainModel() }
+        return databaseHelper.queryAsOneOrNullFlow {
+            resourceQueries.selectResourceById(resourceId.toString())
+        }.map { it?.toDomainModel() }
     }
 
     override suspend fun replaceResource(oldResourceId: Uuid, newResource: Resource) {
         Napier.d { "Replacing resource with id: $oldResourceId with new resource with id: ${newResource.id}" }
-        database.transaction {
-            database.resourceQueries.deleteResource(oldResourceId.toString())
-            upsertResource(newResource)
+        databaseHelper.withDatabase {
+            transaction {
+                resourceQueries.deleteResource(oldResourceId.toString())
+                val sqlDelightResource = newResource.toSqlDelightModel()
+                resourceQueries.insertOrReplaceResource(
+                    id = sqlDelightResource.id,
+                    createdAt = sqlDelightResource.createdAt,
+                    mimeType = sqlDelightResource.mimeType,
+                    data_ = sqlDelightResource.data,
+                    source = sqlDelightResource.source
+                )
+            }
         }
     }
 
     override suspend fun upsertResource(resource: Resource) {
         Napier.d { "Upserting resource with id: ${resource.id}" }
         val sqlDelightResource = resource.toSqlDelightModel()
-        database.resourceQueries.insertOrReplaceResource(
-            id = sqlDelightResource.id,
-            createdAt = sqlDelightResource.createdAt,
-            mimeType = sqlDelightResource.mimeType,
-            data_ = sqlDelightResource.data,
-            source = sqlDelightResource.source
-        )
+        databaseHelper.withDatabase {
+            resourceQueries.insertOrReplaceResource(
+                id = sqlDelightResource.id,
+                createdAt = sqlDelightResource.createdAt,
+                mimeType = sqlDelightResource.mimeType,
+                data_ = sqlDelightResource.data,
+                source = sqlDelightResource.source
+            )
+        }
     }
 
     override suspend fun deleteResourceById(resourceId: Uuid) {
         Napier.d { "Deleting resource with id: $resourceId" }
-        database.resourceQueries.deleteResource(resourceId.toString())
+        databaseHelper.withDatabase {
+            resourceQueries.deleteResource(resourceId.toString())
+        }
     }
 
     override suspend fun deleteAllResources() {
         Napier.d { "Deleting all resources" }
-        database.resourceQueries.deleteAllResources()
+        databaseHelper.withDatabase {
+            resourceQueries.deleteAllResources()
+        }
     }
 }
