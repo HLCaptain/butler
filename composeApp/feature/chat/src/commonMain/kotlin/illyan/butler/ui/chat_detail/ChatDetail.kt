@@ -62,6 +62,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -86,6 +87,7 @@ import coil3.compose.SubcomposeAsyncImageContent
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.State
 import com.mikepenz.markdown.model.rememberMarkdownState
 import dev.chrisbanes.haze.ExperimentalHazeApi
 import dev.chrisbanes.haze.HazeInputScale
@@ -139,6 +141,7 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
@@ -505,6 +508,9 @@ fun MessageList(
     LaunchedEffect(messages.isEmpty()) {
         lazyListState.animateScrollToItem(0)
     }
+    val sortedMessages = remember(messages) {
+        messages.sortedByDescending { it.createdAt }
+    }
     LazyColumn(
         modifier = modifier.consumeWindowInsets(contentPadding),
         state = lazyListState,
@@ -522,7 +528,17 @@ fun MessageList(
                 }
             }
         }
-        items(messages.withIndex().sortedByDescending { it.value.createdAt }, key = { it.value.id }) { (index, message) ->
+        items(
+            items = sortedMessages,
+            key = { it.id },
+            contentType = {
+                when (it.sender) {
+                    is SenderType.User -> "user"
+                    is SenderType.Ai -> "ai"
+                    is SenderType.System -> "system"
+                }
+            }
+        ) { message ->
             Box(
                 modifier = Modifier.animateItem().fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -571,27 +587,32 @@ fun MessageList(
                                 images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
                             )
                         }
-                        AnimatedVisibility(
-                            visible = index == 0 && sentMessageButNoUpdate,
-                            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-                            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
-                        ) {
-                            Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    ButlerMediumTextButton(
-                                        onClick = refreshChat,
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Refresh,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        text = { Text(text = stringResource(Res.string.refresh_chat)) }
+                    }
+                }
+            }
+        }
+        if (sentMessageButNoUpdate) {
+            item("sent_message_no_update") {
+                AnimatedVisibility(
+                    modifier = Modifier.animateItem(),
+                    visible = sentMessageButNoUpdate,
+                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row {
+                            Spacer(modifier = Modifier.weight(1f))
+                            ButlerMediumTextButton(
+                                onClick = refreshChat,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Refresh,
+                                        contentDescription = null
                                     )
-                                }
-                            }
+                                },
+                                text = { Text(text = stringResource(Res.string.refresh_chat)) }
+                            )
                         }
                     }
                 }
@@ -656,7 +677,6 @@ fun MessageItem(
     playingAudio: Uuid? = null,
     images: List<ByteArray> = emptyList(),
 ) {
-
     val sentByUser = remember(message.sender) { message.sender is SenderType.User }
     Column(
         modifier = modifier.padding(8.dp),
@@ -723,15 +743,17 @@ fun MessageItem(
 //                                richTextState.setMarkdown(message.messageContent ?: "")
 //                            }
 //                            RichText(state = richTextState)
-                                var validMarkdownContent by remember(message.content) { mutableStateOf(message.content) }
+                                var validMarkdownContent by remember { mutableStateOf(message.content) }
                                 LaunchedEffect(message.content) {
                                     // Validate markdown content to avoid rendering issues
                                     validMarkdownContent = message.content?.takeIf { it.isNotBlank() } ?: validMarkdownContent
                                 }
-                                val markdownState = rememberMarkdownState(validMarkdownContent ?: "")
+                                val markdownState by rememberMarkdownState { validMarkdownContent ?: "" }
+                                    .state.filter { it is State.Success }
+                                    .collectAsState(State.Loading())
                                 Markdown(
                                     modifier = Modifier, // Don't use the default fillMaxSize here.
-                                    markdownState = markdownState,
+                                    state = markdownState,
                                     colors = markdownColor(
                                         text = MaterialTheme.colorScheme.onSurface,
                                         codeBackground = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),

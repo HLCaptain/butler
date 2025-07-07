@@ -121,10 +121,10 @@ desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.5" }
 korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.2" }
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.10.0-beta04" }
-markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.35.0" }
+markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.36.0-b02" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc13" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.2.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.6" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.7" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.6" }
 material-kolors = { module = "com.materialkolor:material-kolor", version = "2.1.1" }
 
