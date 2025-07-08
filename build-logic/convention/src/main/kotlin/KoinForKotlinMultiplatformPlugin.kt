@@ -21,6 +21,8 @@ class KoinForKotlinMultiplatformPlugin : Plugin<Project> {
             add("kspCommonMainMetadata", koinKsp)
             add("kspAndroid", koinKsp)
             add("kspJvm", koinKsp)
+            add("kspWasmJs", koinKsp)
+            add("kspJs", koinKsp)
         }
     }
 }

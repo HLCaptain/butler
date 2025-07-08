@@ -14,6 +14,9 @@ kotlin {
         implementation(libs.kotlinx.serialization.json)
         implementation(libs.napier)
 
-        implementation(libs.androidx.datastore.preferences)
+        implementation(libs.multiplatformSettings)
+        implementation(libs.multiplatformSettings.coroutines)
+        implementation(libs.multiplatformSettings.observable)
+        implementation(libs.multiplatformSettings.serialization)
     }
 }

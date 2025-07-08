@@ -3,7 +3,6 @@ package illyan.butler.ui.server.select_host
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.host.HostManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -34,13 +33,13 @@ class SelectHostViewModel(
     )
 
     fun testAndSelectHost(url: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             isConnectedToHost.update { hostManager.testAndSelectHost(url) }
         }
     }
 
     fun testHost(url: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             isConnectedToHost.update { hostManager.testHost(url) }
         }
     }

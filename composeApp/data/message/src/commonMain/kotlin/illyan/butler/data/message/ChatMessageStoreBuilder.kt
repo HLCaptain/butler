@@ -39,7 +39,7 @@ fun provideChatMessageMutableStore(
                 is MessageKey.Write.Create -> messageLocalDataSource.upsertMessages(local)
                 is MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessages(local)
                 is MessageKey.Read.ByChatId -> messageLocalDataSource.upsertMessages(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.simpleName}")
             }
         },
         deleteAll = {

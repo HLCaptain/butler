@@ -91,37 +91,36 @@ import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import illyan.butler.config.BuildConfig
 import illyan.butler.core.local.datasource.CredentialLocalDataSource
-import illyan.butler.core.network.ktor.http.setupCioClient
 import illyan.butler.core.network.ktor.http.setupClient
 import illyan.butler.data.error.ErrorRepository
 import illyan.butler.shared.model.auth.ApiKeyCredential
 import illyan.butler.shared.model.chat.Source
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.network.tls.CIOCipherSuites
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.HttpClientEngineConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.datetime.Clock
-import kotlinx.io.asSource
+import kotlinx.io.Buffer
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 
 @Single
 class KtorHttpClientFactory(
     private val credentialDataSource: CredentialLocalDataSource,
     private val errorRepository: ErrorRepository
-) : (Source.Server) -> HttpClient {
-
+) {
     private val hashMap = hashMapOf<Source.Server, HttpClient>()
 
     @OptIn(ExperimentalUuidApi::class)
     @ExperimentalSerializationApi
-    override fun invoke(source: Source.Server): HttpClient {
+    fun getBySource(source: Source.Server): HttpClient {
         return hashMap.getOrPut(source) {
-            HttpClient(CIO) {
-                setupCioClient()
+            HttpClient {
+                setupPlatformHttpClient()
                 setupClient(
                     credentialDataSource = credentialDataSource,
                     errorRepository = errorRepository,
@@ -133,20 +132,22 @@ class KtorHttpClientFactory(
     }
 }
 
+expect fun<T : HttpClientEngineConfig> HttpClientConfig<T>.setupPlatformHttpClient()
+
 @Single
 class KtorUnauthorizedHttpClientFactory(
     private val credentialDataSource: CredentialLocalDataSource,
     private val errorRepository: ErrorRepository
-) : (String) -> HttpClient {
+) {
 
     private val hashMap = hashMapOf<String, HttpClient>()
 
     @OptIn(ExperimentalUuidApi::class)
     @ExperimentalSerializationApi
-    override fun invoke(endpoint: String): HttpClient {
+    fun getByUrl(endpoint: String): HttpClient {
         return hashMap.getOrPut(endpoint) {
-            HttpClient(CIO) {
-                setupCioClient()
+            HttpClient {
+                setupPlatformHttpClient()
                 setupClient(
                     credentialDataSource = credentialDataSource,
                     errorRepository = errorRepository,
@@ -158,6 +159,7 @@ class KtorUnauthorizedHttpClientFactory(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Single
 fun provideOpenAIClient(
     credential: ApiKeyCredential
@@ -465,7 +467,7 @@ fun provideOpenAIClient(
             return file(FileUpload(
                 file = FileSource(
                     name = "dummy_file.txt",
-                    source = byteArrayOf().inputStream().asSource()
+                    source = Buffer()
                 ),
                 purpose = Purpose("dummy_purpose")
             ), requestOptions)
@@ -475,7 +477,7 @@ fun provideOpenAIClient(
             return listOf(file(FileUpload(
                 file = FileSource(
                     name = "dummy_file.txt",
-                    source = byteArrayOf().inputStream().asSource()
+                    source = Buffer()
                 ),
                 purpose = Purpose("dummy_purpose")
             ), requestOptions))
@@ -1129,12 +1131,9 @@ fun provideOpenAIClient(
         config = OpenAIConfig(
             token = credential.apiKey,
             host = OpenAIHost(baseUrl = credential.providerUrl + if (credential.providerUrl.endsWith("/")) "" else "/"),
-            engine = CIO.create {
-                https {
-                    serverName = null // Dynamically infer from URL
-                    cipherSuites = CIOCipherSuites.SupportedSuites
-                }
-            }
+            engine = HttpClient {
+                setupPlatformHttpClient()
+            }.engine
         )
     )
 }

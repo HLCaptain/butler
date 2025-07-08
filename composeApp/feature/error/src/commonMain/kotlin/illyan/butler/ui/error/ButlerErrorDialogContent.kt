@@ -56,7 +56,7 @@ fun ButlerErrorDialogContent(
         )
     },
     title: (@Composable ColumnScope.() -> Unit)? = {
-        Text(stringResource(Res.string.hello_x).format(errorResponse.httpStatusCode))
+        Text(stringResource(Res.string.hello_x, errorResponse.httpStatusCode))
     },
     text: (@Composable ColumnScope.() -> Unit)? = {
         Text(HttpStatusCode.fromValue(errorResponse.httpStatusCode).description)

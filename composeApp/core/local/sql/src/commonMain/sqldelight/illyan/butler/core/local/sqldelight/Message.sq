@@ -1,0 +1,36 @@
+CREATE TABLE messages (
+    id TEXT PRIMARY KEY NOT NULL,
+    createdAt INTEGER NOT NULL,
+    source TEXT NOT NULL, -- JSON serialized Source
+    chatId TEXT NOT NULL,
+    sender TEXT NOT NULL, -- JSON serialized SenderType
+    content TEXT,
+    resourceIds TEXT NOT NULL, -- JSON serialized List<String>
+    status TEXT NOT NULL -- JSON serialized MessageStatus
+);
+
+insertMessage:
+INSERT INTO messages(id, createdAt, source, chatId, sender, content, resourceIds, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertOrReplaceMessage:
+INSERT OR REPLACE INTO messages(id, createdAt, source, chatId, sender, content, resourceIds, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+selectMessageById:
+SELECT * FROM messages WHERE id = ?;
+
+selectMessagesByChatId:
+SELECT * FROM messages WHERE chatId = ? ORDER BY createdAt ASC;
+
+selectMessagesBySource:
+SELECT * FROM messages WHERE source = ? ORDER BY createdAt ASC;
+
+deleteMessage:
+DELETE FROM messages WHERE id = ?;
+
+deleteAllMessages:
+DELETE FROM messages;
+
+deleteAllMessagesForChat:
+DELETE FROM messages WHERE chatId = ?;

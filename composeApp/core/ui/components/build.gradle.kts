@@ -16,4 +16,8 @@ kotlin {
 
         implementation(libs.napier)
     }
+
+    sourceSets.wasmJsMain.dependencies {
+        implementation(libs.kotlinx.browser)
+    }
 }

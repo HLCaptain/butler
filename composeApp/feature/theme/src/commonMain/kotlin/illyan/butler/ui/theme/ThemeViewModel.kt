@@ -21,26 +21,25 @@ package illyan.butler.ui.theme
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import illyan.butler.settings.SettingsManager
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.android.annotation.KoinViewModel
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @KoinViewModel
 class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
-    private val theme = settingsManager.userPreferences.map { it?.theme }
+    private val theme = settingsManager.userPreferences.map { it.theme }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val dynamicColorEnabled = settingsManager.userPreferences
-        .map { it?.dynamicColorEnabled == true }
+        .map { it.dynamicColorEnabled }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val isNight = MutableStateFlow(isNight())
@@ -61,15 +60,11 @@ class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
         ThemeScreenState()
     )
 
-    init {
-        viewModelScope.launch {
-            while (true) {
-                isNight.update { isNight() }
-                delay(1000)
-            }
-        }
+    fun calculateIsNight() {
+        isNight.update { isNight() }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun isNight(): Boolean {
         val systemTimeZone = TimeZone.currentSystemDefault()
         val now = Clock.System.now()

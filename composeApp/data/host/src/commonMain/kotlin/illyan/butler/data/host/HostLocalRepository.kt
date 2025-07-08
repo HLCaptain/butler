@@ -1,29 +1,25 @@
 package illyan.butler.data.host
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.flow.map
+import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.coroutines.FlowSettings
 import org.koin.core.annotation.Single
 
+@OptIn(ExperimentalSettingsApi::class)
 @Single
-class HostLocalRepository(
-    private val datastore: DataStore<Preferences>
+class HostLocalRepository @OptIn(ExperimentalSettingsApi::class) constructor(
+    private val settings: FlowSettings
 ) : HostRepository {
     companion object {
-        val hostKey = stringPreferencesKey("host")
+        const val hostKey = "host"
     }
 
-    override val currentHost = datastore.data.map { it[hostKey] }
+    override val currentHost = settings.getStringOrNullFlow(hostKey)
 
     override suspend fun upsertHostUrl(url: String?) {
-        datastore.edit { datastorePreferences ->
-            if (url != null) {
-                datastorePreferences[hostKey] = url
-            } else {
-                datastorePreferences.remove(hostKey)
-            }
+        if (url.isNullOrBlank()) {
+            settings.remove(hostKey)
+        } else {
+            settings.putString(hostKey, url)
         }
     }
 }

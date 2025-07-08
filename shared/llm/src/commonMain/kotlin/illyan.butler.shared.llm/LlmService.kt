@@ -13,7 +13,7 @@ import com.aallam.openai.api.chat.ImagePart
 import com.aallam.openai.api.chat.ListContent
 import com.aallam.openai.api.chat.TextContent
 import com.aallam.openai.api.chat.TextPart
-import com.aallam.openai.api.file.FileSource
+import com.aallam.openai.api.file.fileSource
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import illyan.butler.shared.model.chat.AiSource
@@ -35,10 +35,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.io.asSource
+import kotlinx.io.Buffer
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -406,15 +406,19 @@ class LlmService(
         val openAI = getOpenAIClient(aiSource.endpoint)
         val type = resource.type.split("/").last()
         // Create tmp file for audio
-        val audioFilePath = kotlin.io.path.createTempFile("${resource.id}_audio_file", ".$type")
-        audioFilePath.toFile().writeBytes(resource.data)
+//        val audioFilePath = kotlin.io.path.createTempFile("${resource.id}_audio_file", ".$type")
+//        audioFilePath.toFile().writeBytes(resource.data)
+        val audioBuffer = Buffer().apply { write(resource.data) }
         return openAI.transcription(
             request = TranscriptionRequest(
-                audio = FileSource(name = audioFilePath.toFile().name, source = audioFilePath.toFile().inputStream().asSource()),
+                audio = fileSource {
+                    name = "${resource.id}_audio_file.$type"
+                    source = audioBuffer
+                },
                 model = ModelId(aiSource.modelId),
                 responseFormat = AudioResponseFormat.Text,
             )
-        ).text.also { audioFilePath.toFile().delete() }
+        ).text
     }
 
     @OptIn(ExperimentalTime::class)

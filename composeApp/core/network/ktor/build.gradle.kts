@@ -17,7 +17,6 @@ kotlin {
 
         implementation(libs.ktor.core)
         implementation(libs.ktor.auth)
-        implementation(libs.ktor.client.cio)
         implementation(libs.ktor.client.content.negotiation)
         implementation(libs.ktor.client.logging)
         implementation(libs.ktor.serialization.kotlinx.protobuf)
@@ -27,5 +26,13 @@ kotlin {
         implementation(libs.kotlinx.datetime)
         implementation(libs.napier)
         implementation(libs.openai.client)
+    }
+
+    sourceSets.nonWebMain.dependencies {
+        implementation(libs.ktor.client.cio)
+    }
+
+    sourceSets.webMain.dependencies {
+        implementation(libs.ktor.client.js)
     }
 }

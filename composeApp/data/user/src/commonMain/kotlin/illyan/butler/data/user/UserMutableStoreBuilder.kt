@@ -45,7 +45,7 @@ fun provideResourceMutableStore(
             when (key) {
                 UserKey.Write -> userLocalDataSource.upsertUser(local)
                 is UserKey.Read.BySource -> userLocalDataSource.upsertUser(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.simpleName}")
             }
         },
         delete = { key ->
@@ -68,6 +68,6 @@ fun provideResourceMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        User::class.qualifiedName.toString()
+        User::class.simpleName.toString()
     ) { it.toString() }
 )

@@ -2,7 +2,6 @@
 
 package illyan.butler.ui.home
 
-import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -128,7 +127,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@Keep
 enum class HomeDestinations(val referenceRoute: KClass<*>) {
     Home(HomeDestination::class),
     Dashboard(DashboardDestination::class),

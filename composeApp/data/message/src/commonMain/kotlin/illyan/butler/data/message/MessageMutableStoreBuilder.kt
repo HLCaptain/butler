@@ -52,7 +52,7 @@ fun provideMessageMutableStore(
             when (key) {
                 MessageKey.Write.Create, MessageKey.Write.Upsert -> messageLocalDataSource.upsertMessage(local)
                 is MessageKey.Read.ByMessageId -> messageLocalDataSource.upsertMessage(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.simpleName}")
             }
         },
         delete = { key ->
@@ -91,6 +91,6 @@ fun provideMessageMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        Message::class.qualifiedName.toString()
+        Message::class.simpleName.toString()
     ) { it.toString() }
 )

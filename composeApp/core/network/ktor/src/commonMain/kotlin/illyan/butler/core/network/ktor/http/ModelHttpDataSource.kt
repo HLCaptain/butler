@@ -18,7 +18,7 @@ class ModelHttpDataSource(
 ) : ModelNetworkDataSource {
     override suspend fun fetchAll(source: Source.Server): List<DomainModel> {
         return try {
-            clientFactory(source).get("/models").body<List<ModelDto>>().map { it.toDomainModel() }
+            clientFactory.getBySource(source).get("/models").body<List<ModelDto>>().map { it.toDomainModel() }
         } catch (_: Exception) {
             emptyList()
         }

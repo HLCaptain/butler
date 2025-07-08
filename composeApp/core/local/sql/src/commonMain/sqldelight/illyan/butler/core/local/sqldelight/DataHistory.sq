@@ -1,0 +1,18 @@
+CREATE TABLE data_history (
+    key TEXT PRIMARY KEY NOT NULL,
+    group_name TEXT NOT NULL,
+    lastFailedTimestamp INTEGER NOT NULL
+);
+
+insertOrReplaceDataHistory:
+INSERT OR REPLACE INTO data_history(key, group_name, lastFailedTimestamp)
+VALUES (?, ?, ?);
+
+selectLastFailedTimestamp:
+SELECT lastFailedTimestamp FROM data_history WHERE key = ?;
+
+deleteDataHistory:
+DELETE FROM data_history WHERE key = ?;
+
+deleteDataHistoryByGroup:
+DELETE FROM data_history WHERE group_name = ?;

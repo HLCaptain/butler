@@ -13,6 +13,6 @@ class HostHttpDataSource(
     private val unauthorizedClientFactory: KtorUnauthorizedHttpClientFactory
 ) : HostNetworkDataSource {
     override suspend fun tryToConnect(url: String): Boolean {
-        return unauthorizedClientFactory(url).get(url).status.isSuccess() // Should get Hello World JSON message
+        return unauthorizedClientFactory.getByUrl(url).get(url).status.isSuccess() // Should get Hello World JSON message
     }
 }

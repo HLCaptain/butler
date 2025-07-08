@@ -12,7 +12,6 @@ import illyan.butler.domain.model.DomainError
 import illyan.butler.shared.model.auth.ApiKeyCredential
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -45,11 +44,11 @@ class HomeViewModel(
                     // This is a 1$ API key for openrouter.ai, but I don't have any credits left
                     // so you can only user ":free" models.
                     // Encoded in Base64 TWICE(!) so bots are less likely to scrape it.
-                    val encodedKey = Base64.decode("YzJzdGIzSXRkakV0Wmpnd05EVm1aRFk1WkRBeVlXVmlNREV5TVdReVkyTmlZak5oTWpSbFlqSTNNREF6TmpVeFpEVXdPVEJpTVdKa09HWTNZbVpoWTJNNU1tTmlZV0l3WVE9PQ==").toString(Charsets.UTF_8)
+                    val encodedKey = Base64.decode("YzJzdGIzSXRkakV0Wmpnd05EVm1aRFk1WkRBeVlXVmlNREV5TVdReVkyTmlZak5oTWpSbFlqSTNNREF6TmpVeFpEVXdPVEJpTVdKa09HWTNZbVpoWTJNNU1tTmlZV0l3WVE9PQ==").decodeToString()
                     credentialRepository.upsertApiKeyCredential(
                         ApiKeyCredential(
                             "https://openrouter.ai/api/v1/",
-                            apiKey = Base64.decode(encodedKey).toString(Charsets.UTF_8).trim()
+                            apiKey = Base64.decode(encodedKey).decodeToString().trim()
                         )
                     )
                 }
@@ -90,7 +89,7 @@ class HomeViewModel(
     )
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             errorRepository.errorEventFlow.collect { error ->
                 Napier.v { "Error event received: $error" }
                 errors.update { it + error }
@@ -99,13 +98,13 @@ class HomeViewModel(
     }
 
     fun clearError(errorId: Uuid) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             errors.update { it.filter { error -> error.id != errorId } }
         }
     }
 
     fun removeLastError() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             errors.update { it.dropLast(1) }
         }
     }

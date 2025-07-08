@@ -7,6 +7,7 @@ import illyan.butler.core.sync.NoopConverter
 import illyan.butler.core.sync.provideBookkeeper
 import illyan.butler.domain.model.Chat
 import illyan.butler.shared.model.chat.Source
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.emptyFlow
 import org.koin.core.annotation.Single
 import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
@@ -37,21 +38,24 @@ fun provideChatMutableStore(
     fetcher = Fetcher.ofFlow<ChatKey, Chat> { key ->
         require(key is ChatKey.Read.ByChatId)
         if (key.source is Source.Server) {
+            Napier.d { "Fetching chat with id: ${key.chatId} from network" }
             chatNetworkDataSource.fetchByChatId(key.source, key.chatId)
         } else {
+            Napier.d { "Fetching chat with id: ${key.chatId} from local" }
             emptyFlow()
         }
     },
     sourceOfTruth = SourceOfTruth.of(
         reader = { key ->
             require(key is ChatKey.Read.ByChatId)
+            Napier.d { "Reading chat with id: ${key.chatId}" }
             chatLocalDataSource.getChat(key.chatId)
         },
         writer = { key, local ->
             when (key) {
                 ChatKey.Write.Create, ChatKey.Write.Upsert -> chatLocalDataSource.upsertChat(local)
                 is ChatKey.Read.ByChatId -> chatLocalDataSource.upsertChat(local) // From fetcher
-                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.qualifiedName}")
+                else -> throw IllegalArgumentException("Unsupported key mimeType: ${key::class.simpleName}")
             }
         },
         delete = { key ->
@@ -90,6 +94,6 @@ fun provideChatMutableStore(
     ),
     bookkeeper = provideBookkeeper(
         dataHistoryLocalDataSource,
-        Chat::class.qualifiedName.toString()
+        Chat::class.simpleName.toString()
     ) { it.toString() }
 )

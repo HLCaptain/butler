@@ -15,5 +15,6 @@ kotlin {
         implementation(projects.composeApp.domain)
 
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.serialization.core)
     }
 }

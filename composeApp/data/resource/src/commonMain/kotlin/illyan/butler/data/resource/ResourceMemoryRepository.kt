@@ -30,7 +30,7 @@ class ResourceMemoryRepository : ResourceRepository {
     }
 
     override suspend fun upsert(resource: Resource): Uuid {
-        resources.removeIf { it.id == resource.id }
+        resources.removeAll { it.id == resource.id }
         resources.add(resource)
         return resource.id
     }

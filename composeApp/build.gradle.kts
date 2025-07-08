@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.utils.localPropertiesFile
-import org.jetbrains.compose.reload.ComposeHotRun
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.android.application)
@@ -13,6 +16,34 @@ group = "illyan"
 version = libs.versions.butler.name.get()
 
 kotlin {
+    wasmJs {
+        outputModuleName.set("composeApp-wasm")
+        browser {
+            val rootDirPath = project.rootDir.path
+            val projectDirPath = project.projectDir.path
+            commonWebpackConfig {
+                outputFileName = "composeApp-wasm.js"
+                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                    static = (static ?: mutableListOf()).apply {
+                        // Serve sources to debug inside browser
+                        add(rootDirPath)
+                        add(projectDirPath)
+                    }
+                }
+            }
+        }
+        binaries.executable()
+    }
+
+    js {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp-js.js"
+            }
+        }
+        binaries.executable()
+    }
+
     sourceSets.commonMain.dependencies {
         implementation(projects.shared.model)
 
@@ -20,8 +51,8 @@ kotlin {
         implementation(projects.composeApp.core.ui.components)
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.core.ui.theme)
-        implementation(projects.composeApp.core.local.room)
-        implementation(projects.composeApp.core.local.datastore)
+        implementation(projects.composeApp.core.local.sql)
+        implementation(projects.composeApp.core.local.keyvalue)
         implementation(projects.composeApp.core.network.ktor)
         implementation(projects.composeApp.config)
 
@@ -61,25 +92,35 @@ kotlin {
         implementation(libs.aboutlibraries.compose.m3)
 
         implementation(libs.napier)
-        implementation(libs.androidx.datastore.preferences)
+
+        implementation(libs.multiplatformSettings)
+        implementation(libs.multiplatformSettings.coroutines)
     }
 
-    sourceSets.androidMain.dependencies {
-        implementation(libs.androidx.core)
-        implementation(libs.androidx.core.splashscreen)
-        implementation(libs.koin.android)
-        implementation(libs.kotlinx.coroutines.android)
-        implementation(libs.androidx.activity)
-        implementation(libs.androidx.activity.compose)
-        implementation(libs.compose.ui.tooling)
+    sourceSets.nonWebMain.dependencies {
+        implementation(libs.androidx.datastore.preferences.core)
     }
 
-    sourceSets.jvmMain.dependencies {
-        implementation(compose.preview)
-        implementation(compose.desktop.common)
-        implementation(compose.desktop.currentOs)
-        implementation(libs.kotlinx.coroutines.swing)
-        implementation(libs.kotlinx.io)
+    sourceSets.androidMain {
+        dependencies {
+            implementation(libs.androidx.core)
+            implementation(libs.androidx.core.splashscreen)
+            implementation(libs.koin.android)
+            implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.androidx.activity)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.compose.ui.tooling)
+        }
+    }
+
+    sourceSets.jvmMain {
+        dependencies {
+            implementation(compose.preview)
+            implementation(compose.desktop.common)
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.kotlinx.io)
+        }
     }
 }
 
@@ -148,7 +189,8 @@ android {
     }
 
     dependencies {
-        debugImplementation(libs.compose.ui.tooling)
+        // libs.compose.ui.tooling not yet compatible with Wasm
+//        debugImplementation(libs.compose.ui.tooling)
         coreLibraryDesugaring(libs.desugar)
     }
 }
@@ -175,6 +217,20 @@ compose.desktop.application {
     }
 }
 
+val buildWebApp by tasks.registering(Copy::class) {
+    val wasmDist = "wasmJsBrowserDistribution"
+    val jsDist = "jsBrowserDistribution"
+
+    dependsOn(wasmDist, jsDist)
+
+    from(tasks.named(jsDist).get().outputs.files)
+    from(tasks.named(wasmDist).get().outputs.files)
+
+    into(layout.buildDirectory.dir("webApp"))
+
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 aboutLibraries {
     android {
         registerAndroidTasks = false
@@ -183,8 +239,4 @@ aboutLibraries {
         prettyPrint = true
         outputPath = file("src/commonMain/composeResources/files/aboutlibraries.json")
     }
-}
-
-tasks.withType<ComposeHotRun>().configureEach {
-    mainClass.set("illyan.butler.MainKt")
 }

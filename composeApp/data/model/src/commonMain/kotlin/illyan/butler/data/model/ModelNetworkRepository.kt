@@ -9,7 +9,7 @@ import illyan.butler.shared.model.auth.ApiKeyCredential
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.ApiType
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +26,7 @@ import org.koin.core.annotation.Single
 class ModelNetworkRepository(
     private val modelNetworkDataSource: ModelNetworkDataSource,
     private val credentialLocalDataSource: CredentialLocalDataSource,
-    private val appRepository: AppRepository
+    private val appRepository: AppRepository,
 ) : ModelRepository {
     private val cachedOpenAIClients = hashMapOf<ApiKeyCredential, OpenAI>()
     private val healthyCredentials = MutableStateFlow(emptyList<ApiKeyCredential>())
@@ -80,7 +80,9 @@ class ModelNetworkRepository(
                     healthyCredentials.update { list -> list - credential }
                     emit(emptyList())
                 }
-            }.flowOn(Dispatchers.IO)
+            }.flowOn(getDispatchersIO())
         }.toTypedArray()) { it.toList().flatten() }
     }
 }
+
+expect fun getDispatchersIO(): CoroutineDispatcher

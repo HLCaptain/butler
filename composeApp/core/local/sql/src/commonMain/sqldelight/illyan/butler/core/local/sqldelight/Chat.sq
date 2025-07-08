@@ -1,0 +1,25 @@
+CREATE TABLE chats (
+    id TEXT PRIMARY KEY NOT NULL,
+    createdAt INTEGER NOT NULL,
+    source TEXT NOT NULL, -- JSON serialized Source
+    title TEXT,
+    summary TEXT,
+    lastUpdated INTEGER NOT NULL,
+    models TEXT NOT NULL -- JSON serialized Map<Capability, AiSource>
+);
+
+insertOrReplaceChat:
+INSERT OR REPLACE INTO chats(id, createdAt, source, title, summary, lastUpdated, models)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+selectChatById:
+SELECT * FROM chats WHERE id = ?;
+
+selectChatsBySource:
+SELECT * FROM chats WHERE source = ?;
+
+deleteChat:
+DELETE FROM chats WHERE id = ?;
+
+deleteAllChats:
+DELETE FROM chats;
