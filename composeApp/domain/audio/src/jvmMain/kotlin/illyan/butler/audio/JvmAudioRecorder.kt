@@ -8,7 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import org.koin.core.annotation.Single
 import java.io.File
 import java.io.IOException
@@ -18,6 +17,8 @@ import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Single
 class JvmAudioRecorder : AudioRecorder {
@@ -93,6 +94,7 @@ class JvmAudioRecorder : AudioRecorder {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun startCapturingAudio() {
         val currentDir = System.getProperty("user.dir")
         Napier.v("Current directory: $currentDir")

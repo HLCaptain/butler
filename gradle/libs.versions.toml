@@ -5,7 +5,7 @@ kotlin = "2.2.0"
 android-minSdk = "26"
 android-compileSdk = "36"
 ksp = "2.2.0-2.0.2"
-agp = "8.11.0"
+agp = "8.11.1"
 compose = "1.8.2"
 compose-android = "1.8.3"
 ktor = "3.2.1"
@@ -13,13 +13,13 @@ koin = "4.1.0"
 koin-annotations = "2.1.0"
 coroutines = "1.10.2"
 serialization = "1.9.0"
-aboutlibraries = "12.2.3"
+aboutlibraries = "12.2.4"
 room = "2.7.2"
 logback = "1.5.18"
 commonsCodec = "1.18.0"
-okhttpLoggingInterceptor = "5.0.0-alpha.17"
+okhttpLoggingInterceptor = "5.1.0"
 prometheus = "1.15.1"
-exposed = "1.0.0-beta-2"
+exposed = "1.0.0-beta-4"
 postgres = "42.7.7"
 postgres-r2dbc = "1.0.7.RELEASE"
 junit = "4.13.2"
@@ -174,12 +174,12 @@ commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttpLoggingInterceptor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
-opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version = "1.51.0" }
-opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version = "1.51.0" }
-opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version = "1.51.0" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version = "1.52.0" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version = "1.52.0" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version = "1.52.0" }
 opentelemetry-exporter-prometheus = { module = "io.opentelemetry:opentelemetry-exporter-prometheus", version = "1.50.0-alpha" }
-opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.51.0" }
-opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.51.0" }
+opentelemetry-trace = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version = "1.52.0" }
+opentelemetry-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version = "1.52.0" }
 opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0", version = "2.16.0-alpha" }
 opentelemetry-resources = { module = "io.opentelemetry.instrumentation:opentelemetry-resources", version = "2.16.0-alpha" }
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
