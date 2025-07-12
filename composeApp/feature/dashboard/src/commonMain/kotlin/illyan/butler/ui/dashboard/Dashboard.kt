@@ -250,29 +250,16 @@ fun DashboardScaffold(
         }
     ) { innerPadding ->
         val hazeState = remember { HazeState() }
-        Row {
-            if (!isCompact) {
-                Column(
-                    modifier = Modifier
-                        .padding(innerPadding + PaddingValues(top = 64.dp) + PaddingValues(horizontal = 32.dp)
-                    )
-                ) {
-                    ProfileDisplayAndSelector(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        selectedUser = state.selectedUser,
-                        users = state.users,
-                        onUserSelected = onUserSelected,
-                    )
-                }
-            }
-            Box(modifier = Modifier.weight(1f)) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(innerPadding + PaddingValues(top = 64.dp)), // Adjust for TabRow height
-                ) {
-                    if (isCompact) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Row {
+                if (!isCompact) {
+                    Column(
+                        modifier = Modifier
+                            .padding(innerPadding + PaddingValues(top = 64.dp) + PaddingValues(horizontal = 32.dp))
+                    ) {
                         ProfileDisplayAndSelector(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             selectedUser = state.selectedUser,
@@ -280,53 +267,67 @@ fun DashboardScaffold(
                             onUserSelected = onUserSelected,
                         )
                     }
-                    // Cannot use HorizontalPager yet, because it straight up crashes on window layout changes
-                    AnimatedContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        targetState = selectedTabIndex,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                fadeIn() + slideInHorizontally(initialOffsetX = { it }) togetherWith
-                                        fadeOut() + slideOutHorizontally(targetOffsetX = { -it })
-                            } else {
-                                fadeIn() + slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                                        fadeOut() + slideOutHorizontally(targetOffsetX = { it })
-                            }
-                        }
-                    ) { selectedTabIndex ->
-                        when (DashboardTab.entries[selectedTabIndex]) {
-                            DashboardTab.Account -> AccountTabContent(
+                }
+                Box {
+                    Column(
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(innerPadding + PaddingValues(top = 64.dp)), // Adjust for TabRow height
+                    ) {
+                        if (isCompact) {
+                            ProfileDisplayAndSelector(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
                                 selectedUser = state.selectedUser,
-                                onUserDataSaved = saveUser,
-                                onLogin = onAddAuth,
-                                appSettings = state.appSettings,
-                                onChangeAppSettings = onChangeAppSettings,
+                                users = state.users,
+                                onUserSelected = onUserSelected,
                             )
-                            DashboardTab.Customization -> CustomizationTabContent(
-                                appSettings = state.appSettings,
-                                onChangeAppSettings = onChangeAppSettings,
-                                currentUser = state.selectedUser,
-                                saveUser = saveUser,
-                            )
+                        }
+                        // Cannot use HorizontalPager yet, because it straight up crashes on window layout changes
+                        AnimatedContent(
+                            targetState = selectedTabIndex,
+                            transitionSpec = {
+                                if (targetState > initialState) {
+                                    fadeIn() + slideInHorizontally(initialOffsetX = { it }) togetherWith
+                                            fadeOut() + slideOutHorizontally(targetOffsetX = { -it })
+                                } else {
+                                    fadeIn() + slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                                            fadeOut() + slideOutHorizontally(targetOffsetX = { it })
+                                }
+                            }
+                        ) { selectedTabIndex ->
+                            when (DashboardTab.entries[selectedTabIndex]) {
+                                DashboardTab.Account -> AccountTabContent(
+                                    selectedUser = state.selectedUser,
+                                    onUserDataSaved = saveUser,
+                                    onLogin = onAddAuth,
+                                    appSettings = state.appSettings,
+                                    onChangeAppSettings = onChangeAppSettings,
+                                )
+                                DashboardTab.Customization -> CustomizationTabContent(
+                                    appSettings = state.appSettings,
+                                    onChangeAppSettings = onChangeAppSettings,
+                                    currentUser = state.selectedUser,
+                                    saveUser = saveUser,
+                                )
 //                            DashboardTab.History -> HistoryTabContent()
 //                            DashboardTab.Analytics -> AnalyticsTabContent()
-                            DashboardTab.About -> AboutTabContent(
-                                libraries = libraries
-                            )
-                            DashboardTab.Auth -> AuthTabContent(
-                                onAddAuth = onAddAuth,
-                                users = state.users,
-                                selectedUser = state.selectedUser,
-                            )
+                                DashboardTab.About -> AboutTabContent(
+                                    libraries = libraries
+                                )
+                                DashboardTab.Auth -> AuthTabContent(
+                                    onAddAuth = onAddAuth,
+                                    users = state.users,
+                                    selectedUser = state.selectedUser,
+                                )
+                            }
                         }
                     }
-                }
-                Row(
-                    modifier = Modifier.padding(innerPadding + PaddingValues(8.dp))
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
                     ButlerScrollableTabRow(
-                        modifier = Modifier.padding(6.dp).clip(CircleShape).hazeEffect(hazeState, style = HazeMaterials.thin()),
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(innerPadding + PaddingValues(14.dp))
+                            .clip(CircleShape)
+                            .hazeEffect(hazeState, style = HazeMaterials.thin()),
                         selectedIndex = selectedTabIndex,
                         onIndexChanged = { selectedTabIndex = it },
                         tabContent = { index ->
@@ -358,7 +359,6 @@ fun DashboardScaffold(
                         },
                         numberOfTabs = DashboardTab.entries.size
                     )
-                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -397,7 +397,6 @@ fun AccountUserTabContent(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -619,7 +618,6 @@ fun AccountDeviceTabContent(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -831,7 +829,6 @@ fun PromptSettings(
         var isDropdownOpen by remember { mutableStateOf(false) }
         var selectedIndex by remember { mutableIntStateOf(0) }
         ButlerDropdownMenuBox(
-            modifier = Modifier.fillMaxWidth(),
             expanded = isDropdownOpen,
             onExpandedChange = { isDropdownOpen = !isDropdownOpen },
             selectValue = { index ->
