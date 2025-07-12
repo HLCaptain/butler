@@ -3,7 +3,7 @@ package illyan.butler.data.error
 import illyan.butler.core.utils.getOsName
 import illyan.butler.core.utils.getPlatformName
 import illyan.butler.core.utils.getSystemMetadata
-import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.Error
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.ErrorState
 import illyan.butler.shared.model.response.ServerErrorResponse
@@ -23,13 +23,13 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalTime::class)
 @Single
 class ErrorMemoryRepository : ErrorRepository {
-    private val _errorEventFlow = MutableSharedFlow<DomainError>()
-    override val errorEventFlow: SharedFlow<DomainError> = _errorEventFlow.asSharedFlow()
+    private val _errorEventFlow = MutableSharedFlow<Error>()
+    override val errorEventFlow: SharedFlow<Error> = _errorEventFlow.asSharedFlow()
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun reportError(throwable: Throwable) {
         Napier.e(throwable) { "Default throwable error reported" }
-        val newEvent = DomainError.Event.Rich(
+        val newEvent = Error.Event.Rich(
             id = Uuid.random(),
             platform = getPlatformName(),
             exception = throwable.toString().split(":").first(),
@@ -51,7 +51,7 @@ class ErrorMemoryRepository : ErrorRepository {
                 val serverResponse = response.body<ServerErrorResponse>()
                 Napier.e { "Custom server error reported: ${serverResponse.statusCodes}" }
                 serverResponse.statusCodes.forEach {
-                    val domainResponse = DomainError.Response(
+                    val domainResponse = Error.Response(
                         id = Uuid.random(),
                         httpStatusCode = response.status.value,
                         customErrorCode = it.code,
@@ -62,7 +62,7 @@ class ErrorMemoryRepository : ErrorRepository {
                 }
             } else {
                 Napier.e { "Default server error reported" }
-                val domainResponse = DomainError.Response(
+                val domainResponse = Error.Response(
                     id = Uuid.random(),
                     httpStatusCode = response.status.value,
                     customErrorCode = null,
@@ -72,7 +72,7 @@ class ErrorMemoryRepository : ErrorRepository {
             }
         } catch (t: Throwable) {
             Napier.e { "Default server error reported" }
-            val domainResponse = DomainError.Response(
+            val domainResponse = Error.Response(
                 id = Uuid.random(),
                 httpStatusCode = response.status.value,
                 customErrorCode = null,
@@ -85,7 +85,7 @@ class ErrorMemoryRepository : ErrorRepository {
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun reportSimpleError(code: ErrorCode) {
         _errorEventFlow.emit(
-            DomainError.Event.Simple(
+            Error.Event.Simple(
                 id = Uuid.random(),
                 code = code,
                 timestamp = Clock.System.now().toEpochMilliseconds(),

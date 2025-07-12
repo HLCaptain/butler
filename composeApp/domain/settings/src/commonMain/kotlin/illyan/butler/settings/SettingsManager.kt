@@ -2,8 +2,8 @@ package illyan.butler.settings
 
 import illyan.butler.data.settings.AppRepository
 import illyan.butler.domain.model.AppSettings
-import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
+import illyan.butler.domain.model.Preferences
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.PromptConfiguration
 import kotlinx.coroutines.flow.map
@@ -18,7 +18,7 @@ class SettingsManager(
     val deviceFilterConfigurations = appRepository.appSettings.map { it.filterConfiguration }
     val selectedPromptConfiguration = appRepository.selectedPromptConfiguration
     val defaultModel = appRepository.defaultModel
-    suspend fun setUserPreferences(preferences: DomainPreferences) {
+    suspend fun setUserPreferences(preferences: Preferences) {
         appRepository.setUserPreferences(preferences)
     }
     suspend fun setDefaultModel(defaultModel: AiSource?) {

@@ -1,17 +1,20 @@
 package illyan.butler.core.ui.theme
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import com.materialkolor.Contrast
+import com.materialkolor.DynamicMaterialTheme
+import com.materialkolor.PaletteStyle
+import com.materialkolor.rememberDynamicMaterialThemeState
 import illyan.butler.domain.model.Theme
 
 @Composable
 fun ButlerTheme(
-    theme: Theme? = Theme.System,
+    theme: Theme = Theme.System,
+    paletteStyle: PaletteStyle = PaletteStyle.Expressive,
+    contrast: Contrast = Contrast.Default,
     dynamicColorEnabled: Boolean = false,
     isNight: Boolean = true,
     content: @Composable () -> Unit,
@@ -23,7 +26,6 @@ fun ButlerTheme(
             Theme.Dark -> true
             Theme.System -> isSystemInDarkTheme
             Theme.DayNightCycle -> isNight
-            null -> null
         }
     }
     val dynamicLightColorScheme = dynamicLightColorScheme()
@@ -34,26 +36,37 @@ fun ButlerTheme(
             when (theme) {
                 Theme.Dark -> dynamicDarkColorScheme
                 Theme.Light -> dynamicLightColorScheme
-                Theme.System, null -> if (isSystemInDarkTheme) dynamicDarkColorScheme else dynamicLightColorScheme
+                Theme.System -> if (isSystemInDarkTheme) dynamicDarkColorScheme else dynamicLightColorScheme
                 Theme.DayNightCycle -> if (isNight) dynamicDarkColorScheme else dynamicLightColorScheme
             }
         } else {
             when (theme) {
                 Theme.Dark -> DarkColors
                 Theme.Light -> LightColors
-                Theme.System, null -> if (isSystemInDarkTheme) DarkColors else LightColors
+                Theme.System -> if (isSystemInDarkTheme) DarkColors else LightColors
                 Theme.DayNightCycle -> if (isNight) DarkColors else LightColors
             }
         }
     }
 
-    ThemeSystemWindow(isDark ?: isSystemInDarkTheme, dynamicColorEnabled)
+    ThemeSystemWindow(isDark, dynamicColorEnabled)
 
-    val colorScheme by animateColorScheme(targetColorScheme, spring(stiffness = Spring.StiffnessLow))
-    MaterialTheme(
-        colorScheme = colorScheme,
+    val themeState = rememberDynamicMaterialThemeState(
+        primary = targetColorScheme.primary,
+        secondary = targetColorScheme.secondary,
+        tertiary = targetColorScheme.tertiary,
+        neutral = targetColorScheme.surface,
+        neutralVariant = targetColorScheme.surfaceVariant,
+        error = targetColorScheme.error,
+        contrastLevel = contrast.value,
+        isDark = isDark,
+        style = paletteStyle,
+    )
+    DynamicMaterialTheme(
+        state = themeState,
         typography = MaterialTheme.typography,
         shapes = butlerShapes(),
+        animate = true,
         content = content
     )
 }

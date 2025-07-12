@@ -23,6 +23,8 @@ fun App() {
     val state by themeViewModel.state.collectAsState()
     ButlerTheme(
         theme = state.theme,
+        paletteStyle = state.paletteStyle,
+
         dynamicColorEnabled = state.dynamicColorEnabled,
         isNight = state.isNight,
     ) {

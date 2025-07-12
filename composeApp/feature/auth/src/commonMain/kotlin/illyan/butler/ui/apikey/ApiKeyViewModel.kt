@@ -2,7 +2,7 @@ package illyan.butler.ui.apikey
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import illyan.butler.domain.model.DomainModel
+import illyan.butler.domain.model.Model
 import illyan.butler.host.HostManager
 import illyan.butler.model.ModelManager
 import illyan.butler.shared.model.auth.ApiKeyCredential
@@ -30,7 +30,7 @@ class ApiKeyViewModel(
         null
     )
 
-    val modelsForCredential = MutableStateFlow<Map<ApiKeyCredential, List<DomainModel>>>(emptyMap())
+    val modelsForCredential = MutableStateFlow<Map<ApiKeyCredential, List<Model>>>(emptyMap())
 
     fun testEndpointForCredential(credential: ApiKeyCredential) {
         viewModelScope.launch {

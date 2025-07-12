@@ -8,7 +8,7 @@ import kotlin.uuid.Uuid
 @Serializable
 data class AppSettings @OptIn(ExperimentalUuidApi::class) constructor(
     val clientId: Uuid = Uuid.random(),
-    val preferences: DomainPreferences = DomainPreferences.Default,
+    val preferences: Preferences = Preferences.Default,
     val filterConfiguration: FilterConfiguration = FilterConfiguration.Default,
     val promptConfigurations: List<PromptConfiguration> = listOf(PromptConfiguration.Default),
     val selectedPromptConfiguration: PromptConfiguration? = PromptConfiguration.Default,

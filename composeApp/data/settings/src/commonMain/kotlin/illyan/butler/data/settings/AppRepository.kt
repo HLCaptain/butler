@@ -1,8 +1,8 @@
 package illyan.butler.data.settings
 
 import illyan.butler.domain.model.AppSettings
-import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
+import illyan.butler.domain.model.Preferences
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.Source
@@ -21,7 +21,7 @@ interface AppRepository {
     val isUserSignedIn: Flow<Boolean>
         get() = signedInServers.map { it.isNotEmpty() }
 
-    suspend fun setUserPreferences(preferences: DomainPreferences)
+    suspend fun setUserPreferences(preferences: Preferences)
     suspend fun addServerSource(source: Source.Server)
     suspend fun removeServerSource(source: Source.Server)
     suspend fun setDefaultModel(model: AiSource?)

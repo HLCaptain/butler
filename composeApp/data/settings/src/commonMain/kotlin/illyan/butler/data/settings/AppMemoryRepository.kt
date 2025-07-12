@@ -1,8 +1,8 @@
 package illyan.butler.data.settings
 
 import illyan.butler.domain.model.AppSettings
-import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
+import illyan.butler.domain.model.Preferences
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.Source
@@ -25,7 +25,7 @@ class AppMemoryRepository : AppRepository {
     override val signedInServers: Flow<Set<Source.Server>> = _currentSignedInUser.asStateFlow()
     override val defaultModel: Flow<AiSource?> = _defaultModel.asStateFlow()
 
-    override suspend fun setUserPreferences(preferences: DomainPreferences) {
+    override suspend fun setUserPreferences(preferences: Preferences) {
         _appSettings.update { it.copy(preferences = preferences) }
     }
 

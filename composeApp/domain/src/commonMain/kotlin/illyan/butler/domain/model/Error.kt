@@ -4,9 +4,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-sealed class DomainError {
+sealed class Error {
     abstract val id: Uuid
-    sealed class Event : DomainError() {
+    sealed class Event : Error() {
         data class Rich(
             override val id: Uuid,
             val platform: String,
@@ -32,7 +32,7 @@ sealed class DomainError {
         val httpStatusCode: Int,
         val timestamp: Long,
         val message: String? = null,
-    ) : DomainError()
+    ) : Error()
 }
 
 enum class ErrorCode {

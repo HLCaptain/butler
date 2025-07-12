@@ -77,7 +77,7 @@ import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.TooltipElevatedCard
 import illyan.butler.core.ui.components.smallDialogWidth
 import illyan.butler.core.ui.theme.canUseDynamicColors
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.domain.model.Preferences
 import illyan.butler.domain.model.Theme
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.dark
@@ -137,7 +137,7 @@ fun UserSettings(
 @Composable
 fun UserSettingsDialogContent(
     modifier: Modifier = Modifier,
-    preferences: DomainPreferences?,
+    preferences: Preferences?,
     arePreferencesSynced: Boolean = false,
     canSyncPreferences: Boolean = false,
     shouldSyncPreferences: Boolean = false,
@@ -262,7 +262,7 @@ fun AnalyticsRequestButtons(
 @Composable
 fun UserSettingsTitle(
     arePreferencesSynced: Boolean = false,
-    preferences: DomainPreferences? = null,
+    preferences: Preferences? = null,
 ) {
     FlowRow(
         horizontalArrangement = Arrangement.SpaceBetween
@@ -520,7 +520,7 @@ fun SettingLabel(
 @Composable
 fun UserSettings(
     modifier: Modifier = Modifier,
-    preferences: DomainPreferences? = null,
+    preferences: Preferences? = null,
     setDynamicColorEnabled: (Boolean) -> Unit = {},
     onThemeChange: (Theme) -> Unit = {},
 ) {

@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import illyan.butler.core.ui.components.ButlerDialogSurface
 import illyan.butler.core.ui.theme.ButlerTheme
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.domain.model.Preferences
 import illyan.butler.domain.model.Theme
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.dark
@@ -27,8 +27,8 @@ import illyan.butler.ui.profile.settings.UserSettingsDialogContent
 import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
 
-private fun generateRandomUserPreferences(): DomainPreferences {
-    return DomainPreferences(
+private fun generateRandomUserPreferences(): Preferences {
+    return Preferences(
         analyticsEnabled = Random.nextBoolean(),
         theme = Theme.entries.random(),
         dynamicColorEnabled = Random.nextBoolean(),

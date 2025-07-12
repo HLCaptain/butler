@@ -8,7 +8,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.Error
 import io.ktor.http.HttpStatusCode
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -16,14 +16,14 @@ import kotlin.uuid.Uuid
 @Composable
 fun ErrorDialogContent(
     cleanError: (Uuid) -> Unit,
-    errors: List<DomainError>,
+    errors: List<Error>,
 ) {
     Crossfade(
         modifier = Modifier.animateContentSize(spring()),
-        targetState = errors.filter { it !is DomainError.Event.Simple }
+        targetState = errors.filter { it !is Error.Event.Simple }
     ) { errors ->
-        val appErrors = errors.mapNotNull { it as? DomainError.Event.Rich }
-        val serverErrors = errors.mapNotNull { it as? DomainError.Response }
+        val appErrors = errors.mapNotNull { it as? Error.Event.Rich }
+        val serverErrors = errors.mapNotNull { it as? Error.Response }
         val latestAppError = appErrors.maxByOrNull { it.timestamp }
         val latestServerError = serverErrors.maxByOrNull { it.timestamp }
         if (latestAppError != null && latestServerError != null) {
@@ -42,7 +42,7 @@ fun ErrorDialogContent(
 
 @Composable
 private fun AppErrorContent(
-    appErrors: List<DomainError.Event.Rich>,
+    appErrors: List<Error.Event.Rich>,
     clearError: (Uuid) -> Unit
 ) {
     appErrors.maxByOrNull { it.timestamp }?.let {
@@ -55,7 +55,7 @@ private fun AppErrorContent(
 
 @Composable
 private fun ServerErrorContent(
-    serverErrors: List<DomainError.Response>,
+    serverErrors: List<Error.Response>,
     clearError: (Uuid) -> Unit
 ) {
     serverErrors.maxByOrNull { it.timestamp }?.let {

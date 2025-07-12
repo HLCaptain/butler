@@ -1,7 +1,7 @@
 package illyan.butler.ui.profile.settings
 
-import illyan.butler.domain.model.DomainPreferences
+import illyan.butler.domain.model.Preferences
 
 data class UserSettingsState(
-    val userPreferences: DomainPreferences? = null
+    val userPreferences: Preferences? = null
 )

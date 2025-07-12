@@ -8,7 +8,7 @@ import illyan.butler.config.BuildConfig
 import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.error.ErrorRepository
 import illyan.butler.domain.model.Chat
-import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.Error
 import illyan.butler.shared.model.auth.ApiKeyCredential
 import illyan.butler.shared.model.chat.Source
 import io.github.aakira.napier.Napier
@@ -35,7 +35,7 @@ class HomeViewModel(
     credentialRepository: CredentialRepository,
     errorRepository: ErrorRepository,
 ) : ViewModel() {
-    private val errors = MutableStateFlow(emptyList<DomainError>())
+    private val errors = MutableStateFlow(emptyList<Error>())
     init {
         if (BuildConfig.NO_CONFIG_SETUP) {
             viewModelScope.launch {
@@ -64,7 +64,7 @@ class HomeViewModel(
     ) { flows ->
         val flows = flows.toMutableList()
         val signedInUserId = flows.removeAt(0) as Uuid?
-        val errors = flows.removeAt(0) as List<DomainError>
+        val errors = flows.removeAt(0) as List<Error>
         val chats = flows.removeAt(0) as List<Chat>
         val credentials = flows.removeAt(0) as List<ApiKeyCredential>? ?: emptyList()
         Napier.v {

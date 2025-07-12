@@ -1,6 +1,6 @@
 package illyan.butler.domain.model
 
-data class DomainModel(
+data class Model(
     val name: String?,
     val id: String,
     val endpoint: String,

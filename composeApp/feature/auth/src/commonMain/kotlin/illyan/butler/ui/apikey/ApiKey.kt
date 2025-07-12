@@ -100,7 +100,7 @@ import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.PlainTooltipWithContent
 import illyan.butler.core.ui.components.SmallCircularProgressIndicator
 import illyan.butler.core.ui.components.mediumDialogWidth
-import illyan.butler.domain.model.DomainModel
+import illyan.butler.domain.model.Model
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.add_api_key
 import illyan.butler.generated.resources.add_credentials
@@ -167,7 +167,7 @@ fun ApiKeyScaffold(
     modifier: Modifier = Modifier,
     credentials: List<ApiKeyCredential>?,
     healthyCredentials: List<ApiKeyCredential>?,
-    models: Map<ApiKeyCredential, List<DomainModel>>,
+    models: Map<ApiKeyCredential, List<Model>>,
     createNewCredential: (ApiKeyCredential) -> Unit = {},
     testApiKeyCredential: (ApiKeyCredential) -> Unit = {},
     deleteCredential: (ApiKeyCredential) -> Unit = {},
@@ -632,7 +632,7 @@ fun EditApiKeyCredential(
     modifier: Modifier = Modifier,
     item: ApiKeyCredential,
     key: Int,
-    models: List<DomainModel>,
+    models: List<Model>,
     sharedTransitionScope: SharedTransitionScope,
     animationScope: AnimatedContentScope,
     saveCredential: (ApiKeyCredential) -> Unit = {},
@@ -755,7 +755,7 @@ fun EditApiKeyCredential(
 @Composable
 fun ApiKeyTestModelListing(
     modifier: Modifier = Modifier,
-    models: List<DomainModel>
+    models: List<Model>
 ) {
     ButlerOutlinedCard(
         modifier = modifier,
@@ -792,7 +792,7 @@ fun ApiKeyTestModelListing(
 @Composable
 fun NewApiKeyCredential(
     modifier: Modifier = Modifier,
-    models: List<DomainModel>,
+    models: List<Model>,
     saveCredential: (ApiKeyCredential) -> Unit = {},
     testCredential: (ApiKeyCredential) -> Unit = {},
     sharedTransitionScope: SharedTransitionScope,

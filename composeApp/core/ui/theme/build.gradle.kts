@@ -5,6 +5,7 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.composeApp.domain)
+        implementation(libs.material.kolors)
     }
 
     sourceSets.androidMain.dependencies {

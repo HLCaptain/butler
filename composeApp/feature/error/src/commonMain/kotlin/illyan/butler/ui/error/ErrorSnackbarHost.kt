@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.Error
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.error_message_chat_refresh
@@ -21,7 +21,7 @@ import kotlin.uuid.Uuid
 @Composable
 fun ErrorSnackbarHost(
     modifier: Modifier = Modifier,
-    errors: List<DomainError.Event.Simple>,
+    errors: List<Error.Event.Simple>,
     cleanError: (Uuid) -> Unit,
 ) {
     val hostState = remember { SnackbarHostState() }

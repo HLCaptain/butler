@@ -102,7 +102,7 @@ import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.BackHandler
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.Chat
-import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.Error
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.create_new_chat
@@ -157,7 +157,7 @@ fun Home(
         ) null else state.signedInUserId != null || state.credentials.orEmpty().isNotEmpty()
     }
 
-    val numberOfDialogErrors = state.errors.filter { it !is DomainError.Event.Simple }.size
+    val numberOfDialogErrors = state.errors.filter { it !is Error.Event.Simple }.size
     ButlerDialog(
         modifier = Modifier.zIndex(1f),
         isDialogOpen = numberOfDialogErrors > 0,
@@ -190,7 +190,7 @@ fun Home(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { ErrorSnackbarHost(
             modifier = Modifier.widthIn(max = 420.dp),
-            errors = state.errors.mapNotNull { it as? DomainError.Event.Simple },
+            errors = state.errors.mapNotNull { it as? Error.Event.Simple },
             cleanError = viewModel::clearError,
         ) },
         containerColor = if (areThereValidCredentials == true) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp) else MaterialTheme.colorScheme.surface

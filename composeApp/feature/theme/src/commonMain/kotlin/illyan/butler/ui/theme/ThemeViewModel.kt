@@ -20,38 +20,51 @@ package illyan.butler.ui.theme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.materialkolor.Contrast
+import com.materialkolor.PaletteStyle
+import com.materialkolor.scheme.Variant
+import illyan.butler.domain.model.Preferences
 import illyan.butler.settings.SettingsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.android.annotation.KoinViewModel
+import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @KoinViewModel
 class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
-    private val theme = settingsManager.userPreferences.map { it.theme }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    private val dynamicColorEnabled = settingsManager.userPreferences
-        .map { it.dynamicColorEnabled }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val preferences = settingsManager.userPreferences
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Preferences.Default)
 
     private val isNight = MutableStateFlow(isNight())
 
     val state = combine(
-        theme,
-        dynamicColorEnabled,
+        preferences,
         isNight,
-    ) { theme, dynamicColorEnabled, isNight ->
+    ) { preferences, isNight ->
         ThemeScreenState(
-            theme = theme,
-            dynamicColorEnabled = dynamicColorEnabled,
+            theme = preferences.theme,
+            paletteStyle = when (preferences.paletteVariant) {
+                Variant.CONTENT -> PaletteStyle.Content
+                Variant.EXPRESSIVE -> PaletteStyle.Expressive
+                Variant.MONOCHROME -> PaletteStyle.Monochrome
+                Variant.NEUTRAL -> PaletteStyle.Neutral
+                Variant.RAINBOW -> PaletteStyle.Rainbow
+                Variant.VIBRANT -> PaletteStyle.Vibrant
+                Variant.FIDELITY -> PaletteStyle.Fidelity
+                Variant.TONAL_SPOT -> PaletteStyle.TonalSpot
+                Variant.FRUIT_SALAD -> PaletteStyle.FruitSalad
+            },
+            contrast = Contrast.entries
+                .associateWith { (it.value - preferences.contrast).absoluteValue }
+                .minByOrNull { it.value }?.key ?: Contrast.Default,
+            dynamicColorEnabled = preferences.dynamicColorEnabled,
             isNight = isNight,
         )
     }.stateIn(

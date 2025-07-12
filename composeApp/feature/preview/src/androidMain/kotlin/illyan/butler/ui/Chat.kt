@@ -9,8 +9,8 @@ import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.domain.model.Chat
-import illyan.butler.domain.model.DomainModel
 import illyan.butler.domain.model.Message
+import illyan.butler.domain.model.Model
 import illyan.butler.ui.chat_detail.ChatDetail
 import illyan.butler.ui.chat_detail.ChatDetailState
 import illyan.butler.ui.chat_details.ChatDetails
@@ -162,19 +162,19 @@ fun NewChatPreview() {
             NewChat(
                 state = NewChatState(
                     serverModels = listOf(
-                        DomainModel(
+                        Model(
                             name = "Cook GPT",
                             id = "Cook GPT",
                             ownedBy = "Chef AI",
                             endpoint = "https://api.chef.ai"
                         ),
-                        DomainModel(
+                        Model(
                             name = "Bartender",
                             id = "Bartender",
                             ownedBy = "Bartender AI",
                             endpoint = "https://api.bartender.ai"
                         ),
-                        DomainModel(
+                        Model(
                             name = "Doctor",
                             id = "Doctor",
                             ownedBy = "Doctor AI",

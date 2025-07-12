@@ -284,6 +284,7 @@ fun DashboardScaffold(
                         }
                         // Cannot use HorizontalPager yet, because it straight up crashes on window layout changes
                         AnimatedContent(
+                            modifier = Modifier.then(if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 640.dp)),
                             targetState = selectedTabIndex,
                             transitionSpec = {
                                 if (targetState > initialState) {
@@ -486,8 +487,6 @@ fun AccountUserTabContent(
             }
         }
         Column(
-            modifier = Modifier
-                .widthIn(max = 480.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
@@ -621,10 +620,8 @@ fun AccountDeviceTabContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
         ButlerStatusMessage(
-            modifier = Modifier
-                .then(if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 480.dp)),
+            modifier = Modifier.fillMaxWidth(),
             imageVector = Icons.Rounded.Info,
             title = { Text(stringResource(Res.string.no_logged_in_users_status_message_title)) },
             description = { Text(stringResource(Res.string.no_logged_in_users_status_message_description)) },
@@ -638,8 +635,6 @@ fun AccountDeviceTabContent(
             colors = ButlerStatusMessageDefaults.statusMessagePrimaryColors()
         )
         Column(
-            modifier = Modifier
-                .widthIn(max = 480.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             appSettings?.let {
@@ -792,6 +787,7 @@ fun CustomizationTabContent(
         )
         appSettings?.let { appSettings ->
             UserSettings(
+                modifier = Modifier.fillMaxWidth(),
                 appSettings = appSettings,
                 onChangeAppSettings = onChangeAppSettings,
             )
@@ -1088,10 +1084,9 @@ fun AuthTabContent(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-        val isCompact = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
         if (users.isEmpty()) {
             ButlerStatusMessage(
-                modifier = Modifier.padding(horizontal = 16.dp).then(if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 480.dp)),
+                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
                 imageVector = Icons.Rounded.Info,
                 title = { Text(stringResource(Res.string.no_logged_in_users_status_message_title)) },
                 description = { Text(stringResource(Res.string.no_logged_in_users_status_message_description)) },
@@ -1108,7 +1103,7 @@ fun AuthTabContent(
             Column(modifier = Modifier.width(IntrinsicSize.Max)) {
                 users.forEach { user ->
                     UserDetailedInfoCard(
-                        modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier.widthIn(max = 480.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         user = user,
                     )
                 }

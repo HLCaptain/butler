@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import illyan.butler.core.ui.components.ButlerDialogContent
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
-import illyan.butler.domain.model.DomainError
+import illyan.butler.domain.model.Error
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.close
 import illyan.butler.generated.resources.copy_stacktrace
@@ -47,7 +47,7 @@ fun ButlerErrorDialogContent(
 @Composable
 fun ButlerErrorDialogContent(
     modifier: Modifier = Modifier,
-    errorResponse: DomainError.Response,
+    errorResponse: Error.Response,
     onClose: () -> Unit = {},
     icon: (@Composable ColumnScope.() -> Unit)? = {
         Icon(
@@ -78,7 +78,7 @@ fun ButlerErrorDialogContent(
 @Composable
 fun ButlerErrorDialogContent(
     modifier: Modifier = Modifier,
-    errorEvent: DomainError.Event.Rich,
+    errorEvent: Error.Event.Rich,
     onClose: () -> Unit = {},
     icon: (@Composable ColumnScope.() -> Unit)? = {
         Icon(

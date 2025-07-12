@@ -1,16 +1,18 @@
 package illyan.butler.domain.model
 
+import com.materialkolor.scheme.Variant
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DomainPreferences(
+data class Preferences(
     val userId: String? = null,
     val analyticsEnabled: Boolean = false,
     val dynamicColorEnabled: Boolean = true,
-    val theme: Theme = Theme.System
-    // TODO: Add shouldSync option and lastUpdate timestamp
+    val theme: Theme = Theme.System,
+    val paletteVariant: Variant = Variant.EXPRESSIVE,
+    val contrast: Double = 0.0,
 ) {
     companion object {
-        val Default = DomainPreferences()
+        val Default = Preferences()
     }
 }

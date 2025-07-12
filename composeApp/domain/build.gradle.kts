@@ -9,5 +9,6 @@ kotlin {
 
         implementation(projects.composeApp.core.utils)
         implementation(libs.kotlinx.serialization.core)
+        implementation(libs.material.kolors)
     }
 }

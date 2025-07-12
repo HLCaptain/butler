@@ -4,7 +4,7 @@ import illyan.butler.core.network.datasource.HostNetworkDataSource
 import illyan.butler.core.network.ktor.http.di.provideOpenAIClient
 import illyan.butler.data.credential.CredentialRepository
 import illyan.butler.data.host.HostRepository
-import illyan.butler.domain.model.DomainModel
+import illyan.butler.domain.model.Model
 import illyan.butler.shared.model.auth.ApiKeyCredential
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,11 +45,11 @@ class HostManager(
     /**
      * @return List of models available on the provider with given credentials
      */
-    suspend fun testApiKeyCredential(credential: ApiKeyCredential): List<DomainModel> {
+    suspend fun testApiKeyCredential(credential: ApiKeyCredential): List<Model> {
         return try {
             withTimeout(5000) {
                 provideOpenAIClient(credential).models().map {
-                    DomainModel(
+                    Model(
                         name = null,
                         id = it.id.id,
                         ownedBy = it.ownedBy,

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.ColorScheme
@@ -34,7 +35,7 @@ actual fun ThemeSystemWindow(isDark: Boolean, isDynamicColors: Boolean) {
         }
     }
     if (!LocalInspectionMode.current) {
-        val activity = LocalContext.current as ComponentActivity
+        val activity = LocalActivity.current as ComponentActivity
         SideEffect {
             WindowCompat.getInsetsController(activity.window, activity.window.decorView).isAppearanceLightStatusBars = !isDark
         }

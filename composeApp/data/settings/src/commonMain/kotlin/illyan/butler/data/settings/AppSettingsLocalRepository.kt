@@ -3,8 +3,8 @@ package illyan.butler.data.settings
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import illyan.butler.domain.model.AppSettings
-import illyan.butler.domain.model.DomainPreferences
 import illyan.butler.domain.model.FilterConfiguration
+import illyan.butler.domain.model.Preferences
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.PromptConfiguration
 import illyan.butler.shared.model.chat.Source
@@ -46,7 +46,7 @@ class AppSettingsLocalRepository(
             it?.let { Json.decodeFromString<AiSource>(it) }
         }
 
-    override suspend fun setUserPreferences(preferences: DomainPreferences) {
+    override suspend fun setUserPreferences(preferences: Preferences) {
         Napier.d { "setUserPreferences: $preferences" }
         val currentSettings = appSettings.first()
         val newSettings = currentSettings.copy(preferences = preferences)
