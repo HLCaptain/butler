@@ -518,6 +518,33 @@ fun MessageList(
         contentPadding = contentPadding,
         reverseLayout = true, // From bottom to up
     ) {
+        if (sentMessageButNoUpdate) {
+            item("sent_message_no_update") {
+                AnimatedVisibility(
+                    modifier = Modifier.animateItem(),
+                    visible = sentMessageButNoUpdate,
+                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row {
+                            Spacer(modifier = Modifier.weight(1f))
+                            ButlerMediumTextButton(
+                                onClick = refreshChat,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Refresh,
+                                        contentDescription = null
+                                    )
+                                },
+                                text = { Text(text = stringResource(Res.string.refresh_chat)) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
         if (sentMessageAndLoading) {
             item {
                 Box(
@@ -585,33 +612,6 @@ fun MessageList(
                                 playingAudio = playingAudio,
                                 stopAudio = stopAudio,
                                 images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        if (sentMessageButNoUpdate) {
-            item("sent_message_no_update") {
-                AnimatedVisibility(
-                    modifier = Modifier.animateItem(),
-                    visible = sentMessageButNoUpdate,
-                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row {
-                            Spacer(modifier = Modifier.weight(1f))
-                            ButlerMediumTextButton(
-                                onClick = refreshChat,
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Refresh,
-                                        contentDescription = null
-                                    )
-                                },
-                                text = { Text(text = stringResource(Res.string.refresh_chat)) }
                             )
                         }
                     }

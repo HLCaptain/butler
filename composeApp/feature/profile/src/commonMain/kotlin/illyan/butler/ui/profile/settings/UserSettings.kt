@@ -540,7 +540,7 @@ fun UserSettings(
                         isDropdownOpen = isDropdownOpen,
                         onToggleDropdown = { isDropdownOpen = !isDropdownOpen },
                         selectValue = onThemeChange,
-                        selectedValue = preferences.theme,
+                        selectedValue = preferences.theming.theme,
                         values = Theme.entries.toList(),
                         text = { theme ->
                             Text(
@@ -564,7 +564,7 @@ fun UserSettings(
                 }
                 item {
                     BooleanSetting(
-                        value = canUseDynamicColors() && preferences.dynamicColorEnabled,
+                        value = canUseDynamicColors() && preferences.theming.dynamicColorEnabled,
                         onValueChange = setDynamicColorEnabled,
                         title = stringResource(Res.string.dynamic_color),
                         enabledText = stringResource(Res.string.enabled),

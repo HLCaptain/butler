@@ -6,8 +6,8 @@ import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
 import illyan.butler.core.local.datastore.getDataStore
-import illyan.butler.core.local.room.RoomCoreModule
 import illyan.butler.core.local.settings.createSettings
+import illyan.butler.core.local.sql.SqlCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
 import illyan.butler.data.credential.CredentialDataModule
@@ -93,7 +93,7 @@ fun commonModules(): List<Module> {
         UserDataModule().module
     )
     val coreModules = listOf(
-        RoomCoreModule().module,
+        SqlCoreModule().module,
         KtorCoreModule().module,
         DataSourceModule().module
     )

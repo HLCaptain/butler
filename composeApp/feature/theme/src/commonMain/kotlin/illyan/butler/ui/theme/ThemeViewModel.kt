@@ -49,8 +49,8 @@ class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
         isNight,
     ) { preferences, isNight ->
         ThemeScreenState(
-            theme = preferences.theme,
-            paletteStyle = when (preferences.paletteVariant) {
+            theme = preferences.theming.theme,
+            paletteStyle = when (preferences.theming.paletteVariant) {
                 Variant.CONTENT -> PaletteStyle.Content
                 Variant.EXPRESSIVE -> PaletteStyle.Expressive
                 Variant.MONOCHROME -> PaletteStyle.Monochrome
@@ -62,10 +62,11 @@ class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
                 Variant.FRUIT_SALAD -> PaletteStyle.FruitSalad
             },
             contrast = Contrast.entries
-                .associateWith { (it.value - preferences.contrast).absoluteValue }
+                .associateWith { (it.value - preferences.theming.contrast).absoluteValue }
                 .minBy { it.value }.key,
-            dynamicColorEnabled = preferences.dynamicColorEnabled,
+            dynamicColorEnabled = preferences.theming.dynamicColorEnabled,
             isNight = isNight,
+            themeColor = preferences.theming.themeColor,
         )
     }.stateIn(
         viewModelScope,

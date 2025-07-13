@@ -53,9 +53,6 @@ local.properties
 ### Kotlin K2
 .kotlin
 
-### Room
-/**/schemas/
-
 ### Android
 *.jks
 *.apk

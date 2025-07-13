@@ -68,11 +68,15 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextAlign
@@ -106,6 +110,7 @@ import illyan.butler.core.ui.components.ButlerStatusMessage
 import illyan.butler.core.ui.components.ButlerStatusMessageDefaults
 import illyan.butler.core.ui.components.ButlerTextField
 import illyan.butler.core.ui.components.ChipSettings
+import illyan.butler.core.ui.components.ColorPickerSetting
 import illyan.butler.core.ui.components.DropdownSetting
 import illyan.butler.core.ui.components.MediumMenuButton
 import illyan.butler.core.ui.components.SliderSetting
@@ -121,7 +126,6 @@ import illyan.butler.domain.model.User
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.about
 import illyan.butler.generated.resources.about_x
-import illyan.butler.generated.resources.accent_color
 import illyan.butler.generated.resources.account
 import illyan.butler.generated.resources.add_filter
 import illyan.butler.generated.resources.add_user
@@ -142,10 +146,12 @@ import illyan.butler.generated.resources.day_night_cycle
 import illyan.butler.generated.resources.delete
 import illyan.butler.generated.resources.device
 import illyan.butler.generated.resources.disabled
+import illyan.butler.generated.resources.disabled_color_due_to_seed
 import illyan.butler.generated.resources.display_name
 import illyan.butler.generated.resources.dynamic_color
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.enabled
+import illyan.butler.generated.resources.error_color
 import illyan.butler.generated.resources.expressive
 import illyan.butler.generated.resources.fidelity
 import illyan.butler.generated.resources.filters
@@ -155,29 +161,32 @@ import illyan.butler.generated.resources.history
 import illyan.butler.generated.resources.libraries
 import illyan.butler.generated.resources.light
 import illyan.butler.generated.resources.login
-import illyan.butler.generated.resources.material_color
 import illyan.butler.generated.resources.monochrome
 import illyan.butler.generated.resources.neutral
+import illyan.butler.generated.resources.neutral_color
+import illyan.butler.generated.resources.neutral_variant_color
 import illyan.butler.generated.resources.no_logged_in_users_status_message_description
 import illyan.butler.generated.resources.no_logged_in_users_status_message_title
 import illyan.butler.generated.resources.no_prompt_configuration
-import illyan.butler.generated.resources.no_theme_color
 import illyan.butler.generated.resources.palette
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.photo_url
 import illyan.butler.generated.resources.preview
+import illyan.butler.generated.resources.primary_color
 import illyan.butler.generated.resources.prompt_configuration
 import illyan.butler.generated.resources.provider_url
 import illyan.butler.generated.resources.rainbow
 import illyan.butler.generated.resources.reset
 import illyan.butler.generated.resources.save
+import illyan.butler.generated.resources.secondary_color
+import illyan.butler.generated.resources.seed_color
 import illyan.butler.generated.resources.select
 import illyan.butler.generated.resources.select_user
 import illyan.butler.generated.resources.selected
 import illyan.butler.generated.resources.support_app_description
 import illyan.butler.generated.resources.system
+import illyan.butler.generated.resources.tertiary_color
 import illyan.butler.generated.resources.theme
-import illyan.butler.generated.resources.theme_color
 import illyan.butler.generated.resources.theming
 import illyan.butler.generated.resources.tonal_spot
 import illyan.butler.generated.resources.username
@@ -185,7 +194,9 @@ import illyan.butler.generated.resources.vibrant
 import illyan.butler.shared.llm.SystemPromptBuilder
 import illyan.butler.shared.llm.generateSystemPrompt
 import illyan.butler.shared.model.chat.FilterOption
+import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentSet
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -961,12 +972,12 @@ fun UserSettings(
             selectValue = { theme ->
                 onChangeAppSettings(
                     appSettings.copy(
-                        preferences = preferences.copy(theme = theme)
+                        preferences = preferences.copy(theming = preferences.theming.copy(theme = theme))
                     )
                 )
                 isThemeDropdownOpen = false
             },
-            selectedValue = preferences.theme,
+            selectedValue = preferences.theming.theme,
             values = Theme.entries,
             text = { theme ->
                 Text(
@@ -988,11 +999,11 @@ fun UserSettings(
             }
         )
         BooleanSetting(
-            value = canUseDynamicColors() && preferences.dynamicColorEnabled,
+            value = canUseDynamicColors() && preferences.theming.dynamicColorEnabled,
             onValueChange = {
                 onChangeAppSettings(
                     appSettings.copy(
-                        preferences = preferences.copy(dynamicColorEnabled = it)
+                        preferences = preferences.copy(theming = preferences.theming.copy(dynamicColorEnabled = it))
                     )
                 )
             },
@@ -1001,9 +1012,9 @@ fun UserSettings(
             disabledText = stringResource(Res.string.disabled),
             enabled = canUseDynamicColors()
         )
-        var contrast by rememberSaveable { mutableStateOf(preferences.contrast) }
-        LaunchedEffect(preferences.contrast) {
-            contrast = preferences.contrast
+        var contrast by rememberSaveable { mutableStateOf(preferences.theming.contrast) }
+        LaunchedEffect(preferences.theming.contrast) {
+            contrast = preferences.theming.contrast
         }
         val closeToContrast by remember {
             derivedStateOf {
@@ -1030,7 +1041,7 @@ fun UserSettings(
             onValueChangeFinished = {
                 onChangeAppSettings(
                     appSettings.copy(
-                        preferences = preferences.copy(contrast = Contrast.entries.minBy { (it.value - contrast).absoluteValue }.value)
+                        preferences = preferences.copy(theming = preferences.theming.copy(contrast = Contrast.entries.minBy { (it.value - contrast).absoluteValue }.value))
                     )
                 )
             }
@@ -1038,7 +1049,7 @@ fun UserSettings(
         ChipSettings(
             title = stringResource(Res.string.palette),
             size = Variant.entries.size,
-            selectedIndex = preferences.paletteVariant.ordinal,
+            selectedIndex = preferences.theming.paletteVariant.ordinal,
             chipLabel = { index ->
                 Text(
                     text = when (Variant.entries[index]) {
@@ -1057,67 +1068,107 @@ fun UserSettings(
             onClick = { index ->
                 onChangeAppSettings(
                     appSettings.copy(
-                        preferences = preferences.copy(paletteVariant = Variant.entries[index])
+                        preferences = preferences.copy(theming = preferences.theming.copy(paletteVariant = Variant.entries[index]))
                     )
                 )
             },
         )
-        var accentColor by rememberSaveable { mutableStateOf(preferences.themeColor as? ThemeColor.Accent) }
-        var materialColor by rememberSaveable { mutableStateOf(preferences.themeColor as? ThemeColor.Material) }
 
-        // 0: No theme color
-        // 1: Accent color
-        // 2: Material color
-        var themeColorType by rememberSaveable { mutableIntStateOf(0) }
-        var isColorThemeDropdownOpen by rememberSaveable { mutableStateOf(false) }
-        DropdownSetting(
-            settingName = stringResource(Res.string.theme_color),
-            isDropdownOpen = isColorThemeDropdownOpen,
-            onToggleDropdown = { isColorThemeDropdownOpen = !isColorThemeDropdownOpen },
-            selectValue = { type ->
-                themeColorType = type
-                when (type) {
-                    0 -> onChangeAppSettings(
-                        appSettings.copy(
-                            preferences = preferences.copy(themeColor = null)
-                        )
-                    )
-                    1 -> onChangeAppSettings(
-                        appSettings.copy(
-                            preferences = preferences.copy(themeColor = accentColor ?: ThemeColor.Accent(0xFF6200EE.toInt()))
-                        )
-                    )
-                    2 -> onChangeAppSettings(
-                        appSettings.copy(
-                            preferences = preferences.copy(themeColor = materialColor ?: ThemeColor.Material(0xFF6200EE.toInt(), 0xFF03DAC5.toInt(), 0xFF018786.toInt(), 0xFF121212.toInt(), 0xFF1F1F1F.toInt()))
-                        )
-                    )
-                }
-            },
-            selectedValue = themeColorType,
-            values = listOf(0, 1, 2),
-            text = { index ->
-                when (index) {
-                    0 -> Text(text = stringResource(Res.string.no_theme_color))
-                    1 -> Text(text = stringResource(Res.string.accent_color))
-                    2 -> Text(text = stringResource(Res.string.material_color))
-                }
+        // Material color selected
+        var themeColor by rememberSaveable(
+            stateSaver = object : Saver<ThemeColor, List<Int>> {
+                override fun restore(value: List<Int>) = ThemeColor(
+                    seedArgb = if (value[0] == Color.Unspecified.toArgb()) null else value[0],
+                    primaryArgb = if (value[1] == Color.Unspecified.toArgb()) null else value[1],
+                    secondaryArgb = if (value[2] == Color.Unspecified.toArgb()) null else value[2],
+                    tertiaryArgb = if (value[3] == Color.Unspecified.toArgb()) null else value[3],
+                    errorArgb = if (value[4] == Color.Unspecified.toArgb()) null else value[4],
+                    neutralArgb = if (value[5] == Color.Unspecified.toArgb()) null else value[5],
+                    neutralVariantArgb = if (value[6] == Color.Unspecified.toArgb()) null else value[6],
+                )
+                override fun SaverScope.save(value: ThemeColor) = listOf(
+                    value.seedArgb ?: Color.Unspecified.toArgb(),
+                    value.primaryArgb ?: Color.Unspecified.toArgb(),
+                    value.secondaryArgb ?: Color.Unspecified.toArgb(),
+                    value.tertiaryArgb ?: Color.Unspecified.toArgb(),
+                    value.errorArgb ?: Color.Unspecified.toArgb(),
+                    value.neutralArgb ?: Color.Unspecified.toArgb(),
+                    value.neutralVariantArgb ?: Color.Unspecified.toArgb(),
+                )
             }
-        )
-        AnimatedContent(
-            targetState = themeColorType
-        ) { type ->
-            when (type)  {
-                0 -> {
-                    // No theme color selected
-                }
-                1 -> {
-                    // Accent color selected
-                }
-                2 -> {
-                    // Material color selected
-                }
-            }
+        ) {
+            mutableStateOf(preferences.theming.themeColor)
+        }
+        var seedArgb by rememberSaveable(themeColor) { mutableIntStateOf((themeColor.seedArgb ?: Color.Unspecified.toArgb())) }
+        var primaryArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.primaryArgb ?: Color.Unspecified.toArgb()) }
+        var secondaryArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.secondaryArgb ?: Color.Unspecified.toArgb()) }
+        var tertiaryArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.tertiaryArgb ?: Color.Unspecified.toArgb()) }
+        var errorArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.errorArgb ?: Color.Unspecified.toArgb()) }
+        var neutralArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.neutralArgb ?: Color.Unspecified.toArgb()) }
+        var neutralVariantArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.neutralVariantArgb ?: Color.Unspecified.toArgb()) }
+        var colorChanges by rememberSaveable { mutableIntStateOf(0) }
+        LaunchedEffect(colorChanges) {
+            delay(200)
+            onChangeAppSettings(
+                appSettings.copy(
+                    preferences = preferences.copy(
+                        theming = preferences.theming.copy(
+                            themeColor = themeColor.copy(
+                                seedArgb = seedArgb.takeIf { it != Color.Unspecified.toArgb() },
+                                primaryArgb = primaryArgb.takeIf { it != Color.Unspecified.toArgb() },
+                                secondaryArgb = secondaryArgb.takeIf { it != Color.Unspecified.toArgb() },
+                                tertiaryArgb = tertiaryArgb.takeIf { it != Color.Unspecified.toArgb() },
+                                errorArgb = errorArgb.takeIf { it != Color.Unspecified.toArgb() },
+                                neutralArgb = neutralArgb.takeIf { it != Color.Unspecified.toArgb() },
+                                neutralVariantArgb = neutralVariantArgb.takeIf { it != Color.Unspecified.toArgb() }
+                            )
+                        )
+                    )
+                )
+            )
+        }
+        listOf(
+            Triple(
+                Res.string.seed_color,
+                seedArgb
+            ) { newValue: Color -> seedArgb = newValue.toArgb() },
+            Triple(
+                Res.string.primary_color,
+                primaryArgb
+            ) { newValue: Color -> primaryArgb = newValue.toArgb() },
+            Triple(
+                Res.string.secondary_color,
+                secondaryArgb
+            ) { newValue: Color -> secondaryArgb = newValue.toArgb() },
+            Triple(
+                Res.string.tertiary_color,
+                tertiaryArgb
+            ) { newValue: Color -> tertiaryArgb = newValue.toArgb() },
+            Triple(
+                Res.string.error_color,
+                errorArgb
+            ) { newValue: Color -> errorArgb = newValue.toArgb() },
+            Triple(
+                Res.string.neutral_color,
+                neutralArgb
+            ) { newValue: Color -> neutralArgb = newValue.toArgb() },
+            Triple(
+                Res.string.neutral_variant_color,
+                neutralVariantArgb
+            ) { newValue: Color -> neutralVariantArgb = newValue.toArgb() }
+        ).forEachIndexed { index, (titleRes, color, onColorChange) ->
+            val title = stringResource(titleRes)
+            val enabled = index == 0 || themeColor.seedArgb == null
+            ColorPickerSetting(
+                title = if (enabled) title else stringResource(Res.string.disabled_color_due_to_seed, titleRes),
+                selectedColor = color.takeIf { it != Color.Unspecified.toArgb() }?.let { Color(it) } ?: Color.Unspecified,
+                enabled = index == 0 || themeColor.seedArgb == null,
+                onColorChanged = {
+                    Napier.v { "Color changed: $title to ${it.toArgb()}" }
+                    onColorChange(it)
+                    colorChanges++
+                },
+            )
         }
     }
 }

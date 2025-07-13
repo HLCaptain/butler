@@ -25,7 +25,7 @@ fun App() {
         theme = state.theme,
         paletteStyle = state.paletteStyle,
         contrast = state.contrast,
-
+        themeColor = state.themeColor,
         dynamicColorEnabled = state.dynamicColorEnabled,
         isNight = state.isNight,
     ) {

@@ -226,9 +226,15 @@
     <string name="contrast_high">High</string>
 
     <!-- Theme Colors -->
-    <string name="theme_color">Theme color</string>
-    <string name="no_theme_color">No color</string>
-    <string name="accent_color">Accent</string>
-    <string name="material_color">Material</string>
+    <string name="unspecified_color">Unspecified</string>
+    <string name="seed_color">Seed</string>
+    <string name="primary_color">Primary</string>
+    <string name="secondary_color">Secondary</string>
+    <string name="tertiary_color">Tertiary</string>
+    <string name="error_color">Error</string>
+    <string name="neutral_color">Neutral</string>
+    <string name="neutral_variant_color">Neutral variant</string>
+    <string name="disabled_color_due_to_seed">%1$s (seed used)</string>
+    <string name="argb_hex">ARGB Hex</string>
 
 </resources>

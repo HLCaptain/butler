@@ -29,7 +29,10 @@ class AppSettingsLocalRepository(
     }
 
     // allowStructuredMapKeys is required by Map<FilterOptions, Boolean> in FilterConfiguration
-    val filterConfigurationJsonParser = Json { allowStructuredMapKeys = true }
+    val filterConfigurationJsonParser = Json {
+        allowStructuredMapKeys = true
+        ignoreUnknownKeys = true
+    }
 
     override val appSettings: Flow<AppSettings> = settings.getStringOrNullFlow(appSettingsKey).map {
         it?.let { filterConfigurationJsonParser.decodeFromString<AppSettings>(it) } ?: AppSettings.Default

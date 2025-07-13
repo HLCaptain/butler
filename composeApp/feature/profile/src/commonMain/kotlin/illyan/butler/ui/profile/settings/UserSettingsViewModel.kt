@@ -25,7 +25,8 @@ class UserSettingsViewModel(
 
     fun setTheme(theme: Theme) {
         viewModelScope.launch {
-            state.value.userPreferences?.copy(theme = theme)?.let { userPreferences ->
+            val preferences = state.value.userPreferences
+            preferences?.copy(theming = preferences.theming.copy(theme = theme))?.let { userPreferences ->
                 settingsManager.setUserPreferences(userPreferences)
             }
         }
@@ -33,7 +34,8 @@ class UserSettingsViewModel(
 
     fun setDynamicColorEnabled(isEnabled: Boolean) {
         viewModelScope.launch {
-            state.value.userPreferences?.copy(dynamicColorEnabled = isEnabled)?.let { userPreferences ->
+            val preferences = state.value.userPreferences
+            preferences?.copy(theming = preferences.theming.copy(dynamicColorEnabled = isEnabled))?.let { userPreferences ->
                 settingsManager.setUserPreferences(userPreferences)
             }
         }
