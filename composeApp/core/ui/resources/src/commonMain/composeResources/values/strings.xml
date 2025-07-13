@@ -205,4 +205,30 @@
     <string name="onboarding_select">Select</string>
     <string name="onboarding_unavailable">Unavailable</string>
 
+    <!-- Customization -->
+    <!-- Palettes -->
+    <string name="palette">Palette</string>
+    <string name="tonal_spot">TonalSpot</string>
+    <string name="neutral">Neutral</string>
+    <string name="vibrant">Vibrant</string>
+    <string name="expressive">Expressive</string>
+    <string name="rainbow">Rainbow</string>
+    <string name="fruit_salad">FruitSalad</string>
+    <string name="monochrome">Monochrome</string>
+    <string name="fidelity">Fidelity</string>
+    <string name="content">Content</string>
+
+    <!-- Contrast -->
+    <string name="contrast">Contrast</string>
+    <string name="contrast_low">Low</string>
+    <string name="contrast_medium">Medium</string>
+    <string name="contrast_default">Default</string>
+    <string name="contrast_high">High</string>
+
+    <!-- Theme Colors -->
+    <string name="theme_color">Theme color</string>
+    <string name="no_theme_color">No color</string>
+    <string name="accent_color">Accent</string>
+    <string name="material_color">Material</string>
+
 </resources>

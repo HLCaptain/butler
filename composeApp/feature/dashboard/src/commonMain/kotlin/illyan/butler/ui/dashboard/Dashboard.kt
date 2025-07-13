@@ -59,8 +59,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -81,6 +83,8 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.compose.AsyncImage
+import com.materialkolor.Contrast
+import com.materialkolor.scheme.Variant
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import dev.chrisbanes.haze.HazeState
@@ -101,8 +105,10 @@ import illyan.butler.core.ui.components.ButlerScrollableTabRow
 import illyan.butler.core.ui.components.ButlerStatusMessage
 import illyan.butler.core.ui.components.ButlerStatusMessageDefaults
 import illyan.butler.core.ui.components.ButlerTextField
+import illyan.butler.core.ui.components.ChipSettings
 import illyan.butler.core.ui.components.DropdownSetting
 import illyan.butler.core.ui.components.MediumMenuButton
+import illyan.butler.core.ui.components.SliderSetting
 import illyan.butler.core.ui.components.SmallMenuButton
 import illyan.butler.core.ui.components.butlerUriHandler
 import illyan.butler.core.ui.components.largeDialogSize
@@ -110,10 +116,12 @@ import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.Theme
+import illyan.butler.domain.model.ThemeColor
 import illyan.butler.domain.model.User
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.about
 import illyan.butler.generated.resources.about_x
+import illyan.butler.generated.resources.accent_color
 import illyan.butler.generated.resources.account
 import illyan.butler.generated.resources.add_filter
 import illyan.butler.generated.resources.add_user
@@ -121,6 +129,12 @@ import illyan.butler.generated.resources.analytics
 import illyan.butler.generated.resources.app_description_brief
 import illyan.butler.generated.resources.app_name
 import illyan.butler.generated.resources.auth
+import illyan.butler.generated.resources.content
+import illyan.butler.generated.resources.contrast
+import illyan.butler.generated.resources.contrast_default
+import illyan.butler.generated.resources.contrast_high
+import illyan.butler.generated.resources.contrast_low
+import illyan.butler.generated.resources.contrast_medium
 import illyan.butler.generated.resources.customization
 import illyan.butler.generated.resources.dark
 import illyan.butler.generated.resources.dashboard
@@ -132,20 +146,29 @@ import illyan.butler.generated.resources.display_name
 import illyan.butler.generated.resources.dynamic_color
 import illyan.butler.generated.resources.email
 import illyan.butler.generated.resources.enabled
+import illyan.butler.generated.resources.expressive
+import illyan.butler.generated.resources.fidelity
 import illyan.butler.generated.resources.filters
+import illyan.butler.generated.resources.fruit_salad
 import illyan.butler.generated.resources.full_name
 import illyan.butler.generated.resources.history
 import illyan.butler.generated.resources.libraries
 import illyan.butler.generated.resources.light
 import illyan.butler.generated.resources.login
+import illyan.butler.generated.resources.material_color
+import illyan.butler.generated.resources.monochrome
+import illyan.butler.generated.resources.neutral
 import illyan.butler.generated.resources.no_logged_in_users_status_message_description
 import illyan.butler.generated.resources.no_logged_in_users_status_message_title
 import illyan.butler.generated.resources.no_prompt_configuration
+import illyan.butler.generated.resources.no_theme_color
+import illyan.butler.generated.resources.palette
 import illyan.butler.generated.resources.phone
 import illyan.butler.generated.resources.photo_url
 import illyan.butler.generated.resources.preview
 import illyan.butler.generated.resources.prompt_configuration
 import illyan.butler.generated.resources.provider_url
+import illyan.butler.generated.resources.rainbow
 import illyan.butler.generated.resources.reset
 import illyan.butler.generated.resources.save
 import illyan.butler.generated.resources.select
@@ -154,8 +177,11 @@ import illyan.butler.generated.resources.selected
 import illyan.butler.generated.resources.support_app_description
 import illyan.butler.generated.resources.system
 import illyan.butler.generated.resources.theme
+import illyan.butler.generated.resources.theme_color
 import illyan.butler.generated.resources.theming
+import illyan.butler.generated.resources.tonal_spot
 import illyan.butler.generated.resources.username
+import illyan.butler.generated.resources.vibrant
 import illyan.butler.shared.llm.SystemPromptBuilder
 import illyan.butler.shared.llm.generateSystemPrompt
 import illyan.butler.shared.model.chat.FilterOption
@@ -163,6 +189,7 @@ import kotlinx.collections.immutable.PersistentSet
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.math.absoluteValue
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -926,21 +953,21 @@ fun UserSettings(
 ) {
     val preferences = appSettings.preferences
     Column(modifier = modifier) {
-        var isDropdownOpen by rememberSaveable { mutableStateOf(false) }
+        var isThemeDropdownOpen by rememberSaveable { mutableStateOf(false) }
         DropdownSetting(
             settingName = stringResource(Res.string.theme),
-            isDropdownOpen = isDropdownOpen,
-            onToggleDropdown = { isDropdownOpen = !isDropdownOpen },
+            isDropdownOpen = isThemeDropdownOpen,
+            onToggleDropdown = { isThemeDropdownOpen = !isThemeDropdownOpen },
             selectValue = { theme ->
                 onChangeAppSettings(
                     appSettings.copy(
                         preferences = preferences.copy(theme = theme)
                     )
                 )
-                isDropdownOpen = false
+                isThemeDropdownOpen = false
             },
             selectedValue = preferences.theme,
-            values = Theme.entries.toList(),
+            values = Theme.entries,
             text = { theme ->
                 Text(
                     text = when (theme) {
@@ -974,6 +1001,124 @@ fun UserSettings(
             disabledText = stringResource(Res.string.disabled),
             enabled = canUseDynamicColors()
         )
+        var contrast by rememberSaveable { mutableStateOf(preferences.contrast) }
+        LaunchedEffect(preferences.contrast) {
+            contrast = preferences.contrast
+        }
+        val closeToContrast by remember {
+            derivedStateOf {
+                Contrast.entries
+                    .associateWith { (contrast - it.value).absoluteValue }
+                    .minBy { it.value }
+                    .key
+            }
+        }
+        SliderSetting(
+            title = stringResource(Res.string.contrast),
+            value = contrast.toFloat(),
+            steps = Contrast.entries.size - 2,
+            valueString = stringResource (when (closeToContrast) {
+                Contrast.High -> Res.string.contrast_high
+                Contrast.Medium -> Res.string.contrast_medium
+                Contrast.Reduced -> Res.string.contrast_low
+                Contrast.Default -> Res.string.contrast_default
+            }),
+            valueRange = Contrast.entries.minOf { it.value.toFloat() }..Contrast.entries.maxOf { it.value.toFloat() },
+            onValueChange = { newValue ->
+                contrast = newValue.toDouble()
+            },
+            onValueChangeFinished = {
+                onChangeAppSettings(
+                    appSettings.copy(
+                        preferences = preferences.copy(contrast = Contrast.entries.minBy { (it.value - contrast).absoluteValue }.value)
+                    )
+                )
+            }
+        )
+        ChipSettings(
+            title = stringResource(Res.string.palette),
+            size = Variant.entries.size,
+            selectedIndex = preferences.paletteVariant.ordinal,
+            chipLabel = { index ->
+                Text(
+                    text = when (Variant.entries[index]) {
+                        Variant.MONOCHROME -> stringResource(Res.string.monochrome)
+                        Variant.NEUTRAL -> stringResource(Res.string.neutral)
+                        Variant.TONAL_SPOT -> stringResource(Res.string.tonal_spot)
+                        Variant.VIBRANT -> stringResource(Res.string.vibrant)
+                        Variant.EXPRESSIVE -> stringResource(Res.string.expressive)
+                        Variant.FIDELITY -> stringResource(Res.string.fidelity)
+                        Variant.CONTENT -> stringResource(Res.string.content)
+                        Variant.RAINBOW -> stringResource(Res.string.rainbow)
+                        Variant.FRUIT_SALAD -> stringResource(Res.string.fruit_salad)
+                    }
+                )
+            },
+            onClick = { index ->
+                onChangeAppSettings(
+                    appSettings.copy(
+                        preferences = preferences.copy(paletteVariant = Variant.entries[index])
+                    )
+                )
+            },
+        )
+        var accentColor by rememberSaveable { mutableStateOf(preferences.themeColor as? ThemeColor.Accent) }
+        var materialColor by rememberSaveable { mutableStateOf(preferences.themeColor as? ThemeColor.Material) }
+
+        // 0: No theme color
+        // 1: Accent color
+        // 2: Material color
+        var themeColorType by rememberSaveable { mutableIntStateOf(0) }
+        var isColorThemeDropdownOpen by rememberSaveable { mutableStateOf(false) }
+        DropdownSetting(
+            settingName = stringResource(Res.string.theme_color),
+            isDropdownOpen = isColorThemeDropdownOpen,
+            onToggleDropdown = { isColorThemeDropdownOpen = !isColorThemeDropdownOpen },
+            selectValue = { type ->
+                themeColorType = type
+                when (type) {
+                    0 -> onChangeAppSettings(
+                        appSettings.copy(
+                            preferences = preferences.copy(themeColor = null)
+                        )
+                    )
+                    1 -> onChangeAppSettings(
+                        appSettings.copy(
+                            preferences = preferences.copy(themeColor = accentColor ?: ThemeColor.Accent(0xFF6200EE.toInt()))
+                        )
+                    )
+                    2 -> onChangeAppSettings(
+                        appSettings.copy(
+                            preferences = preferences.copy(themeColor = materialColor ?: ThemeColor.Material(0xFF6200EE.toInt(), 0xFF03DAC5.toInt(), 0xFF018786.toInt(), 0xFF121212.toInt(), 0xFF1F1F1F.toInt()))
+                        )
+                    )
+                }
+            },
+            selectedValue = themeColorType,
+            values = listOf(0, 1, 2),
+            text = { index ->
+                when (index) {
+                    0 -> Text(text = stringResource(Res.string.no_theme_color))
+                    1 -> Text(text = stringResource(Res.string.accent_color))
+                    2 -> Text(text = stringResource(Res.string.material_color))
+                }
+            }
+        )
+        AnimatedContent(
+            targetState = themeColorType
+        ) { type ->
+            when (type)  {
+                0 -> {
+                    // No theme color selected
+                }
+                1 -> {
+                    // Accent color selected
+                }
+                2 -> {
+                    // Material color selected
+                }
+            }
+        }
     }
 }
 

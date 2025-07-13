@@ -2,30 +2,40 @@ package illyan.butler.core.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import com.github.skydoves.colorpicker.compose.HsvColorPicker
+import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.off
 import illyan.butler.generated.resources.on
@@ -87,7 +97,7 @@ fun <T : Any> DropdownSetting(
     selectedValue: T? = null,
     isDropdownOpen: Boolean = false,
     onToggleDropdown: () -> Unit = {},
-    values: Iterable<T> = emptyList(),
+    values: Collection<T> = emptyList(),
     text: @Composable (T) -> Unit = { Text(it.toString()) },
     getValueLeadingIcon: (T) -> ImageVector? = { null },
     getValueTrailingIcon: (T) -> ImageVector? = { null },
@@ -135,6 +145,121 @@ fun <T : Any> DropdownSetting(
                 getValueLeadingIcon = getValueLeadingIcon,
                 getValueTrailingIcon = getValueTrailingIcon,
                 onDismissRequest = onToggleDropdown
+            )
+        }
+    }
+}
+
+@Composable
+fun SliderSetting(
+    modifier: Modifier = Modifier,
+    value: Float,
+    valueString: String = value.toString(),
+    onValueChange: (Float) -> Unit,
+    steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    title: String,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+) {
+    SettingItem(
+        modifier = modifier,
+        settingName = title,
+        onClick = null,
+        enabled = enabled
+    ) {
+        Spacer(modifier = Modifier.width(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = valueString,
+                style = MaterialTheme.typography.labelLarge
+            )
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                steps = steps,
+                onValueChangeFinished = onValueChangeFinished,
+                enabled = enabled,
+                valueRange = valueRange
+            )
+        }
+    }
+}
+
+@Composable
+fun ChipSettings(
+    modifier: Modifier = Modifier,
+    size: Int,
+    selectedIndex: Int?,
+    title: String,
+    enabled: Boolean = true,
+    chipLabel: @Composable (Int) -> Unit,
+    onClick: ((Int) -> Unit)?,
+) {
+    SettingItem(
+        modifier = modifier,
+        settingName = title,
+        enabled = enabled
+    ) {
+        Spacer(modifier = Modifier.width(8.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            repeat(size) { index ->
+                AssistChip(
+                    onClick = { if (enabled) onClick?.invoke(index) },
+                    leadingIcon = {
+                        if (selectedIndex == index) {
+                            Icon(
+                                imageVector = Icons.Rounded.Done,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    label = {
+                        chipLabel(index)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ColorPickerSetting(
+    modifier: Modifier = Modifier,
+    title: String,
+    selectedColor: Color,
+    onColorChanged: (Color) -> Unit,
+    enabled: Boolean = true,
+) {
+    SettingItem(
+        modifier = modifier,
+        settingName = title,
+        enabled = enabled
+    ) {
+        Spacer(modifier = Modifier.width(8.dp))
+        val colorPickerController = rememberColorPickerController()
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "#${selectedColor.toArgb().toString(16).uppercase()}",
+                style = MaterialTheme.typography.labelLarge,
+            )
+            HsvColorPicker(
+                modifier = Modifier,
+                controller = colorPickerController,
+                onColorChanged = { colorEnvelope ->
+                    onColorChanged(colorEnvelope.color)
+                }
             )
         }
     }
@@ -212,7 +337,7 @@ fun SettingItem(
     settingName: String,
     titleStyle: TextStyle = MaterialTheme.typography.labelLarge,
     titleWeight: FontWeight = FontWeight.Normal,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit = {},
 ) = SettingItem(
@@ -232,7 +357,7 @@ fun SettingItem(
 @Composable
 fun SettingItem(
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     title: @Composable RowScope.() -> Unit = {},
     content: @Composable RowScope.() -> Unit = {},

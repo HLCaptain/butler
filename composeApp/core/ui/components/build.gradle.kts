@@ -11,6 +11,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.theme)
 
         implementation(libs.richtext)
+        implementation(libs.colorpicker)
 
         implementation(libs.jetbrains.navigation.compose)
 

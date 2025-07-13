@@ -11,6 +11,7 @@ data class Preferences(
     val theme: Theme = Theme.System,
     val paletteVariant: Variant = Variant.EXPRESSIVE,
     val contrast: Double = 0.0,
+    val themeColor: ThemeColor? = null,
 ) {
     companion object {
         val Default = Preferences()

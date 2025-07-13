@@ -24,6 +24,7 @@ fun App() {
     ButlerTheme(
         theme = state.theme,
         paletteStyle = state.paletteStyle,
+        contrast = state.contrast,
 
         dynamicColorEnabled = state.dynamicColorEnabled,
         isNight = state.isNight,

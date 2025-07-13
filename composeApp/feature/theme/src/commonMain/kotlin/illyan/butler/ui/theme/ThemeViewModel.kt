@@ -63,7 +63,7 @@ class ThemeViewModel(settingsManager: SettingsManager) : ViewModel() {
             },
             contrast = Contrast.entries
                 .associateWith { (it.value - preferences.contrast).absoluteValue }
-                .minByOrNull { it.value }?.key ?: Contrast.Default,
+                .minBy { it.value }.key,
             dynamicColorEnabled = preferences.dynamicColorEnabled,
             isNight = isNight,
         )

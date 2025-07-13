@@ -652,6 +652,8 @@ fun NewChatFABExtended(
     ExtendedFloatingActionButton(
         modifier = modifier,
         onClick = onClick,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        containerColor = MaterialTheme.colorScheme.primary,
         icon = {
             Icon(
                 imageVector = Icons.Filled.Add,
