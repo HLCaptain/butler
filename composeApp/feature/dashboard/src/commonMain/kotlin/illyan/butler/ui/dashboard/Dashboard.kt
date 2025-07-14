@@ -68,8 +68,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -121,7 +119,6 @@ import illyan.butler.core.ui.theme.canUseDynamicColors
 import illyan.butler.core.ui.utils.plus
 import illyan.butler.domain.model.AppSettings
 import illyan.butler.domain.model.Theme
-import illyan.butler.domain.model.ThemeColor
 import illyan.butler.domain.model.User
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.about
@@ -194,7 +191,6 @@ import illyan.butler.generated.resources.vibrant
 import illyan.butler.shared.llm.SystemPromptBuilder
 import illyan.butler.shared.llm.generateSystemPrompt
 import illyan.butler.shared.model.chat.FilterOption
-import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.StringResource
@@ -356,7 +352,6 @@ fun DashboardScaffold(
                                 DashboardTab.Auth -> AuthTabContent(
                                     onAddAuth = onAddAuth,
                                     users = state.users,
-                                    selectedUser = state.selectedUser,
                                 )
                             }
                         }
@@ -1075,100 +1070,73 @@ fun UserSettings(
         )
 
         // Material color selected
-        var themeColor by rememberSaveable(
-            stateSaver = object : Saver<ThemeColor, List<Int>> {
-                override fun restore(value: List<Int>) = ThemeColor(
-                    seedArgb = if (value[0] == Color.Unspecified.toArgb()) null else value[0],
-                    primaryArgb = if (value[1] == Color.Unspecified.toArgb()) null else value[1],
-                    secondaryArgb = if (value[2] == Color.Unspecified.toArgb()) null else value[2],
-                    tertiaryArgb = if (value[3] == Color.Unspecified.toArgb()) null else value[3],
-                    errorArgb = if (value[4] == Color.Unspecified.toArgb()) null else value[4],
-                    neutralArgb = if (value[5] == Color.Unspecified.toArgb()) null else value[5],
-                    neutralVariantArgb = if (value[6] == Color.Unspecified.toArgb()) null else value[6],
-                )
-                override fun SaverScope.save(value: ThemeColor) = listOf(
-                    value.seedArgb ?: Color.Unspecified.toArgb(),
-                    value.primaryArgb ?: Color.Unspecified.toArgb(),
-                    value.secondaryArgb ?: Color.Unspecified.toArgb(),
-                    value.tertiaryArgb ?: Color.Unspecified.toArgb(),
-                    value.errorArgb ?: Color.Unspecified.toArgb(),
-                    value.neutralArgb ?: Color.Unspecified.toArgb(),
-                    value.neutralVariantArgb ?: Color.Unspecified.toArgb(),
-                )
-            }
-        ) {
-            mutableStateOf(preferences.theming.themeColor)
+        val themeColor = preferences.theming.themeColor
+        val colors = remember {
+            mutableStateListOf(
+                (themeColor.seedArgb ?: Color.Unspecified.toArgb()),
+                (themeColor.primaryArgb ?: Color.Unspecified.toArgb()),
+                (themeColor.secondaryArgb ?: Color.Unspecified.toArgb()),
+                (themeColor.tertiaryArgb ?: Color.Unspecified.toArgb()),
+                (themeColor.errorArgb ?: Color.Unspecified.toArgb()),
+                (themeColor.neutralArgb ?: Color.Unspecified.toArgb()),
+                (themeColor.neutralVariantArgb ?: Color.Unspecified.toArgb())
+            )
         }
-        var seedArgb by rememberSaveable(themeColor) { mutableIntStateOf((themeColor.seedArgb ?: Color.Unspecified.toArgb())) }
-        var primaryArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.primaryArgb ?: Color.Unspecified.toArgb()) }
-        var secondaryArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.secondaryArgb ?: Color.Unspecified.toArgb()) }
-        var tertiaryArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.tertiaryArgb ?: Color.Unspecified.toArgb()) }
-        var errorArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.errorArgb ?: Color.Unspecified.toArgb()) }
-        var neutralArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.neutralArgb ?: Color.Unspecified.toArgb()) }
-        var neutralVariantArgb by rememberSaveable(themeColor) { mutableIntStateOf(themeColor.neutralVariantArgb ?: Color.Unspecified.toArgb()) }
+        LaunchedEffect(themeColor) {
+            colors[0] = themeColor.seedArgb ?: Color.Unspecified.toArgb()
+            colors[1] = themeColor.primaryArgb ?: Color.Unspecified.toArgb()
+            colors[2] = themeColor.secondaryArgb ?: Color.Unspecified.toArgb()
+            colors[3] = themeColor.tertiaryArgb ?: Color.Unspecified.toArgb()
+            colors[4] = themeColor.errorArgb ?: Color.Unspecified.toArgb()
+            colors[5] = themeColor.neutralArgb ?: Color.Unspecified.toArgb()
+            colors[6] = themeColor.neutralVariantArgb ?: Color.Unspecified.toArgb()
+        }
         var colorChanges by rememberSaveable { mutableIntStateOf(0) }
         LaunchedEffect(colorChanges) {
+            if (colorChanges == 0) return@LaunchedEffect
             delay(200)
             onChangeAppSettings(
                 appSettings.copy(
                     preferences = preferences.copy(
                         theming = preferences.theming.copy(
                             themeColor = themeColor.copy(
-                                seedArgb = seedArgb.takeIf { it != Color.Unspecified.toArgb() },
-                                primaryArgb = primaryArgb.takeIf { it != Color.Unspecified.toArgb() },
-                                secondaryArgb = secondaryArgb.takeIf { it != Color.Unspecified.toArgb() },
-                                tertiaryArgb = tertiaryArgb.takeIf { it != Color.Unspecified.toArgb() },
-                                errorArgb = errorArgb.takeIf { it != Color.Unspecified.toArgb() },
-                                neutralArgb = neutralArgb.takeIf { it != Color.Unspecified.toArgb() },
-                                neutralVariantArgb = neutralVariantArgb.takeIf { it != Color.Unspecified.toArgb() }
+                                seedArgb = colors[0].takeIf { it != Color.Unspecified.toArgb() },
+                                primaryArgb = colors[1].takeIf { it != Color.Unspecified.toArgb() },
+                                secondaryArgb = colors[2].takeIf { it != Color.Unspecified.toArgb() },
+                                tertiaryArgb = colors[3].takeIf { it != Color.Unspecified.toArgb() },
+                                errorArgb = colors[4].takeIf { it != Color.Unspecified.toArgb() },
+                                neutralArgb = colors[5].takeIf { it != Color.Unspecified.toArgb() },
+                                neutralVariantArgb = colors[6].takeIf { it != Color.Unspecified.toArgb() }
                             )
                         )
                     )
                 )
             )
         }
-        listOf(
-            Triple(
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            listOf(
                 Res.string.seed_color,
-                seedArgb
-            ) { newValue: Color -> seedArgb = newValue.toArgb() },
-            Triple(
                 Res.string.primary_color,
-                primaryArgb
-            ) { newValue: Color -> primaryArgb = newValue.toArgb() },
-            Triple(
                 Res.string.secondary_color,
-                secondaryArgb
-            ) { newValue: Color -> secondaryArgb = newValue.toArgb() },
-            Triple(
                 Res.string.tertiary_color,
-                tertiaryArgb
-            ) { newValue: Color -> tertiaryArgb = newValue.toArgb() },
-            Triple(
                 Res.string.error_color,
-                errorArgb
-            ) { newValue: Color -> errorArgb = newValue.toArgb() },
-            Triple(
                 Res.string.neutral_color,
-                neutralArgb
-            ) { newValue: Color -> neutralArgb = newValue.toArgb() },
-            Triple(
                 Res.string.neutral_variant_color,
-                neutralVariantArgb
-            ) { newValue: Color -> neutralVariantArgb = newValue.toArgb() }
-        ).forEachIndexed { index, (titleRes, color, onColorChange) ->
-            val title = stringResource(titleRes)
-            val enabled = index == 0 || themeColor.seedArgb == null
-            ColorPickerSetting(
-                title = if (enabled) title else stringResource(Res.string.disabled_color_due_to_seed, titleRes),
-                selectedColor = color.takeIf { it != Color.Unspecified.toArgb() }?.let { Color(it) } ?: Color.Unspecified,
-                enabled = index == 0 || themeColor.seedArgb == null,
-                onColorChanged = {
-                    Napier.v { "Color changed: $title to ${it.toArgb()}" }
-                    onColorChange(it)
-                    colorChanges++
-                },
-            )
+            ).forEachIndexed { index, titleRes ->
+                val title = stringResource(titleRes)
+                val enabled = titleRes == Res.string.seed_color || colors[0] == Color.Unspecified.toArgb()
+                ColorPickerSetting(
+                    title = if (enabled) title else stringResource(Res.string.disabled_color_due_to_seed, title),
+                    selectedColor = colors[index].takeIf { it != Color.Unspecified.toArgb() }?.let { Color(it) } ?: Color.Unspecified,
+                    enabled = enabled,
+                    onColorChanged = {
+                        colors[index] = it.toArgb()
+                        colorChanges++
+                    },
+                )
+            }
         }
     }
 }
@@ -1268,7 +1236,6 @@ fun AboutTabContent(
 fun AuthTabContent(
     onAddAuth: () -> Unit,
     users: PersistentSet<User>,
-    selectedUser: User? = null,
 ) {
     // Display authentication options
     Column(

@@ -42,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,6 +68,7 @@ import illyan.butler.generated.resources.argb_hex
 import illyan.butler.generated.resources.off
 import illyan.butler.generated.resources.on
 import illyan.butler.generated.resources.unspecified_color
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -366,7 +368,7 @@ fun ColorPickerSetting(
                         onColorChanged(Color.Unspecified)
                     }
                 },
-                enabled = selectedColor != Color.Unspecified
+                enabled = selectedColor != Color.Unspecified && enabled
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.Undo,
@@ -384,13 +386,18 @@ fun ColorPickerSetting(
                 )
             ) {
                 val colorPickerController = rememberColorPickerController()
+                LaunchedEffect(selectedColor) {
+                    if (selectedColor != Color.Unspecified) {
+                        colorPickerController.selectByColor(selectedColor, fromUser = true)
+                    }
+                }
                 HsvColorPicker(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .size(180.dp)
                         .padding(8.dp),
                     controller = colorPickerController,
-                    initialColor = selectedColor,
+                    initialColor = if (selectedColor == Color.Unspecified) Color.White else selectedColor,
                     onColorChanged = { colorEnvelope -> onColorChanged(colorEnvelope.color) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -400,9 +407,16 @@ fun ColorPickerSetting(
                         .padding(8.dp)
                         .height(35.dp),
                     controller = colorPickerController,
+                    initialColor = if (selectedColor == Color.Unspecified) Color.White else selectedColor,
                 )
                 var textFieldColorHex by rememberSaveable(selectedColor.toArgb().toHexString()) { mutableStateOf("#${selectedColor.toArgb().toHexString()}") }
-                val isValidHex = { textFieldColorHex.matches(Regex("^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")) && textFieldColorHex.length in 7..9 }
+                val isValidHex = { hex: String ->
+                    Napier.v {
+                        "Checking hex validity: $hex"
+                    }
+                    hex.matches(Regex("^#?([A-Fa-f0-9]{8})$")) &&
+                            hex.trim('#', ' ').length == 8
+                }
                 ButlerTextField(
                     modifier = Modifier.padding(8.dp),
                     isCompact = true,
@@ -413,15 +427,17 @@ fun ColorPickerSetting(
                         )
                     },
                     value = textFieldColorHex,
-                    onValueChange = {
-                        textFieldColorHex = it
-                        if (isValidHex()) {
-                            textFieldColorHex.trim('#').toIntOrNull(16)?.let { colorInt ->
+                    onValueChange = { newValue ->
+                        if (isValidHex(newValue)) {
+                            Napier.v { "Valid hex color: $newValue" }
+                            newValue.trim('#', ' ').uppercase().hexToInt().let { colorInt ->
+                                Napier.v { "Parsed color: $colorInt from $textFieldColorHex" }
                                 onColorChanged(Color(colorInt))
                             }
                         }
+                        textFieldColorHex = newValue
                     },
-                    isError = !isValidHex(),
+                    isError = !isValidHex(textFieldColorHex),
                     isOutlined = true
                 )
             }
