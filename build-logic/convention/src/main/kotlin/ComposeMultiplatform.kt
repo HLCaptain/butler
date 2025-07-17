@@ -11,7 +11,7 @@ internal fun configureComposeMultiplatformLibrary(
 
 internal fun configureComposeMultiplatform(
     extension: KotlinMultiplatformExtension
-) = configureComposeMultiplatform(extension, extension.extensions.getByType<ComposePlugin.Dependencies>())
+) = configureComposeMultiplatform(extension, extension.extensions.getByType())
 
 @OptIn(ExperimentalWasmDsl::class, ExperimentalKotlinGradlePluginApi::class)
 private fun configureComposeMultiplatform(
@@ -22,9 +22,16 @@ private fun configureComposeMultiplatform(
 
     applyDefaultHierarchyTemplate {
         common {
+            group("ios") {
+                withIosX64()
+                withIosArm64()
+                withIosSimulatorArm64()
+            }
+
             group("nonWeb") {
                 withJvm()
                 withAndroidTarget()
+                group("ios")
             }
 
             group("web") {
@@ -32,10 +39,14 @@ private fun configureComposeMultiplatform(
                 withJs()
             }
 
-            group("nonAndroid") {
+            group("nonMobile") {
                 withJvm()
-                withWasmJs()
-                withJs()
+                group("web")
+            }
+
+            group("nonAndroid") {
+                group("nonMobile")
+                group("ios")
             }
         }
     }
@@ -45,6 +56,10 @@ private fun configureComposeMultiplatform(
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     jvm()
 

@@ -13,7 +13,7 @@ private lateinit var dataStore: DataStore<Preferences>
 private val lock = Mutex()
 
 // Source: https://github.com/android/kotlin-multiplatform-samples/blob/main/DiceRoller/shared/src/commonMain/kotlin/com/google/samples/apps/diceroller/createDataStore.kt
-fun getDataStore(producePath: () -> String): DataStore<Preferences> = runBlocking {
+fun getDataStoreByPath(producePath: () -> String): DataStore<Preferences> = runBlocking {
     lock.withLock {
         if (::dataStore.isInitialized) {
             dataStore

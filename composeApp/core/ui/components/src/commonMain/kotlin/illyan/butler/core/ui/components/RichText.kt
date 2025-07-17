@@ -1,80 +1,73 @@
 package illyan.butler.core.ui.components
 
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
-import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
-import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
-import com.mohamedrejeb.richeditor.model.ImageLoader
-import com.mohamedrejeb.richeditor.model.LocalImageLoader
-import com.mohamedrejeb.richeditor.model.RichTextState
-import com.mohamedrejeb.richeditor.ui.material3.RichText
+import com.mikepenz.markdown.compose.MarkdownSuccess
+import com.mikepenz.markdown.compose.components.MarkdownComponents
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.elements.MarkdownCheckBox
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.ImageTransformer
+import com.mikepenz.markdown.model.MarkdownAnimations
+import com.mikepenz.markdown.model.MarkdownAnnotator
+import com.mikepenz.markdown.model.MarkdownColors
+import com.mikepenz.markdown.model.MarkdownDimens
+import com.mikepenz.markdown.model.MarkdownExtendedSpans
+import com.mikepenz.markdown.model.MarkdownInlineContent
+import com.mikepenz.markdown.model.MarkdownPadding
+import com.mikepenz.markdown.model.MarkdownState
+import com.mikepenz.markdown.model.MarkdownTypography
+import com.mikepenz.markdown.model.NoOpImageTransformerImpl
+import com.mikepenz.markdown.model.State
+import com.mikepenz.markdown.model.markdownAnimations
+import com.mikepenz.markdown.model.markdownAnnotator
+import com.mikepenz.markdown.model.markdownDimens
+import com.mikepenz.markdown.model.markdownExtendedSpans
+import com.mikepenz.markdown.model.markdownInlineContent
+import com.mikepenz.markdown.model.markdownPadding
 
-@OptIn(ExperimentalRichTextApi::class)
 @Composable
 fun ButlerRichText(
-    modifier: Modifier = Modifier,
-    state: RichTextState,
-    linkTextDecoration: TextDecoration = TextDecoration.Underline,
-    color: Color = Color.Unspecified,
-    linkColor: Color = MaterialTheme.colorScheme.primary,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    fontStyle: FontStyle? = null,
-    fontWeight: FontWeight? = null,
-    fontFamily: FontFamily? = null,
-    letterSpacing: TextUnit = TextUnit.Unspecified,
-    textDecoration: TextDecoration? = null,
-    textAlign: TextAlign = TextAlign.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
-    maxLines: Int = Int.MAX_VALUE,
-    inlineContent: Map<String, InlineTextContent> = mapOf(),
-    onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyle.current,
-    imageLoader: ImageLoader = LocalImageLoader.current,
-    uriHandler: UriHandler? = null, // LocalUriHandler.current for default behavior
+    markdownState: MarkdownState,
+    colors: MarkdownColors = markdownColor(),
+    typography: MarkdownTypography = markdownTypography(),
+    modifier: Modifier = Modifier.fillMaxSize(),
+    padding: MarkdownPadding = markdownPadding(),
+    dimens: MarkdownDimens = markdownDimens(),
+    imageTransformer: ImageTransformer = NoOpImageTransformerImpl(),
+    annotator: MarkdownAnnotator = markdownAnnotator(),
+    extendedSpans: MarkdownExtendedSpans = markdownExtendedSpans(),
+    inlineContent: MarkdownInlineContent = markdownInlineContent(),
+    components: MarkdownComponents = markdownComponents(checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) }),
+    animations: MarkdownAnimations = markdownAnimations(),
+    loading: @Composable (modifier: Modifier) -> Unit = { Box(modifier) },
+    success: @Composable (state: State.Success, components: MarkdownComponents, modifier: Modifier) -> Unit = { state, components, modifier ->
+        MarkdownSuccess(state = state, components = components, modifier = modifier)
+    },
+    error: @Composable (modifier: Modifier) -> Unit = { Box(modifier) },
 ) {
-    // Change link color and text decoration.
-    state.config.linkColor = linkColor
-    state.config.linkTextDecoration = linkTextDecoration
-
-    CompositionLocalProvider(LocalUriHandler provides (uriHandler ?: butlerUriHandler() ?: LocalUriHandler.current)) {
-        RichText(
-            state = state,
-            modifier = modifier,
-            color = color,
-            fontSize = fontSize,
-            fontStyle = fontStyle,
-            fontWeight = fontWeight,
-            fontFamily = fontFamily,
-            letterSpacing = letterSpacing,
-            textDecoration = textDecoration,
-            textAlign = textAlign,
-            lineHeight = lineHeight,
-            overflow = overflow,
-            softWrap = softWrap,
-            maxLines = maxLines,
-            inlineContent = inlineContent,
-            onTextLayout = onTextLayout,
-            style = style,
-            imageLoader = imageLoader
-        )
-    }
+    Markdown(
+        markdownState = markdownState,
+        colors = colors,
+        typography = typography,
+        modifier = modifier,
+        padding = padding,
+        dimens = dimens,
+        imageTransformer = imageTransformer,
+        annotator = annotator,
+        extendedSpans = extendedSpans,
+        inlineContent = inlineContent,
+        components = components,
+        animations = animations,
+        loading = loading,
+        success = success,
+        error = error,
+    )
 }
 
 @Composable

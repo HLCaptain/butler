@@ -10,7 +10,7 @@ kotlin {
         implementation(projects.composeApp.core.ui.utils)
         implementation(projects.composeApp.core.ui.theme)
 
-        implementation(libs.richtext)
+        implementation(libs.markdown)
         implementation(libs.colorpicker)
 
         implementation(libs.jetbrains.navigation.compose)

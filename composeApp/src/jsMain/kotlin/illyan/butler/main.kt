@@ -7,7 +7,6 @@ import illyan.butler.audio.AudioDomainModule
 import illyan.butler.auth.AuthDomainModule
 import illyan.butler.chat.ChatDomainModule
 import illyan.butler.core.local.settings.createSettings
-import illyan.butler.core.local.sqldelight.SqlDelightCoreModule
 import illyan.butler.core.network.ktor.KtorCoreModule
 import illyan.butler.data.chat.ChatDataModule
 import illyan.butler.data.credential.CredentialDataModule
@@ -57,50 +56,4 @@ fun main() {
             App()
         }
     }
-}
-
-fun commonModules(): List<Module> {
-    val featureModules = listOf(
-        AuthFeatureModule().module,
-        ChatFeatureModule().module,
-        DashboardFeatureModule().module,
-        ErrorFeatureModule().module,
-        HomeFeatureModule().module,
-        OnboardingFeatureModule().module,
-        PermissionFeatureModule().module,
-        ProfileFeatureModule().module,
-        ThemeFeatureModule().module
-    )
-    val domainModules = listOf(
-        AudioDomainModule().module,
-        AuthDomainModule().module,
-        ChatDomainModule().module,
-        HostDomainModule().module,
-        ModelDomainModule().module,
-        SettingsDomainModule().module
-    )
-    val dataModules = listOf(
-        ChatDataModule().module,
-        CredentialDataModule().module,
-        HostDataModule().module,
-        MessageDataModule().module,
-        ModelDataModule().module,
-        ResourceDataModule().module,
-        SettingsDataModule().module,
-        UserDataModule().module
-    )
-    val coreModules = listOf(
-        SqlDelightCoreModule().module,
-        KtorCoreModule().module,
-        DataSourceModule().module
-    )
-    return listOf(
-        ErrorDataModule().module,
-        CoroutineModule().module, // Must be after ErrorDataModule
-        *coreModules.toTypedArray(),
-        *dataModules.toTypedArray(),
-        RepositoryModule().module,
-        *domainModules.toTypedArray(),
-        *featureModules.toTypedArray()
-    )
 }

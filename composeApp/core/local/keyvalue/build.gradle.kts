@@ -15,4 +15,8 @@ kotlin {
         implementation(libs.androidx.datastore.preferences.core)
         implementation(libs.multiplatformSettings.datastore)
     }
+
+//    sourceSets.iosMain {
+//        dependsOn(sourceSets.nonWebMain.get())
+//    }
 }

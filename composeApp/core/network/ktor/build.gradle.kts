@@ -32,6 +32,10 @@ kotlin {
         implementation(libs.ktor.client.cio)
     }
 
+    sourceSets.iosMain.dependencies {
+        implementation(libs.ktor.client.darwin)
+    }
+
     sourceSets.webMain.dependencies {
         implementation(libs.ktor.client.js)
     }

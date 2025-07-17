@@ -1,8 +1,8 @@
 package illyan.butler.core.utils
 
-val userAgent: String = js("navigator.userAgent")
-val platform: String = js("navigator.platform")
-val language: String = js("navigator.language")
+expect val userAgent: String
+expect val platform: String
+expect val language: String
 
 actual fun getSystemMetadata(): Map<String, String> {
     return mapOf(

@@ -21,7 +21,9 @@ import illyan.butler.core.local.sql.model.RoomUser
 import illyan.butler.core.local.sql.model.RoomUserTokens
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase>
+expect object ButlerDatabaseCtor : RoomDatabaseConstructor<ButlerDatabase> {
+    override fun initialize(): ButlerDatabase
+}
 
 const val BUTLER_DATABASE_VERSION = 12
 

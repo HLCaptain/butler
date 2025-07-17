@@ -37,6 +37,12 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
 
 ### From KMP Web Wizard terrakok.github.io/kmp-web-wizard/ ###
 /local.properties

@@ -1,8 +1,11 @@
+import com.google.devtools.ksp.gradle.KspAATask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 class KoinForKotlinMultiplatformPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -19,10 +22,48 @@ class KoinForKotlinMultiplatformPlugin : Plugin<Project> {
         dependencies {
             val koinKsp = defaultLibs.findLibrary("koin.ksp").get().get()
             add("kspCommonMainMetadata", koinKsp)
-            add("kspAndroid", koinKsp)
-            add("kspJvm", koinKsp)
-            add("kspWasmJs", koinKsp)
-            add("kspJs", koinKsp)
+//            add("kspAndroid", koinKsp)
+//            add("kspJvm", koinKsp)
+//            add("kspWasmJs", koinKsp)
+//            add("kspJs", koinKsp)
+//            add("kspIosX64", koinKsp)
+//            add("kspIosArm64", koinKsp)
+//            add("kspIosSimulatorArm64", koinKsp)
         }
+
+        // WORKAROUND: ADD this dependsOn("kspCommonMainKotlinMetadata") instead of above dependencies
+        // (https://github.com/InsertKoinIO/hello-kmp/blob/annotations/shared/build.gradle.kts)
+        tasks.withType<KotlinCompilationTask<*>>().configureEach {
+            if (name != "kspCommonMainKotlinMetadata") {
+                dependsOn("kspCommonMainKotlinMetadata")
+            }
+        }
+        // A problem was found with the configuration of task ':composeApp:data:error:kspKotlinJvm' (type 'KspAATask').
+        project.tasks.withType<KspAATask>().configureEach {
+            if (name != "kspCommonMainKotlinMetadata") {
+//                val tasks = listOf(
+//                    "kspDebugKotlinAndroid",
+//                    "kspReleaseKotlinAndroid",
+//                    "kspKotlinIosSimulatorArm64",
+//                    "kspKotlinIosX64",
+//                    "kspKotlinIosArm64",
+//                    "kspKotlinWasmJs",
+//                    "kspKotlinJs",
+//                    "kspKotlinJvm"
+//                )
+//                if (tasks.any { name.contains(it, ignoreCase = true) }) {
+//                    enabled = false
+//                }
+                dependsOn("kspCommonMainKotlinMetadata")
+            }
+        }
+//        afterEvaluate {
+//            tasks.filter {
+//                it.name.contains("SourcesJar", true)
+//            }.forEach {
+//                println("SourceJarTask====>${it.name}")
+//                it.dependsOn("kspCommonMainKotlinMetadata")
+//            }
+//        }
     }
 }

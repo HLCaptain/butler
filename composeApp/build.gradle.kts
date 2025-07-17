@@ -16,6 +16,20 @@ group = "illyan"
 version = libs.versions.butler.name.get()
 
 kotlin {
+
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+            // Required when using NativeSQLiteDriver
+            linkerOpts.add("-lsqlite3")
+        }
+    }
+
     wasmJs {
         outputModuleName.set("composeApp-wasm")
         browser {

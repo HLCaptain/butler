@@ -1,3 +1,5 @@
+import com.google.devtools.ksp.gradle.KspAATask
+
 plugins {
     alias(libs.plugins.illyan.butler.kotlinMultiplatformLibrary)
     alias(libs.plugins.illyan.butler.koinForKotlinMultiplatform)
@@ -51,6 +53,19 @@ dependencies {
     add("kspCommonMainMetadata", libs.androidx.room.compiler)
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspJvm", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+
+    // Koin additional KSP config
+    add("kspCommonMainMetadata", libs.koin.ksp)
+    add("kspAndroid", libs.koin.ksp)
+    add("kspJvm", libs.koin.ksp)
+    add("kspWasmJs", libs.koin.ksp)
+    add("kspJs", libs.koin.ksp)
+    add("kspIosX64", libs.koin.ksp)
+    add("kspIosArm64", libs.koin.ksp)
+    add("kspIosSimulatorArm64", libs.koin.ksp)
 }
 
 room {

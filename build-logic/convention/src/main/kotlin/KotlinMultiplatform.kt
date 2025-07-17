@@ -11,9 +11,16 @@ internal fun configureKotlinMultiplatform(
 
     applyDefaultHierarchyTemplate {
         common {
+            group("ios") {
+                withIosX64()
+                withIosArm64()
+                withIosSimulatorArm64()
+            }
+
             group("nonWeb") {
                 withJvm()
                 withAndroidTarget()
+                group("ios")
             }
 
             group("web") {
@@ -21,10 +28,14 @@ internal fun configureKotlinMultiplatform(
                 withJs()
             }
 
-            group("nonAndroid") {
+            group("nonMobile") {
                 withJvm()
-                withWasmJs()
-                withJs()
+                group("web")
+            }
+
+            group("nonAndroid") {
+                group("nonMobile")
+                group("ios")
             }
         }
     }
@@ -34,6 +45,10 @@ internal fun configureKotlinMultiplatform(
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     jvm()
 

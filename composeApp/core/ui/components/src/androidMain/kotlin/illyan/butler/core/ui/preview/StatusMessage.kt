@@ -11,8 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mikepenz.markdown.compose.extendedspans.internal.update
+import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.rememberMarkdownState
 import illyan.butler.core.ui.components.ButlerInvertedStatusMessage
 import illyan.butler.core.ui.components.ButlerRichText
 import illyan.butler.core.ui.components.ButlerStatusMessage
@@ -20,7 +21,6 @@ import illyan.butler.core.ui.components.ButlerStatusMessageDefaults
 import illyan.butler.core.ui.components.StatusMessageColors
 import illyan.butler.core.ui.theme.ButlerTheme
 
-@OptIn(ExperimentalRichTextApi::class)
 @Composable
 private fun StatusMessagePreview(
     colors: StatusMessageColors,
@@ -35,10 +35,14 @@ private fun StatusMessagePreview(
                 imageVector = Icons.Rounded.Info,
                 title = { Text("Status Message Title") },
                 description = {
-                    val richTextState = rememberRichTextState()
+                    val markdownState = rememberMarkdownState { "<p><strong>Butler</strong> by HLCaptain is a Kotlin-based library that offers a clean architecture template for Android and multiplatform apps. It integrates tools like Koin, SqlDelight, and Voyager to simplify scalable app development. For more information, visit the <a href=\"https://github.com/HLCaptain/butler\">GitHub repository</a>.</p>" }
                     ButlerRichText(
-                        state = richTextState.setHtml("<p><strong>Butler</strong> by HLCaptain is a Kotlin-based library that offers a clean architecture template for Android and multiplatform apps. It integrates tools like Koin, SqlDelight, and Voyager to simplify scalable app development. For more information, visit the <a href=\"https://github.com/HLCaptain/butler\">GitHub repository</a>.</p>"),
-                        linkColor = colors.primaryColor
+                        markdownState = markdownState,
+                        typography = markdownTypography(
+                            textLink = markdownTypography().textLink.update {
+                                copy(color = colors.primaryColor)
+                            }
+                        )
                     )
                 },
                 actions = {
@@ -56,7 +60,6 @@ private fun StatusMessagePreview(
     }
 }
 
-@OptIn(ExperimentalRichTextApi::class)
 @Composable
 private fun InvertedStatusMessagePreview(
     colors: StatusMessageColors
@@ -69,10 +72,14 @@ private fun InvertedStatusMessagePreview(
                 imageVector = Icons.Rounded.Info,
                 title = { Text("Status Message Title") },
                 description = {
-                    val richTextState = rememberRichTextState()
+                    val markdownState = rememberMarkdownState { "<p><strong>Butler</strong> by HLCaptain is a Kotlin-based library that offers a clean architecture template for Android and multiplatform apps. It integrates tools like Koin, SqlDelight, and Voyager to simplify scalable app development. For more information, visit the <a href=\"https://github.com/HLCaptain/butler\">GitHub repository</a>.</p>" }
                     ButlerRichText(
-                        state = richTextState.setHtml("<p><strong>Butler</strong> by HLCaptain is a Kotlin-based library that offers a clean architecture template for Android and multiplatform apps. It integrates tools like Koin, SqlDelight, and Voyager to simplify scalable app development. For more information, visit the <a href=\"https://github.com/HLCaptain/butler\">GitHub repository</a>.</p>"),
-                        linkColor = colors.primaryColor
+                        markdownState = markdownState,
+                        typography = markdownTypography(
+                            textLink = markdownTypography().textLink.update {
+                                copy(color = colors.primaryColor)
+                            }
+                        )
                     )
                 },
                 actions = {

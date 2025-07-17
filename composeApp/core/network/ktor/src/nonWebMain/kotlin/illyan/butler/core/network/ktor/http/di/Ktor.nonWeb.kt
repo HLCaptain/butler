@@ -10,7 +10,7 @@ actual fun<T : HttpClientEngineConfig> HttpClientConfig<T>.setupPlatformHttpClie
         if (this is CIOEngineConfig) {
             https {
                 serverName = null
-                cipherSuites = CIOCipherSuites.SupportedSuites
+//                cipherSuites = CIOCipherSuites.SupportedSuites
             }
         }
     }

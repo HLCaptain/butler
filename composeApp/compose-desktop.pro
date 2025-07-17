@@ -11,6 +11,9 @@
 -keep class org.jetbrains.skiko.** { *; }
 -keep class io.ktor.** { *; }
 
+# https://developer.android.com/kotlin/multiplatform/room#minification_and_obfuscation
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+
 # FileKit https://github.com/vinceglb/FileKit
 -keep class com.sun.jna.** { *; }
 -keep class * implements com.sun.jna.** { *; }
