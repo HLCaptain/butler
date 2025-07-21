@@ -39,6 +39,7 @@ kotlin {
         implementation(libs.filekit)
         // Using markdown for code blocks, as richtext does not support it yet
         implementation(libs.markdown)
+        implementation(libs.markdown.code)
 //        implementation(libs.richtext)
         implementation(libs.material.kolors)
     }

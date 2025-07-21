@@ -1,11 +1,11 @@
 [versions]
 butler-name = "2.4.0-alpha"
 butler-code = "7"
-kotlin = "2.2.0"
+kotlin = "2.2.20-Beta1"
 android-minSdk = "26"
 android-compileSdk = "36"
-ksp = "2.2.0-2.0.2"
-agp = "8.11.1"
+ksp = "2.2.20-Beta1-2.0.2"
+agp = "8.12.0-rc01"
 compose = "1.8.2"
 compose-android = "1.8.3"
 ktor = "3.2.2"
@@ -32,7 +32,7 @@ multiplatformSettings = "1.3.0"
 sqlDelight = "2.1.0"
 sqlJs = "1.8.0"
 webPackPlugin = "9.1.0"
-materialKolor = "2.1.1"
+materialKolor = "2.1.1" # FIXME: stay on 2.1.1 until compose 1.9.0 is released
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -123,9 +123,10 @@ korge-audio = { module = "com.soywiz:korlibs-audio", version = "6.0.0" }
 korge-io = { module = "com.soywiz:korlibs-io", version = "6.0.2" }
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version = "0.10.0-beta04" }
 markdown = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.36.0-b02" }
+markdown-code = { module = "com.mikepenz:multiplatform-markdown-renderer-code", version = "0.36.0-b02" }
 richtext = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version = "1.0.0-rc13" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.2.0" }
-haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.8" }
+haze = { module = "dev.chrisbanes.haze:haze-materials", version = "1.6.9" }
 permissionx = { module = "com.eygraber.permissionx:compose-permissionx", version = "0.0.6" }
 material-kolors = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 material-kolors-utilities = { module = "com.materialkolor:material-color-utilities", version.ref = "materialKolor" }

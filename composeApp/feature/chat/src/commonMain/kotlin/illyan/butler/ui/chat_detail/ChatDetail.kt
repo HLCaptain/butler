@@ -11,10 +11,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,7 +43,10 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -78,6 +84,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -85,6 +93,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeBlock
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.State
@@ -94,9 +105,12 @@ import dev.chrisbanes.haze.HazeInputScale
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.SyntaxThemes
 import illyan.butler.core.ui.components.ButlerButtonDefaults
 import illyan.butler.core.ui.components.ButlerCard
 import illyan.butler.core.ui.components.ButlerCardDefaults
+import illyan.butler.core.ui.components.ButlerDropdownMenu
 import illyan.butler.core.ui.components.ButlerLargeSolidButton
 import illyan.butler.core.ui.components.ButlerMediumSolidButton
 import illyan.butler.core.ui.components.ButlerMediumTextButton
@@ -104,11 +118,8 @@ import illyan.butler.core.ui.components.ButlerOutlinedCard
 import illyan.butler.core.ui.components.ButlerSmallTextButton
 import illyan.butler.core.ui.components.ButlerTag
 import illyan.butler.core.ui.components.ButlerTextField
-import illyan.butler.core.ui.components.ButlerTooltipDefaults
 import illyan.butler.core.ui.components.MediumCircularProgressIndicator
 import illyan.butler.core.ui.components.PlainTooltipWithContent
-import illyan.butler.core.ui.components.RichTooltipWithContent
-import illyan.butler.core.ui.getTooltipGestures
 import illyan.butler.core.ui.utils.ReverseLayoutDirection
 import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.Message
@@ -574,47 +585,15 @@ fun MessageList(
                     modifier = Modifier.widthIn(max = preferredWidth),
                     contentAlignment = if (message.sender is SenderType.User) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
-                    Column {
-                        val systemString = stringResource(Res.string.system)
-                        RichTooltipWithContent(
-                            enabledGestures = getTooltipGestures(),
-                            tooltip = {
-                                val keyValueList = remember(message) {
-                                    listOf(
-                                        Res.string.message_id to message.id.toString(),
-                                        Res.string.timestamp to message.createdAt.toString(),
-                                        Res.string.sender_id to when (val sender = message.sender) {
-                                            is SenderType.User -> when (val source = sender.source) {
-                                                is Source.Server -> source.userId
-                                                is Source.Device -> source.deviceId
-                                            }.toString()
-                                            is SenderType.Ai -> sender.source.modelId
-                                            is SenderType.System -> systemString
-                                        },
-                                    )
-                                }
-                                Column {
-                                    keyValueList.forEach {
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Text(text = stringResource(it.first))
-                                            Text(text = it.second)
-                                        }
-                                    }
-                                }
-                            },
-                            colors = ButlerTooltipDefaults.richTooltipColors
-                        ) { gestureAreaModifier ->
-                            MessageItem(
-                                modifier = gestureAreaModifier.fillMaxWidth(),
-                                message = message,
-                                sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
-                                playAudio = playAudio,
-                                playingAudio = playingAudio,
-                                stopAudio = stopAudio,
-                                images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
-                            )
-                        }
-                    }
+                    MessageItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        message = message,
+                        sounds = sounds.filter { (key, _) -> message.resourceIds.contains(key) },
+                        playAudio = playAudio,
+                        playingAudio = playingAudio,
+                        stopAudio = stopAudio,
+                        images = images.filter { (key, _) -> message.resourceIds.contains(key) }.values.toList()
+                    )
                 }
             }
         }
@@ -667,6 +646,7 @@ fun SystemMessageItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessageItem(
     modifier: Modifier = Modifier,
@@ -751,6 +731,10 @@ fun MessageItem(
                                 val markdownState by rememberMarkdownState { validMarkdownContent ?: "" }
                                     .state.filter { it is State.Success }
                                     .collectAsState(State.Loading())
+                                val isDarkTheme = isSystemInDarkTheme()
+                                val highlightsBuilder = remember(isDarkTheme) {
+                                    Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
+                                }
                                 Markdown(
                                     modifier = Modifier, // Don't use the default fillMaxSize here.
                                     state = markdownState,
@@ -761,9 +745,106 @@ fun MessageItem(
                                         dividerColor = MaterialTheme.colorScheme.outline,
                                         tableBackground = MaterialTheme.colorScheme.surface,
                                     ),
-                                    typography = markdownTypography()
+                                    typography = markdownTypography(),
+                                    components = markdownComponents(
+                                        codeBlock = {
+                                            MarkdownHighlightedCodeBlock(
+                                                content = it.content,
+                                                node = it.node,
+                                                highlightsBuilder = highlightsBuilder
+                                            )
+                                        },
+                                        codeFence = {
+                                            MarkdownHighlightedCodeFence(
+                                                content = it.content,
+                                                node = it.node,
+                                                highlightsBuilder = highlightsBuilder
+                                            )
+                                        },
+                                    )
                                 )
                             }
+                        }
+                    }
+                }
+            }
+        }
+        var infoDropDownOpen by rememberSaveable { mutableStateOf(false) }
+        Row {
+            IconButton(
+                onClick = { infoDropDownOpen = !infoDropDownOpen },
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Info,
+                    contentDescription = null,
+                )
+            }
+            val clipboardManager = LocalClipboardManager.current
+            var checkShown by remember { mutableStateOf(false) }
+            LaunchedEffect(checkShown) {
+                if (checkShown) {
+                    delay(1000)
+                    checkShown = false
+                }
+            }
+            IconButton(
+                onClick = {
+                    message.content?.let {
+                        clipboardManager.setText(AnnotatedString(it))
+                        checkShown = true
+                    }
+                },
+            ) {
+                AnimatedContent(
+                    targetState = checkShown,
+                    transitionSpec = {
+                        fadeIn() + scaleIn() togetherWith fadeOut() + scaleOut()
+                    }
+                ) { isChecked ->
+                    if (isChecked) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.ContentCopy,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+            ButlerDropdownMenu(
+                expanded = infoDropDownOpen,
+                onDismissRequest = { infoDropDownOpen = !infoDropDownOpen },
+            ) {
+                val systemString = stringResource(Res.string.system)
+                val keyValueList = remember(message) {
+                    listOf(
+                        Res.string.message_id to message.id.toString(),
+                        Res.string.timestamp to message.createdAt.toString(),
+                        Res.string.sender_id to when (val sender = message.sender) {
+                            is SenderType.User -> when (val source = sender.source) {
+                                is Source.Server -> source.userId
+                                is Source.Device -> source.deviceId
+                            }.toString()
+                            is SenderType.Ai -> sender.source.modelId
+                            is SenderType.System -> systemString
+                        },
+                    )
+                }
+                Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                    keyValueList.forEach { (res, value) ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = stringResource(res),
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                            Text(
+                                text = value,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
                         }
                     }
                 }
