@@ -449,12 +449,10 @@ fun SearchOpenFAB(
                     )
                 }
             )
-        }
-        LaunchedEffect(selectedModel) {
-            if (selectedModel == null) {
-                focusRequester.requestFocus()
-            } else {
-                focusRequester.freeFocus()
+            LaunchedEffect(Unit) {
+                if (selectedModel == null) {
+                    focusRequester.requestFocus()
+                }
             }
         }
     }

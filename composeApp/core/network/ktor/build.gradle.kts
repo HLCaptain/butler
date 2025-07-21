@@ -28,7 +28,11 @@ kotlin {
         implementation(libs.openai.client)
     }
 
-    sourceSets.nonWebMain.dependencies {
+    sourceSets.androidMain.dependencies {
+        implementation(libs.ktor.client.cio)
+    }
+
+    sourceSets.jvmMain.dependencies {
         implementation(libs.ktor.client.cio)
     }
 

@@ -36,25 +36,6 @@ class HomeViewModel(
     errorRepository: ErrorRepository,
 ) : ViewModel() {
     private val errors = MutableStateFlow(emptyList<Error>())
-    init {
-        if (BuildConfig.NO_CONFIG_SETUP) {
-            viewModelScope.launch {
-                val credentials = credentialRepository.apiKeyCredentials.first()
-                if (credentials.orEmpty().none { it.providerUrl.contains("openrouter.ai") }) {
-                    // This is a 1$ API key for openrouter.ai, but I don't have any credits left
-                    // so you can only user ":free" models.
-                    // Encoded in Base64 TWICE(!) so bots are less likely to scrape it.
-                    val encodedKey = Base64.decode("YzJzdGIzSXRkakV0Wmpnd05EVm1aRFk1WkRBeVlXVmlNREV5TVdReVkyTmlZak5oTWpSbFlqSTNNREF6TmpVeFpEVXdPVEJpTVdKa09HWTNZbVpoWTJNNU1tTmlZV0l3WVE9PQ==").decodeToString()
-                    credentialRepository.upsertApiKeyCredential(
-                        ApiKeyCredential(
-                            "https://openrouter.ai/api/v1/",
-                            apiKey = Base64.decode(encodedKey).decodeToString().trim()
-                        )
-                    )
-                }
-            }
-        }
-    }
 
     val state = combine(
         authManager.signedInServers.map { it.firstOrNull() },
@@ -89,6 +70,23 @@ class HomeViewModel(
     )
 
     init {
+        if (BuildConfig.NO_CONFIG_SETUP) {
+            viewModelScope.launch {
+                val credentials = credentialRepository.apiKeyCredentials.first()
+                if (credentials.orEmpty().none { it.providerUrl.contains("openrouter.ai") }) {
+                    // This is a 1$ API key for openrouter.ai, but I don't have any credits left
+                    // so you can only user ":free" models.
+                    // Encoded in Base64 TWICE(!) so bots are less likely to scrape it.
+                    val encodedKey = Base64.decode("YzJzdGIzSXRkakV0Wmpnd05EVm1aRFk1WkRBeVlXVmlNREV5TVdReVkyTmlZak5oTWpSbFlqSTNNREF6TmpVeFpEVXdPVEJpTVdKa09HWTNZbVpoWTJNNU1tTmlZV0l3WVE9PQ==").decodeToString()
+                    credentialRepository.upsertApiKeyCredential(
+                        ApiKeyCredential(
+                            "https://openrouter.ai/api/v1/",
+                            apiKey = Base64.decode(encodedKey).decodeToString().trim()
+                        )
+                    )
+                }
+            }
+        }
         viewModelScope.launch {
             errorRepository.errorEventFlow.collect { error ->
                 Napier.v { "Error event received: $error" }

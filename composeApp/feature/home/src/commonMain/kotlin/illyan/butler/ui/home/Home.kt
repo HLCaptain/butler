@@ -253,8 +253,8 @@ fun Home(
                                     }
                                 }
                             } else {
-                                navController.navigate(HomeDestination) {
-                                    popUpTo(HomeDestination) { inclusive = true }
+                                navController.navigate(OnboardDestination(HomeDestinations.Home.ordinal)) {
+                                    popUpTo(OnboardDestination::class) { inclusive = true }
                                     launchSingleTop = true
                                 }
                             }

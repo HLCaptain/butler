@@ -97,7 +97,6 @@ import illyan.butler.shared.model.auth.ApiKeyCredential
 import illyan.butler.shared.model.chat.Source
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.HttpClientEngineConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.io.Buffer
@@ -119,8 +118,7 @@ class KtorHttpClientFactory(
     @ExperimentalSerializationApi
     fun getBySource(source: Source.Server): HttpClient {
         return hashMap.getOrPut(source) {
-            HttpClient {
-                setupPlatformHttpClient()
+            createPlatformHttpClient {
                 setupClient(
                     credentialDataSource = credentialDataSource,
                     errorRepository = errorRepository,
@@ -132,7 +130,7 @@ class KtorHttpClientFactory(
     }
 }
 
-expect fun<T : HttpClientEngineConfig> HttpClientConfig<T>.setupPlatformHttpClient()
+expect fun createPlatformHttpClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
 @Single
 class KtorUnauthorizedHttpClientFactory(
@@ -146,8 +144,7 @@ class KtorUnauthorizedHttpClientFactory(
     @ExperimentalSerializationApi
     fun getByUrl(endpoint: String): HttpClient {
         return hashMap.getOrPut(endpoint) {
-            HttpClient {
-                setupPlatformHttpClient()
+            createPlatformHttpClient {
                 setupClient(
                     credentialDataSource = credentialDataSource,
                     errorRepository = errorRepository,
@@ -1131,9 +1128,7 @@ fun provideOpenAIClient(
         config = OpenAIConfig(
             token = credential.apiKey,
             host = OpenAIHost(baseUrl = credential.providerUrl + if (credential.providerUrl.endsWith("/")) "" else "/"),
-            engine = HttpClient {
-                setupPlatformHttpClient()
-            }.engine
+            engine = createPlatformHttpClient {}.engine
         )
     )
 }
