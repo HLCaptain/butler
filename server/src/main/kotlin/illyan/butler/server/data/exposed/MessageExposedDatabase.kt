@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.and
@@ -29,8 +28,13 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.r2dbc.update
 import org.koin.core.annotation.Single
-import java.util.UUID
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Single
 class MessageExposedDatabase(
     private val database: R2dbcDatabase,
@@ -44,17 +48,17 @@ class MessageExposedDatabase(
             }
         }
     }
-    override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
+    override suspend fun sendMessage(userId: Uuid, message: MessageDto): MessageDto {
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
-            val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq UUID.fromString(message.chatId))
+            val userUuid = userId.toJavaUuid()
+            val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq message.chatId.toJavaUuid())
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
-            val nowMillis = Clock.System.now().toEpochMilliseconds()
+            val nowMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val newMessageId = if (isUserInChat) {
                 Messages.insertAndGetId {
                     it[time] = nowMillis
-                    it[senderId] = userId
-                    it[chatId] = entityId(message.chatId, Chats)
+                    it[sender] = message.sender
+                    it[chatId] = entityId(message.chatId.toString(), Chats)
                     it[this.message] = message.content
                 }
             } else {
@@ -64,18 +68,18 @@ class MessageExposedDatabase(
             // Insert content urls id to MessageContentUrls table
             MessageResources.batchInsert(message.resourceIds) {
                 this[MessageResources.messageId] = newMessageId
-                this[MessageResources.resourceId] = UUID.fromString(it)
+                this[MessageResources.resourceId] = it.toJavaUuid()
             }
-            message.copy(id = newMessageId.value.toString(), time = nowMillis)
+            message.copy(id = newMessageId.value.toKotlinUuid(), time = nowMillis)
         }
     }
 
-    override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
+    override suspend fun editMessage(userId: Uuid, message: MessageDto): MessageDto {
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
-            val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq UUID.fromString(message.chatId))
+            val userUuid = userId.toJavaUuid()
+            val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq message.chatId.toJavaUuid())
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
-            val messageUuid = UUID.fromString(message.id)
+            val messageUuid = message.id.toJavaUuid()
             if (isUserInChat) {
                 Messages.update({ Messages.id eq messageUuid }) { it[this.message] = message.content }
             } else {
@@ -86,43 +90,43 @@ class MessageExposedDatabase(
             // Insert content urls id to MessageContentUrls table
             val currentMessageResources = MessageResources.selectAll().where(MessageResources.messageId eq messageUuid).toList()
             val removedResources = currentMessageResources.filter { resource ->
-                !message.resourceIds.contains(resource[MessageResources.resourceId].value.toString())
+                !message.resourceIds.contains(resource[MessageResources.resourceId].value.toKotlinUuid())
             }
             removedResources.forEach { resource ->
                 MessageResources.deleteWhere { (messageId eq messageUuid) and (resourceId eq resource[resourceId]) }
             }
             val addedResources = message.resourceIds.filter { id ->
-                currentMessageResources.none { it[MessageResources.resourceId].value.toString() == id }
+                currentMessageResources.none { it[MessageResources.resourceId].value.toKotlinUuid() == id }
             }
             MessageResources.batchInsert(addedResources) {
                 this[MessageResources.messageId] = messageUuid
-                this[MessageResources.resourceId] = UUID.fromString(it)
+                this[MessageResources.resourceId] = it.toJavaUuid()
             }
             message
         }
     }
 
-    override suspend fun deleteMessage(userId: String, chatId: String, messageId: String): Boolean {
+    override suspend fun deleteMessage(userId: Uuid, chatId: Uuid, messageId: Uuid): Boolean {
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
-            val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq UUID.fromString(chatId))
+            val userUuid = userId.toJavaUuid()
+            val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq chatId.toJavaUuid())
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
                 // Deleted more than 0 rows
-                val messageUuid = UUID.fromString(messageId)
-                val chatUuid = UUID.fromString(chatId)
+                val messageUuid = messageId.toJavaUuid()
+                val chatUuid = chatId.toJavaUuid()
                 MessageResources.deleteWhere { MessageResources.messageId eq messageUuid }
-                Messages.deleteWhere { (id eq messageUuid) and (Messages.chatId eq chatUuid) and (senderId eq userId) } > 0
+                Messages.deleteWhere { (id eq messageUuid) and (Messages.chatId eq chatUuid) } > 0
             } else {
                 throw ApiException(StatusCode.ChatNotFound)
             }
         }
     }
 
-    override suspend fun getPreviousMessages(userId: String, chatId: String, limit: Int, timestamp: Long): List<MessageDto> {
+    override suspend fun getPreviousMessages(userId: Uuid, chatId: Uuid, limit: Int, timestamp: Long): List<MessageDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
-            val chatUuid = UUID.fromString(chatId)
+            val userUuid = userId.toJavaUuid()
+            val chatUuid = chatId.toJavaUuid()
             val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq chatUuid)
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
@@ -139,10 +143,10 @@ class MessageExposedDatabase(
         }
     }
 
-    override suspend fun getMessages(userId: String, chatId: String, limit: Int, offset: Int): List<MessageDto> {
+    override suspend fun getMessages(userId: Uuid, chatId: Uuid, limit: Int, offset: Int): List<MessageDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
-            val chatUuid = UUID.fromString(chatId)
+            val userUuid = userId.toJavaUuid()
+            val chatUuid = chatId.toJavaUuid()
             val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq chatUuid)
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
@@ -158,10 +162,10 @@ class MessageExposedDatabase(
         }
     }
 
-    override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
+    override suspend fun getMessages(userId: Uuid, chatId: Uuid): List<MessageDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
-            val chatUuid = UUID.fromString(chatId)
+            val userUuid = userId.toJavaUuid()
+            val chatUuid = chatId.toJavaUuid()
             val userChat = (Chats.ownerId eq userUuid) and (Chats.id eq chatUuid)
             val isUserInChat = Chats.selectAll().where(userChat).count() > 0
             if (isUserInChat) {
@@ -176,7 +180,7 @@ class MessageExposedDatabase(
         }
     }
 
-    override fun getChangedMessagesAffectingUser(userId: String): Flow<List<MessageDto>> {
+    override fun getChangedMessagesAffectingUser(userId: Uuid): Flow<List<MessageDto>> {
         return flow {
             var previousMessages: Set<MessageDto>? = null
             while (true) {
@@ -191,32 +195,32 @@ class MessageExposedDatabase(
         }
     }
 
-    override suspend fun getMessages(userId: String): List<MessageDto> {
+    override suspend fun getMessages(userId: Uuid): List<MessageDto> {
         return suspendTransaction(dispatcher, db = database) {
             // Get all messages related to the user (including messages from chats the user is a member of)
-            val userChatIds = Chats.selectAll().where(Chats.ownerId eq UUID.fromString(userId)).map { it[Chats.id] }.toList()
+            val userChatIds = Chats.selectAll().where(Chats.ownerId eq userId.toJavaUuid()).map { it[Chats.id] }.toList()
             val messages = Messages.selectAll().where { Messages.chatId inList userChatIds }
             messages.map { it.toMessageDto() }.toList()
         }
     }
 
-    override fun getPreviousMessagesFlow(userId: String, chatId: String, limit: Int, timestamp: Long): Flow<List<MessageDto>> = flow {
+    override fun getPreviousMessagesFlow(userId: Uuid, chatId: Uuid, limit: Int, timestamp: Long): Flow<List<MessageDto>> = flow {
         emit(getPreviousMessages(userId, chatId, limit, timestamp))
     }
 
-    override fun getMessagesFlow(userId: String, chatId: String, limit: Int, offset: Int): Flow<List<MessageDto>> = flow {
+    override fun getMessagesFlow(userId: Uuid, chatId: Uuid, limit: Int, offset: Int): Flow<List<MessageDto>> = flow {
         emit(getMessages(userId, chatId, limit, offset))
     }
 
-    override fun getMessagesFlow(userId: String, chatId: String): Flow<List<MessageDto>> = flow {
+    override fun getMessagesFlow(userId: Uuid, chatId: Uuid): Flow<List<MessageDto>> = flow {
         emit(getMessages(userId, chatId))
     }
 
-    override fun getMessagesFlow(userId: String): Flow<List<MessageDto>> = flow {
+    override fun getMessagesFlow(userId: Uuid): Flow<List<MessageDto>> = flow {
         emit(getMessages(userId))
     }
 
-    override fun getChangedMessagesAffectingChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+    override fun getChangedMessagesAffectingChat(userId: Uuid, chatId: Uuid): Flow<List<MessageDto>> {
         // This is a simple implementation, a more robust one would listen to database changes.
         return flow {
             var previousMessages: Set<MessageDto>? = null
@@ -235,15 +239,16 @@ class MessageExposedDatabase(
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 suspend fun ResultRow.toMessageDto() = MessageDto(
-    id = this[Messages.id].value.toString(),
-    senderId = this[Messages.senderId],
+    id = this[Messages.id].value.toKotlinUuid(),
+    sender = this[Messages.sender],
     content = this[Messages.message],
     time = this[Messages.time],
-    chatId = this[Messages.chatId].value.toString(),
+    chatId = this[Messages.chatId].value.toKotlinUuid(),
     resourceIds = MessageResources
         .selectAll()
         .where(MessageResources.messageId eq this[Messages.id])
-        .map { it[MessageResources.resourceId].value.toString() }
+        .map { it[MessageResources.resourceId].value.toKotlinUuid() }
         .toList()
 )

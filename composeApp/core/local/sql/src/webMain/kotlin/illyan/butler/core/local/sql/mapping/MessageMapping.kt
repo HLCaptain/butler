@@ -1,4 +1,4 @@
-package illyan.butler.core.local.sqldelight.mapping
+package illyan.butler.core.local.sql.mapping
 
 import illyan.butler.core.local.sqldelight.Messages
 import illyan.butler.domain.model.Message

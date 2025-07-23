@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.and
@@ -32,8 +31,14 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.r2dbc.update
 import org.koin.core.annotation.Single
-import java.util.UUID
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 @Single
 class ChatExposedDatabase(
     private val database: R2dbcDatabase,
@@ -49,13 +54,13 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun getChat(userId: String, chatId: String): ChatDto {
+    override suspend fun getChat(userId: Uuid, chatId: Uuid): ChatDto {
         return suspendTransaction(dispatcher, db = database) {
             val userChat = Chats.selectAll()
-                .where { Chats.id eq UUID.fromString(chatId) }
-            val isUserInChat = userChat.map { it[Chats.ownerId] }.first().value.toString() == userId
+                .where { Chats.id eq chatId.toJavaUuid() }
+            val isUserInChat = userChat.map { it[Chats.ownerId] }.first().value.toKotlinUuid() == userId
             if (isUserInChat) {
-                val chatUuid = UUID.fromString(chatId)
+                val chatUuid = chatId.toJavaUuid()
                 Chats.selectAll().where(Chats.id eq chatUuid).first().toChatDto().also {
                     Napier.d("Returning chat $it")
                 }
@@ -65,33 +70,33 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun createChat(userId: String, chat: ChatDto): ChatDto {
+    override suspend fun createChat(userId: Uuid, chat: ChatDto): ChatDto {
         Napier.d("Creating chat $chat")
         return suspendTransaction(dispatcher, db = database) {
-            val createdMillis = Clock.System.now().toEpochMilliseconds()
+            val createdMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val chatId = Chats.insertAndGetId {
                 it[name] = chat.name
                 it[created] = createdMillis
                 it[models] = chat.models
                 it[summary] = chat.summary
-                it[ownerId] = UUID.fromString(userId)
+                it[ownerId] = userId.toJavaUuid()
             }
             chat.copy(
-                id = chatId.value.toString(),
-                createdAt = createdMillis,
+                id = chatId.value.toKotlinUuid(),
+                createdAt = Instant.fromEpochMilliseconds(createdMillis),
                 ownerId = userId
             )
         }
     }
 
-    override suspend fun editChat(userId: String, chat: ChatDto): ChatDto {
+    override suspend fun editChat(userId: Uuid, chat: ChatDto): ChatDto {
         return suspendTransaction(dispatcher, db = database) {
-            val chatUuid = UUID.fromString(chat.id)
+            val chatUuid = chat.id
             val userChat = Chats.selectAll()
-                .where { Chats.id eq chatUuid }
-            val isUserInChat = userChat.map { it[Chats.ownerId] }.first().value.toString() == userId
+                .where { Chats.id eq chatUuid.toJavaUuid() }
+            val isUserInChat = userChat.map { it[Chats.ownerId] }.first().value.toKotlinUuid() == userId
             if (isUserInChat) {
-                Chats.update({ Chats.id eq chatUuid }) {
+                Chats.update({ Chats.id eq chatUuid.toJavaUuid() }) {
                     it[name] = chat.name
                     it[summary] = chat.summary
                     it[models] = chat.models
@@ -103,12 +108,12 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun deleteChat(userId: String, chatId: String): Boolean {
+    override suspend fun deleteChat(userId: Uuid, chatId: Uuid): Boolean {
         return suspendTransaction(dispatcher, db = database) {
-            val chatUuid = UUID.fromString(chatId)
+            val chatUuid = chatId.toJavaUuid()
             val userChat = Chats.selectAll()
                 .where { Chats.id eq chatUuid }
-            val isUserInChat = userChat.map { it[Chats.ownerId] }.first().value.toString() == userId
+            val isUserInChat = userChat.map { it[Chats.ownerId] }.first().value.toKotlinUuid() == userId
             if (isUserInChat) {
                 Chats.deleteWhere { id eq chatUuid } > 0 // Deleted more than 0 rows
             } else {
@@ -117,9 +122,9 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun getChats(userId: String, fromDate: Long, toDate: Long): List<ChatDto> {
+    override suspend fun getChats(userId: Uuid, fromDate: Long, toDate: Long): List<ChatDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userChatIds = Chats.selectAll().where { Chats.ownerId eq UUID.fromString(userId) }.map { it[Chats.id] }.toList()
+            val userChatIds = Chats.selectAll().where { Chats.ownerId eq userId.toJavaUuid() }.map { it[Chats.id] }.toList()
 
             val relevantChatIds = Messages.selectAll().where {
                 (Messages.chatId inList userChatIds) and
@@ -137,9 +142,9 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
+    override suspend fun getChats(userId: Uuid, limit: Int, offset: Int): List<ChatDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq UUID.fromString(userId) }
+            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq userId.toJavaUuid() }
             val userChatReferences = userChatQuery.map { it[Chats.id] }.toList()
             val userChats = userChatQuery.map { it.toChatDto() }.toList()
 
@@ -150,19 +155,19 @@ class ChatExposedDatabase(
                 .where { (Messages.chatId inList userChatReferences) }
                 .toList()
                 .sortedBy { Messages.time }
-                .associate { it[Messages.chatId].value.toString() to it[Messages.time] }
+                .associate { it[Messages.chatId].value.toKotlinUuid() to it[Messages.time] }
 
             val chats = userChats
-                .sortedBy { chatAndLastMessageTime[it.id] ?: it.createdAt }
+                .sortedBy { chatAndLastMessageTime[it.id] ?: it.createdAt.toEpochMilliseconds() }
                 .drop(offset)
                 .take(limit)
             chats
         }
     }
 
-    override suspend fun getChats(userId: String): List<ChatDto> {
+    override suspend fun getChats(userId: Uuid): List<ChatDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq UUID.fromString(userId) }
+            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq userId.toJavaUuid() }
             val userChatReferences = userChatQuery.map { it[Chats.id] }.toList()
 
             val chats = Chats.selectAll().where { Chats.id inList userChatReferences }.map { chatRow ->
@@ -172,9 +177,9 @@ class ChatExposedDatabase(
         }
     }
 
-    override suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto> {
+    override suspend fun getPreviousChats(userId: Uuid, limit: Int, timestamp: Long): List<ChatDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq UUID.fromString(userId) }
+            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq userId.toJavaUuid() }
             val userChatReferences = userChatQuery.map { it[Chats.id] }.toList()
 
             val lastMessageOfChat = Messages
@@ -183,22 +188,22 @@ class ChatExposedDatabase(
                 .where { (Messages.chatId inList userChatReferences) }
                 .toList()
                 .sortedBy { Messages.time }
-                .associate { it[Messages.chatId].value.toString() to it[Messages.time] }
+                .associate { it[Messages.chatId].value.toKotlinUuid() to it[Messages.time] }
 
             val chats = Chats.selectAll()
                 .where {
                     (Chats.id inList userChatReferences) or ((Chats.id notInList userChatReferences) and (Chats.created lessEq timestamp))
                 }.map { chatRow -> chatRow.toChatDto() }
                 .toList()
-                .sortedByDescending { lastMessageOfChat[it.id] ?: it.createdAt }
+                .sortedByDescending { lastMessageOfChat[it.id] ?: it.createdAt.toEpochMilliseconds() }
                 .take(limit)
             chats
         }
     }
 
-    override suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
+    override suspend fun getPreviousChats(userId: Uuid, limit: Int, offset: Int): List<ChatDto> {
         return suspendTransaction(dispatcher, db = database) {
-            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq UUID.fromString(userId) }
+            val userChatQuery = Chats.selectAll().where { Chats.ownerId eq userId.toJavaUuid() }
             val userChatReferences = userChatQuery.map { it[Chats.id] }.toList()
             val userChats = userChatQuery.map { it.toChatDto() }.toList()
 
@@ -209,49 +214,49 @@ class ChatExposedDatabase(
                 .where { (Messages.chatId inList userChatReferences) }
                 .toList()
                 .sortedBy { Messages.time }
-                .associate { it[Messages.chatId].value.toString() to it[Messages.time] }
+                .associate { it[Messages.chatId].value.toKotlinUuid() to it[Messages.time] }
 
             val chats = userChats
-                .sortedByDescending { chatAndLastMessageTime[it.id] ?: it.createdAt }
+                .sortedByDescending { chatAndLastMessageTime[it.id] ?: it.createdAt.toEpochMilliseconds() }
                 .drop(offset)
                 .take(limit)
             chats
         }
     }
 
-    override fun getChatFlow(userId: String, chatId: String): Flow<ChatDto> = flow {
+    override fun getChatFlow(userId: Uuid, chatId: Uuid): Flow<ChatDto> = flow {
         emit(getChat(userId, chatId))
     }
 
-    override fun getChatsLastMonthFlow(userId: String): Flow<List<ChatDto>> = flow {
+    override fun getChatsLastMonthFlow(userId: Uuid): Flow<List<ChatDto>> = flow {
         emit(getChatsLastMonth(userId))
     }
 
-    override fun getChatsLastWeekFlow(userId: String): Flow<List<ChatDto>> = flow {
+    override fun getChatsLastWeekFlow(userId: Uuid): Flow<List<ChatDto>> = flow {
         emit(getChatsLastWeek(userId))
     }
 
-    override fun getChatsFlow(userId: String): Flow<List<ChatDto>> = flow {
+    override fun getChatsFlow(userId: Uuid): Flow<List<ChatDto>> = flow {
         emit(getChats(userId))
     }
 
-    override fun getChatsFlow(userId: String, limit: Int, offset: Int): Flow<List<ChatDto>> = flow {
+    override fun getChatsFlow(userId: Uuid, limit: Int, offset: Int): Flow<List<ChatDto>> = flow {
         emit(getChats(userId, limit, offset))
     }
 
-    override fun getChatsFlow(userId: String, fromDate: Long, toDate: Long): Flow<List<ChatDto>> = flow {
+    override fun getChatsFlow(userId: Uuid, fromDate: Long, toDate: Long): Flow<List<ChatDto>> = flow {
         emit(getChats(userId, fromDate, toDate))
     }
 
-    override fun getPreviousChatsFlow(userId: String, limit: Int, timestamp: Long): Flow<List<ChatDto>> = flow {
+    override fun getPreviousChatsFlow(userId: Uuid, limit: Int, timestamp: Long): Flow<List<ChatDto>> = flow {
         emit(getPreviousChats(userId, limit, timestamp))
     }
 
-    override fun getPreviousChatsFlow(userId: String, limit: Int, offset: Int): Flow<List<ChatDto>> = flow {
+    override fun getPreviousChatsFlow(userId: Uuid, limit: Int, offset: Int): Flow<List<ChatDto>> = flow {
         emit(getPreviousChats(userId, limit, offset))
     }
 
-    override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
+    override fun getChangedChatsAffectingUser(userId: Uuid): Flow<List<ChatDto>> {
         // This is a simple implementation, a more robust one would listen to database changes.
         return flow {
             var previousChats: Set<ChatDto>? = null
@@ -269,7 +274,7 @@ class ChatExposedDatabase(
         }
     }
 
-    override fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto> {
+    override fun getChangesFromChat(userId: Uuid, chatId: Uuid): Flow<ChatDto> {
         // This is a simple implementation, a more robust one would listen to database changes.
         return flow {
             var previousChat: ChatDto? = null
@@ -285,10 +290,10 @@ class ChatExposedDatabase(
     }
 
     private fun ResultRow.toChatDto() = ChatDto(
-        id = this[Chats.id].value.toString(),
-        createdAt = this[Chats.created],
+        id = this[Chats.id].value.toKotlinUuid(),
+        createdAt = Instant.fromEpochMilliseconds(this[Chats.created]),
         name = this[Chats.name],
-        ownerId = this[Chats.ownerId].value.toString(),
+        ownerId = this[Chats.ownerId].value.toKotlinUuid(),
         models = this[Chats.models],
         summary = this[Chats.summary]
     )

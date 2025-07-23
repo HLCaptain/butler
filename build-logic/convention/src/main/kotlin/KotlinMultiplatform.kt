@@ -37,6 +37,12 @@ internal fun configureKotlinMultiplatform(
                 group("nonMobile")
                 group("ios")
             }
+
+            group("nonIos") {
+                withJvm()
+                withAndroidTarget()
+                group("web")
+            }
         }
     }
 

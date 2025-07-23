@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.server.endpoints
 
 import illyan.butler.server.AppConfig
@@ -22,6 +24,7 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
@@ -33,6 +36,8 @@ import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.ktor.ext.inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalSerializationApi::class)
 private suspend inline fun <reified T : Any> DefaultWebSocketServerSession.sendSerialized(data: T) {
@@ -68,7 +73,7 @@ fun Route.chatRoute() {
         route("/messages") {
             get {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-                call.respond(chatService.getMessages(userId))
+                call.respond(chatService.getMessages(Uuid.parse(userId)))
             }
         }
 
@@ -78,16 +83,16 @@ fun Route.chatRoute() {
                 val limit = call.parameters["limit"]?.toInt()
                 val timestamp = call.parameters["timestamp"]?.toLong()
                 call.respond(HttpStatusCode.OK, if (limit == null || timestamp == null) {
-                    chatService.getChats(userId)
+                    chatService.getChats(Uuid.parse(userId))
                 } else {
-                    chatService.getPreviousChats(userId, limit, timestamp)
+                    chatService.getPreviousChats(Uuid.parse(userId), limit, timestamp)
                 })
             }
 
             post {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                 val chat = call.receive<ChatDto>()
-                val result = chatService.createChat(userId, chat)
+                val result = chatService.createChat(Uuid.parse(userId), chat)
                 call.respond(HttpStatusCode.Created, result)
             }
 
@@ -95,7 +100,7 @@ fun Route.chatRoute() {
                 get {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                    val result = chatService.getChat(userId, chatId)
+                    val result = chatService.getChat(Uuid.parse(userId), Uuid.parse(chatId))
                     call.respond(HttpStatusCode.OK, result)
                 }
 
@@ -109,13 +114,23 @@ fun Route.chatRoute() {
                     }
 
                     launch {
-                        chatService.getChangesFromChat(userId, chatId).collectLatest { chatDto ->
+                        chatService.getChangesFromChat(Uuid.parse(userId), Uuid.parse(chatId)).collectLatest { chatDto ->
                             sendSerialized(chatDto)
                         }
                     }
 
                     for (frame in incoming) {
                         // Handle incoming frames if necessary, e.g., client acknowledging receipt or sending commands
+                        if (frame is Frame.Text) {
+                            val text = frame.readText()
+                            val chatDto = tryReceiveDeserialized<ChatDto>(text)
+                            if (chatDto != null && chatDto.id == Uuid.parse(chatId)) {
+                                // Ensure the received chat belongs to the correct user and chat
+                                chatService.editChat(Uuid.parse(userId), chatDto)
+                            } else {
+                                // Log or handle chats for wrong user/chat
+                            }
+                        }
                     }
                 }
 
@@ -123,15 +138,15 @@ fun Route.chatRoute() {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
                     val chat = call.receive<ChatDto>()
-                    require(chat.id == chatId) { "Chat id must match path parameter" }
-                    val result = chatService.editChat(userId, chat)
+                    require(chat.id == Uuid.parse(chatId)) { "Chat id must match path parameter" }
+                    val result = chatService.editChat(Uuid.parse(userId), chat)
                     call.respond(HttpStatusCode.OK, result)
                 }
 
                 delete {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val chatId = call.parameters["chatId"]?.trim().orEmpty()
-                    val result = chatService.deleteChat(userId, chatId)
+                    val result = chatService.deleteChat(Uuid.parse(userId), Uuid.parse(chatId))
                     call.respond(HttpStatusCode.OK, result)
                 }
 
@@ -144,13 +159,13 @@ fun Route.chatRoute() {
                         val offset = call.parameters["offset"]?.toInt()
                         call.respond(HttpStatusCode.OK, if (limit != null) {
                             if (offset != null) {
-                                chatService.getMessages(userId, chatId, limit, offset)
+                                chatService.getMessages(Uuid.parse(userId), Uuid.parse(chatId), limit, offset)
                             } else if (timestamp != null) {
-                                chatService.getPreviousMessages(userId, chatId, limit, timestamp)
+                                chatService.getPreviousMessages(Uuid.parse(userId), Uuid.parse(chatId), limit, timestamp)
                             } else {
-                                chatService.getMessages(userId, chatId)
+                                chatService.getMessages(Uuid.parse(userId), Uuid.parse(chatId))
                             }
-                        } else chatService.getMessages(userId, chatId))
+                        } else chatService.getMessages(Uuid.parse(userId), Uuid.parse(chatId)))
                     }
 
                     webSocket {
@@ -158,18 +173,23 @@ fun Route.chatRoute() {
                         val chatId = call.parameters["chatId"]?.trim().orEmpty()
 
                         if (userId.isEmpty() || chatId.isEmpty()) {
-                            close(io.ktor.websocket.CloseReason(io.ktor.websocket.CloseReason.Codes.VIOLATED_POLICY, "User ID and Chat ID must be provided"))
+                            close(
+                                CloseReason(
+                                    CloseReason.Codes.VIOLATED_POLICY,
+                                    "User ID and Chat ID must be provided"
+                                )
+                            )
                             return@webSocket
                         }
 
                         // Launch a coroutine to send all messages history once and then listen for new messages
                         launch {
                             // Send all current messages once upon connection
-                            val initialMessages = chatService.getMessages(userId, chatId)
+                            val initialMessages = chatService.getMessages(Uuid.parse(userId), Uuid.parse(chatId))
                             sendSerialized(initialMessages)
 
                             // Then, collect and send new/changed messages
-                            chatService.getChangedMessagesByChat(userId, chatId).collectLatest { messages ->
+                            chatService.getChangedMessagesByChat(Uuid.parse(userId), Uuid.parse(chatId)).collectLatest { messages ->
                                 sendSerialized(messages)
                             }
                         }
@@ -181,8 +201,8 @@ fun Route.chatRoute() {
                                 val messageDto = tryReceiveDeserialized<MessageDto>(text)
                                 if (messageDto != null) {
                                     // Ensure the received message belongs to the correct chat and user before processing
-                                    if (messageDto.chatId == chatId) {
-                                        chatService.sendMessage(userId, messageDto.copy(senderId = userId))
+                                    if (messageDto.chatId == Uuid.parse(chatId)) {
+                                        chatService.sendMessage(Uuid.parse(userId), messageDto)
                                         // The flow above will pick up the new message and broadcast it
                                     } else {
                                         // Log or handle messages for wrong chat
@@ -195,7 +215,7 @@ fun Route.chatRoute() {
                     post {
                         val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                         val message = call.receive<MessageDto>()
-                        val result = chatService.sendMessage(userId, message)
+                        val result = chatService.sendMessage(Uuid.parse(userId), message)
                         call.respond(HttpStatusCode.Created, result)
                     }
 
@@ -204,8 +224,8 @@ fun Route.chatRoute() {
                             val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                             val message = call.receive<MessageDto>()
                             val messageId = call.parameters["messageId"]?.trim().orEmpty()
-                            require(message.id == messageId) { "Message id must match path parameter" }
-                            val result = chatService.editMessage(userId, message)
+                            require(message.id == Uuid.parse(messageId)) { "Message id must match path parameter" }
+                            val result = chatService.editMessage(Uuid.parse(userId), message)
                             call.respond(HttpStatusCode.OK, result)
                         }
 
@@ -243,12 +263,12 @@ fun Route.chatRoute() {
                             val chatId = call.parameters["chatId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                             val messageId = call.parameters["messageId"]
                             val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-                            val chats = chatService.getChats(userId)
+                            val chats = chatService.getChats(Uuid.parse(userId))
 //                            call.respond(
 //                                llmService.answerChat(
 //                                    chats.first { it.id == chatId },
 //                                    chats.filter { it.id != chatId },
-//                                    chatService.getMessages(userId, chatId).first { it.id == messageId }
+//                                    chatService.getMessages(Uuid.parse(userId), Uuid.parse(chatId)).first { it.id == messageId }
 //                                )
 //                            )
                         }
@@ -257,7 +277,7 @@ fun Route.chatRoute() {
                             val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                             val chatId = call.parameters["chatId"]?.trim().orEmpty()
                             val messageId = call.parameters["messageId"]?.trim().orEmpty()
-                            val result = chatService.deleteMessage(userId, chatId, messageId)
+                            val result = chatService.deleteMessage(Uuid.parse(userId), Uuid.parse(chatId), Uuid.parse(messageId))
                             call.respond(HttpStatusCode.OK, result)
                         }
                     }
@@ -268,20 +288,20 @@ fun Route.chatRoute() {
         route("/resources") {
             get {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
-                call.respond(HttpStatusCode.OK, chatService.getResources(userId))
+                call.respond(HttpStatusCode.OK, chatService.getResources(Uuid.parse(userId)))
             }
             route("/{resourceId}") {
                 get {
                     val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                     val resourceId = call.parameters["resourceId"]?.trim().orEmpty()
-                    call.respond(HttpStatusCode.OK, chatService.getResource(userId, resourceId))
+                    call.respond(HttpStatusCode.OK, chatService.getResource(Uuid.parse(userId), Uuid.parse(resourceId)))
                 }
             }
 
             post {
                 val userId = call.principal<JWTPrincipal>()?.payload?.getClaim(Claim.USER_ID).toString().trim('\"', ' ')
                 val resource = call.receive<ResourceDto>()
-                call.respond(HttpStatusCode.Created, chatService.createResource(userId, resource))
+                call.respond(HttpStatusCode.Created, chatService.createResource(resource))
             }
         }
     }

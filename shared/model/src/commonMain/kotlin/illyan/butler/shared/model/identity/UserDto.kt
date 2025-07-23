@@ -17,6 +17,6 @@ data class UserDto(
     val fullName: String? = null,
     val photoUrl: String? = null,
     val address: AddressDto? = null,
-    val filters: Set<FilterOption>,
-    val customPrompts: List<PromptConfiguration> = emptyList(),
+    val filters: Set<FilterOption> = emptySet(),
+    val promptConfigurations: List<PromptConfiguration> = emptyList(),
 )

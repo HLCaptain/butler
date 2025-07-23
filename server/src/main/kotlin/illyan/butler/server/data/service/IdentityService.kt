@@ -12,10 +12,14 @@ import illyan.butler.shared.model.authenticate.TokenType
 import illyan.butler.shared.model.identity.UserDto
 import illyan.butler.shared.model.response.UserTokensResponse
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Clock
-import kotlinx.datetime.toJavaInstant
 import org.koin.core.annotation.Single
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.toJavaInstant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Single
 class IdentityService(
     private val userDatabase: UserDatabase
@@ -38,7 +42,7 @@ class IdentityService(
     }
 
     fun generateUserTokens(
-        userId: String,
+        userId: Uuid,
         tokenConfiguration: TokenConfiguration
     ) = UserTokensResponse(
         userId,
@@ -49,18 +53,18 @@ class IdentityService(
     )
 
     private fun generateToken(
-        userId: String,
+        userId: Uuid,
         tokenConfiguration: TokenConfiguration,
         tokenType: TokenType
     ) = JWT.create()
         .withIssuer(tokenConfiguration.issuer)
         .withAudience(tokenConfiguration.audience)
         .withExpiresAt((Clock.System.now() + tokenConfiguration.accessTokenExpireDuration).toJavaInstant())
-        .withClaim(Claim.USER_ID, userId)
+        .withClaim(Claim.USER_ID, userId.toString())
         .withClaim(Claim.TOKEN_TYPE, tokenType.name)
         .sign(Algorithm.HMAC256(tokenConfiguration.secret))
 
-    override suspend fun getUser(userId: String): UserDto {
+    override suspend fun getUser(userId: Uuid): UserDto {
         return userDatabase.getUser(userId)
     }
 
@@ -76,17 +80,17 @@ class IdentityService(
         userDatabase.updateUser(user)
     }
 
-    override suspend fun deleteUser(userId: String) {
+    override suspend fun deleteUser(userId: Uuid) {
         userDatabase.deleteUser(userId)
     }
 
-    override fun getUserChanges(userId: String): Flow<UserDto> {
+    override fun getUserChanges(userId: Uuid): Flow<UserDto> {
         TODO("Not yet implemented")
     }
 
     suspend fun registerUser(email: String, password: String): UserDto {
-        return createUser(UserDto(null, email)).also {
-            userDatabase.upsertPasswordForUser(it.id!!, password)
+        return createUser(UserDto(Uuid.random(), email)).also {
+            userDatabase.upsertPasswordForUser(it.id, password)
         }
     }
 }

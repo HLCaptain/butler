@@ -1,4 +1,4 @@
-package illyan.butler.core.local.sqldelight
+package illyan.butler.core.local.sql
 
 import app.cash.sqldelight.Query
 import app.cash.sqldelight.SuspendingTransacter

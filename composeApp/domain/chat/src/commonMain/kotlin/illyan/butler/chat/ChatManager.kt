@@ -15,8 +15,8 @@ import illyan.butler.domain.model.ErrorCode
 import illyan.butler.domain.model.Message
 import illyan.butler.domain.model.Resource
 import illyan.butler.settings.SettingsManager
-import illyan.butler.shared.llm.LlmService
 import illyan.butler.shared.llm.SystemPromptBuilder
+import illyan.butler.shared.llm.createLlmService
 import illyan.butler.shared.model.chat.AiSource
 import illyan.butler.shared.model.chat.Capability
 import illyan.butler.shared.model.chat.SenderType
@@ -82,7 +82,7 @@ class ChatManager(
 
     private val deviceSource = authManager.clientId.map { it?.let { Source.Device(it) } }
 
-    private val llmService = LlmService(
+    private val llmService = createLlmService(
         coroutineScopeIO = coroutineScopeIO,
         getResource = { resourceId, _ ->
             resourceRepository.getResourceFlow(
@@ -90,7 +90,7 @@ class ChatManager(
                 deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null")
             ).filterNotNull().first().toNetworkModel()
         },
-        createResource = { chatId, sender, resource ->
+        createResource = { userId, chatId, sender, resource ->
             val deviceSource = deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null")
             val id = resourceRepository.upsert(resource.toDomainModel(deviceSource))
             sendMessageWithResourceIds(
@@ -103,7 +103,7 @@ class ChatManager(
             )
             resource.copy(id = id)
         },
-        upsertMessage = { message ->
+        upsertMessage = { userId, message ->
             val id = sendMessageWithResourceIds(
                 message.toDomainModel(deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null"))
             )
@@ -122,11 +122,11 @@ class ChatManager(
             chatRepository.upsert(chat.toDomainModel(deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null")))
             chat
         },
-        errorInMessageResponse = { message ->
+        errorInMessageResponse = { userId, message ->
             errorRepository.reportSimpleError(ErrorCode.MessageResponseError)
             message?.toDomainModel(deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null"))?.let { messageRepository.delete(it) }
         },
-        removeMessage = { message ->
+        removeMessage = { userId, message ->
             Napier.v { "Removing message ${message.id} from device" }
             messageRepository.delete(message.toDomainModel(deviceSource.firstOrNull() ?: throw IllegalStateException("Device source is null")))
         },

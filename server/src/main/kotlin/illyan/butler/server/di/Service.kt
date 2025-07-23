@@ -2,7 +2,7 @@ package illyan.butler.server.di
 
 import com.aallam.openai.client.OpenAI
 import illyan.butler.server.data.service.ChatService
-import illyan.butler.shared.llm.LlmService
+import illyan.butler.shared.llm.createLlmService
 import illyan.butler.shared.model.chat.MessageDto
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -10,40 +10,41 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.plus
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 fun provideLlmService(
     chatService: ChatService,
     coroutineScope: CoroutineScope,
     @Named("OpenAIClients") openAIClients: Map<String, OpenAI>
-) = LlmService(
+) = createLlmService(
     coroutineScopeIO = coroutineScope + CoroutineExceptionHandler { _, t ->
         Napier.e("Error while processing chat", t)
     },
     getResource = { resourceId, senderId ->
         chatService.getResource(
-            resourceId, senderId
+            resourceId,
+            senderId
         )
     },
-    createResource = { chatId, modelId, resource ->
-        val newResource = chatService.createResource(
-            modelId,
-            resource
-        )
+    createResource = { userId, chatId, modelId, resource ->
+        val newResource = chatService.createResource(resource)
         chatService.sendMessage(
-            modelId,
+            userId,
             MessageDto(
-                id = null,
-                senderId = modelId,
+                id = Uuid.random(),
+                sender = modelId,
                 chatId = chatId,
-                resourceIds = listOf(newResource.id!!)
+                resourceIds = listOf(newResource.id)
             )
         )
         newResource
     },
-    upsertMessage = { message ->
+    upsertMessage = { userId, message ->
         chatService.editMessage(
-            message.senderId,
+            Uuid.parse(message.senderId), // Assuming senderId is a Uuid string (Sender is eaither AI or User, NOT SYSTEM)
             message
         )
     },
@@ -56,21 +57,21 @@ fun provideLlmService(
             chat
         )
     },
-    errorInMessageResponse = { message ->
+    errorInMessageResponse = { userId, message ->
         message?.let {
             chatService.deleteMessage(
-                it.senderId,
+                userId,
                 it.chatId,
-                it.id!!
+                it.id
             )
         }
         Napier.e { "Error in message response" }
     },
-    removeMessage = { message ->
+    removeMessage = { userId, message ->
         chatService.deleteMessage(
-            message.senderId,
+            userId,
             message.chatId,
-            message.id!!
+            message.id
         )
     }
 )

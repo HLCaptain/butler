@@ -1,10 +1,10 @@
-package illyan.butler.core.local.sqldelight.datasource
+package illyan.butler.core.local.sql.datasource
 
 import illyan.butler.core.local.datasource.UserLocalDataSource
-import illyan.butler.core.local.sqldelight.DatabaseHelper
+import illyan.butler.core.local.sql.DatabaseHelper
+import illyan.butler.core.local.sql.mapping.toDomainModel
+import illyan.butler.core.local.sql.mapping.toSqlDelightModel
 import illyan.butler.core.local.sqldelight.db.ButlerDatabase
-import illyan.butler.core.local.sqldelight.mapping.toDomainModel
-import illyan.butler.core.local.sqldelight.mapping.toSqlDelightModel
 import illyan.butler.domain.model.User
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow

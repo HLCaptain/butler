@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package illyan.butler.server.plugins
 
 import illyan.butler.server.AppConfig
@@ -27,8 +29,8 @@ import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
@@ -52,9 +54,10 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import io.opentelemetry.semconv.ServiceAttributes
-import kotlinx.datetime.Clock
 import org.slf4j.event.Level
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 fun Application.configureMonitoring() {
     install(CallLogging) {

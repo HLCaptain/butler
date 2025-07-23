@@ -47,16 +47,58 @@ private const val CONTENT_TYPE_IMAGE = "image"
 private const val CONTENT_TYPE_AUDIO = "audio"
 private const val RESOURCE_TYPE_AUDIO_MP3 = "audio/mp3"
 
+@OptIn(ExperimentalUuidApi::class)
+expect fun provideLlmService(
+    coroutineScopeIO: CoroutineScope,
+    getResource: suspend (userId: Uuid, resourceId: Uuid) -> ResourceDto,
+    createResource: suspend (userId: Uuid, chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
+    upsertMessage: suspend (userId: Uuid, message: MessageDto) -> MessageDto,
+    getOpenAIClient: suspend (endpoint: String) -> OpenAI,
+    upsertChat: suspend (chat: ChatDto) -> ChatDto,
+    errorInMessageResponse: suspend (userId: Uuid, message: MessageDto?) -> Unit,
+    removeMessage: suspend (userId: Uuid, message: MessageDto) -> Unit,
+): LlmService?
+
+@OptIn(ExperimentalUuidApi::class)
+fun createLlmService(
+    coroutineScopeIO: CoroutineScope,
+    getResource: suspend (userId: Uuid, resourceId: Uuid) -> ResourceDto,
+    createResource: suspend (userId: Uuid, chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
+    upsertMessage: suspend (userId: Uuid, message: MessageDto) -> MessageDto,
+    getOpenAIClient: suspend (endpoint: String) -> OpenAI,
+    upsertChat: suspend (chat: ChatDto) -> ChatDto,
+    errorInMessageResponse: suspend (userId: Uuid, message: MessageDto?) -> Unit,
+    removeMessage: suspend (userId: Uuid, message: MessageDto) -> Unit,
+): LlmService = provideLlmService(
+    coroutineScopeIO,
+    getResource,
+    createResource,
+    upsertMessage,
+    getOpenAIClient,
+    upsertChat,
+    errorInMessageResponse,
+    removeMessage
+) ?: LlmService(
+    coroutineScopeIO,
+    getResource,
+    createResource,
+    upsertMessage,
+    getOpenAIClient,
+    upsertChat,
+    errorInMessageResponse,
+    removeMessage
+)
+
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-class LlmService(
+class LlmService internal constructor(
     private val coroutineScopeIO: CoroutineScope,
-    private val getResource: suspend (resourceId: Uuid, ownerId: Uuid) -> ResourceDto,
-    private val createResource: suspend (chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
-    private val upsertMessage: suspend (message: MessageDto) -> MessageDto,
+    private val getResource: suspend (userId: Uuid, resourceId: Uuid) -> ResourceDto,
+    private val createResource: suspend (userId: Uuid, chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
+    private val upsertMessage: suspend (userId: Uuid, message: MessageDto) -> MessageDto,
     private val getOpenAIClient: suspend (endpoint: String) -> OpenAI,
     private val upsertChat: suspend (chat: ChatDto) -> ChatDto,
-    private val errorInMessageResponse: suspend (message: MessageDto?) -> Unit,
-    private val removeMessage: suspend (message: MessageDto) -> Unit,
+    private val errorInMessageResponse: suspend (userId: Uuid, message: MessageDto?) -> Unit,
+    private val removeMessage: suspend (userId: Uuid, message: MessageDto) -> Unit,
 ) {
     @OptIn(ExperimentalTime::class)
     suspend fun answerChat(
@@ -67,7 +109,7 @@ class LlmService(
     ) {
         Napier.v("Answering chat ${chat.id}")
 
-        val (initialMessages, lastMessage, isRegenerating) = prepareConversation(chatMessages, regenerateMessage)
+        val (initialMessages, lastMessage, isRegenerating) = prepareConversation(chat.ownerId, chatMessages, regenerateMessage)
         if (initialMessages.isEmpty()) {
             Napier.v("No messages in chat, skipping")
             return
@@ -79,7 +121,7 @@ class LlmService(
             return
         }
 
-        val resources = initialMessages.map { message -> message.resourceIds.map { getResource(it, chat.ownerId) } }.flatten()
+        val resources = initialMessages.map { message -> message.resourceIds.map { getResource(chat.ownerId, it) } }.flatten()
         val conversation = initialMessages.toConversation(chat.ownerId.toString(), resources)
 
         val updatedMessages = when {
@@ -91,20 +133,21 @@ class LlmService(
     }
 
     private suspend fun prepareConversation(
+        chatOwnerId: Uuid,
         chatMessages: List<MessageDto>,
         regenerateMessage: MessageDto?
     ): Triple<List<MessageDto>, MessageDto, Boolean> {
         var messages = chatMessages.sortedBy { it.time }
         val isRegenerating = regenerateMessage != null
         val lastMessage = if (isRegenerating) {
-            messages.first { it.id == regenerateMessage!!.id }
+            messages.first { it.id == regenerateMessage.id }
         } else {
             messages.last()
         }
 
         if (lastMessage.senderId != regenerateMessage?.senderId && lastMessage.content.isNullOrBlank()) {
             Napier.v("Last message from AI is blank, removing it.")
-            removeMessage(lastMessage)
+            removeMessage(chatOwnerId, lastMessage)
             messages = messages.filter { it.id != lastMessage.id }
         }
         return Triple(messages, messages.last(), isRegenerating)
@@ -118,13 +161,13 @@ class LlmService(
     ): List<MessageDto> {
         Napier.v("Handling text message")
         val answerFlow = answerChatWithTextAndContextStream(chat, conversation, previousChats)
-        var updatedAnswer: MessageDto? = null
+        var updatedAnswer: MessageDto?
 
         val firstAnswer = try {
             answerFlow.firstOrNull { !it.isNullOrBlank() }
         } catch (e: Exception) {
             Napier.e("Error getting first answer", e)
-            errorInMessageResponse(null)
+            errorInMessageResponse(chat.ownerId, null)
             return emptyList()
         }
 
@@ -133,13 +176,13 @@ class LlmService(
             return emptyList()
         }
 
-        updatedAnswer = toNewMessage(regenerateMessage, chat, firstAnswer).let { upsertMessage(it) }
+        updatedAnswer = upsertMessage(chat.ownerId, toNewMessage(regenerateMessage, chat, firstAnswer))
         val initialMessage = updatedAnswer
 
         coroutineScopeIO.launch {
             answerFlow.catch {
                 Napier.e("Error in chat completion stream", it)
-                updatedAnswer?.let { msg -> errorInMessageResponse(msg) }
+                updatedAnswer?.let { msg -> errorInMessageResponse(chat.ownerId, msg) }
                 cancel()
             }.collect { answer ->
                 if (answer == null) {
@@ -147,7 +190,7 @@ class LlmService(
                     cancel()
                     return@collect
                 }
-                updatedAnswer = toNewMessage(updatedAnswer, chat, answer).let { upsertMessage(it) }
+                updatedAnswer = upsertMessage(chat.ownerId, toNewMessage(updatedAnswer, chat, answer))
             }
         }
         return listOfNotNull(initialMessage)
@@ -170,7 +213,7 @@ class LlmService(
                 CONTENT_TYPE_IMAGE -> {
                     Napier.v("Resource is an image, answering with text")
                     val answer = answerChatWithTextAndContext(chat, conversation, previousChats)
-                    val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer))
+                    val newMessage = upsertMessage(chat.ownerId, toNewMessage(regenerateMessage, chat, answer))
                     messages.add(newMessage)
                 }
                 CONTENT_TYPE_AUDIO -> {
@@ -203,7 +246,7 @@ class LlmService(
         val lastMessageInConversation = conversation.last()
         val newContent = ((lastMessageInConversation.content?.let { "$it\n\n" } ?: "") + speechToTextContents.joinToString("\n\n")).trim()
 
-        val updatedOriginalMessage = upsertMessage(originalMessage.copy(content = newContent))
+        val updatedOriginalMessage = upsertMessage(chat.ownerId, originalMessage.copy(content = newContent))
 
         val modifiedConversation = conversation.dropLast(1) + ChatMessage(
             role = lastMessageInConversation.role,
@@ -213,8 +256,8 @@ class LlmService(
         val answer = answerChatWithTextAndContext(chat, modifiedConversation, previousChats)
         val audioResource = generateSpeechFromText(chat, answer)
         val chatCompletionModelConfig = chat.models[Capability.CHAT_COMPLETION]!!
-        val newResourceId = audioResource?.let { createResource(chat.id, SenderType.Ai(chatCompletionModelConfig), it).id }
-        val newMessage = upsertMessage(toNewMessage(regenerateMessage, chat, answer, listOfNotNull(newResourceId)))
+        val newResourceId = audioResource?.let { createResource(chat.ownerId, chat.id, SenderType.Ai(chatCompletionModelConfig), it).id }
+        val newMessage = upsertMessage(chat.ownerId, toNewMessage(regenerateMessage, chat, answer, listOfNotNull(newResourceId)))
 
         return listOf(updatedOriginalMessage, newMessage)
     }

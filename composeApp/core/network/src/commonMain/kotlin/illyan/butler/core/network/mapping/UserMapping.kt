@@ -22,7 +22,7 @@ fun UserDto.toDomainModel(
     photoUrl = photoUrl,
     address = address?.toDomainModel(),
     filters = filters,
-    promptConfigurations = customPrompts,
+    promptConfigurations = promptConfigurations,
 )
 
 fun AddressDto.toDomainModel() = Address(
@@ -42,7 +42,7 @@ fun User.toNetworkModel() = UserDto(
     photoUrl = photoUrl,
     address = address?.toNetworkModel(),
     filters = filters,
-    customPrompts = promptConfigurations,
+    promptConfigurations = promptConfigurations,
 )
 
 fun Address.toNetworkModel() = AddressDto(

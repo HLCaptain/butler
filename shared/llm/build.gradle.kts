@@ -13,4 +13,8 @@ kotlin {
 
         implementation(libs.napier)
     }
+
+    sourceSets.nonIosMain.dependencies {
+        implementation(libs.koog)
+    }
 }

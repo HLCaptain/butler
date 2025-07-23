@@ -28,11 +28,12 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.r2dbc.update
 import org.koin.core.annotation.Single
 import org.springframework.security.crypto.password.PasswordEncoder
-import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class UserExposedDatabase(
     private val database: R2dbcDatabase,
@@ -56,29 +57,29 @@ class UserExposedDatabase(
                 Napier.e("Error creating user: ${e.message}", throwable = e)
                 throw ApiException(StatusCode.UserAlreadyExists)
             }
-            user.copy(id = userId.value.toString())
+            user.copy(id = userId.value.toKotlinUuid())
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun getUser(userId: String): UserDto {
+    override suspend fun getUser(userId: Uuid): UserDto {
         return suspendTransaction(dispatcher, db = database) {
-            Users.selectAll().where { Users.id eq Uuid.parse(userId).toJavaUuid() }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
+            Users.selectAll().where { Users.id eq userId.toJavaUuid() }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun updateUser(user: UserDto): UserDto {
         return suspendTransaction(dispatcher, db = database) {
-            val isUserUpdated = Users.update({ Users.id eq Uuid.parse(user.id!!).toJavaUuid() }) { setUser(it, user) } > 0
+            val isUserUpdated = Users.update({ Users.id eq user.id.toJavaUuid() }) { setUser(it, user) } > 0
             if (isUserUpdated) user else throw ApiException(StatusCode.UserNotFound)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun deleteUser(userId: String) {
+    override suspend fun deleteUser(userId: Uuid) {
         suspendTransaction(dispatcher, db = database) {
-            Users.deleteWhere { id eq Uuid.parse(userId).toJavaUuid() }
+            Users.deleteWhere { id eq userId.toJavaUuid() }
         }
     }
 
@@ -88,13 +89,13 @@ class UserExposedDatabase(
                 Users.email eq email
             }.firstOrNull()?.toUserDto() ?: throw ApiException(StatusCode.UserNotFound)
 
-            val potentialUser = UserPasswords.selectAll().where { UserPasswords.userId eq UUID.fromString(user.id) }.first()
-            if (passwordEncoder.matches(password, potentialUser[UserPasswords.passwordHash])) user else throw throw ApiException(StatusCode.UserNotFound)
+            val potentialUser = UserPasswords.selectAll().where { UserPasswords.userId eq user.id.toJavaUuid() }.first()
+            if (passwordEncoder.matches(password, potentialUser[UserPasswords.passwordHash])) user else throw ApiException(StatusCode.UserNotFound)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override fun getUserFlow(userId: String): Flow<UserDto> = flow {
+    override fun getUserFlow(userId: Uuid): Flow<UserDto> = flow {
         emit(getUser(userId))
     }
 
@@ -102,10 +103,10 @@ class UserExposedDatabase(
         emit(getUserByEmailAndPassword(email, password))
     }
 
-    override suspend fun upsertPasswordForUser(userId: String, password: String) {
+    override suspend fun upsertPasswordForUser(userId: Uuid, password: String) {
         val encodedPassword = passwordEncoder.encode(password)
         return suspendTransaction(dispatcher, db = database) {
-            val userUuid = UUID.fromString(userId)
+            val userUuid = userId.toJavaUuid()
             val isPasswordUpdated = UserPasswords.update({ UserPasswords.userId eq userUuid }) {
                 it[passwordHash] = encodedPassword
             } > 0
@@ -133,14 +134,16 @@ class UserExposedDatabase(
     }
 
     private fun ResultRow.toUserDto() = UserDto(
-        id = this[Users.id].value.toString(),
+        id = this[Users.id].value.toKotlinUuid(),
         email = this[Users.email],
         username = this[Users.username],
         displayName = this[Users.displayName],
         phone = this[Users.phone],
         fullName = this[Users.fullName],
         photoUrl = this[Users.photoUrl],
-        address = this.toAddressDto()
+        address = this.toAddressDto(),
+        filters = this[Users.filters],
+        promptConfigurations = this[Users.promptConfigurations]
     )
 
     private fun ResultRow.toAddressDto() = this[Users.street]?.let {
@@ -152,4 +155,3 @@ class UserExposedDatabase(
         )
     }
 }
-

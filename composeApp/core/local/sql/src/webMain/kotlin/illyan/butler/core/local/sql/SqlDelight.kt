@@ -1,4 +1,4 @@
-package illyan.butler.core.local.sqldelight
+package illyan.butler.core.local.sql
 
 import app.cash.sqldelight.async.coroutines.awaitCreate
 import app.cash.sqldelight.driver.worker.createDefaultWebWorkerDriver
@@ -22,4 +22,5 @@ fun createDatabase(
 }
 
 @Single
-fun createDatabaseHelper(database: ButlerDatabase) = DatabaseHelper(database, ButlerDatabase.Schema, createDefaultWebWorkerDriver())
+fun createDatabaseHelper(database: ButlerDatabase) =
+    DatabaseHelper(database, ButlerDatabase.Schema, createDefaultWebWorkerDriver())

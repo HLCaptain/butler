@@ -11,6 +11,8 @@ import illyan.butler.shared.model.chat.MessageDto
 import illyan.butler.shared.model.chat.ResourceDto
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Single
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Chat service implementation.
@@ -22,110 +24,111 @@ import org.koin.core.annotation.Single
  * FIXME: fix caching
  * FIXME: check authorization
  */
+@OptIn(ExperimentalUuidApi::class)
 @Single
 class ChatService(
     private val chatDatabase: ChatDatabase,
     private val messageDatabase: MessageDatabase,
     private val resourceDatabase: ResourceDatabase
 ) : ChatDataSource, MessageDataSource, ResourceDataSource {
-    override suspend fun getChat(userId: String, chatId: String): ChatDto {
+    override suspend fun getChat(userId: Uuid, chatId: Uuid): ChatDto {
         return chatDatabase.getChat(userId, chatId)
     }
 
-    override suspend fun createChat(userId: String, chat: ChatDto): ChatDto {
+    override suspend fun createChat(userId: Uuid, chat: ChatDto): ChatDto {
         return chatDatabase.createChat(userId, chat)
     }
 
-    override suspend fun editChat(userId: String, chat: ChatDto): ChatDto {
+    override suspend fun editChat(userId: Uuid, chat: ChatDto): ChatDto {
         return chatDatabase.editChat(userId, chat)
     }
 
-    override suspend fun deleteChat(userId: String, chatId: String): Boolean {
+    override suspend fun deleteChat(userId: Uuid, chatId: Uuid): Boolean {
         return chatDatabase.deleteChat(userId, chatId)
     }
 
-    override suspend fun getChats(userId: String): List<ChatDto> {
+    override suspend fun getChats(userId: Uuid): List<ChatDto> {
         return chatDatabase.getChats(userId)
     }
 
-    override suspend fun getChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
+    override suspend fun getChats(userId: Uuid, limit: Int, offset: Int): List<ChatDto> {
         return chatDatabase.getChats(userId, limit, offset)
     }
 
-    override suspend fun getChats(userId: String, fromDate: Long, toDate: Long): List<ChatDto> {
+    override suspend fun getChats(userId: Uuid, fromDate: Long, toDate: Long): List<ChatDto> {
         return chatDatabase.getChats(userId, fromDate, toDate)
     }
 
-    override suspend fun getPreviousChats(userId: String, limit: Int, timestamp: Long): List<ChatDto> {
+    override suspend fun getPreviousChats(userId: Uuid, limit: Int, timestamp: Long): List<ChatDto> {
         return chatDatabase.getPreviousChats(userId, limit, timestamp)
     }
 
-    override suspend fun getPreviousChats(userId: String, limit: Int, offset: Int): List<ChatDto> {
+    override suspend fun getPreviousChats(userId: Uuid, limit: Int, offset: Int): List<ChatDto> {
         return chatDatabase.getPreviousChats(userId, limit, offset)
     }
 
-    override fun getChangedChatsAffectingUser(userId: String): Flow<List<ChatDto>> {
+    override fun getChangedChatsAffectingUser(userId: Uuid): Flow<List<ChatDto>> {
         return chatDatabase.getChangedChatsAffectingUser(userId)
     }
 
-    override fun getChangesFromChat(userId: String, chatId: String): Flow<ChatDto> {
+    override fun getChangesFromChat(userId: Uuid, chatId: Uuid): Flow<ChatDto> {
         return chatDatabase.getChangesFromChat(userId, chatId)
     }
 
-    override suspend fun sendMessage(userId: String, message: MessageDto): MessageDto {
+    override suspend fun sendMessage(userId: Uuid, message: MessageDto): MessageDto {
         return messageDatabase.sendMessage(userId, message)
     }
 
-    override suspend fun editMessage(userId: String, message: MessageDto): MessageDto {
+    override suspend fun editMessage(userId: Uuid, message: MessageDto): MessageDto {
         return messageDatabase.editMessage(userId, message)
     }
 
-    override suspend fun deleteMessage(userId: String, chatId: String, messageId: String): Boolean {
+    override suspend fun deleteMessage(userId: Uuid, chatId: Uuid, messageId: Uuid): Boolean {
         return messageDatabase.deleteMessage(userId, chatId, messageId)
     }
 
     override suspend fun getPreviousMessages(
-        userId: String,
-        chatId: String,
+        userId: Uuid,
+        chatId: Uuid,
         limit: Int,
         timestamp: Long
     ): List<MessageDto> {
         return messageDatabase.getPreviousMessages(userId, chatId, limit, timestamp)
     }
 
-    override suspend fun getMessages(userId: String, chatId: String, limit: Int, offset: Int): List<MessageDto> {
+    override suspend fun getMessages(userId: Uuid, chatId: Uuid, limit: Int, offset: Int): List<MessageDto> {
         return messageDatabase.getMessages(userId, chatId, limit, offset)
     }
 
-    override suspend fun getMessages(userId: String, chatId: String): List<MessageDto> {
+    override suspend fun getMessages(userId: Uuid, chatId: Uuid): List<MessageDto> {
         return messageDatabase.getMessages(userId, chatId)
     }
 
-    override suspend fun getMessages(userId: String): List<MessageDto> {
+    override suspend fun getMessages(userId: Uuid): List<MessageDto> {
         return messageDatabase.getMessages(userId)
     }
 
-    override fun getChangedMessagesByUser(userId: String): Flow<List<MessageDto>> {
+    override fun getChangedMessagesByUser(userId: Uuid): Flow<List<MessageDto>> {
         return messageDatabase.getChangedMessagesAffectingUser(userId)
     }
 
-    override fun getChangedMessagesByChat(userId: String, chatId: String): Flow<List<MessageDto>> {
+    override fun getChangedMessagesByChat(userId: Uuid, chatId: Uuid): Flow<List<MessageDto>> {
         return messageDatabase.getChangedMessagesAffectingChat(userId, chatId)
     }
 
-    override suspend fun createResource(userId: String, resource: ResourceDto): ResourceDto {
-        return resourceDatabase.createResource(userId, resource)
+    override suspend fun createResource(resource: ResourceDto): ResourceDto {
+        return resourceDatabase.createResource(resource)
     }
 
-    override suspend fun getResource(userId: String, resourceId: String): ResourceDto {
+    override suspend fun getResource(userId: Uuid, resourceId: Uuid): ResourceDto {
         return resourceDatabase.getResource(userId, resourceId)
     }
 
-    override suspend fun deleteResource(userId: String, resourceId: String): Boolean {
+    override suspend fun deleteResource(userId: Uuid, resourceId: Uuid): Boolean {
         return resourceDatabase.deleteResource(userId, resourceId)
     }
 
-    override suspend fun getResources(userId: String): List<ResourceDto> {
+    override suspend fun getResources(userId: Uuid): List<ResourceDto> {
         return resourceDatabase.getResources(userId)
     }
 }

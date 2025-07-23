@@ -1,8 +1,8 @@
-package illyan.butler.core.local.sqldelight.datasource
+package illyan.butler.core.local.sql.datasource
 
 import illyan.butler.core.local.datasource.DataHistoryLocalDataSource
 import illyan.butler.core.local.model.DataHistory
-import illyan.butler.core.local.sqldelight.DatabaseHelper
+import illyan.butler.core.local.sql.DatabaseHelper
 import illyan.butler.core.local.sqldelight.db.ButlerDatabase
 import io.github.aakira.napier.Napier
 import org.koin.core.annotation.Single

@@ -143,6 +143,8 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version 
 kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.8.0" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version = "0.3" }
 
+koog = { module = "ai.koog:koog-agents", version = "0.3.0" }
+
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 

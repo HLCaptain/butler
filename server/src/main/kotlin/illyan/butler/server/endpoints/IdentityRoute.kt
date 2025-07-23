@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package illyan.butler.server.endpoints
 
 import illyan.butler.server.data.service.IdentityService
@@ -15,6 +17,8 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import org.koin.ktor.ext.inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 fun Route.identityRoutes(tokenConfiguration: TokenConfiguration) {
     val identityService: IdentityService by inject()
@@ -35,7 +39,7 @@ fun Route.identityRoutes(tokenConfiguration: TokenConfiguration) {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.payload?.getClaim(Claim.USER_ID)?.toString()?.trim('\"', ' ')
             if (!userId.isNullOrBlank()) {
-                val token = identityService.generateUserTokens(userId, tokenConfiguration)
+                val token = identityService.generateUserTokens(Uuid.parse(userId), tokenConfiguration)
                 call.respond(HttpStatusCode.Created, token)
             } else {
                 call.respond(HttpStatusCode.Unauthorized, "User not authenticated")
@@ -46,7 +50,7 @@ fun Route.identityRoutes(tokenConfiguration: TokenConfiguration) {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.payload?.getClaim(Claim.USER_ID)?.toString()?.trim('\"', ' ')
             if (!userId.isNullOrBlank()) {
-                val user = identityService.getUser(userId)
+                val user = identityService.getUser(Uuid.parse(userId))
                 call.respond(HttpStatusCode.OK, user)
             } else {
                 call.respond(HttpStatusCode.Unauthorized, "User not authenticated")

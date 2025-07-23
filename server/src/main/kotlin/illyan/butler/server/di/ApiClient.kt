@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package illyan.butler.server.di
 
 import illyan.butler.server.AppConfig
@@ -25,7 +27,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.protobuf.protobuf
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v3_0.KtorClientTelemetry
-import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.core.annotation.Single
 import java.security.KeyStore
@@ -33,6 +34,8 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 fun HttpClientConfig<OkHttpConfig>.setupClient() {
     install(Logging) {

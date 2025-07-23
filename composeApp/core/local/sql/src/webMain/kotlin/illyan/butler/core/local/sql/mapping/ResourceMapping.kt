@@ -1,4 +1,4 @@
-package illyan.butler.core.local.sqldelight.mapping
+package illyan.butler.core.local.sql.mapping
 
 import illyan.butler.core.local.sqldelight.Resources
 import illyan.butler.domain.model.Resource
