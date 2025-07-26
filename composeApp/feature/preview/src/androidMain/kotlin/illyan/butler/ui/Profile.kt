@@ -11,9 +11,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import illyan.butler.core.ui.components.ButlerDialogSurface
+import illyan.butler.core.ui.components.DropdownSetting
 import illyan.butler.core.ui.theme.ButlerTheme
 import illyan.butler.domain.model.Preferences
 import illyan.butler.domain.model.Theme
+import illyan.butler.domain.model.Theming
 import illyan.butler.generated.resources.Res
 import illyan.butler.generated.resources.dark
 import illyan.butler.generated.resources.day_night_cycle
@@ -22,7 +24,6 @@ import illyan.butler.generated.resources.system
 import illyan.butler.generated.resources.theme
 import illyan.butler.ui.profile.dialog.ProfileDialogContent
 import illyan.butler.ui.profile.settings.AnalyticsRequestDialogContent
-import illyan.butler.ui.profile.settings.DropdownSetting
 import illyan.butler.ui.profile.settings.UserSettingsDialogContent
 import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
@@ -30,10 +31,10 @@ import kotlin.random.Random
 private fun generateRandomUserPreferences(): Preferences {
     return Preferences(
         analyticsEnabled = Random.nextBoolean(),
-        theme = Theme.entries.random(),
-        dynamicColorEnabled = Random.nextBoolean(),
-//        clientId = UUID.Uuid.random().toString().toString(),
-//        lastUpdate = ZonedDateTime.now()
+        theming = Theming(
+            theme = Theme.entries.random(),
+            dynamicColorEnabled = Random.nextBoolean(),
+        ),
     )
 }
 
@@ -102,7 +103,7 @@ fun DropdownSettingPreview() {
                 selectValue = {},
                 selectedValue = Theme.entries.random(),
                 values = Theme.entries.toList(),
-                getValueName = { theme ->
+                text = { theme ->
                     when (theme) {
                         Theme.System -> stringResource(Res.string.system)
                         Theme.Light -> stringResource(Res.string.light)

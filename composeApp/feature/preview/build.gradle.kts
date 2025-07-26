@@ -5,6 +5,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.shared.model)
+
         implementation(projects.composeApp.domain)
 
         implementation(projects.composeApp.core.ui.theme)
