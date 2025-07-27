@@ -5,11 +5,23 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
+        gradlePluginPortal()
         maven("https://jitpack.io")
         maven("https://central.sonatype.com/")
         maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
         maven("https://packages.jetbrains.team/maven/p/firework/dev")
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
         gradlePluginPortal()
+        maven("https://jitpack.io")
+        maven("https://central.sonatype.com/")
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
+        maven("https://packages.jetbrains.team/maven/p/firework/dev")
     }
 }
 

@@ -90,7 +90,7 @@ fun createLlmService(
 )
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-class LlmService internal constructor(
+open class LlmService internal constructor(
     private val coroutineScopeIO: CoroutineScope,
     private val getResource: suspend (userId: Uuid, resourceId: Uuid) -> ResourceDto,
     private val createResource: suspend (userId: Uuid, chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
@@ -101,7 +101,7 @@ class LlmService internal constructor(
     private val removeMessage: suspend (userId: Uuid, message: MessageDto) -> Unit,
 ) {
     @OptIn(ExperimentalTime::class)
-    suspend fun answerChat(
+    open suspend fun answerChat(
         chat: ChatDto,
         chatMessages: List<MessageDto>,
         previousChats: List<ChatDto> = emptyList(),

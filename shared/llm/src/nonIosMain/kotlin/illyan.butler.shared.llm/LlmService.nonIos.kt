@@ -5,6 +5,7 @@ import illyan.butler.shared.model.chat.ChatDto
 import illyan.butler.shared.model.chat.MessageDto
 import illyan.butler.shared.model.chat.ResourceDto
 import illyan.butler.shared.model.chat.SenderType
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -45,9 +46,6 @@ actual fun provideLlmService(
     errorInMessageResponse: suspend (userId: Uuid, message: MessageDto?) -> Unit,
     removeMessage: suspend (userId: Uuid, message: MessageDto) -> Unit,
 ): LlmService? {
-    // Using Koog's graph-based approach for better concurrency handling
-    // The LlmService implementation internally organizes operations as a graph of tasks
-    // with explicit dependencies between them, which helps address concurrency issues.
     return LlmService(
         coroutineScopeIO,
         getResource,
@@ -58,4 +56,70 @@ actual fun provideLlmService(
         errorInMessageResponse,
         removeMessage
     )
+}
+
+@OptIn(ExperimentalUuidApi::class)
+class KoogLlmService(
+    coroutineScopeIO: CoroutineScope,
+    getResource: suspend (userId: Uuid, resourceId: Uuid) -> ResourceDto,
+    createResource: suspend (userId: Uuid, chatId: Uuid, senderId: SenderType.Ai, resource: ResourceDto) -> ResourceDto,
+    upsertMessage: suspend (userId: Uuid, message: MessageDto) -> MessageDto,
+    getOpenAIClient: suspend (endpoint: String) -> OpenAI,
+    upsertChat: suspend (chat: ChatDto) -> ChatDto,
+    errorInMessageResponse: suspend (userId: Uuid, message: MessageDto?) -> Unit,
+    removeMessage: suspend (userId: Uuid, message: MessageDto) -> Unit
+) : LlmService(
+    coroutineScopeIO,
+    getResource,
+    createResource,
+    upsertMessage,
+    getOpenAIClient,
+    upsertChat,
+    errorInMessageResponse,
+    removeMessage
+) {
+    override suspend fun answerChat(
+        chat: ChatDto,
+        chatMessages: List<MessageDto>,
+        previousChats: List<ChatDto>,
+        regenerateMessage: MessageDto?
+    ) {
+        //  Sort and prepare the conversation
+        // • Order messages by timestamp
+        // • Determine if this is a regeneration of an existing AI message
+        // • Remove any blank AI message if regenerating
+        //
+        // Early exits
+        // • If there are no messages, return immediately
+        // • If the last message isn’t from the user (and not regenerating), update chat metadata and return
+        //
+        // Fetch any referenced resources (images, audio)
+        //
+        // Build a list of ChatMessage objects from MessageDto, merging consecutive messages from the same role
+        //
+        // Branch on resource presence
+        // a. Text-only
+        // • Initiate a streaming text completion request
+        // • Await first non-blank chunk, upsert it as a new MessageDto
+        // • Launch a coroutine to collect further chunks and upsert updates until completion
+        // b. With resources
+        // • Group resources by type (image vs. audio)
+        // • For each image: treat like text above
+        // • For each audio:
+        // – Transcribe it
+        // – Upsert the transcription onto the original message
+        // – Generate a text answer and then synthesize speech
+        // – Upsert both the updated original and the new AI audio message
+        //
+        // Update chat name and summary
+        // • Combine name-and-summary generation streams
+        // • Upsert chat if name or summary changed
+        //
+        // Finish and return without explicit result (all state is persisted via upserts)
+
+        if (chatMessages.isEmpty()) {
+            Napier.d { "No messages in chat, returning early." }
+            return
+        }
+    }
 }
